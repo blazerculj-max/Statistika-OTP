@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Fetch Liga OTP banka + 2. SKL data using phase IDs to avoid fetching all pages."""
+"""
+Fetch KZS basketball data for all 3 leagues.
+Saves to data/ directory for use by the web app.
+"""
 
 import json, time, urllib.request, os
 from datetime import datetime, timezone
@@ -12,16 +15,24 @@ LEAGUES = {
     'liga1': {
         'id': 579,
         'name': 'Liga OTP banka',
-        # Fetch first page only — liga1 has 135 tekme, fits in 1 page
-        'phase_ids': None,
-        'max_pages': 1,
+        'short': '1. SKL',
+        'phase_ids': None,   # single page, all phases
+        'group_ids': None,
     },
     'liga2': {
         'id': 581,
         'name': '2. SKL',
-        # Fetch by specific phase IDs to avoid getting 60k+ tekme
+        'short': '2. SKL',
         'phase_ids': [5813, 5873, 5874, 5880],
-        'max_pages': 1,
+        'group_ids': None,
+    },
+    'liga3': {
+        'id': 582,
+        'name': '3. SKL',
+        'short': '3. SKL',
+        # Redni del (Vzhod+Zahod) + Četrtfinale + 1.krog končnica
+        'phase_ids': [5814, 5819, 5820],
+        'group_ids': None,  # fetch all groups within phase
     },
 }
 
@@ -32,16 +43,20 @@ def fetch_json(url, retries=3):
             with urllib.request.urlopen(req, timeout=15) as r:
                 return json.loads(r.read().decode())
         except Exception as e:
-            print(f"  Err: {e}")
+            print(f"  Err ({i+1}/{retries}): {e}")
             time.sleep(i + 1)
     return None
 
-def fetch_matches_for_phase(comp_id, phase_id):
-    """Fetch all matches for a specific phase (paginates if needed)."""
+def fetch_matches_for_phase(comp_id, phase_id, group_id=None):
+    """Fetch all matches for a specific phase, optionally filtered by group."""
     all_items = []
     page = 1
     while True:
-        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}&competitionPhaseId={phase_id}&page={page}"
+        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}&competitionPhaseId={phase_id}"
+        if group_id:
+            url += f"&competitionPhaseGroupId={group_id}"
+        if page > 1:
+            url += f"&page={page}"
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items:
@@ -54,7 +69,7 @@ def fetch_matches_for_phase(comp_id, phase_id):
     return all_items
 
 def fetch_matches_single_page(comp_id):
-    """Fetch single page of matches (for leagues that fit in one page)."""
+    """Fetch single page (for leagues that fit in one page)."""
     url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
     data = fetch_json(url)
     return data.get('data', {}).get('items', []) if data else []
@@ -63,13 +78,14 @@ def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
 
     if lg['phase_ids']:
-        # Fetch by phase IDs — precise, no bloat
+        # Fetch by phase ID
         all_matches = []
         for phase_id in lg['phase_ids']:
             items = fetch_matches_for_phase(lg['id'], phase_id)
-            print(f"  Phase {phase_id}: {len(items)} tekem")
+            phase_name = items[0]['competitions'][0].get('competitionPhaseName', '?') if items else '?'
+            print(f"  Phase {phase_id} ({phase_name}): {len(items)} tekem")
             all_matches.extend(items)
-        # Deduplicate by match ID
+        # Deduplicate
         seen = set()
         matches = []
         for m in all_matches:
@@ -79,13 +95,17 @@ def process_league(key, lg):
         matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
         print(f"  Skupaj: {len(matches)} tekem")
     else:
-        # Single page fetch for smaller leagues
         matches = fetch_matches_single_page(lg['id'])
         matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
         print(f"  {len(matches)} tekem (ena stran)")
 
     finished = [m for m in matches if m['status'] == 'FINISHED']
-    print(f"  {len(finished)} odigranih")
+    live = [m for m in matches if m['status'] == 'LIVE']
+    print(f"  {len(finished)} odigranih, {len(live)} v živo")
+
+    # Attendance stats
+    with_att = [m for m in finished if m.get('attendance', 0) > 0]
+    print(f"  {len(with_att)}/{len(finished)} tekem z obiskoma")
 
     # Fetch stats
     stats = {}
@@ -98,9 +118,11 @@ def process_league(key, lg):
         time.sleep(0.1)
 
     now = datetime.now(timezone.utc).isoformat()
+
+    # Save stats
     stats_file = f"data/{key}_stats.json"
     with open(stats_file, 'w') as f:
-        json.dump({'updatedAt': now, 'allMatches': matches, 'matchStats': stats},
+        json.dump({'updatedAt': now, 'league': lg['name'], 'allMatches': matches, 'matchStats': stats},
                   f, ensure_ascii=False, separators=(',', ':'))
     print(f"  Saved {stats_file} ({os.path.getsize(stats_file)//1024} KB)")
 
@@ -126,41 +148,39 @@ def process_league(key, lg):
         json.dump({'updatedAt': now, 'pbp': pbp}, f, ensure_ascii=False, separators=(',', ':'))
     print(f"  Saved {pbp_file} ({os.path.getsize(pbp_file)//1024} KB)")
 
+    # Save attendance separately for obiski app
+    att_records = [
+        {
+            'matchId': m['id'],
+            'round': m['round'],
+            'date': m.get('dateTime', ''),
+            'home': m['firstTeamName'],
+            'away': m['secondTeamName'],
+            'homeScore': m.get('firstTeamScore'),
+            'awayScore': m.get('secondTeamScore'),
+            'attendance': m.get('attendance', 0),
+            'hall': m.get('sportHallName', ''),
+            'phase': m.get('competitions', [{}])[0].get('competitionPhaseName', 'Redni del'),
+            'phaseGroup': m.get('competitions', [{}])[0].get('competitionPhaseGroupName', ''),
+        }
+        for m in finished if m.get('attendance', 0) > 0
+    ]
+    return att_records
+
 os.makedirs('data', exist_ok=True)
 print(f"=== KZS Fetcher {datetime.now(timezone.utc).isoformat()} ===")
+
+all_attendance = {}
 for key, lg in LEAGUES.items():
-    process_league(key, lg)
+    att = process_league(key, lg)
+    all_attendance[key] = att
+
+# Save combined attendance
+att_file = 'data/attendance.json'
+with open(att_file, 'w') as f:
+    json.dump({
+        'updatedAt': datetime.now(timezone.utc).isoformat(),
+        'leagues': all_attendance
+    }, f, ensure_ascii=False, separators=(',', ':'))
+print(f"\nSaved {att_file} ({os.path.getsize(att_file)//1024} KB)")
 print("\n=== Done! ===")
-
-def export_attendance(all_leagues_matches):
-    """Export attendance data in format usable by obiski-tekem app."""
-    att_data = {}
-    for league_key, matches in all_leagues_matches.items():
-        att_data[league_key] = [
-            {
-                'id': m['id'],
-                'round': m['round'],
-                'date': m.get('dateTime',''),
-                'home': m['firstTeamName'],
-                'away': m['secondTeamName'],
-                'homeScore': m.get('firstTeamScore'),
-                'awayScore': m.get('secondTeamScore'),
-                'attendance': m.get('attendance', 0),
-                'hall': m.get('sportHallName',''),
-                'phase': m.get('competitions',[{}])[0].get('competitionPhaseName','Redni del'),
-                'status': m.get('status','')
-            }
-            for m in matches if m.get('status') == 'FINISHED'
-        ]
-
-    now = datetime.now(timezone.utc).isoformat()
-    with open('data/attendance.json', 'w') as f:
-        json.dump({'updatedAt': now, 'leagues': att_data}, f,
-                  ensure_ascii=False, separators=(',',':'))
-    print(f"\nSaved data/attendance.json ({os.path.getsize('data/attendance.json')//1024} KB)")
-
-# Call export at end of main (add to existing script)
-# all_matches_by_league = {}
-# for key, lg in LEAGUES.items():
-#     process_league(key, lg)  <- already saves
-# export_attendance(all_matches_by_league)
