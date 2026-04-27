@@ -1217,11 +1217,13 @@ function renderMiniTrend(pid){
   const log=playerGameLog[pid];
   if(!log||log.length<3)return '';
   const last5=log.slice(-5);
+  // Use only positive efe for height scaling; negatives shown in red at min height
   const maxEfe=Math.max(...last5.map(g=>g.efe),1);
   const bars=last5.map(g=>{
-    const h=Math.max(4,Math.round(g.efe/maxEfe*16));
-    const col=g.efe>15?'#34d399':g.efe>8?'#facc15':'#f87171';
-    return `<div style="width:4px;height:${h}px;background:${col};border-radius:1px;flex-shrink:0" title="K${g.round}: ${g.pts}pts ${g.reb}reb ${g.ast}ast EFE:${g.efe}"></div>`;
+    const h=g.efe>0?Math.max(4,Math.round(g.efe/maxEfe*16)):4;
+    const col=g.efe>15?'#34d399':g.efe>8?'#facc15':g.efe>0?'#f97316':'#f87171';
+    const tip=`K${g.round}: ${g.pts}pts ${g.reb}sk ${g.ast}ast EFE:${g.efe}`;
+    return `<div style="width:4px;height:${h}px;background:${col};border-radius:1px;flex-shrink:0;cursor:default" title="${tip}"></div>`;
   }).join('');
   return `<span style="display:inline-flex;align-items:flex-end;gap:1px;margin-left:6px;vertical-align:middle">${bars}</span>`;
 }
@@ -1751,27 +1753,65 @@ function drawTrend(pid, color){
   const log=playerGameLog[pid];
   if(!log||log.length<3)return '';
   const last=log.slice(-10);
-  const maxEfe=Math.max(...last.map(g=>Math.abs(g.efe)),1);
-  const w=260,h=70,pad=10;
-  const bw=Math.floor((w-pad*2)/last.length)-2;
+  const w=280, h=90, padL=8, padR=8, padT=20, padB=24;
+  const bw=Math.max(4,Math.floor((w-padL-padR)/last.length)-3);
+  const chartH=h-padT-padB;
+  const maxEfe=Math.max(...last.map(g=>g.efe),1);
 
-  let bars='';
+  // Build HTML tooltip overlay instead of SVG title
+  let bars='', tooltips='', labels='';
   last.forEach((g,i)=>{
-    const bh=Math.max(3,Math.round(Math.abs(g.efe)/maxEfe*(h-pad*2)));
+    const bh=g.efe>0?Math.max(4,Math.round(g.efe/maxEfe*chartH)):4;
     const col=g.efe>15?'#34d399':g.efe>8?'#facc15':g.efe>0?'#f97316':'#f87171';
-    const x=pad+i*(bw+2);
-    const y=g.efe>=0?h-pad-bh:h-pad;
-    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity=".85">
-      <title>K${g.round}: ${g.pts}pts ${g.reb}reb ${g.ast}ast EFE:${g.efe}</title></rect>`;
-    bars+=`<text x="${x+bw/2}" y="${h-1}" font-size="7" text-anchor="middle" fill="rgba(148,163,184,.5)" font-family="DM Mono,monospace">${g.round}</text>`;
-  });
-  // Zero line
-  bars+=`<line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
+    const x=padL+i*(bw+3);
+    const y=padT+chartH-bh;
 
-  return `<svg viewBox="0 0 ${w} ${h+10}" style="width:100%;display:block;margin:0 auto">
-    ${bars}
-    <text x="${pad}" y="10" font-size="8" fill="rgba(148,163,184,.6)" font-family="DM Sans,sans-serif">EFE po krogu</text>
-  </svg>`;
+    // Bar
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${g.efe>0?'.9':'.6'}"/>`;
+
+    // EFE value on top of bar
+    if(bh>12){
+      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="DM Mono,monospace" font-weight="bold">${g.efe}</text>`;
+    }
+
+    // Round label at bottom
+    labels+=`<text x="${x+bw/2}" y="${h-4}" font-size="7" text-anchor="middle" fill="rgba(148,163,184,.5)" font-family="DM Mono,monospace">K${g.round}</text>`;
+
+    // Invisible hover rect for tooltip
+    bars+=`<rect x="${x}" y="${padT}" width="${bw}" height="${chartH}" fill="transparent" class="trend-hover"
+      data-tip="Krog ${g.round}: ${g.pts} točk · ${g.reb} skokov · ${g.ast} asist · EFE: ${g.efe}"
+      onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()"/>`;
+  });
+
+  // Zero line
+  const zeroY=padT+chartH;
+  bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+
+  // Legend
+  bars+=`<text x="${padL}" y="12" font-size="8" fill="rgba(148,163,184,.6)" font-family="DM Sans,sans-serif">EFE po krogu (zadnjih 10)</text>`;
+
+  return `<div style="position:relative">
+    <svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block;overflow:visible">
+      ${bars}${labels}
+    </svg>
+    <div id="trend-tip" style="display:none;position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:.72rem;color:var(--text);font-family:var(--fm);white-space:nowrap;pointer-events:none;z-index:10"></div>
+  </div>`;
+}
+
+function showTrendTip(evt, el){
+  const tip=document.getElementById('trend-tip');
+  if(!tip)return;
+  tip.textContent=el.getAttribute('data-tip');
+  tip.style.display='block';
+  const svg=el.closest('svg');
+  const rect=el.getBoundingClientRect();
+  const wrap=tip.parentElement.getBoundingClientRect();
+  tip.style.left=(rect.left-wrap.left+rect.width/2-tip.offsetWidth/2)+'px';
+  tip.style.top=(rect.top-wrap.top-tip.offsetHeight-6)+'px';
+}
+function hideTrendTip(){
+  const tip=document.getElementById('trend-tip');
+  if(tip)tip.style.display='none';
 }
 
 function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';}
