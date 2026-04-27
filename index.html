@@ -197,6 +197,23 @@ select:focus{outline:none;border-color:var(--acc)}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* MOMENTUM CHART */
 .momentum-wrap{background:var(--card2);border-radius:8px;padding:12px;margin-bottom:16px}
+/* ATTENDANCE */
+.att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
+.att-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.att-card-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.att-row{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid rgba(26,26,50,.4)}
+.att-row:last-child{border-bottom:none}
+.att-row:hover{background:rgba(255,255,255,.02)}
+.att-rank{width:22px;font-size:.72rem;color:var(--mut);font-family:var(--fm);text-align:center;flex-shrink:0}
+.att-info{flex:1;min-width:0}
+.att-name{font-size:.82rem;font-weight:500;color:var(--text)}
+.att-meta{font-size:.65rem;color:var(--mut)}
+.att-bar-wrap{flex:2;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;min-width:40px}
+.att-bar{height:100%;border-radius:3px;background:var(--blue)}
+.att-val{font-family:var(--fh);font-size:1.1rem;flex-shrink:0;min-width:50px;text-align:right}
+.att-trend{display:flex;align-items:flex-end;gap:2px;height:40px}
+.att-trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--blue);opacity:.7;cursor:default;transition:opacity .15s}
+.att-trend-bar:hover{opacity:1}
 /* HERO PAGE */
 #hero-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
 .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none}
@@ -346,6 +363,7 @@ select:focus{outline:none;border-color:var(--acc)}
 <nav class="nav">
   <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
   <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
+  <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
   <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
@@ -384,6 +402,22 @@ select:focus{outline:none;border-color:var(--acc)}
       <div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div><span>Vodilni v asistencah</span>
       <div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span>Vodilni v EFE</span>
     </div>
+  </div>
+
+  <div id="tab-obisk" class="tab">
+    <div class="ctrls">
+      <div class="tgl">
+        <button class="tb active" id="att-avg-btn" onclick="setAttMode('avg')">POVPREČJE</button>
+        <button class="tb" id="att-tot-btn" onclick="setAttMode('total')">SKUPAJ</button>
+      </div>
+      <a href="https://blazerculj-max.github.io/obiski-tekem/" target="_blank"
+        style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;background:var(--card2);border:1px solid var(--border2);color:var(--sub);font-size:.78rem;font-family:var(--fs);font-weight:600;text-decoration:none;transition:all .2s"
+        onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+        onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--sub)'">
+        📊 Obiski tekem →
+      </a>
+    </div>
+    <div id="obisk-wrap"></div>
   </div>
 
   <div id="tab-lestvica" class="tab">
@@ -1140,6 +1174,7 @@ function showTab(t){
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
   if(t==='lestvica')renderStandings();
+  if(t==='obisk')renderAttendance();
   if(t==='liga'||t==='ekipe'){
     // Show/hide phase filters based on league
     const hasObstanek = getLg().id === 581;
@@ -1396,7 +1431,7 @@ async function openMatch(matchId){
         <div class="mo-score" id="mo-score">${matchInfo.status==='FINISHED'?`${s1} : ${s2}`:'—'}</div>
         <div class="mo-team away" style="color:${c2}">${t2}</div>
       </div>
-      <div class="mo-meta">${date} · ${matchInfo.sportHallName} · Krog ${matchInfo.round}</div>
+      <div class="mo-meta">${date} · ${matchInfo.sportHallName} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
     </div>
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME (točke po minutah)</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
@@ -1941,6 +1976,155 @@ function drawScoring(pts2,pts3,ptsFT,total,color,t){
 }
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════
+// ATTENDANCE
+// ═══════════════════════════════════════
+let attMode = 'avg';
+
+function setAttMode(m) {
+  attMode = m;
+  document.getElementById('att-avg-btn').classList.toggle('active', m==='avg');
+  document.getElementById('att-tot-btn').classList.toggle('active', m==='total');
+  renderAttendance();
+}
+
+function renderAttendance() {
+  if (!allMatches.length) return;
+
+  const finished = allMatches.filter(m => m.status==='FINISHED' && m.attendance>0);
+  if (!finished.length) {
+    document.getElementById('obisk-wrap').innerHTML='<div class="empty">Ni podatkov o obisku</div>';
+    return;
+  }
+
+  // Per team stats
+  const byTeam = {};
+  finished.forEach(m => {
+    const home = normalizeTeamName(m.firstTeamName) || m.firstTeamName;
+    if (!byTeam[home]) byTeam[home] = {name:home, total:0, count:0, games:[]};
+    byTeam[home].total += m.attendance;
+    byTeam[home].count++;
+    byTeam[home].games.push({round:m.round, att:m.attendance, opp:normalizeTeamName(m.secondTeamName)||m.secondTeamName});
+  });
+
+  const teams = Object.values(byTeam)
+    .map(t => ({...t, avg: Math.round(t.total/t.count)}))
+    .sort((a,b) => attMode==='avg' ? b.avg-a.avg : b.total-a.total);
+
+  const maxVal = attMode==='avg' ? Math.max(...teams.map(t=>t.avg)) : Math.max(...teams.map(t=>t.total));
+  const color = '#60a5fa';
+
+  // Team leaderboard
+  const leaderRows = teams.map((t,i) => {
+    const val = attMode==='avg' ? t.avg : t.total;
+    const tc = TEAM_COLORS[t.name] || '#888';
+    const rk = i<3?['🥇','🥈','🥉'][i]:(i+1);
+    // Mini trend
+    const trendGames = [...t.games].sort((a,b)=>a.round-b.round).slice(-8);
+    const maxAtt = Math.max(...trendGames.map(g=>g.att),1);
+    const trendBars = trendGames.map(g => {
+      const h = Math.max(4, Math.round(g.att/maxAtt*30));
+      return `<div class="att-trend-bar" style="height:${h}px" title="K${g.round} vs ${g.opp}: ${g.att} gledalcev"></div>`;
+    }).join('');
+    return `<div class="att-row">
+      <div class="att-rank">${rk}</div>
+      <div class="att-info">
+        <div class="att-name" style="color:${tc}">${t.name}</div>
+        <div class="att-meta">${t.count} domačih tekem · min ${Math.min(...t.games.map(g=>g.att))} · max ${Math.max(...t.games.map(g=>g.att))}</div>
+      </div>
+      <div class="att-trend">${trendBars}</div>
+      <div class="att-val" style="color:${tc}">${val.toLocaleString('sl')}</div>
+    </div>`;
+  }).join('');
+
+  // Top 10 matches
+  const topMatches = [...finished].sort((a,b)=>b.attendance-a.attendance).slice(0,10);
+  const maxAtt = topMatches[0]?.attendance || 1;
+  const topRows = topMatches.map((m,i) => {
+    const t1 = normalizeTeamName(m.firstTeamName)||m.firstTeamName;
+    const t2 = normalizeTeamName(m.secondTeamName)||m.secondTeamName;
+    const c1 = TEAM_COLORS[t1]||'#888';
+    const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    const rk = i<3?['🥇','🥈','🥉'][i]:(i+1);
+    return `<div class="att-row">
+      <div class="att-rank">${rk}</div>
+      <div class="att-info">
+        <div class="att-name"><span style="color:${c1}">${t1}</span> vs ${t2}</div>
+        <div class="att-meta">K${m.round} · ${date} · ${m.sportHallName}</div>
+      </div>
+      <div class="att-bar-wrap"><div class="att-bar" style="width:${m.attendance/maxAtt*100}%"></div></div>
+      <div class="att-val" style="color:var(--acc)">${m.attendance.toLocaleString('sl')}</div>
+    </div>`;
+  }).join('');
+
+  // Season total
+  const totalAtt = finished.reduce((s,m)=>s+m.attendance,0);
+  const avgAtt = Math.round(totalAtt/finished.length);
+  const maxSingle = Math.max(...finished.map(m=>m.attendance));
+
+  // Trend po krogih
+  const byRound = {};
+  finished.forEach(m => {
+    if(!byRound[m.round]) byRound[m.round]={total:0,count:0};
+    byRound[m.round].total+=m.attendance;
+    byRound[m.round].count++;
+  });
+  const rounds = Object.entries(byRound).sort((a,b)=>a[0]-b[0]);
+  const maxRoundAvg = Math.max(...rounds.map(([,v])=>v.total/v.count),1);
+  const trendBars = rounds.map(([r,v])=>{
+    const avg = Math.round(v.total/v.count);
+    const h = Math.max(4,Math.round(avg/maxRoundAvg*80));
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px">
+      <div style="font-size:.6rem;color:var(--mut);font-family:var(--fm)">${avg>999?Math.round(avg/100)/10+'k':avg}</div>
+      <div style="width:100%;height:${h}px;background:var(--blue);border-radius:3px 3px 0 0;opacity:.75;cursor:default" title="Krog ${r}: povp. ${avg} gledalcev"></div>
+      <div style="font-size:.58rem;color:var(--mut)">${r}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('obisk-wrap').innerHTML = `
+    <!-- Summary cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px">
+      <div class="ac" style="padding:14px 16px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.8rem;color:var(--blue)">${avgAtt.toLocaleString('sl')}</div>
+        <div style="font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">Povp./tekmo</div>
+      </div>
+      <div class="ac" style="padding:14px 16px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.8rem;color:var(--acc)">${totalAtt.toLocaleString('sl')}</div>
+        <div style="font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">Skupaj gledalci</div>
+      </div>
+      <div class="ac" style="padding:14px 16px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.8rem;color:var(--green)">${maxSingle.toLocaleString('sl')}</div>
+        <div style="font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">Rekord tekme</div>
+      </div>
+      <div class="ac" style="padding:14px 16px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.8rem;color:var(--purple)">${finished.length}</div>
+        <div style="font-size:.68rem;color:var(--mut);text-transform:uppercase;letter-spacing:.06em">Tekem z obiskoma</div>
+      </div>
+    </div>
+
+    <!-- Trend po krogih -->
+    <div class="ac" style="margin-bottom:20px">
+      <div class="act">Povprečni obisk po krogih</div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:110px;padding-bottom:18px">${trendBars}</div>
+    </div>
+
+    <div class="att-grid">
+      <!-- Team leaderboard -->
+      <div class="att-card" style="grid-column:span 1">
+        <div class="att-card-title">
+          <span>🏟️ Ekipe po ${attMode==='avg'?'povprečju':'skupnem obisku'}</span>
+          <span style="font-size:.65rem;color:var(--mut);font-family:var(--fm)">${attMode==='avg'?'povp./tekmo':'skupaj'}</span>
+        </div>
+        ${leaderRows}
+      </div>
+      <!-- Top matches -->
+      <div class="att-card" style="grid-column:span 1">
+        <div class="att-card-title">🔥 Top 10 tekem po obisku</div>
+        ${topRows}
+      </div>
+    </div>`;
+}
 
 // ═══════════════════════════════════════
 // STANDINGS
