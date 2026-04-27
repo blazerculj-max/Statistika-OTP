@@ -75,7 +75,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .barval{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.63rem;font-family:var(--fm);font-weight:600}
 .at{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
 .at th{text-align:left;padding:6px 8px;color:var(--mut);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
-.at td{padding:7px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm)}
+.at td{padding:7px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm);text-align:center}
 .at td:first-child{font-family:var(--fs);font-weight:500}
 .at tr:last-child td{border-bottom:none}
 .si{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 14px;border-radius:7px;font-family:var(--fs);font-size:.85rem;width:280px}
@@ -392,6 +392,10 @@ select:focus{outline:none;border-color:var(--acc)}
 // CONFIG
 // ═══════════════════════════════════════════════════
 const API = 'https://api.kzs.si/api/v1/public';
+const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
+const GITHUB_STATS_URL = GITHUB_RAW + '/stats.json';
+const GITHUB_PBP_URL   = GITHUB_RAW + '/pbp.json';
+const GITHUB_MAX_AGE   = 6 * 3600 * 1000; // 6 ur
 const COMP_ID = 579;
 const SEASON_ID = 26;
 
@@ -481,33 +485,57 @@ function cacheClear() {
 
 async function loadAllData() {
   try {
-    // ── Check cache first ──
+    // ── 1. Preveri localStorage cache ──
     const cached = cacheGet(CACHE_KEY_STATS);
     if (cached) {
       const age = cacheInfo(CACHE_KEY_STATS);
-      setProgress(80, 'Nalagam iz predpomnilnika (' + age + ' star)...');
+      setProgress(85, '⚡ Iz predpomnilnika (' + age + ' star)...');
       allMatches = cached.allMatches;
       matchStatsCache = cached.matchStatsCache;
-      setProgress(96, 'Agregiram podatke...');
-      aggregatePlayers();
-      setProgress(99, 'Pripravljam vmesnik...');
-      initUI();
-      setProgress(100, '⚡ Iz predpomnilnika (' + age + ')');
-      setTimeout(() => {
-        document.getElementById('loading-overlay').style.display = 'none';
-      }, 300);
+      setProgress(96, 'Agregiram...');
+      aggregatePlayers(); initUI();
+      setProgress(100, '⚡ Naloženo iz predpomnilnika (' + age + ')');
+      setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
       initWebSocket();
       return;
     }
 
-    // ── Fresh fetch ──
-    setProgress(5, 'Pridobivam seznam tekem...');
+    // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
+    setProgress(10, '🐙 Nalagam iz GitHub...');
+    try {
+      const ghRes = await fetch(GITHUB_STATS_URL + '?t=' + Date.now());
+      if (ghRes.ok) {
+        const ghData = await ghRes.json();
+        const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
+        if (ghAge < GITHUB_MAX_AGE) {
+          setProgress(80, '🐙 GitHub podatki (' + Math.round(ghAge/60000) + ' min stari)...');
+          allMatches = ghData.allMatches;
+          // Convert matchStats format from GitHub
+          Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
+            matchStatsCache[parseInt(id)] = stats;
+          });
+          cacheSet(CACHE_KEY_STATS, {allMatches, matchStatsCache});
+          setProgress(96, 'Agregiram...');
+          aggregatePlayers(); initUI();
+          setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
+          setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
+          initWebSocket();
+          return;
+        }
+        console.log('GitHub data too old (' + Math.round(ghAge/3600000) + 'h), fetching fresh...');
+      }
+    } catch(ghErr) {
+      console.log('GitHub fetch failed, falling back to API:', ghErr.message);
+    }
+
+    // ── 3. Fallback: direktni API ──
+    setProgress(15, 'Nalagam iz API...');
     const res = await fetch(`${API}/matches/?competitionId=${COMP_ID}&seasonId=${SEASON_ID}`);
     const data = await res.json();
     allMatches = data.data.items.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
 
     const finished = allMatches.filter(m => m.status === 'FINISHED');
-    setProgress(10, `Najdenih ${allMatches.length} tekem, ${finished.length} odigranih...`);
+    setProgress(20, `${allMatches.length} tekem, ${finished.length} odigranih...`);
 
     const batchSize = 8;
     for (let i = 0; i < finished.length; i += batchSize) {
@@ -519,22 +547,15 @@ async function loadAllData() {
           matchStatsCache[m.id] = d.data;
         } catch(e) {}
       }));
-      const pct = 10 + Math.round((i + batchSize) / finished.length * 85);
-      setProgress(Math.min(pct,95), `Nalagam statistiko... ${Math.min(i+batchSize, finished.length)}/${finished.length} tekem`);
+      const pct = 20 + Math.round((i + batchSize) / finished.length * 70);
+      setProgress(Math.min(pct,90), `Statistika... ${Math.min(i+batchSize, finished.length)}/${finished.length}`);
     }
 
-    // ── Save to cache ──
     cacheSet(CACHE_KEY_STATS, {allMatches, matchStatsCache});
-
-    setProgress(96, 'Agregiram podatke...');
-    aggregatePlayers();
-    setProgress(99, 'Pripravljam vmesnik...');
-    initUI();
-    setProgress(100, 'Pripravljeno! (shranjeno v predpomnilnik)');
-    setTimeout(() => {
-      document.getElementById('loading-overlay').style.display = 'none';
-    }, 400);
-
+    setProgress(96, 'Agregiram...');
+    aggregatePlayers(); initUI();
+    setProgress(100, '✅ Naloženo iz API');
+    setTimeout(() => document.getElementById('loading-overlay').style.display='none', 400);
     initWebSocket();
 
   } catch(e) {
@@ -1162,12 +1183,12 @@ function renderAge(){
     const barsHtml=AGE_GROUPS.map((g,i)=>{const v=vals[i];const h=Math.round((v/maxV)*140);return `<div class="bw"><div class="bar" style="height:${h}px;background:${AGE_COLORS[i]}"><div class="barval" style="color:${AGE_COLORS[i]}">${labelFn(v)}</div></div><div class="barlbl">${g}</div></div>`;}).join('');
     return `<div class="ac"><div class="act">${title}</div><div class="bars">${barsHtml}</div></div>`;
   }
-  const tableRows=AGE_GROUPS.map((g,i)=>{const d=data[g],n=d.players.length;return `<tr><td><span style="color:${AGE_COLORS[i]};font-weight:600">${g}</span></td><td>${n}</td><td>${fmt(d.min,0)}</td><td>${d.toc}</td><td>${n>0?fmt(d.efe/n,1):'—'}</td></tr>`;}).join('');
+  const tableRows=AGE_GROUPS.map((g,i)=>{const d=data[g],n=d.players.length;return `<tr><td><span style="color:${AGE_COLORS[i]};font-weight:600">${g}</span></td><td style="text-align:center">${n}</td><td style="text-align:center">${fmt(d.min,0)}</td><td style="text-align:center">${d.toc}</td><td style="text-align:center">${n>0?fmt(d.efe/n,1):'—'}</td></tr>`;}).join('');
   document.getElementById('age-wrap').innerHTML=
     barChart('Skupne minute po starostni skupini',d=>d.min,v=>fmt(v,0))+
     barChart('Skupaj točke po skupini',d=>d.toc,v=>v)+
     barChart('Število igralcev',d=>d.players.length,v=>v)+
-    `<div class="ac"><div class="act">Pregled po skupinah</div><table class="at"><thead><tr><th>Skupina</th><th style="text-align:right">Igrač</th><th style="text-align:right">Skupaj MIN</th><th style="text-align:right">Skupaj TOČ</th><th style="text-align:right">Avg EFE</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
+    `<div class="ac"><div class="act">Pregled po skupinah</div><table class="at"><thead><tr><th>Skupina</th><th style="text-align:center">Število igralcev</th><th style="text-align:center">Skupaj MIN</th><th style="text-align:center">Skupaj TOČ</th><th style="text-align:center">Avg EFE</th></tr></thead><tbody>${tableRows}</tbody></table></div>`;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1620,6 +1641,10 @@ function renderH2H(){
 const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 const FIBA_BASE = 'https://fibalivestats.dcd.shared.geniussports.com/data/';
 
+function setNerdStatus(msg){
+  const el=document.getElementById('nerd-status');
+  if(el)el.textContent=msg;
+}
 function setNerdView(v){
   nerdView=v;
   ['clutch','quarters','shots','runs'].forEach(x=>{
@@ -1631,20 +1656,44 @@ function setNerdView(v){
 }
 
 async function loadPBPData(){
-  // ── Check PBP cache ──
+  // ── 1. Preveri localStorage cache ──
   const cachedPBP = cacheGet(CACHE_KEY_PBP);
   if (cachedPBP) {
     const age = cacheInfo(CACHE_KEY_PBP);
     pbpData = cachedPBP;
-    pbpLoaded = true;
-    nerdStats = null;
+    pbpLoaded = true; nerdStats = null;
     document.getElementById('nerd-status').textContent = '⚡ PBP iz predpomnilnika (' + age + ')';
     renderNerd();
     return;
   }
 
-  document.getElementById('nerd-wrap').innerHTML='<div class="empty" style="padding:40px">Nalagam play-by-play podatke...<br><small style="color:var(--mut)">Prvič traja ~2 minuti · naslednjič bo takojšnje</small></div>';
-  document.getElementById('nerd-status').textContent='Nalagam PBP (prvič)...';
+  document.getElementById('nerd-wrap').innerHTML='<div class="empty" style="padding:30px">Nalagam PBP...</div>';
+  document.getElementById('nerd-status').textContent='Nalagam PBP...';
+
+  // ── 2. Poskusi GitHub ──
+  try {
+    setNerdStatus('🐙 Nalagam PBP iz GitHub...');
+    const ghRes = await fetch(GITHUB_PBP_URL + '?t=' + Date.now());
+    if (ghRes.ok) {
+      const ghData = await ghRes.json();
+      // Convert: GitHub format has string keys, we need int keys
+      Object.entries(ghData.pbp || {}).forEach(([id, events]) => {
+        pbpData[parseInt(id)] = {pbp: events, matchId: parseInt(id)};
+      });
+      cacheSet(CACHE_KEY_PBP, pbpData);
+      pbpLoaded = true; nerdStats = null;
+      const age = Math.round((Date.now() - new Date(ghData.updatedAt).getTime()) / 60000);
+      document.getElementById('nerd-status').textContent = '🐙 PBP iz GitHub (' + age + ' min)';
+      renderNerd();
+      return;
+    }
+  } catch(ghErr) {
+    console.log('GitHub PBP failed, falling back:', ghErr.message);
+  }
+
+  // ── 3. Fallback: codetabs proxy ──
+  document.getElementById('nerd-wrap').innerHTML='<div class="empty" style="padding:40px">Nalagam play-by-play...<br><small style="color:var(--mut)">Prvič traja ~2 minuti · naslednjič bo takojšnje</small></div>';
+  document.getElementById('nerd-status').textContent='Nalagam PBP (prvič, ~2 min)...';
 
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.fibaLiveStatsUrl);
 
