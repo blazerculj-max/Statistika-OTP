@@ -169,6 +169,34 @@ select:focus{outline:none;border-color:var(--acc)}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* MOMENTUM CHART */
 .momentum-wrap{background:var(--card2);border-radius:8px;padding:12px;margin-bottom:16px}
+/* HERO PAGE */
+#hero-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none}
+.hero-wrap{position:relative;z-index:1;text-align:center;padding:40px 24px;max-width:700px;width:100%}
+.hero-badge{display:inline-block;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--acc);padding:5px 16px;border-radius:20px;font-family:var(--fm);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
+.hero-title{font-family:var(--fh);font-size:clamp(2.5rem,8vw,5rem);letter-spacing:.06em;line-height:.95;margin-bottom:8px}
+.hero-title span{color:var(--acc)}
+.hero-sub{font-size:.9rem;color:var(--mut);margin-bottom:48px;font-family:var(--fm)}
+.hero-leagues{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
+@media(max-width:500px){.hero-leagues{grid-template-columns:1fr}}
+.hero-card{border-radius:14px;border:2px solid var(--border2);background:var(--card);padding:24px 20px;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
+.hero-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s}
+.hero-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.hero-card.liga1::before{background:linear-gradient(135deg,rgba(249,115,22,.12),transparent)}
+.hero-card.liga2::before{background:linear-gradient(135deg,rgba(96,165,250,.12),transparent)}
+.hero-card:hover::before{opacity:1}
+.hero-card:hover.liga1{border-color:rgba(249,115,22,.5)}
+.hero-card:hover.liga2{border-color:rgba(96,165,250,.5)}
+.hc-badge{font-size:.65rem;font-family:var(--fm);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
+.hc-name{font-family:var(--fh);font-size:1.6rem;letter-spacing:.04em;margin-bottom:6px;line-height:1}
+.hc-meta{font-size:.72rem;color:var(--mut);margin-bottom:16px}
+.hc-teams{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.hc-team-pill{font-size:.62rem;padding:2px 8px;border-radius:10px;border:1px solid var(--border2);color:var(--sub)}
+.hc-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-family:var(--fh);font-size:.9rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s}
+.hc-btn.liga1{background:var(--acc);color:white}
+.hc-btn.liga2{background:var(--blue);color:white}
+.hc-btn:hover{opacity:.9;transform:translateX(2px)}
+.hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
 /* STANDINGS */
 .standings-table{width:100%;border-collapse:collapse;font-size:.82rem}
 .standings-table thead th{background:var(--card2);color:var(--sub);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
@@ -222,9 +250,48 @@ select:focus{outline:none;border-color:var(--acc)}
 </head>
 <body>
 
-<div id="loading-overlay">
-  <div class="load-title">LIGA <span style="color:var(--acc)">OTP BANKA</span></div>
-  <div class="load-sub">Nalagam podatke iz API...</div>
+<!-- HERO PAGE -->
+<div id="hero-overlay">
+  <div class="hero-bg"></div>
+  <div class="hero-wrap">
+    <div class="hero-badge">🇸🇮 Sezona 2025/26</div>
+    <div class="hero-title">SLOVENSKA<br><span>KOŠARKA</span></div>
+    <div class="hero-sub">Napredna statistika · Live rezultati · Play-by-play analiza</div>
+    <div class="hero-leagues">
+      <div class="hero-card liga1" onclick="selectLeague('liga1')">
+        <div class="hc-badge" style="color:var(--acc)">⭐ Prva liga</div>
+        <div class="hc-name">Liga OTP banka</div>
+        <div class="hc-meta">10 ekip · 25 krogov · Redni del zaključen</div>
+        <div class="hc-teams" id="hero-teams-liga1">
+          <div class="hc-team-pill">GGD Šenčur</div>
+          <div class="hc-team-pill">Krka</div>
+          <div class="hc-team-pill">Helios</div>
+          <div class="hc-team-pill">Ilirija</div>
+          <div class="hc-team-pill">+ 6 ekip</div>
+        </div>
+        <button class="hc-btn liga1">Odpri statistiko →</button>
+      </div>
+      <div class="hero-card liga2" onclick="selectLeague('liga2')">
+        <div class="hc-badge" style="color:var(--blue)">🏀 Druga liga</div>
+        <div class="hc-name">2. SKL</div>
+        <div class="hc-meta">12 ekip · Redni del + Končnica + Obstanek</div>
+        <div class="hc-teams" id="hero-teams-liga2">
+          <div class="hc-team-pill">Voga Grosuplje</div>
+          <div class="hc-team-pill">Ipros Vrhnika</div>
+          <div class="hc-team-pill">Celje</div>
+          <div class="hc-team-pill">+ 9 ekip</div>
+        </div>
+        <button class="hc-btn liga2">Odpri statistiko →</button>
+      </div>
+    </div>
+    <div class="hero-footer">Podatki se samodejno osvežujejo · Vir: KZS API + FIBA LiveStats</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-overlay" style="display:none">
+  <div class="load-title" id="load-title">LIGA <span style="color:var(--acc)">OTP BANKA</span></div>
+  <div class="load-sub" id="load-sub">Nalagam podatke...</div>
   <div class="load-bar-wrap"><div class="load-bar" id="load-bar" style="width:0%"></div></div>
   <div class="load-detail" id="load-detail">Pridobivam seznam tekem...</div>
 </div>
@@ -408,18 +475,24 @@ const LEAGUES = {
     color: '#f97316',
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
     pbpUrl:   GITHUB_RAW + '/liga1_pbp.json',
-    cacheStats: 'liga1_stats_v1',
-    cachePbp:   'liga1_pbp_v1',
+    cacheStats: 'liga1_stats_v2',
+    cachePbp:   'liga1_pbp_v2',
+    // All phase IDs — fetched together
+    phaseIds: null, // null = fetch all phases for this competitionId
+    teams: ['GGD Šenčur','Krka','Kansai Helios','Laško','Rogaška','Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi','ECE Triglav Kranj'],
   },
   'liga2': {
     id: 581,
-    name: '2. slovenska košarkarska liga',
+    name: '2. SKL',
     short: '2. SKL',
     color: '#60a5fa',
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
     pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
-    cacheStats: 'liga2_stats_v1',
-    cachePbp:   'liga2_pbp_v1',
+    cacheStats: 'liga2_stats_v2',
+    cachePbp:   'liga2_pbp_v2',
+    // All phases: Redni del(5813) + Obstanek(5873) + Četrtfinale(5874) + Polfinale(5880)
+    phaseIds: [5813, 5873, 5874, 5880],
+    teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
 };
 
@@ -509,17 +582,46 @@ function cacheClear() {
   alert('Cache počiščen za vse lige. Podatki se bodo naložili na novo.');
 }
 
+function selectLeague(lg) {
+  // Hide hero, show loading
+  document.getElementById('hero-overlay').style.display = 'none';
+  document.getElementById('loading-overlay').style.display = 'flex';
+  currentLeague = lg;
+  const l = getLg();
+  // Update loading title
+  document.getElementById('load-title').innerHTML = l.short === '1. SKL'
+    ? 'LIGA <span style="color:var(--acc)">OTP BANKA</span>'
+    : '2. <span style="color:var(--blue)">SKL</span>';
+  // Update header
+  updateHeader();
+  loadAllData();
+}
+
+function updateHeader() {
+  const l = getLg();
+  const title = document.getElementById('hdr-title');
+  if (title) {
+    title.innerHTML = l.id === 579
+      ? 'LIGA <span>OTP BANKA</span>'
+      : '2. <span>SKL</span>';
+  }
+  const badge = document.getElementById('league-badge');
+  if (badge) {
+    badge.textContent = l.name;
+    badge.style.background = l.color;
+  }
+  Object.keys(LEAGUES).forEach(k => {
+    const btn = document.getElementById('lg-btn-' + k);
+    if (btn) btn.classList.toggle('active', k === currentLeague);
+  });
+}
+
 async function switchLeague(lg) {
   if (currentLeague === lg) return;
   currentLeague = lg;
   const l = getLg();
   // Update UI
-  Object.keys(LEAGUES).forEach(k => {
-    const btn = document.getElementById('lg-btn-' + k);
-    if (btn) btn.classList.toggle('active', k === lg);
-  });
-  document.getElementById('league-badge').textContent = l.name;
-  document.getElementById('league-badge').style.background = l.color;
+  updateHeader();
   // Reset state
   P = []; allMatches = []; matchStatsCache = {}; pbpData = {};
   pbpLoaded = false; nerdStats = null; _leaguePlayers = null; _tmAgg = {};
@@ -544,6 +646,8 @@ function showTabDirect(t) {
 
 async function loadAllData() {
   try {
+    document.getElementById('loading-overlay').style.display = 'flex';
+    setProgress(0, 'Pripravljam...');
     // ── 1. Preveri localStorage cache ──
     const cached = cacheGet(getLg().cacheStats, TTL_STATS);
     if (cached) {
@@ -767,15 +871,22 @@ function handleLiveScore(msg) {
 // INIT UI
 // ═══════════════════════════════════════════════════
 function initUI() {
-  const teams = [...new Set(P.map(p => p[F.team]))].sort();
+  // Use league team list if available, otherwise derive from data
+  const lgTeams = getLg().teams;
+  const teams = lgTeams && lgTeams.length
+    ? lgTeams.filter(t => P.some(p => p[F.team] === t || p[F.team].includes(t))).sort()
+    : [...new Set(P.map(p => p[F.team]))].sort();
 
   // Team select
   const ts = document.getElementById('team-sel');
+  ts.innerHTML = '';
   teams.forEach(t => { const o = document.createElement('option'); o.value = o.textContent = t; ts.appendChild(o); });
 
-  // Team filters
+  // Team filters — only current league teams
   ['srch-team','team-filter-m'].forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = id === 'srch-team' ? '<option value="">Vse ekipe</option>' : '<option value="">Vse ekipe</option>';
     teams.forEach(t => { const o = document.createElement('option'); o.value = o.textContent = t; el.appendChild(o); });
   });
 
@@ -1995,7 +2106,8 @@ function renderRuns({scoringRuns}){
 
 // START
 // ═══════════════════════════════════════════════════
-loadAllData();
+// Show hero page on load — user selects league
+document.getElementById('loading-overlay').style.display = 'none';
 </script>
 </body>
 </html>
