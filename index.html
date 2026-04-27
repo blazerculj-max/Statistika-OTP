@@ -693,18 +693,27 @@ async function loadAllData() {
 
     // ── 3. Fallback: direktni API ──
     setProgress(15, 'Nalagam iz API...');
-    // Fetch all pages
+    // Fetch matches — use phase IDs for 2. SKL to avoid fetching entire KZS database
+    setProgress(16, 'Nalagam tekme...');
+    const phaseIds = getLg().phaseIds;
     let allItems = [];
-    let page = 1;
-    while(true) {
-      const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&page=${page}`);
+    if(phaseIds) {
+      // Fetch per phase (precise, fast)
+      for(let i=0; i<phaseIds.length; i++) {
+        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${phaseIds[i]}`);
+        const data = await res.json();
+        const items = data.data?.items || [];
+        allItems = allItems.concat(items);
+        setProgress(16 + Math.round((i+1)/phaseIds.length * 10), `Nalagam tekme... faza ${i+1}/${phaseIds.length} (${allItems.length} tekem)`);
+      }
+      // Deduplicate
+      const seen = new Set();
+      allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
+    } else {
+      // Single page fetch for smaller leagues
+      const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}`);
       const data = await res.json();
-      const items = data.data?.items || [];
-      if(!items.length) break;
-      allItems = allItems.concat(items);
-      setProgress(15 + page * 2, `Nalagam tekme... stran ${page} (${allItems.length} tekem)`);
-      if(items.length < 150) break; // last page
-      page++;
+      allItems = data.data?.items || [];
     }
     allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
 
