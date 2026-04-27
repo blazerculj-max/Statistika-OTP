@@ -693,9 +693,20 @@ async function loadAllData() {
 
     // ── 3. Fallback: direktni API ──
     setProgress(15, 'Nalagam iz API...');
-    const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}`);
-    const data = await res.json();
-    allMatches = data.data.items.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
+    // Fetch all pages
+    let allItems = [];
+    let page = 1;
+    while(true) {
+      const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&page=${page}`);
+      const data = await res.json();
+      const items = data.data?.items || [];
+      if(!items.length) break;
+      allItems = allItems.concat(items);
+      setProgress(15 + page * 2, `Nalagam tekme... stran ${page} (${allItems.length} tekem)`);
+      if(items.length < 150) break; // last page
+      page++;
+    }
+    allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
 
     const finished = allMatches.filter(m => m.status === 'FINISHED');
     setProgress(20, `${allMatches.length} tekem, ${finished.length} odigranih...`);
