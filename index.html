@@ -169,6 +169,31 @@ select:focus{outline:none;border-color:var(--acc)}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* MOMENTUM CHART */
 .momentum-wrap{background:var(--card2);border-radius:8px;padding:12px;margin-bottom:16px}
+/* NERD STATS */
+.nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
+.nerd-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.nerd-card-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.nerd-row{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid rgba(26,26,50,.4)}
+.nerd-row:last-child{border-bottom:none}
+.nerd-row:hover{background:rgba(249,115,22,.03)}
+.nerd-rank{width:22px;font-size:.72rem;color:var(--mut);font-family:var(--fm);flex-shrink:0;text-align:center}
+.nerd-info{flex:1;min-width:0}
+.nerd-name{font-size:.82rem;font-weight:500;color:var(--text);line-height:1.2}
+.nerd-team{font-size:.67rem;color:var(--mut);margin-top:1px}
+.nerd-right{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;min-width:60px}
+.nerd-val{font-family:var(--fm);font-size:.92rem;font-weight:700;text-align:right}
+.nerd-sub{font-size:.63rem;color:var(--mut);font-family:var(--fm);text-align:right}
+.nerd-bar-wrap{width:100%;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+.nerd-bar{height:100%;border-radius:2px}
+.nerd-section-title{font-family:var(--fh);font-size:1.4rem;letter-spacing:.04em;color:var(--sub);margin:20px 0 12px}
+.clutch-def{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:.75rem;color:var(--mut);margin-bottom:16px;font-family:var(--fm)}
+.q-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.q-title{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;color:var(--mut);margin-bottom:8px}
+.run-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px}
+.run-score{font-family:var(--fh);font-size:1.6rem;letter-spacing:.04em}
+.run-meta{flex:1;font-size:.75rem;color:var(--mut)}
+.run-game{font-size:.72rem;color:var(--sub);margin-top:2px}
 /* TREND CHART */
 .trend-wrap{margin-top:8px}
 .trend-bars{display:flex;gap:3px;align-items:flex-end;height:50px}
@@ -194,6 +219,7 @@ select:focus{outline:none;border-color:var(--acc)}
     <span class="hdr-season">SEZONA 2025/26</span>
     <div style="display:flex;gap:6px;align-items:center">
       <span class="hdr-badge">SLOVENIJA</span>
+      <button onclick="cacheClear()" title="Počisti predpomnilnik" style="background:transparent;border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fm)">♻️ cache</button>
       <span id="live-badge" style="display:none;background:#22c55e;color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;animation:pulse-border 1.5s infinite">● LIVE</span>
     </div>
   </div>
@@ -205,6 +231,7 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
   <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
+  <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
 </nav>
 
 <div class="content">
@@ -290,6 +317,24 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="age-wrap" id="age-wrap"></div>
   </div>
 
+  <div id="tab-nerd" class="tab">
+    <div class="ctrls" style="flex-wrap:wrap;gap:10px">
+      <div class="tgl">
+        <button class="tb active" id="nerd-clutch-btn" onclick="setNerdView('clutch')">🎯 CLUTCH</button>
+        <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">⏱ ČETRTINE</button>
+        <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">🏹 TIPI METOV</button>
+        <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">🔥 SCORING RUNS</button>
+      </div>
+      <select id="nerd-min-sel" onchange="renderNerd()" style="width:140px">
+        <option value="5">Min 5 tekem</option>
+        <option value="10">Min 10 tekem</option>
+        <option value="15">Min 15 tekem</option>
+      </select>
+      <div id="nerd-status" style="font-size:.72rem;color:var(--mut);font-family:var(--fm)"></div>
+    </div>
+    <div id="nerd-wrap"></div>
+  </div>
+
   <div id="tab-iskanje" class="tab">
     <div class="section-title">ISKANJE IGRALCEV</div>
     <div class="ctrls">
@@ -325,6 +370,10 @@ const TEAM_SHORT = {
 // STATE
 // ═══════════════════════════════════════════════════
 let P = [];           // aggregated players [{...}]
+let pbpData = {};     // matchId → pbp array
+let pbpLoaded = false;
+let nerdView = 'clutch';
+let nerdStats = null; // computed nerd stats cache
 let allMatches = [];  // raw match list from API
 let matchStatsCache = {}; // matchId → stats
 let playerGameLog = {}; // playerId → [{round, matchId, stats}]
@@ -344,8 +393,73 @@ function setProgress(pct, msg) {
   if (msg) document.getElementById('load-detail').textContent = msg;
 }
 
+// ═══════════════════════════════════════
+// CACHE — localStorage z TTL
+// ═══════════════════════════════════════
+const CACHE_KEY_STATS = 'liga_stats_v3';
+const CACHE_KEY_PBP   = 'liga_pbp_v3';
+const TTL_STATS = 6 * 3600 * 1000;   // 6 ur (nova tekma se doda)
+const TTL_PBP   = 7 * 24 * 3600 * 1000; // 7 dni (PBP se ne spreminja)
+
+function cacheGet(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const {ts, data} = JSON.parse(raw);
+    const ttl = key === CACHE_KEY_PBP ? TTL_PBP : TTL_STATS;
+    if (Date.now() - ts > ttl) { localStorage.removeItem(key); return null; }
+    return data;
+  } catch(e) { return null; }
+}
+
+function cacheSet(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ts: Date.now(), data}));
+  } catch(e) {
+    // localStorage full — clear old data and try again
+    try { localStorage.clear(); localStorage.setItem(key, JSON.stringify({ts: Date.now(), data})); }
+    catch(e2) {}
+  }
+}
+
+function cacheInfo(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const {ts} = JSON.parse(raw);
+    const age = Math.round((Date.now() - ts) / 60000);
+    return age < 60 ? age + ' min' : Math.round(age/60) + ' ur';
+  } catch(e) { return null; }
+}
+
+function cacheClear() {
+  localStorage.removeItem(CACHE_KEY_STATS);
+  localStorage.removeItem(CACHE_KEY_PBP);
+  alert('Cache počiščen. Ob naslednjem odpiranju se bodo podatki naložili na novo.');
+}
+
 async function loadAllData() {
   try {
+    // ── Check cache first ──
+    const cached = cacheGet(CACHE_KEY_STATS);
+    if (cached) {
+      const age = cacheInfo(CACHE_KEY_STATS);
+      setProgress(80, 'Nalagam iz predpomnilnika (' + age + ' star)...');
+      allMatches = cached.allMatches;
+      matchStatsCache = cached.matchStatsCache;
+      setProgress(96, 'Agregiram podatke...');
+      aggregatePlayers();
+      setProgress(99, 'Pripravljam vmesnik...');
+      initUI();
+      setProgress(100, '⚡ Iz predpomnilnika (' + age + ')');
+      setTimeout(() => {
+        document.getElementById('loading-overlay').style.display = 'none';
+      }, 300);
+      initWebSocket();
+      return;
+    }
+
+    // ── Fresh fetch ──
     setProgress(5, 'Pridobivam seznam tekem...');
     const res = await fetch(`${API}/matches/?competitionId=${COMP_ID}&seasonId=${SEASON_ID}`);
     const data = await res.json();
@@ -354,7 +468,6 @@ async function loadAllData() {
     const finished = allMatches.filter(m => m.status === 'FINISHED');
     setProgress(10, `Najdenih ${allMatches.length} tekem, ${finished.length} odigranih...`);
 
-    // Fetch stats in batches of 8
     const batchSize = 8;
     for (let i = 0; i < finished.length; i += batchSize) {
       const batch = finished.slice(i, i + batchSize);
@@ -369,16 +482,18 @@ async function loadAllData() {
       setProgress(Math.min(pct,95), `Nalagam statistiko... ${Math.min(i+batchSize, finished.length)}/${finished.length} tekem`);
     }
 
+    // ── Save to cache ──
+    cacheSet(CACHE_KEY_STATS, {allMatches, matchStatsCache});
+
     setProgress(96, 'Agregiram podatke...');
     aggregatePlayers();
     setProgress(99, 'Pripravljam vmesnik...');
     initUI();
-    setProgress(100, 'Pripravljeno!');
+    setProgress(100, 'Pripravljeno! (shranjeno v predpomnilnik)');
     setTimeout(() => {
       document.getElementById('loading-overlay').style.display = 'none';
     }, 400);
 
-    // Start WebSocket for live scores
     initWebSocket();
 
   } catch(e) {
@@ -661,6 +776,7 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
+  if(t==='nerd'){if(!pbpLoaded)loadPBPData();else renderNerd();}
 }
 function setMode(m){mode=m;document.getElementById('btn-tot').classList.toggle('active',m==='tot');document.getElementById('btn-avg').classList.toggle('active',m==='avg');renderTeam();}
 function setLMin(n){lMin=n;[5,10,15].forEach(v=>document.getElementById('lmin'+v).classList.toggle('active',v===n));renderLeaders();}
@@ -1303,6 +1419,278 @@ function drawScoring(pts2,pts3,ptsFT,total,color,t){
 }
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════
+// NERD STATS — PBP ENGINE
+// ═══════════════════════════════════════
+const CORS_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
+const FIBA_BASE = 'https://fibalivestats.dcd.shared.geniussports.com/data/';
+
+function setNerdView(v){
+  nerdView=v;
+  ['clutch','quarters','shots','runs'].forEach(x=>{
+    const btn=document.getElementById('nerd-'+x+'-btn');
+    if(btn)btn.classList.toggle('active',x===v);
+  });
+  nerdStats=null;
+  renderNerd();
+}
+
+async function loadPBPData(){
+  // ── Check PBP cache ──
+  const cachedPBP = cacheGet(CACHE_KEY_PBP);
+  if (cachedPBP) {
+    const age = cacheInfo(CACHE_KEY_PBP);
+    pbpData = cachedPBP;
+    pbpLoaded = true;
+    nerdStats = null;
+    document.getElementById('nerd-status').textContent = '⚡ PBP iz predpomnilnika (' + age + ')';
+    renderNerd();
+    return;
+  }
+
+  document.getElementById('nerd-wrap').innerHTML='<div class="empty" style="padding:40px">Nalagam play-by-play podatke...<br><small style="color:var(--mut)">Prvič traja ~2 minuti · naslednjič bo takojšnje</small></div>';
+  document.getElementById('nerd-status').textContent='Nalagam PBP (prvič)...';
+
+  const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.fibaLiveStatsUrl);
+
+  function getFibaId(m){
+    if(!m.fibaLiveStatsUrl)return null;
+    const match=m.fibaLiveStatsUrl.match(/\/([0-9]+)\/$/);
+    return match?match[1]:null;
+  }
+
+  let loaded=0;
+  for(let i=0;i<finished.length;i+=3){
+    const batch=finished.slice(i,i+3);
+    await Promise.all(batch.map(async m=>{
+      const fibaId=getFibaId(m);
+      if(!fibaId)return;
+      try{
+        const url=FIBA_BASE+fibaId+'/data.json';
+        const r=await fetch(CORS_PROXY+encodeURIComponent(url));
+        const d=await r.json();
+        if(d&&d.pbp)pbpData[m.id]={pbp:d.pbp,tm:d.tm,matchId:m.id};
+      }catch(e){}
+      loaded++;
+    }));
+    document.getElementById('nerd-status').textContent='PBP: '+loaded+'/'+finished.length+' tekem';
+    await new Promise(r=>setTimeout(r,500));
+  }
+
+  // ── Save PBP to cache ──
+  cacheSet(CACHE_KEY_PBP, pbpData);
+
+  pbpLoaded=true;
+  nerdStats=null;
+  document.getElementById('nerd-status').textContent='PBP shranjen · '+Object.keys(pbpData).length+' tekem';
+  renderNerd();
+}
+
+function computeNerdStats(){
+  if(nerdStats)return nerdStats;
+  const minT=parseInt(document.getElementById('nerd-min-sel')?document.getElementById('nerd-min-sel').value:5);
+
+  const nameMap={};
+  P.forEach((p,idx)=>{
+    const parts=p[F.name].split(' ');
+    const lastName=parts[parts.length-1].toLowerCase().replace(/[čćšžđ]/g,c=>({'č':'c','ć':'c','š':'s','ž':'z','đ':'d'}[c]||c));
+    if(!nameMap[lastName])nameMap[lastName]=[];
+    nameMap[lastName].push({p,idx});
+  });
+
+  function findPlayer(ev){
+    if(!ev.familyName)return null;
+    const key=(ev.internationalFamilyName||ev.familyName).toLowerCase();
+    const candidates=nameMap[key]||[];
+    if(!candidates.length)return null;
+    if(candidates.length===1)return candidates[0];
+    const fi=(ev.internationalFirstName||ev.firstName||'')[0]||'';
+    return candidates.find(c=>c.p[F.name][0].toLowerCase()===fi.toLowerCase())||candidates[0];
+  }
+
+  const stats={};
+  function getS(idx){
+    if(!stats[idx])stats[idx]={
+      clutch:{pts:0,fga:0,fgm:0,tov:0,ast:0,plus:0},
+      q:{1:{pts:0,fga:0,fgm:0},2:{pts:0,fga:0,fgm:0},3:{pts:0,fga:0,fgm:0},4:{pts:0,fga:0,fgm:0},5:{pts:0,fga:0,fgm:0}},
+      shots:{drivinglayup:{a:0,m:0},jumpshot:{a:0,m:0},pullupjumpshot:{a:0,m:0},
+             stepbackjumpshot:{a:0,m:0},floatingjumpshot:{a:0,m:0},hookshot:{a:0,m:0},
+             layup:{a:0,m:0},dunk:{a:0,m:0},alleyoop:{a:0,m:0},fadeaway:{a:0,m:0}},
+    };
+    return stats[idx];
+  }
+
+  function isClutch(ev){
+    if(ev.period<4)return false;
+    if(ev.periodType==='OVERTIME')return Math.abs(ev.lead||0)<=8;
+    const gt=ev.gt||'99:99';
+    const mins=parseInt(gt.split(':')[0])||99;
+    return mins<=3&&Math.abs(ev.lead||0)<=5;
+  }
+
+  const scoringRuns=[];
+
+  Object.values(pbpData).forEach(({pbp,matchId})=>{
+    if(!pbp||!pbp.length)return;
+    const events=[...pbp].reverse();
+
+    // Scoring runs
+    let run1=0,run2=0,maxRun={pts:0,tno:0,matchId,period:1};
+    events.forEach(ev=>{
+      if((ev.actionType==='2pt'||ev.actionType==='3pt')&&ev.success===0){
+        const pts=ev.actionType==='3pt'?3:2;
+        if(ev.tno===1){run1+=pts;run2=0;if(run1>maxRun.pts)maxRun={pts:run1,tno:1,matchId,period:ev.period};}
+        else if(ev.tno===2){run2+=pts;run1=0;if(run2>maxRun.pts)maxRun={pts:run2,tno:2,matchId,period:ev.period};}
+      } else if(ev.actionType==='freethrow'&&ev.success===0){
+        if(ev.tno===1){run1+=1;run2=0;}
+        else if(ev.tno===2){run2+=1;run1=0;}
+      } else if(ev.actionType&&ev.tno>0){
+        // any other event breaks the run
+      }
+    });
+    if(maxRun.pts>=8)scoringRuns.push(maxRun);
+
+    // Player events
+    events.forEach(ev=>{
+      const found=findPlayer(ev);
+      if(!found)return;
+      const {p,idx}=found;
+      if(p[F.T]<minT)return;
+      const s=getS(idx);
+      const q=Math.min(ev.period||1,5);
+
+      if(ev.actionType==='2pt'||ev.actionType==='3pt'){
+        const pts=ev.actionType==='3pt'?3:2;
+        const made=ev.success===0;
+        const st=ev.subType||'';
+        s.q[q].fga++;
+        if(made){s.q[q].fgm++;s.q[q].pts+=pts;}
+        if(s.shots[st]){s.shots[st].a++;if(made)s.shots[st].m++;}
+        if(isClutch(ev)){s.clutch.fga++;if(made){s.clutch.fgm++;s.clutch.pts+=pts;}}
+      }
+      if(ev.actionType==='turnover'&&isClutch(ev))s.clutch.tov++;
+      if(ev.actionType==='assist'&&isClutch(ev))s.clutch.ast++;
+    });
+  });
+
+  scoringRuns.sort((a,b)=>b.pts-a.pts);
+  nerdStats={stats,scoringRuns,minT};
+  return nerdStats;
+}
+
+function renderNerd(){
+  if(!pbpLoaded)return;
+  const nd=computeNerdStats();
+  const wrap=document.getElementById('nerd-wrap');
+  if(nerdView==='clutch')wrap.innerHTML=renderClutch(nd);
+  else if(nerdView==='quarters')wrap.innerHTML=renderQuarters(nd);
+  else if(nerdView==='shots')wrap.innerHTML=renderShotTypes(nd);
+  else if(nerdView==='runs')wrap.innerHTML=renderRuns(nd);
+}
+
+function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
+  const minT=parseInt(document.getElementById('nerd-min-sel')?document.getElementById('nerd-min-sel').value:5);
+  const qual=entries.filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
+  qual.sort((a,b)=>valFn(b[1])-valFn(a[1]));
+  const top=qual.slice(0,10);
+  const maxV=top.length?valFn(top[0][1]):1;
+  const rows=top.map(([idx,s],r)=>{
+    const p=P[idx];if(!p)return '';
+    const v=valFn(s);
+    const tc=TEAM_COLORS[p[F.team].split('/')[0].trim()]||'#888';
+    const teamShort=TEAM_SHORT[p[F.team].split('/')[0].trim()]||p[F.team].split('/')[0].trim();
+    const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+    // Parse dispFn result — may contain <small> for sub info
+    const raw=String(dispFn(v,s));
+    const mainVal=raw.replace(/<small[^>]*>.*?<\/small>/g,'').trim();
+    const subMatch=raw.match(/<small[^>]*>(.*?)<\/small>/);
+    const subVal=subMatch?subMatch[1]:'';
+    const barPct=maxV>0?Math.round(v/maxV*100):0;
+    return '<div class="nerd-row">'+
+      '<div class="nerd-rank">'+rk+'</div>'+
+      '<div class="nerd-info">'+
+        '<div class="nerd-name pname-link" onclick="showPlayer('+idx+')">'+p[F.name]+'</div>'+
+        '<div class="nerd-team" style="color:'+tc+'">'+teamShort+'</div>'+
+        '<div class="nerd-bar-wrap" style="margin-top:4px"><div class="nerd-bar" style="width:'+barPct+'%;background:'+color+'"></div></div>'+
+      '</div>'+
+      '<div class="nerd-right">'+
+        '<div class="nerd-val" style="color:'+color+'">'+mainVal+'</div>'+
+        (subVal?'<div class="nerd-sub">'+subVal+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+(rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
+}
+
+function renderClutch({stats}){
+  const e=Object.entries(stats);
+  const def='<div class="clutch-def">⚡ CLUTCH = Q4 ali OT · razlika ≤ 5 točk · zadnje 3 minute</div>';
+  const cards=[
+    mkCard('Clutch točke','var(--acc)','🏀',e,s=>s.clutch.pts,(v,s)=>v+' <small style="font-size:.65rem;color:var(--mut)">'+s.clutch.fgm+'/'+s.clutch.fga+'</small>'),
+    mkCard('Clutch FG%','#22c55e','🎯',e.filter(([,s])=>s.clutch.fga>=3),s=>s.clutch.fga>0?Math.round(s.clutch.fgm/s.clutch.fga*100):0,(v,s)=>v+'% <small style="font-size:.65rem;color:var(--mut)">'+s.clutch.fgm+'/'+s.clutch.fga+'</small>'),
+    mkCard('Clutch asistence','var(--purple)','🎪',e,s=>s.clutch.ast,(v)=>v),
+    mkCard('Clutch izgube','var(--red)','💔',e,s=>s.clutch.tov,(v)=>v),
+  ].join('');
+  return def+'<div class="nerd-grid">'+cards+'</div>';
+}
+
+function renderQuarters({stats}){
+  const e=Object.entries(stats);
+  const qNames={1:'Q1',2:'Q2',3:'Q3',4:'Q4',5:'OT'};
+  const qColors={1:'#60a5fa',2:'#a78bfa',3:'#f97316',4:'#ef4444',5:'#22c55e'};
+  return [1,2,3,4].map(q=>{
+    const hasOT=Object.values(stats).some(s=>s.q[5].fga>0);
+    const cards=[
+      mkCard(qNames[q]+' Točke',qColors[q],'🏀',e,s=>s.q[q].pts,(v,s)=>v+' <small style="font-size:.65rem;color:var(--mut)">'+s.q[q].fgm+'/'+s.q[q].fga+'</small>'),
+      mkCard(qNames[q]+' FG%',qColors[q],'🎯',e.filter(([,s])=>s.q[q].fga>=3),s=>s.q[q].fga>0?Math.round(s.q[q].fgm/s.q[q].fga*100):0,(v,s)=>v+'% <small style="font-size:.65rem;color:var(--mut)">'+s.q[q].fgm+'/'+s.q[q].fga+'</small>'),
+    ].join('');
+    return '<div class="nerd-section-title">'+qNames[q]+'</div><div class="nerd-grid">'+cards+'</div>';
+  }).join('');
+}
+
+function renderShotTypes({stats}){
+  const e=Object.entries(stats);
+  const types=[
+    {k:'drivinglayup',lbl:'Driving Layup',icon:'🚀',color:'#f97316'},
+    {k:'jumpshot',lbl:'Jump Shot',icon:'🏀',color:'#60a5fa'},
+    {k:'pullupjumpshot',lbl:'Pull-up Jumper',icon:'⚡',color:'#a78bfa'},
+    {k:'floatingjumpshot',lbl:'Floater',icon:'🌊',color:'#34d399'},
+    {k:'stepbackjumpshot',lbl:'Step-back',icon:'↩️',color:'#fbbf24'},
+    {k:'hookshot',lbl:'Hook Shot',icon:'🪝',color:'#f87171'},
+    {k:'layup',lbl:'Layup',icon:'🎯',color:'#818cf8'},
+    {k:'fadeaway',lbl:'Fadeaway',icon:'🌅',color:'#c084fc'},
+  ];
+  const cards=types.map(t=>
+    mkCard(t.lbl,t.color,t.icon,e.filter(([,s])=>s.shots[t.k]&&s.shots[t.k].a>=3),
+      s=>(s.shots[t.k]||{m:0}).m,
+      (v,s)=>v+' <small style="font-size:.65rem;color:var(--mut)">'+(s.shots[t.k]?Math.round(s.shots[t.k].m/Math.max(s.shots[t.k].a,1)*100)+'%':'')+'</small>')
+  ).join('');
+  return '<div class="nerd-grid">'+cards+'</div>';
+}
+
+function renderRuns({scoringRuns}){
+  if(!scoringRuns.length)return '<div class="empty">Ni podatkov o scoring runih</div>';
+  const items=scoringRuns.slice(0,15).map(r=>{
+    const m=allMatches.find(x=>x.id===r.matchId);
+    if(!m)return '';
+    const teamName=r.tno===1?m.firstTeamName:m.secondTeamName;
+    const color=TEAM_COLORS[normalizeTeamName(teamName)]||'#888';
+    const qName={1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[r.period]||'OT';
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    const opp=r.tno===1?m.secondTeamName:m.firstTeamName;
+    return '<div class="run-item">'+
+      '<div class="run-score" style="color:'+color+'">'+r.pts+'-0</div>'+
+      '<div class="run-meta">'+
+        '<div style="font-weight:600;color:'+color+'">'+teamName+'</div>'+
+        '<div class="run-game">vs '+opp+' · '+qName+' · '+date+'</div>'+
+      '</div>'+
+      '<div style="font-family:var(--fh);font-size:1.3rem;color:var(--mut)">K'+m.round+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="nerd-section-title">🔥 NAJVEČJI SCORING RUNS SEZONE</div>'+items;
+}
+
 // START
 // ═══════════════════════════════════════════════════
 loadAllData();
