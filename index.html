@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga OTP banka – Statistika 2025/26</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08080f;--card:#0e0e1c;--card2:#12122a;--border:#1a1a32;--border2:#22223a;--acc:#f97316;--blue:#60a5fa;--purple:#a78bfa;--green:#34d399;--red:#f87171;--text:#e2e8f0;--sub:#94a3b8;--mut:#475569;--fh:'Bebas Neue',cursive;--fm:'DM Mono',monospace;--fs:'DM Sans',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--fs);min-height:100vh}
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#07071a,#110826,#071120);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 30px #000a}
+.hdr-title{font-family:var(--fh);font-size:2rem;letter-spacing:.06em}.hdr-title span{color:var(--acc)}
+.hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
+.hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
+/* NAV */
+.nav{display:flex;gap:3px;padding:10px 28px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto}
+.nb{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--mut);font-family:var(--fs);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.nb:hover{color:var(--text);background:var(--border)}.nb.active{background:var(--acc);color:#fff}
+/* CONTENT */
+.content{padding:20px 28px;max-width:1900px;margin:0 auto}
+.tab{display:none}.tab.active{display:block}
+/* CONTROLS */
+.ctrls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+select{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 34px 7px 12px;border-radius:7px;font-family:var(--fs);font-size:.82rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:20px}
+select:focus{outline:none;border-color:var(--acc)}
+.tgl{display:flex;border:1px solid var(--border2);border-radius:7px;overflow:hidden}
+.tb{padding:7px 14px;border:none;background:var(--card2);color:var(--mut);font-family:var(--fs);font-size:.75rem;font-weight:600;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.04em}
+.tb.active{background:var(--acc);color:#fff}
+/* TEAM HEADER */
+.team-hdr{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:10px;margin-bottom:14px;border:1px solid var(--border2);background:linear-gradient(135deg,var(--card2),var(--card));position:relative;overflow:hidden}
+.team-hdr::after{content:'';position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:var(--tc,var(--acc));opacity:.06}
+.tdot{width:12px;height:12px;border-radius:50%;background:var(--tc,var(--acc));flex-shrink:0}
+.tname{font-family:var(--fh);font-size:1.7rem;letter-spacing:.04em;color:var(--tc,var(--acc))}
+.tmeta{font-size:.72rem;color:var(--mut);font-family:var(--fm)}
+.tstats{display:flex;gap:20px;margin-left:auto}
+.ts{text-align:center}
+.tsv{font-family:var(--fh);font-size:1.4rem}
+.tsl{font-size:.62rem;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+/* TABLE */
+.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+.st{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.75rem}
+.st .gr{font-size:.6rem;letter-spacing:.12em;text-align:center;padding:3px;font-family:var(--fh);border-bottom:1px solid var(--border)}
+.gr-met{background:#0f0f20;color:var(--acc)}.gr-sk{background:#0a1020;color:var(--blue)}.gr-on{background:#120a20;color:var(--purple)}.gr-bl{background:#0a1a12;color:var(--green)}.gr-em{background:#0e0e1a;color:transparent}
+.st thead{position:sticky;top:0;z-index:5}
+.st th{background:var(--card2);color:var(--sub);font-weight:500;text-transform:uppercase;font-size:.66rem;letter-spacing:.05em;padding:7px 5px;text-align:center;cursor:pointer;white-space:nowrap;border-bottom:2px solid var(--border);transition:color .2s;user-select:none}
+.st th:hover{color:var(--acc)}.st th.sa::after{content:" ↑";color:var(--acc)}.st th.sd::after{content:" ↓";color:var(--acc)}.st th.sa,.st th.sd{color:var(--acc)}
+.st th:first-child,.st td:first-child{text-align:left;padding-left:12px;min-width:160px;font-family:var(--fs);font-weight:500}
+.st td{padding:7px 5px;text-align:center;border-bottom:1px solid rgba(26,26,50,.7);white-space:nowrap;transition:background .1s}
+.st tr:hover td{background:rgba(249,115,22,.04)}
+/* LEADER HIGHLIGHTS */
+.lp{background:rgba(249,115,22,.16)!important;color:var(--acc)!important;font-weight:700}
+.lr{background:rgba(96,165,250,.14)!important;color:var(--blue)!important;font-weight:700}
+.la{background:rgba(167,139,250,.14)!important;color:var(--purple)!important;font-weight:700}
+.le{background:rgba(52,211,153,.14)!important;color:var(--green)!important;font-weight:700}
+/* PCT */
+.phi{color:#4ade80}.pmd{color:#facc15}.plo{color:#f87171}
+/* LEADERS GRID */
+.ldrs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.lc{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.lch{padding:9px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.lct{font-family:var(--fh);font-size:1rem;letter-spacing:.05em}
+.lcb{padding:4px 0}
+.lr2{display:flex;align-items:center;gap:7px;padding:5px 14px;border-bottom:1px solid rgba(26,26,50,.5)}
+.lr2:last-child{border-bottom:none}.lr2:hover{background:rgba(255,255,255,.02)}
+.lrk{width:16px;font-size:.7rem;font-family:var(--fm);color:var(--mut);flex-shrink:0}
+.lrk.g{color:#fbbf24;font-weight:700}.lrk.s{color:#cbd5e1}.lrk.b{color:#c97c3a}
+.lri{flex:1;min-width:0}
+.lrn{font-size:.78rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrtm{font-size:.63rem;color:var(--mut)}
+.lrv{font-family:var(--fm);font-size:.88rem;font-weight:600;flex-shrink:0;text-align:right}
+.lrv-sub{font-family:var(--fm);font-size:.63rem;color:var(--mut);text-align:right;margin-top:1px}
+.td-pct{display:flex;flex-direction:column;align-items:center;gap:1px}
+.td-pct-sub{font-size:.62rem;color:var(--mut);font-family:var(--fm);line-height:1}
+.hm-good{background:rgba(52,211,153,VAR) !important}
+.hm-bad{background:rgba(248,113,113,VAR) !important}
+.ts-badge{font-size:.65rem;background:rgba(167,139,250,.15);color:#a78bfa;border-radius:3px;padding:1px 5px;font-family:var(--fm)}
+.hm-toggle{margin-left:auto}
+/* AGE */
+.age-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.age-wrap{grid-template-columns:1fr}}
+.ac{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.act{font-family:var(--fh);font-size:1.3rem;letter-spacing:.04em;margin-bottom:14px;color:var(--sub)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:160px;padding-bottom:28px;position:relative}
+.bw{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
+.bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;position:relative;cursor:default}
+.barlbl{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:.6rem;color:var(--mut);white-space:nowrap}
+.barval{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.63rem;font-family:var(--fm);font-weight:600}
+/* AGE TABLE */
+.at{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
+.at th{text-align:left;padding:6px 8px;color:var(--mut);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.at td{padding:7px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm)}
+.at td:first-child{font-family:var(--fs);font-weight:500}
+.at tr:last-child td{border-bottom:none}
+/* SEARCH */
+.srch-wrap{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.si{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 14px;border-radius:7px;font-family:var(--fs);font-size:.85rem;width:280px}
+.si::placeholder{color:var(--mut)}.si:focus{outline:none;border-color:var(--acc)}
+.srch-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .2s}
+.pcard:hover{border-color:var(--acc)}
+.pcard.selected{border-color:var(--acc);background:rgba(249,115,22,.05)}
+.pc-name{font-family:var(--fs);font-weight:600;font-size:.92rem;margin-bottom:3px}
+.pc-meta{font-size:.72rem;color:var(--mut);margin-bottom:10px}
+.pc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.pc-stat{text-align:center;background:var(--card2);border-radius:5px;padding:5px 4px}
+.pc-sv{font-family:var(--fh);font-size:1.1rem}
+.pc-sl{font-size:.6rem;color:var(--mut);letter-spacing:.04em}
+/* COMPARE */
+.cmp-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:start;margin-top:20px}
+.cmp-col{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.cmp-hdr{padding:12px 16px;border-bottom:1px solid var(--border)}
+.cmp-row{display:flex;justify-content:space-between;align-items:center;padding:6px 16px;border-bottom:1px solid rgba(26,26,50,.5)}
+.cmp-row:last-child{border-bottom:none}
+.cmp-lbl{font-size:.72rem;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;flex:1;text-align:center}
+.cmp-val{font-family:var(--fm);font-size:.88rem;font-weight:600;width:70px}
+.cmp-val.left{text-align:right;color:var(--acc)}.cmp-val.right{text-align:left;color:var(--blue)}
+.cmp-val.win{font-weight:700;opacity:1}.cmp-val.lose{opacity:.5}
+.vs-badge{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:20px 10px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:1.6rem;color:var(--mut);letter-spacing:.06em}
+/* LEGEND */
+.lgnd{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.7rem;color:var(--mut);margin-top:8px}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+/* UTIL */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.65rem;font-weight:600;letter-spacing:.04em}
+.empty{text-align:center;padding:40px;color:var(--mut);font-size:.9rem}
+.section-title{font-family:var(--fh);font-size:1.5rem;letter-spacing:.04em;margin-bottom:14px;color:var(--sub)}
+.filter-note{font-size:.72rem;color:var(--mut);font-family:var(--fm);padding:6px 0}
+/* PLAYER OVERLAY */
+#player-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.pp-modal{background:var(--card);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:960px;max-height:92vh;overflow-y:auto;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.pp-close{position:sticky;top:12px;float:right;margin:12px 14px 0 0;width:32px;height:32px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--sub);z-index:10;transition:all .2s}
+.pp-close:hover{background:var(--red);color:white;border-color:var(--red)}
+.pp-header{display:flex;align-items:center;gap:16px;padding:20px 22px;position:relative;overflow:hidden}
+.pp-color-bar{width:4px;height:60px;border-radius:2px;flex-shrink:0}
+.pp-name{font-family:var(--fh);font-size:2rem;letter-spacing:.04em;line-height:1}
+.pp-meta{font-size:.78rem;color:var(--mut);margin-top:4px}
+.pp-key-stats{display:flex;gap:16px;margin-left:auto}
+.pp-stat{text-align:center;background:var(--card2);border-radius:8px;padding:8px 14px;min-width:64px}
+.pp-sv{font-family:var(--fh);font-size:1.5rem}
+.pp-sl{font-size:.62rem;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
+.pp-body{display:grid;grid-template-columns:300px 1fr;gap:0;border-top:1px solid var(--border)}
+@media(max-width:700px){.pp-body{grid-template-columns:1fr}}
+.pp-left{padding:18px 16px;border-right:1px solid var(--border)}
+.pp-right{padding:18px 20px;overflow-y:auto}
+.pp-section-title{font-family:var(--fh);font-size:.95rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px;text-transform:uppercase}
+/* ADV BARS */
+.adv-grid{display:flex;flex-direction:column;gap:8px}
+.adv-row{display:grid;grid-template-columns:70px 1fr 52px;align-items:center;gap:8px}
+.adv-lbl{font-size:.72rem;color:var(--sub);text-align:right;font-family:var(--fm)}
+.adv-bar-wrap{background:rgba(255,255,255,.05);border-radius:4px;height:8px;overflow:hidden}
+.adv-bar{height:100%;border-radius:4px;transition:width .5s ease}
+.adv-val{font-family:var(--fm);font-size:.78rem;font-weight:600}
+/* PP TABLE */
+.pp-table{width:100%;border-collapse:collapse;font-size:.76rem;margin-top:4px}
+.pp-table th{text-align:left;padding:5px 8px;color:var(--mut);font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.pp-table td{padding:5px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm)}
+.pp-table td:first-child{font-family:var(--fs);color:var(--sub);font-size:.72rem}
+.pp-table tr:last-child td{border-bottom:none}
+/* COMPARE BARS */
+.cbar-hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.cbar-row{display:grid;grid-template-columns:52px 1fr 52px;gap:6px;align-items:center;margin-bottom:6px}
+.cbar-name{font-family:var(--fm);font-size:.72rem;font-weight:600}
+.cbar-bars{display:flex;flex-direction:column}
+.cbar-lbl{font-size:.62rem;color:var(--mut);text-align:center;letter-spacing:.04em}
+/* CLICKABLE PLAYER NAME */
+.pname-link{cursor:pointer;transition:color .15s}
+.pname-link:hover{color:var(--acc)!important;text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div id="player-overlay" onclick="if(event.target===this)closePlayer()"></div>
+<header class="hdr">
+  <div class="hdr-title">LIGA <span>OTP BANKA</span></div>
+  <div class="hdr-right">
+    <span class="hdr-season">SEZONA 2025/26</span>
+    <span class="hdr-badge">SLOVENIJA</span>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
+  <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
+  <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
+  <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
+</nav>
+
+<div class="content">
+
+<!-- TAB: EKIPE -->
+<div id="tab-ekipe" class="tab active">
+  <div class="ctrls">
+    <select id="team-sel" onchange="renderTeam()">
+      <option>GGD Šenčur</option><option>Krka</option><option>Kansai Helios</option>
+      <option>Laško</option><option>Rogaška</option><option>Ilirija</option>
+      <option>Šentjur</option><option>Terme Olimia Podčetrtek</option>
+      <option>Hopsi</option><option>ECE Triglav Kranj</option>
+    </select>
+    <div class="tgl">
+      <button class="tb active" id="btn-tot" onclick="setMode('tot')">SKUPNO</button>
+      <button class="tb" id="btn-avg" onclick="setMode('avg')">PER GAME</button>
+    </div>
+    <select id="min-sel" onchange="renderTeam()">
+      <option value="0">Vsi igralci</option>
+      <option value="5">Min 5 tekem</option>
+      <option value="10">Min 10 tekem</option>
+    </select>
+    <div class="tgl hm-toggle">
+      <button class="tb" id="btn-hm" onclick="toggleHeatmap()" title="Barvna lestvica po stolpcih">🌡️ HEAT MAP</button>
+    </div>
+  </div>
+  <div id="team-hdr-wrap"></div>
+  <div class="tw"><table class="st" id="st"></table></div>
+  <div class="lgnd" id="lgnd">
+    <div class="ld" style="background:var(--acc)"></div><span>Vodilni v točkah</span>
+    <div class="ld" style="background:var(--blue)"></div><span>Vodilni v skokih</span>
+    <div class="ld" style="background:var(--purple)"></div><span>Vodilni v asistencah</span>
+    <div class="ld" style="background:var(--green)"></div><span>Vodilni v EFE</span>
+  </div>
+</div>
+
+<!-- TAB: LIGA -->
+<div id="tab-liga" class="tab">
+  <div class="ctrls">
+    <span class="filter-note">Min tekem:</span>
+    <div class="tgl">
+      <button class="tb active" id="lmin5" onclick="setLMin(5)">5+</button>
+      <button class="tb" id="lmin10" onclick="setLMin(10)">10+</button>
+      <button class="tb" id="lmin15" onclick="setLMin(15)">15+</button>
+    </div>
+    <div class="tgl">
+      <button class="tb active" id="lbtn-avg" onclick="setLMode('avg')">PER GAME</button>
+      <button class="tb" id="lbtn-tot" onclick="setLMode('tot')">SKUPNO</button>
+    </div>
+  </div>
+  <div class="ctrls" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;gap:18px">
+    <span class="filter-note" style="color:var(--sub);font-size:.72rem">MIN METOV / TM ZA %:</span>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:.72rem;color:#f59e0b;font-family:var(--fm);letter-spacing:.04em">2T</span>
+      <select id="min2t" onchange="setMinShots()" style="width:80px;font-size:.78rem;padding:5px 28px 5px 8px">
+        <option value="0.5">0.5/tm</option>
+        <option value="1.0">1.0/tm</option>
+        <option value="1.5">1.5/tm</option>
+        <option value="2.0" selected>2.0/tm</option>
+        <option value="2.5">2.5/tm</option>
+        <option value="3.0">3.0/tm</option>
+        <option value="4.0">4.0/tm</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:.72rem;color:#06b6d4;font-family:var(--fm);letter-spacing:.04em">3T</span>
+      <select id="min3t" onchange="setMinShots()" style="width:80px;font-size:.78rem;padding:5px 28px 5px 8px">
+        <option value="0.3">0.3/tm</option>
+        <option value="0.5">0.5/tm</option>
+        <option value="0.8">0.8/tm</option>
+        <option value="1.0" selected>1.0/tm</option>
+        <option value="1.5">1.5/tm</option>
+        <option value="2.0">2.0/tm</option>
+        <option value="3.0">3.0/tm</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:.72rem;color:#34d399;font-family:var(--fm);letter-spacing:.04em">PM</span>
+      <select id="minpm" onchange="setMinShots()" style="width:80px;font-size:.78rem;padding:5px 28px 5px 8px">
+        <option value="0.3">0.3/tm</option>
+        <option value="0.5">0.5/tm</option>
+        <option value="0.8" selected>0.8/tm</option>
+        <option value="1.0">1.0/tm</option>
+        <option value="1.5">1.5/tm</option>
+        <option value="2.0">2.0/tm</option>
+      </select>
+    </div>
+    <span id="shots-note" style="font-size:.68rem;color:var(--mut);font-family:var(--fm)"></span>
+  </div>
+  <div class="ldrs-grid" id="ldrs-grid"></div>
+</div>
+
+<!-- TAB: STAROST -->
+<div id="tab-starost" class="tab">
+  <div class="age-wrap" id="age-wrap"></div>
+</div>
+
+<!-- TAB: ISKANJE -->
+<div id="tab-iskanje" class="tab">
+  <div class="section-title">ISKANJE IGRALCEV</div>
+  <div class="srch-wrap">
+    <input class="si" id="srch" type="text" placeholder="Išči po imenu..." oninput="doSearch()">
+    <select id="srch-team" onchange="doSearch()">
+      <option value="">Vse ekipe</option>
+      <option>GGD Šenčur</option><option>Krka</option><option>Kansai Helios</option>
+      <option>Laško</option><option>Rogaška</option><option>Ilirija</option>
+      <option>Šentjur</option><option>Terme Olimia Podčetrtek</option>
+      <option>Hopsi</option><option>ECE Triglav Kranj</option>
+    </select>
+  </div>
+  <div class="srch-results" id="srch-results"></div>
+  <div style="margin-top:24px" id="cmp-section" style="display:none">
+    <div class="section-title">PRIMERJAVA</div>
+    <div class="cmp-wrap" id="cmp-wrap"></div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// Fields: [name, team, born, T, MIN, fg2m,fg2a, fg3m,fg3a, ftm,fta, toc, nap,obr,pod, sto,izs,izg,pz, blk,pre, pm, efe]
+// ═══════════════════════════════════════════════════════════
+const P=[
+// GGD Šenčur
+['Frane Antić','GGD Šenčur',2003,23,364.3,86,138,0,0,21,41,193,41,46,7,34,32,19,9,9,10,66,214],
+['Lovro Bolhar','GGD Šenčur',2006,21,199.7,17,33,4,16,11,19,57,4,22,22,34,25,25,9,1,2,-37,54],
+['Noman Budimlić','GGD Šenčur',2006,2,11.8,2,4,0,1,2,2,6,0,0,1,0,1,3,0,0,1,-5,1],
+['Mark Ciperle','GGD Šenčur',2007,17,165.9,8,20,5,22,5,11,36,8,15,10,25,7,10,4,3,2,-1,31],
+['Vukašin Ćorić','GGD Šenčur',2004,22,331.1,16,30,21,68,15,19,110,5,26,13,28,18,14,14,1,1,23,90],
+['Nace Frelih','GGD Šenčur',2002,17,116.9,10,14,1,7,7,16,30,8,8,5,18,8,6,4,4,1,-44,34],
+['Samed Grošić','GGD Šenčur',2007,24,289.4,27,61,8,32,14,17,92,23,55,19,60,17,16,14,5,6,42,131],
+['Tristan Jolić','GGD Šenčur',2008,5,10.1,0,0,1,1,0,0,3,0,1,0,2,0,1,1,0,0,0,4],
+['Filip Kalajžić','GGD Šenčur',2007,6,116.7,19,28,0,1,4,6,42,11,11,3,15,12,9,2,3,1,55,51],
+['Jaka Klobučar','GGD Šenčur',1987,23,532.9,41,80,31,107,55,76,230,7,56,98,41,77,50,30,1,5,113,236],
+['Filip Krajina','GGD Šenčur',1995,18,406.1,80,123,0,0,34,55,194,32,49,24,37,53,18,5,13,6,94,235],
+['Brandon Murray','GGD Šenčur',2002,23,658.1,135,212,9,41,38,48,335,18,53,59,46,45,52,26,12,7,109,332],
+['Jan Novak','GGD Šenčur',1995,22,587,88,151,14,43,54,80,272,22,94,143,63,95,58,61,13,9,209,429],
+['Domen Petrović','GGD Šenčur',2004,24,660.4,116,175,35,87,64,77,401,35,131,87,43,72,47,36,6,4,135,525],
+['Matej Rojc','GGD Šenčur',1993,22,374.8,21,53,6,20,36,44,96,14,32,56,73,57,24,15,2,4,101,137],
+// Krka
+['Niko Bačvić','Krka',1997,23,426.8,40,66,13,30,44,60,163,10,46,116,39,79,30,23,1,1,249,270],
+['Victor Bailey Jr','Krka',1998,8,179.4,37,62,16,40,24,26,146,7,22,7,10,24,7,6,2,2,77,132],
+['Timotej Balažič','Krka',2008,3,8.2,1,1,1,2,0,0,5,0,1,0,1,0,1,0,0,0,5,4],
+['Lovro Buljević','Krka',1998,10,166.8,44,56,3,15,16,28,113,25,21,7,26,22,14,3,10,1,82,129],
+['Lovro Fila','Krka',2006,4,8,0,0,1,3,0,0,3,0,0,0,1,0,0,0,0,0,-5,1],
+['Krišs Helmanis','Krka',1998,10,198.1,33,51,2,8,14,24,86,10,31,10,18,22,12,8,9,2,117,108],
+['Val Hribar','Krka',2007,1,2.4,0,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,-2,0],
+['Mario Ihring','Krka',1998,12,245.4,23,41,6,21,21,27,85,6,29,65,22,37,18,17,0,1,134,145],
+['Jaka Klobučar','Krka',2003,24,383.6,36,52,21,56,26,29,161,11,56,33,43,30,27,9,6,3,138,195],
+['Jazon Krošelj','Krka',2008,8,54.5,7,13,0,3,5,6,19,3,5,6,4,5,8,3,0,0,-9,18],
+['Blaž Mahkovic','Krka',1990,13,218,24,41,12,28,34,38,118,3,21,33,32,29,6,7,0,1,155,139],
+['Sukhmail Mathon','Krka',1998,22,406.2,70,122,9,20,68,88,235,33,62,41,50,73,32,12,15,12,290,283],
+['Khalil Brantley','Krka',2001,7,161.3,32,45,10,26,20,26,114,12,19,26,15,25,13,22,0,1,108,145],
+['Urban Oman','Krka',1998,25,566,22,29,42,95,18,22,188,24,74,47,23,18,13,48,12,1,371,316],
+['Jan Rebec','Krka',1993,24,526.4,37,50,51,122,31,32,258,11,48,64,45,42,39,25,0,3,319,282],
+['Leon Šantelj','Krka',1995,25,452.6,56,88,8,27,27,37,163,19,37,28,66,47,26,18,2,5,251,180],
+['Žak Smrekar','Krka',2006,24,458.3,72,114,27,89,52,67,277,14,57,59,42,59,23,24,15,6,367,304],
+['Lovro Urbiha','Krka',2003,24,538,60,91,27,65,31,33,232,14,61,48,30,37,19,24,3,6,343,292],
+// Kansai Helios
+['Jon Dolničar','Kansai Helios',2004,24,741.4,78,155,34,93,96,109,354,6,37,98,64,105,49,25,1,18,-14,323],
+['Caleb Dorsey','Kansai Helios',2001,21,342.9,14,22,24,66,3,7,103,10,45,15,45,11,10,13,5,2,0,127],
+['Kurtis Henderson Jr','Kansai Helios',2001,4,36.3,0,2,4,9,0,0,12,1,5,4,10,2,1,0,0,0,-4,14],
+['Lovro Lapajne','Kansai Helios',2007,20,338.1,29,46,4,9,13,19,83,23,32,10,55,19,13,15,5,4,-16,127],
+['Žan Mark Loboda','Kansai Helios',2007,12,114.9,3,8,5,18,2,6,23,8,6,2,20,6,4,5,4,0,-29,22],
+['Blaž Mahkovic','Kansai Helios',1990,12,344.7,44,86,26,66,70,87,236,14,32,47,35,78,29,19,1,0,50,221],
+['Alen Malovčić','Kansai Helios',2002,21,643.5,68,127,22,77,95,124,297,28,120,58,62,111,42,17,5,7,36,340],
+['Mark Morano Mahmutović','Kansai Helios',2007,23,712.2,67,120,47,99,31,41,306,17,47,55,35,45,49,25,9,6,-24,295],
+['Bright Nosakhare','Kansai Helios',2005,12,72.6,7,14,0,1,2,2,16,10,3,3,20,1,6,3,1,1,-37,22],
+['Petja Rebula','Kansai Helios',2007,7,36.2,2,5,0,3,2,2,6,0,5,1,5,1,3,3,0,1,-3,6],
+['Lenart Sirc','Kansai Helios',2003,23,628.1,99,162,5,18,71,91,284,65,91,37,71,75,41,25,21,23,99,386],
+['Peter Stražar','Kansai Helios',2007,3,4.8,0,1,0,0,2,2,2,0,0,1,0,1,0,0,0,0,0,2],
+['Igor Struger','Kansai Helios',2007,11,133.9,19,31,0,0,12,18,50,13,11,4,30,12,13,3,6,3,-31,56],
+['Martin Tršan','Kansai Helios',2009,8,45.9,1,4,4,9,1,2,15,0,2,6,7,3,5,1,0,0,-9,10],
+['Jan Zemljič','Kansai Helios',2004,25,662.4,40,103,42,136,65,76,271,7,64,107,84,75,72,41,4,5,17,254],
+// Laško
+['Anže Bobnar','Laško',2004,19,420,19,46,45,107,25,30,198,5,46,13,47,33,20,26,0,6,-114,174],
+['Gal Čop','Laško',2008,20,273.1,30,74,12,40,24,34,120,6,11,33,56,39,39,6,1,5,-100,56],
+['Žak Tit Hlastec','Laško',2007,3,7.5,0,1,0,0,0,0,0,1,0,0,1,0,1,1,0,0,-17,0],
+['Filip Horvat','Laško',2004,25,708.3,44,67,55,147,27,36,280,28,95,20,60,35,24,22,17,1,-206,314],
+['Jaka Jovanović','Laško',2007,3,10.2,0,1,1,1,0,0,3,0,0,0,1,0,1,0,0,0,-14,1],
+['Emir Krajinić','Laško',2002,25,690.9,131,222,1,3,67,96,332,75,110,20,92,69,42,20,29,13,-100,422],
+['Taij Pesjak','Laško',2007,23,417.6,19,46,22,65,31,42,135,10,29,18,50,40,19,15,3,9,-123,110],
+['Timon Petrovič','Laško',2007,7,90.2,6,10,1,7,8,14,23,9,12,0,17,10,3,3,1,0,-22,29],
+['Bine Plut','Laško',2006,22,175.2,15,28,1,3,1,3,34,25,21,5,30,6,5,8,7,1,-74,78],
+['Matic Rezec','Laško',2009,20,282.4,7,26,5,24,6,13,35,12,21,11,36,10,15,5,0,3,-141,24],
+['Erolt Rrahmani','Laško',2006,17,242.6,30,55,3,9,9,17,78,28,27,5,30,16,16,18,2,3,5,103],
+['Josip Santro','Laško',2008,23,217.9,14,27,1,6,8,14,39,7,18,8,41,11,10,11,6,1,-88,55],
+['Nigel Scantlebury','Laško',2000,25,768.9,114,213,36,125,112,132,448,14,52,146,77,130,67,46,2,11,-141,433],
+['Oskar Tkalec','Laško',2007,7,19.8,0,1,1,3,0,0,3,1,0,0,2,0,0,1,0,0,-14,2],
+['Alen Zulić','Laško',2004,23,675.4,59,133,37,134,113,141,342,3,48,141,59,134,71,23,2,6,-146,289],
+// Rogaška
+['Nick Čevizović','Rogaška',2002,24,480.3,35,79,33,94,17,21,186,14,34,36,69,29,48,10,3,6,-184,126],
+['Ankit Choudhary','Rogaška',2001,8,136.1,13,28,10,32,23,31,79,4,6,6,11,16,10,4,2,3,-23,46],
+['Tadej Colnarič','Rogaška',2005,25,569.8,56,90,9,29,59,91,198,48,94,52,76,76,26,21,13,5,52,314],
+['Tadej Ferme','Rogaška',1991,23,749.6,26,59,56,153,61,73,281,7,58,114,54,66,38,32,1,3,1,313],
+['Ronald Jackson','Rogaška',1997,10,276.2,36,67,5,23,30,46,117,28,42,23,37,35,14,15,7,2,-24,153],
+['Patrik Johan','Rogaška',2008,1,2.6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0],
+['Dezmond Jones','Rogaška',2001,8,251.8,32,56,18,52,27,38,145,2,14,33,20,40,28,10,1,1,-18,108],
+['Val Luka Jugovac','Rogaška',2003,24,545.7,75,127,12,41,30,43,216,29,81,61,70,39,59,30,4,9,-40,268],
+['Daishon Knight','Rogaška',1991,2,66.2,8,26,1,5,4,6,23,1,5,10,3,10,5,2,0,1,-4,12],
+['Rok Kozel','Rogaška',2008,17,148.8,11,19,5,13,2,4,39,4,13,3,7,5,11,8,5,1,-29,43],
+['David Križanič','Rogaška',2003,12,344.9,44,61,15,48,28,38,161,19,31,8,34,33,17,11,3,3,-72,156],
+['Luka Majstorović','Rogaška',1996,15,283.9,53,96,4,9,18,35,136,16,51,17,30,41,29,5,5,5,-129,136],
+['Yaw Obeng-Mensah','Rogaška',2000,24,599.9,110,196,10,39,68,109,318,51,111,24,50,94,33,25,13,7,44,353],
+['Tai Rodić','Rogaška',2008,1,2.6,0,0,1,1,0,0,3,0,0,0,1,0,0,0,0,0,3,3],
+['Maj Šimunić','Rogaška',2006,1,0.7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,0],
+['Nik Stanković','Rogaška',2008,3,6.3,0,0,0,0,0,0,0,0,1,2,1,0,2,0,0,0,1,1],
+['Patrik Tabak','Rogaška',2000,20,501.9,19,59,26,94,17,26,133,11,42,77,55,42,49,31,10,5,-61,138],
+['Vito Tišma','Rogaška',2006,2,3.8,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,-1,1],
+['Aljaž Toplišek','Rogaška',2007,4,24.5,4,6,0,0,2,4,10,2,2,1,5,2,3,2,0,1,-5,10],
+['Joshua Walker','Rogaška',2002,6,54.4,9,18,0,0,4,4,22,2,9,2,11,5,2,1,1,1,3,26],
+// Ilirija
+['Lian Boisa','Ilirija',2007,20,256.1,34,51,2,17,18,28,92,33,29,14,45,21,8,14,1,8,96,133],
+['Pavle Đokić','Ilirija',2008,1,3.4,0,0,1,1,0,0,3,0,0,0,0,0,0,0,1,0,8,4],
+['Lovro Faganel','Ilirija',2007,18,255.6,37,59,2,9,23,35,103,29,41,11,48,24,13,12,11,2,28,153],
+['Bine Gabrijel','Ilirija',2007,12,139.5,12,18,7,26,13,24,58,2,9,23,22,16,19,6,0,2,30,43],
+['Wendell Green Jr','Ilirija',2002,20,504.4,54,111,40,117,67,77,295,7,54,109,48,73,44,29,0,11,128,306],
+['Robert Jurković','Ilirija',2002,22,503.7,76,113,28,73,40,58,276,31,104,27,44,64,23,11,22,7,112,348],
+['Luka Kureš','Ilirija',1998,24,561.6,52,100,30,87,51,61,245,6,50,63,54,59,39,24,1,9,158,235],
+['Boban Marjanović','Ilirija',2006,7,116.7,29,56,2,10,15,17,79,9,27,5,9,16,3,2,1,1,35,83],
+['Edo Murić','Ilirija',1991,12,279.7,35,57,18,53,41,49,165,14,41,20,20,35,19,12,5,3,65,173],
+['Mark Padjen','Ilirija',2006,12,278.8,12,27,18,47,35,39,113,2,34,42,26,42,19,17,5,0,64,146],
+['Petar Popović','Ilirija',2007,9,205.4,27,42,5,19,22,25,91,1,17,32,13,22,19,11,1,1,61,102],
+['Bine Prepelič','Ilirija',2001,12,258.5,20,36,1,16,18,27,61,18,54,13,21,20,13,11,1,2,28,105],
+['Radoslav Raykov','Ilirija',2006,11,37.3,4,7,1,3,3,6,14,1,6,3,6,3,2,2,5,3,26,21],
+['Simisola Shittu','Ilirija',1999,6,109.3,27,41,0,5,13,24,67,8,30,11,17,19,10,5,1,1,51,82],
+['Gašper Škorjanc','Ilirija',2004,23,431.1,28,57,10,27,15,22,101,19,23,53,36,32,37,21,2,8,137,129],
+['Tim Tomažič','Ilirija',1999,23,587,106,161,4,25,26,51,250,38,71,65,39,60,39,21,5,5,105,310],
+['Tristan Vukotič','Ilirija',2005,21,322,22,40,23,62,39,51,152,13,37,13,66,46,20,13,6,4,83,145],
+// Šentjur
+['Nal Belko','Šentjur',2004,25,594.8,36,91,39,124,14,30,203,5,27,86,62,48,51,20,0,9,-138,134],
+['Maj Dolinšek','Šentjur',2006,14,154.4,5,14,8,25,8,13,42,9,19,6,23,10,7,5,0,2,-40,43],
+['Jan Dornik','Šentjur',1998,23,567.9,63,102,18,53,40,43,220,34,90,26,78,50,35,31,20,2,-94,309],
+['Urban Durnik','Šentjur',2007,15,317.4,48,91,0,3,29,41,125,37,45,18,52,40,28,6,2,6,-71,147],
+['Ožbej Glavan','Šentjur',2001,24,686.4,57,96,42,93,56,74,296,38,89,42,83,70,47,21,6,9,-62,337],
+['Matej Ilek','Šentjur',2009,2,4.6,0,0,0,0,0,0,0,0,0,0,2,0,1,0,0,0,-10,-1],
+['Teo Kugler','Šentjur',2007,4,7.4,1,1,0,0,0,0,2,0,0,0,0,0,0,0,0,0,-6,2],
+['Maj Kundih','Šentjur',2007,1,1.8,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,-4,-1],
+['Luka Lapornik','Šentjur',2007,7,111.2,3,9,8,20,7,10,37,5,11,3,20,12,5,7,2,0,-13,39],
+['Domen Močnik','Šentjur',2002,22,440.1,19,48,28,78,15,20,137,14,44,32,63,27,34,9,1,8,-94,119],
+['Teo Pahernik','Šentjur',2005,19,139.8,11,20,0,0,7,18,29,15,15,1,27,13,8,2,1,4,-92,35],
+['Jure Pelko','Šentjur',1990,20,474.7,26,62,40,118,47,59,219,6,49,71,52,60,31,17,1,8,-15,206],
+['Luka Rudović','Šentjur',2003,8,204.4,15,22,8,27,15,20,69,6,16,10,17,21,17,4,3,1,-98,60],
+['Radoš Šešlija','Šentjur',1992,16,468.4,87,158,0,0,24,30,198,42,71,21,34,48,36,21,11,6,20,251],
+['Jure Špan','Šentjur',1995,24,629.8,62,136,35,112,53,64,282,9,38,130,59,77,52,19,4,10,-67,268],
+['Tim Strašek','Šentjur',2007,3,6.9,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-9,-1],
+['Milojko Vasilić','Šentjur',1989,8,82.1,8,16,0,2,7,10,23,8,10,5,22,9,8,4,2,0,-36,31],
+['Nejc Zajko','Šentjur',2006,16,133,8,19,5,17,7,7,38,4,9,15,15,12,14,3,0,1,-56,32],
+// Terme Olimia Podčetrtek
+['Simo Atanacković','Terme Olimia Podčetrtek',1990,23,621.6,56,115,36,119,45,66,265,29,78,26,70,57,36,21,6,11,-243,226],
+['Vid Borišek','Terme Olimia Podčetrtek',2005,11,128.5,3,10,1,12,10,14,19,2,8,6,9,11,6,4,0,1,-63,11],
+['Dionte Bostick','Terme Olimia Podčetrtek',2001,23,688.2,89,175,23,82,53,83,300,18,52,70,64,75,52,29,4,13,-245,246],
+['Jaša Brečko','Terme Olimia Podčetrtek',2007,5,39,1,9,0,3,4,4,6,0,2,2,4,3,4,0,0,1,-57,-5],
+['Jan Copot','Terme Olimia Podčetrtek',2001,21,738.8,62,146,32,111,56,69,276,23,97,82,40,87,70,24,10,12,-266,266],
+['Blaž Habot','Terme Olimia Podčetrtek',2000,8,110.7,13,30,0,0,10,14,36,9,14,5,15,13,6,2,0,2,-40,39],
+['Lan Hotko','Terme Olimia Podčetrtek',2007,6,13.3,1,3,1,1,0,0,5,0,0,0,1,1,0,0,0,1,6,3],
+['Tilen Jugovic','Terme Olimia Podčetrtek',2002,6,139.2,17,32,2,17,9,15,49,6,12,25,19,16,11,12,2,1,-40,59],
+['Ian Košak','Terme Olimia Podčetrtek',2007,2,2.8,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,2,0],
+['Brandon Newman','Terme Olimia Podčetrtek',2001,10,294,38,71,21,49,11,14,150,17,40,21,30,26,28,14,8,6,-52,158],
+['Rok Pajk','Terme Olimia Podčetrtek',2002,24,479.9,73,110,4,36,33,68,191,38,59,26,54,50,19,4,3,8,-195,198],
+['Filip Petić','Terme Olimia Podčetrtek',2006,13,77.6,11,15,1,4,9,15,34,4,11,4,15,8,5,2,2,1,-32,39],
+['Jan Šelekar','Terme Olimia Podčetrtek',2008,14,69.5,6,11,0,1,0,0,12,6,7,3,12,1,4,1,3,0,-56,22],
+['Žiga Švigelj','Terme Olimia Podčetrtek',1997,24,689.1,40,93,12,39,46,64,162,37,75,80,76,78,56,34,4,14,-255,238],
+['Luka Tekavčič','Terme Olimia Podčetrtek',2002,22,529.3,86,169,8,31,62,103,258,46,56,29,63,78,45,15,17,15,-170,229],
+['Gregory Tribble Jr','Terme Olimia Podčetrtek',2001,6,149.4,15,29,5,14,8,18,53,0,8,8,20,15,15,0,0,2,-101,21],
+['Edwin Vilić','Terme Olimia Podčetrtek',2007,10,54.1,2,11,1,2,2,4,9,3,0,2,6,2,5,1,0,4,-48,-2],
+// Hopsi
+['Nejc Barič','Hopsi',1997,24,631.3,25,59,20,78,35,51,145,8,25,133,61,93,51,27,0,5,-48,179],
+['Martin Cizej','Hopsi',2008,16,147.6,21,28,0,4,5,10,47,12,16,4,25,6,6,7,11,2,-15,75],
+['Nik Dragan','Hopsi',2000,10,239,36,64,12,36,24,30,132,17,33,17,20,29,13,5,4,3,-12,137],
+['Tim Dragan','Hopsi',2005,22,356.3,20,38,23,58,22,27,131,24,59,11,42,16,13,4,6,6,-70,164],
+['Žiga Fifolt','Hopsi',1993,22,670.1,88,143,2,4,106,141,288,69,110,19,49,104,31,11,34,12,-5,408],
+['Kameron Hobbs','Hopsi',2007,7,195.5,33,70,21,53,33,38,162,9,12,14,19,37,21,16,1,2,-21,119],
+['Nik Ivančič','Hopsi',2006,10,57.8,3,5,1,6,6,8,15,0,4,1,9,6,5,2,0,0,-45,8],
+['Dino Murić','Hopsi',1990,20,640.8,101,200,21,62,81,127,346,47,110,36,51,119,46,23,8,9,-107,338],
+['Tjaš Novak','Hopsi',2007,5,20.7,3,4,0,1,0,0,6,0,3,1,1,0,3,0,0,0,-16,5],
+['Filip Razdevšek','Hopsi',2005,22,237.8,17,37,12,30,11,15,81,3,7,39,46,30,26,11,1,4,-61,74],
+['Lovro Strnad','Hopsi',2007,19,207.9,10,21,4,22,12,16,44,11,15,5,40,13,9,13,2,2,-5,48],
+['Tjaž Tajnik','Hopsi',2006,3,4,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,-7,-2],
+['Nik Urbanija','Hopsi',2005,25,751.2,60,118,66,146,49,62,367,16,70,29,61,52,35,9,2,5,-108,307],
+['Miha Vašl','Hopsi',1992,21,461.3,23,42,43,126,29,33,204,8,33,36,56,42,24,16,0,1,-99,167],
+['Daniel Vujasinović','Hopsi',1989,18,404,8,25,16,46,48,53,112,1,25,116,42,42,50,15,2,2,-6,169],
+// ECE Triglav Kranj
+['Luka Blažević','ECE Triglav Kranj',2007,3,9.2,2,2,0,0,1,2,5,0,0,1,0,1,0,0,0,0,0,5],
+['Mirza Bogilović','ECE Triglav Kranj',2004,11,39.6,4,7,0,0,2,4,10,3,3,0,7,2,2,0,4,0,-6,13],
+['Črt Čabrilo','ECE Triglav Kranj',2004,24,617.1,71,154,32,80,58,83,296,20,30,92,57,88,54,28,0,25,-38,256],
+['Jošt Flerin','ECE Triglav Kranj',2003,24,563.5,46,90,24,86,9,22,173,21,63,54,68,34,44,19,10,11,-1,177],
+['Nejc Klavžar','ECE Triglav Kranj',1999,24,513.9,39,73,23,85,26,36,173,6,45,64,62,56,45,23,0,4,-11,160],
+['David Kralj','ECE Triglav Kranj',1999,22,608.2,67,118,36,114,40,45,282,22,39,78,54,55,55,18,3,2,36,253],
+['Miha Muratović','ECE Triglav Kranj',2002,24,584.6,118,175,2,5,101,128,343,63,101,21,83,86,22,22,12,7,88,453],
+['Anej Orel','ECE Triglav Kranj',2002,16,333.7,37,67,12,39,39,53,149,22,40,22,37,49,34,9,4,3,-1,141],
+['Gaber Ožegovič','ECE Triglav Kranj',1998,24,559.3,33,69,15,63,12,18,123,24,66,64,65,25,38,14,4,13,4,167],
+['Žiga Pezdir','ECE Triglav Kranj',2007,11,24.3,0,0,1,3,0,0,3,2,2,0,1,0,0,0,0,0,-9,5],
+['Stefan Ristič','ECE Triglav Kranj',2002,11,185.7,28,42,0,0,9,20,65,12,22,10,33,20,11,6,4,3,-19,83],
+['Uroš Šikanič','ECE Triglav Kranj',2001,23,767,74,129,33,76,46,60,293,41,135,83,62,58,44,20,2,9,-15,418],
+['Hubert Urbiha','ECE Triglav Kranj',2007,16,43.9,4,6,2,4,3,6,17,3,6,3,6,4,4,2,0,1,22,20],
+];
+
+// Field indices
+const F={name:0,team:1,born:2,T:3,MIN:4,fg2m:5,fg2a:6,fg3m:7,fg3a:8,ftm:9,fta:10,toc:11,nap:12,obr:13,pod:14,sto:15,izs:16,izg:17,pz:18,blk:19,pre:20,pm:21,efe:22};
+
+const TEAM_COLORS={
+  'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
+  'Laško':'#ef4444','Rogaška':'#a855f7','Ilirija':'#ec4899',
+  'Šentjur':'#06b6d4','Terme Olimia Podčetrtek':'#f97316',
+  'Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1'
+};
+const TEAM_SHORT={
+  'GGD Šenčur':'ŠEN','Krka':'KRK','Kansai Helios':'HEL',
+  'Laško':'LAŠ','Rogaška':'ROG','Ilirija':'ILI',
+  'Šentjur':'ŠNT','Terme Olimia Podčetrtek':'POD',
+  'Hopsi':'HOP','ECE Triglav Kranj':'KRJ'
+};
+
+let mode='tot', lMode='avg', lMin=5, sortCol=-1, sortDir=1, heatmap=false;
+let min2T=2.0, min3T=1.0, minPM=0.8;
+
+function setMinShots(){
+  min2T=parseFloat(document.getElementById('min2t').value);
+  min3T=parseFloat(document.getElementById('min3t').value);
+  minPM=parseFloat(document.getElementById('minpm').value);
+  renderLeaders();
+}
+let cmpA=null, cmpB=null;
+
+function pct(m,a){return a>0?Math.round(m/a*1000)/10:null}
+function fmt(v,dec=1){return v===null||v===undefined?'—':(dec===0?Math.round(v):v.toFixed(dec))}
+function pctCls(v){if(v===null)return '';if(v>=55)return 'phi';if(v>=40)return 'pmd';return 'plo'}
+function age(born){return 2025-born}
+function ageGroup(born){
+  const a=age(born);
+  if(a<=18)return 'U18';
+  if(a<=21)return '19–21';
+  if(a<=25)return '22–25';
+  if(a<=30)return '26–30';
+  if(a<=35)return '31–35';
+  return '35+';
+}
+const AGE_GROUPS=['U18','19–21','22–25','26–30','31–35','35+'];
+const AGE_COLORS=['#818cf8','#60a5fa','#34d399','#facc15','#f97316','#f87171'];
+
+// ── COLUMNS DEFINITION ──
+const COLS=[
+  {k:'name',lbl:'IGRALEC',fmt:(p,m)=>p[F.name],noSort:false,tip:''},
+  {k:'T',lbl:'T',fmt:(p,m)=>p[F.T],tip:'Tekme'},
+  {k:'MIN',lbl:'MIN',fmt:(p,m)=>m==='avg'?fmt(p[F.MIN]/p[F.T]):fmt(p[F.MIN],0),tip:'Minute'},
+  {k:'fg2',lbl:'2T%',fmt:(p,m)=>{const v=pct(p[F.fg2m],p[F.fg2a]);const sub=m==='avg'?`${fmt(p[F.fg2m]/p[F.T],1)}/${fmt(p[F.fg2a]/p[F.T],1)}`:`${p[F.fg2m]}/${p[F.fg2a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg2a]>0?sub:'—'}</span></div>`},tip:'2-točkovni %'},
+  {k:'fg3',lbl:'3T%',fmt:(p,m)=>{const v=pct(p[F.fg3m],p[F.fg3a]);const sub=m==='avg'?`${fmt(p[F.fg3m]/p[F.T],1)}/${fmt(p[F.fg3a]/p[F.T],1)}`:`${p[F.fg3m]}/${p[F.fg3a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg3a]>0?sub:'—'}</span></div>`},tip:'3-točkovni %'},
+  {k:'met',lbl:'MET%',fmt:(p,m)=>{const tm=p[F.fg2m]+p[F.fg3m],ta=p[F.fg2a]+p[F.fg3a];const v=pct(tm,ta);const sub=m==='avg'?`${fmt(tm/p[F.T],1)}/${fmt(ta/p[F.T],1)}`:`${tm}/${ta}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${ta>0?sub:'—'}</span></div>`},tip:'Skupni met %'},
+  {k:'pm',lbl:'PM%',fmt:(p,m)=>{const v=pct(p[F.ftm],p[F.fta]);const sub=m==='avg'?`${fmt(p[F.ftm]/p[F.T],1)}/${fmt(p[F.fta]/p[F.T],1)}`:`${p[F.ftm]}/${p[F.fta]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fta]>0?sub:'—'}</span></div>`},tip:'Prosti meti %'},
+  {k:'toc',lbl:'TOČ',fmt:(p,m)=>m==='avg'?fmt(p[F.toc]/p[F.T]):p[F.toc],tip:'Točke'},
+  {k:'nap',lbl:'NAP',fmt:(p,m)=>m==='avg'?fmt(p[F.nap]/p[F.T]):p[F.nap],tip:'Napadalni skoki'},
+  {k:'obr',lbl:'OBR',fmt:(p,m)=>m==='avg'?fmt(p[F.obr]/p[F.T]):p[F.obr],tip:'Obrambni skoki'},
+  {k:'sk',lbl:'SK',fmt:(p,m)=>{const v=p[F.nap]+p[F.obr];return m==='avg'?fmt(v/p[F.T]):v},tip:'Skupni skoki'},
+  {k:'pod',lbl:'POD',fmt:(p,m)=>m==='avg'?fmt(p[F.pod]/p[F.T]):p[F.pod],tip:'Podaje'},
+  {k:'sto',lbl:'STO',fmt:(p,m)=>m==='avg'?fmt(p[F.sto]/p[F.T]):p[F.sto],tip:'STO'},
+  {k:'izs',lbl:'IZS',fmt:(p,m)=>m==='avg'?fmt(p[F.izs]/p[F.T]):p[F.izs],tip:'IZS'},
+  {k:'izg',lbl:'IZG',fmt:(p,m)=>m==='avg'?fmt(p[F.izg]/p[F.T]):p[F.izg],tip:'Izgube'},
+  {k:'pz',lbl:'PŽ',fmt:(p,m)=>m==='avg'?fmt(p[F.pz]/p[F.T]):p[F.pz],tip:'Osebne napake'},
+  {k:'blk',lbl:'BLK',fmt:(p,m)=>m==='avg'?fmt(p[F.blk]/p[F.T]):p[F.blk],tip:'Blokade (dal)'},
+  {k:'pre',lbl:'PRE',fmt:(p,m)=>m==='avg'?fmt(p[F.pre]/p[F.T]):p[F.pre],tip:'Blokade (prejel)'},
+  {k:'pm_p',lbl:'+/−',fmt:(p,m)=>m==='avg'?fmt(p[F.pm]/p[F.T]):(p[F.pm]>0?'+':'')+p[F.pm],tip:'Plus/Minus'},
+  {k:'efe',lbl:'EFE',fmt:(p,m)=>m==='avg'?fmt(p[F.efe]/p[F.T]):p[F.efe],tip:'Efektivnost'},
+  {k:'ts',lbl:'TS%',fmt:(p,m)=>{
+    const fga=p[F.fg2a]+p[F.fg3a];
+    const denom=2*(fga+0.44*p[F.fta]);
+    // Min 20 skupnih poskusov (FGA + 0.44*FTA) za smiseln vzorec
+    if(denom<4||fga+p[F.fta]<20)return '<span style="color:var(--mut);font-size:.7rem">min</span>';
+    const v=Math.round(p[F.toc]/denom*1000)/10;
+    const cls=v>=60?'phi':v>=50?'pmd':'plo';
+    return `<div class="td-pct"><span class="${cls}">${v.toFixed(1)}%</span><span class="td-pct-sub">${fga+p[F.fta]} psk</span></div>`;
+  },tip:'True Shooting % — min 20 poskusov. Formula: TOČ / (2 × (FGA + 0.44 × FTA))'},
+  {k:'at',lbl:'A/T',fmt:(p,m)=>{
+    if(p[F.izg]===0)return p[F.pod]>0?'∞':'—';
+    return fmt(p[F.pod]/p[F.izg],2);
+  },tip:'Assist/Turnover razmerje (POD/IZG)'},
+  {k:'usg',lbl:'USG%',fmt:(p,m)=>{
+    if(p[F.MIN]<10)return '<span style="color:var(--mut);font-size:.7rem">min</span>';
+    const tm=getTmAgg(p[F.team]);
+    const tmMP=tm.T*5*40;
+    const v=((p[F.fg2a]+p[F.fg3a]+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));
+    const pv=Math.round(v*1000)/10;
+    const cls=pv>=30?'phi':pv>=20?'pmd':'plo';
+    return '<div class="td-pct"><span class="'+cls+'">'+pv.toFixed(1)+'%</span></div>';
+  },tip:'Usage Rate — % ekipnih napadov pri katerih sodeluje igralec (met, PM, izguba). Formula: (FGA + 0.44×FTA + TOV) × TmMP/5 / (MP × (TmFGA + 0.44×TmFTA + TmTOV))'},
+  {k:'per',lbl:'PER',fmt:(p,m)=>{
+    if(p[F.T]<5)return '<span style="color:var(--mut);font-size:.7rem">min</span>';
+    const v=perOf(p);
+    const cls=v>=20?'phi':v>=12?'pmd':'plo';
+    return '<div class="td-pct"><span class="'+cls+'">'+v.toFixed(1)+'</span></div>';
+  },tip:'PER (Player Efficiency Rating) — na tekmo, povprečje lige ≈ 15. 20+ odlično.'},
+  {k:'flr',lbl:'FLR%',fmt:(p,m)=>{
+    if(p[F.fg2m]+p[F.fg3m]<10)return '<span style="color:var(--mut);font-size:.7rem">min</span>';
+    // Floor % = AST / (FGM + FGM×(1 - TmAST/TmFGM)×factor + 0.44×FTA×FT_factor + ...)
+    // Practical: how often does player assist on teammate makes relative to own scoring
+    // Simple floor%: (AST / (AST + FGM)) - measures if player is creator vs finisher
+    const fgm=p[F.fg2m]+p[F.fg3m];
+    const ast=p[F.pod];
+    if(fgm+ast===0)return '—';
+    const v=Math.round(ast/(ast+fgm)*1000)/10;
+    const cls=v>=40?'phi':v>=20?'pmd':'plo';
+    return '<div class="td-pct"><span class="'+cls+'">'+v.toFixed(1)+'%</span><span class="td-pct-sub">'+ast+' pod / '+fgm+' košev</span></div>';
+  },tip:'Floor % — delež asistenc glede na lastne koše (AST / (AST + FGM)). Visok % = organizator, nizek % = finišer.'},
+];
+// Sortable numeric values
+function sortVal(p,k){
+  if(k==='name')return p[F.name];
+  if(k==='T')return p[F.T];if(k==='MIN')return p[F.MIN];
+  if(k==='fg2')return pct(p[F.fg2m],p[F.fg2a])??-1;
+  if(k==='fg3')return pct(p[F.fg3m],p[F.fg3a])??-1;
+  if(k==='met')return pct(p[F.fg2m]+p[F.fg3m],p[F.fg2a]+p[F.fg3a])??-1;
+  if(k==='pm')return pct(p[F.ftm],p[F.fta])??-1;
+  if(k==='toc')return p[F.toc];if(k==='nap')return p[F.nap];if(k==='obr')return p[F.obr];
+  if(k==='sk')return p[F.nap]+p[F.obr];if(k==='pod')return p[F.pod];
+  if(k==='sto')return p[F.sto];if(k==='izs')return p[F.izs];
+  if(k==='izg')return p[F.izg];if(k==='pz')return p[F.pz];
+  if(k==='blk')return p[F.blk];if(k==='pre')return p[F.pre];
+  if(k==='pm_p')return p[F.pm];if(k==='efe')return p[F.efe];
+  if(k==='ts'){const fga=p[F.fg2a]+p[F.fg3a];const d=2*(fga+0.44*p[F.fta]);return (d>0&&fga+p[F.fta]>=20)?p[F.toc]/d*100:-1;}
+  if(k==='at')return p[F.izg]>0?p[F.pod]/p[F.izg]:-1;
+  if(k==='usg'){if(p[F.MIN]<10)return-1;const tm=getTmAgg(p[F.team]);const tmMP=tm.T*5*40;return((p[F.fg2a]+p[F.fg3a]+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));}
+  if(k==='per'){if(p[F.T]<5)return-1;const t=p[F.T],fgm=(p[F.fg2m]+p[F.fg3m])/t,fga=(p[F.fg2a]+p[F.fg3a])/t,ftm=p[F.ftm]/t,fta=p[F.fta]/t,sk=(p[F.nap]+p[F.obr])/t,ast=p[F.pod]/t,stl=p[F.sto]/t,blk=p[F.blk]/t,tov=p[F.izg]/t,pf=p[F.pz]/t,pts=p[F.toc]/t;return pts+sk+ast*1.5+stl*1.5+blk*1.2-(fga-fgm)*0.7-(fta-ftm)*0.4-tov-pf*0.5;}
+  if(k==='flr'){const fgm=p[F.fg2m]+p[F.fg3m];if(fgm<10)return-1;const ast=p[F.pod];return fgm+ast>0?ast/(ast+fgm)*100:-1;}
+  return 0;
+}
+
+// Column groups for header
+const GRPS=[
+  {lbl:'',cls:'gr-em',span:3},
+  {lbl:'MET',cls:'gr-met',span:4},
+  {lbl:'SKOKI',cls:'gr-sk',span:3},
+  {lbl:'',cls:'gr-em',span:1},
+  {lbl:'OS. NAPAKE',cls:'gr-on',span:4},
+  {lbl:'BLOKADE',cls:'gr-bl',span:2},
+  {lbl:'',cls:'gr-em',span:2},
+  {lbl:'NAPREDNO',cls:'gr-met',span:5},
+];
+
+// ── TEAM AGGREGATE CACHE ──
+const _tmAgg={};
+function getTmAgg(team){
+  if(_tmAgg[team])return _tmAgg[team];
+  const tm=P.filter(p=>p[F.team]===team);
+  // Deduplicate (Mahkovic played for 2 teams - count only for the team in question)
+  const maxT=Math.max(...tm.map(p=>p[F.T]));
+  _tmAgg[team]={
+    T:maxT,
+    fga:tm.reduce((s,p)=>s+p[F.fg2a]+p[F.fg3a],0),
+    fta:tm.reduce((s,p)=>s+p[F.fta],0),
+    ftm:tm.reduce((s,p)=>s+p[F.ftm],0),
+    fgm:tm.reduce((s,p)=>s+p[F.fg2m]+p[F.fg3m],0),
+    izg:tm.reduce((s,p)=>s+p[F.izg],0),
+    ast:tm.reduce((s,p)=>s+p[F.pod],0),
+    toc:tm.reduce((s,p)=>s+p[F.toc],0),
+  };
+  return _tmAgg[team];
+}
+
+function showTab(t){
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(e=>e.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  event.target.classList.add('active');
+  if(t==='ekipe')renderTeam();
+  if(t==='liga')renderLeaders();
+  if(t==='starost')renderAge();
+  if(t==='iskanje')doSearch();
+}
+function toggleHeatmap(){
+  heatmap=!heatmap;
+  document.getElementById('btn-hm').classList.toggle('active',heatmap);
+  renderTeam();
+}
+function setMode(m){
+  mode=m;
+  document.getElementById('btn-tot').classList.toggle('active',m==='tot');
+  document.getElementById('btn-avg').classList.toggle('active',m==='avg');
+  renderTeam();
+}
+function setLMin(n){
+  lMin=n;
+  [5,10,15].forEach(v=>document.getElementById('lmin'+v).classList.toggle('active',v===n));
+  renderLeaders();
+}
+function setLMode(m){
+  lMode=m;
+  document.getElementById('lbtn-avg').classList.toggle('active',m==='avg');
+  document.getElementById('lbtn-tot').classList.toggle('active',m==='tot');
+  renderLeaders();
+}
+
+function renderTeam(){
+  const team=document.getElementById('team-sel').value;
+  const minT=parseInt(document.getElementById('min-sel').value);
+  const color=TEAM_COLORS[team]||'#f97316';
+  let players=P.filter(p=>p[F.team]===team);
+  if(minT>0)players=players.filter(p=>p[F.T]>=minT);
+
+  // Compute per-game leaders (min 5 games) — store player references, not indices
+  const qual=players.filter(p=>p[F.T]>=5);
+  let lPts=-1,lReb=-1,lAst=-1,lEfe=-1;
+  let lpPlayer=null,lrPlayer=null,laPlayer=null,lePlayer=null;
+  qual.forEach(p=>{
+    const t=p[F.T];
+    if(p[F.toc]/t>lPts){lPts=p[F.toc]/t;lpPlayer=p}
+    if((p[F.nap]+p[F.obr])/t>lReb){lReb=(p[F.nap]+p[F.obr])/t;lrPlayer=p}
+    if(p[F.pod]/t>lAst){lAst=p[F.pod]/t;laPlayer=p}
+    if(p[F.efe]/t>lEfe){lEfe=p[F.efe]/t;lePlayer=p}
+  });
+
+  // Sort
+  if(sortCol>=0){
+    const k=COLS[sortCol].k;
+    players.sort((a,b)=>{
+      let av=sortVal(a,k),bv=sortVal(b,k);
+      if(typeof av==='string')return sortDir*(av.localeCompare(bv,'sl'));
+      return sortDir*(av-bv);
+    });
+  }
+
+  // Team header card
+  const allTm=P.filter(p=>p[F.team]===team);
+  const tmPts=allTm.reduce((s,p)=>s+p[F.toc],0);
+  const tmGames=Math.max(...allTm.map(p=>p[F.T]));
+  const tmEfe=allTm.reduce((s,p)=>s+p[F.efe],0);
+  const tmPlayers=allTm.length;
+  document.getElementById('team-hdr-wrap').innerHTML=`
+  <div class="team-hdr" style="--tc:${color}">
+    <div class="tdot"></div>
+    <div>
+      <div class="tname">${team}</div>
+      <div class="tmeta">${tmPlayers} igralcev · ${tmGames} tekem · Sezona 2025/26</div>
+    </div>
+    <div class="tstats">
+      <div class="ts"><div class="tsv" style="color:${color}">${tmPts}</div><div class="tsl">Skupaj TOČ</div></div>
+      <div class="ts"><div class="tsv" style="color:${color}">${fmt(tmPts/tmGames)}</div><div class="tsl">TOČ/TM</div></div>
+      <div class="ts"><div class="tsv" style="color:${color}">${tmEfe}</div><div class="tsl">Skupaj EFE</div></div>
+    </div>
+  </div>`;
+
+  // Build table
+  const hdrGrpRow=GRPS.map(g=>`<th colspan="${g.span}" class="gr ${g.cls}">${g.lbl}</th>`).join('');
+  const hdrRow=COLS.map((c,i)=>{
+    let cls=c.k==='name'?'col-name':'';
+    if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');
+    return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})">${c.lbl}</th>`;
+  }).join('');
+
+  // Heatmap: compute min/max per column (only numeric, only qualified players)
+  // Columns where LOWER is better (inverse heat)
+  const hmInverse=new Set(['izg','pz','pre']);
+  // Columns to skip heatmap (pct cols handled separately, name/T skipped)
+  const hmSkip=new Set(['name','T','fg2','fg3','met','pm']);
+  let hmRange={};
+  if(heatmap && players.length>1){
+    COLS.forEach(c=>{
+      if(hmSkip.has(c.k))return;
+      const vals=players.filter(p=>p[F.T]>0).map(p=>sortVal(p,c.k)).filter(v=>v>-999);
+      if(vals.length<2)return;
+      hmRange[c.k]={min:Math.min(...vals),max:Math.max(...vals)};
+    });
+  }
+  function hmStyle(k,p){
+    if(!heatmap||!hmRange[k])return '';
+    const {min,max}=hmRange[k];
+    if(max===min)return '';
+    const raw=sortVal(p,k);
+    if(raw<=-999)return '';
+    let t=(raw-min)/(max-min); // 0=min, 1=max
+    if(hmInverse.has(k))t=1-t;
+    // Only color if meaningfully different from middle
+    if(t<0.15||t>0.85){
+      const op=(t>0.5?(t-0.15):((1-t)-0.15))*0.35;
+      return t>0.5
+        ? 'background:rgba(52,211,153,'+op.toFixed(2)+') !important'
+        : 'background:rgba(248,113,113,'+op.toFixed(2)+') !important';
+    }
+    return '';
+  }
+
+  const rows=players.map((p,ri)=>{
+    let cells=COLS.map((c,ci)=>{
+      let val=c.fmt(p,mode);
+      let cls=c.k==='name'?'col-name':'';
+      // Leader highlights
+      if(c.k==='toc'&&p===lpPlayer)cls+=' lp';
+      if(c.k==='sk'&&p===lrPlayer)cls+=' lr';
+      if(c.k==='pod'&&p===laPlayer)cls+=' la';
+      if(c.k==='efe'&&p===lePlayer)cls+=' le';
+      const hs=hmStyle(c.k,p);
+      return `<td class="${cls}" style="${hs}">${val}</td>`;
+    }).join('');
+    const pidx=P.indexOf(p);
+    const bornBadge=`<span style="font-size:.62rem;color:var(--mut);margin-left:6px;font-family:var(--fm)">${p[F.born]}</span>`;
+    cells=cells.replace(`>${p[F.name]}<`,`><span class="pname-link" onclick="showPlayer(${pidx})" title="Odpri profil">${p[F.name]}</span>${bornBadge}<`);
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('st').innerHTML=`
+    <thead>
+      <tr>${hdrGrpRow}</tr>
+      <tr>${hdrRow}</tr>
+    </thead>
+    <tbody>${rows||'<tr><td colspan="20" class="empty">Ni podatkov</td></tr>'}</tbody>`;
+}
+
+let teamSortDir=1;
+function sortTeam(i){
+  if(sortCol===i)sortDir*=-1; else{sortCol=i;sortDir=-1;}
+  renderTeam();
+}
+
+// ── LEAGUE LEADERS ──
+const LEADER_CATS=[
+  {lbl:'Točke',icon:'🏀',color:'var(--acc)',k:'toc',fi:F.toc,div:true},
+  {lbl:'Skoki',icon:'💪',color:'var(--blue)',k:'sk',fi:null,div:true,calc:p=>p[F.nap]+p[F.obr]},
+  {lbl:'Asistence',icon:'🎯',color:'var(--purple)',k:'pod',fi:F.pod,div:true},
+  {lbl:'Efektivnost',icon:'⚡',color:'var(--green)',k:'efe',fi:F.efe,div:true},
+  {lbl:'Blokade',icon:'🛡️',color:'#818cf8',k:'blk',fi:F.blk,div:true},
+  {lbl:'2T %',icon:'🎯',color:'#f59e0b',k:'fg2pct',fi:null,pct:true,m:p=>p[F.fg2m],a:p=>p[F.fg2a],minKey:'min2T'},
+  {lbl:'3T %',icon:'🌟',color:'#06b6d4',k:'fg3pct',fi:null,pct:true,m:p=>p[F.fg3m],a:p=>p[F.fg3a],minKey:'min3T'},
+  {lbl:'PM %',icon:'🎰',color:'#34d399',k:'fgpct',fi:null,pct:true,m:p=>p[F.ftm],a:p=>p[F.fta],minKey:'minPM'},
+  {lbl:'STO',icon:'🕵️',color:'#f87171',k:'sto',fi:F.sto,div:true},
+  {lbl:'Minute',icon:'⏱️',color:'#94a3b8',k:'min',fi:F.MIN,div:true},
+  {lbl:'True Shooting %',icon:'🎯',color:'#a78bfa',k:'ts',fi:null,ts:true},
+  {lbl:'Assist / Turnover',icon:'⚖️',color:'#fb923c',k:'at',fi:null,at:true},
+  {lbl:'Usage Rate',icon:'🔄',color:'#38bdf8',k:'usg',fi:null,usg:true},
+  {lbl:'PER',icon:'⭐',color:'#fbbf24',k:'per',fi:null,per:true},
+  {lbl:'Floor %',icon:'🎪',color:'#f472b6',k:'flr',fi:null,flr:true},
+];
+
+function renderLeaders(){
+  const html=LEADER_CATS.map(cat=>{
+    let entries=P.filter(p=>p[F.T]>=lMin);
+    let vals;
+    if(cat.pct){
+      // Per-game shot attempt filter
+      const minPerGame={min2T,min3T,minPM}[cat.minKey]||0;
+      entries=entries.filter(p=>p[F.T]>0 && cat.a(p)/p[F.T]>=minPerGame);
+      vals=entries.map(p=>({p,v:pct(cat.m(p),cat.a(p))}));
+    } else if(cat.ts){
+      // True Shooting % — min 20 skupnih poskusov
+      entries=entries.filter(p=>{
+        const fga=p[F.fg2a]+p[F.fg3a];
+        return fga+p[F.fta]>=20;
+      });
+      vals=entries.map(p=>{
+        const fga=p[F.fg2a]+p[F.fg3a];
+        const denom=2*(fga+0.44*p[F.fta]);
+        return {p,v:denom>0?Math.round(p[F.toc]/denom*1000)/10:0};
+      });
+    } else if(cat.at){
+      entries=entries.filter(p=>p[F.izg]>=5);
+      vals=entries.map(p=>({p,v:Math.round(p[F.pod]/p[F.izg]*100)/100}));
+    } else if(cat.usg){
+      entries=entries.filter(p=>p[F.MIN]>=10);
+      vals=entries.map(p=>{
+        const tm=getTmAgg(p[F.team]);
+        const tmMP=tm.T*5*40;
+        const v=((p[F.fg2a]+p[F.fg3a]+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));
+        return {p,v:Math.round(v*1000)/10};
+      });
+    } else if(cat.per){
+      entries=entries.filter(p=>p[F.T]>=5);
+      vals=entries.map(p=>({p,v:perOf(p)||0}));
+    } else if(cat.flr){
+      entries=entries.filter(p=>p[F.fg2m]+p[F.fg3m]>=10);
+      vals=entries.map(p=>{
+        const fgm=p[F.fg2m]+p[F.fg3m],ast=p[F.pod];
+        return {p,v:fgm+ast>0?Math.round(ast/(ast+fgm)*1000)/10:0};
+      });
+    } else {
+      const calc=cat.calc||(p=>p[cat.fi]);
+      vals=entries.map(p=>({p,v:lMode==='avg'?calc(p)/p[F.T]:calc(p)}));
+    }
+    vals.sort((a,b)=>b.v-a.v);
+    const top=vals.slice(0,10);
+    const rankCls=r=>r===0?'g':r===1?'s':r===2?'b':'';
+    const rows=top.map((e,r)=>{
+      const p=e.p;
+      let shotInfo='';
+      if(cat.pct){
+        const m=cat.m(p), a=cat.a(p), t=p[F.T];
+        if(lMode==='avg'){
+          shotInfo=fmt(m/t,1)+'/'+fmt(a/t,1)+'/tm';
+        } else {
+          shotInfo=m+'/'+a;
+        }
+      } else if(cat.ts){
+        const fga=p[F.fg2a]+p[F.fg3a];
+        shotInfo=(fga+p[F.fta])+' psk';
+      } else if(cat.at){
+        shotInfo=p[F.pod]+' pod / '+p[F.izg]+' izg';
+      } else if(cat.usg){
+        const tm=getTmAgg(p[F.team]);
+        shotInfo=fmt(p[F.MIN]/p[F.T],1)+' min/tm';
+      } else if(cat.per){
+        shotInfo=fmt(p[F.MIN]/p[F.T],1)+' min/tm';
+      } else if(cat.flr){
+        shotInfo=p[F.pod]+' pod / '+(p[F.fg2m]+p[F.fg3m])+' košev';
+      }
+      return `<div class="lr2">
+        <div class="lrk ${rankCls(r)}">${r+1}</div>
+        <div class="lri">
+          <div class="lrn">${p[F.name]}</div>
+          <div class="lrtm" style="color:${TEAM_COLORS[p[F.team]]}">${TEAM_SHORT[p[F.team]]||p[F.team]}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="lrv" style="color:${cat.color}">${cat.pct||cat.ts||cat.usg||cat.flr?fmt(e.v,1)+'%':cat.at?fmt(e.v,2):fmt(e.v,lMode==='avg'?1:0)}</div>
+          ${shotInfo?`<div class="lrv-sub">${shotInfo}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    const filterNote=cat.pct
+      ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">'+({min2T,min3T,minPM})[cat.minKey]+'/tm</span>'
+      : cat.ts ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">min 20 psk</span>'
+      : cat.at ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">min 5 izg</span>'
+      : cat.usg ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">min 10 min</span>'
+      : cat.per ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">min 10 min · avg≈15</span>'
+      : cat.flr ? '<span style="font-size:.63rem;color:var(--mut);margin-left:auto;font-family:var(--fm)">min 10 košev</span>'
+      : '';
+    return `<div class="lc">
+      <div class="lch"><span class="lct" style="color:${cat.color}">${cat.icon} ${cat.lbl}</span>${filterNote}</div>
+      <div class="lcb">${rows||'<div class="empty">—</div>'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('ldrs-grid').innerHTML=html;
+}
+
+// ── AGE ANALYSIS ──
+function renderAge(){
+  const groups=AGE_GROUPS;
+  // Aggregate by age group
+  const data={};
+  groups.forEach(g=>{data[g]={players:[],min:0,toc:0,efe:0}});
+  P.forEach(p=>{
+    const g=ageGroup(p[F.born]);
+    if(data[g]){
+      // Avoid double-counting Mahkovic (count once per person)
+      if(!data[g].players.find(x=>x[F.name]===p[F.name]&&x[F.born]===p[F.born])){
+        data[g].players.push(p);
+        data[g].min+=p[F.MIN];
+        data[g].toc+=p[F.toc];
+        data[g].efe+=p[F.efe];
+      }
+    }
+  });
+
+  function barChart(title,valueFn,labelFn,color){
+    const vals=groups.map(g=>valueFn(data[g]));
+    const maxV=Math.max(...vals)||1;
+    const barsHtml=groups.map((g,i)=>{
+      const v=vals[i];
+      const h=Math.round((v/maxV)*140);
+      return `<div class="bw">
+        <div class="bar" style="height:${h}px;background:${AGE_COLORS[i]}">
+          <div class="barval" style="color:${AGE_COLORS[i]}">${labelFn(v)}</div>
+        </div>
+        <div class="barlbl">${g}</div>
+      </div>`;
+    }).join('');
+    return `<div class="ac">
+      <div class="act">${title}</div>
+      <div class="bars">${barsHtml}</div>
+    </div>`;
+  }
+
+  function tableCard(title,rows){
+    const rowsHtml=rows.map(r=>`<tr>${r.map((c,i)=>`<td ${i>0?'style="text-align:right;font-family:var(--fm)"':''}>${c}</td>`).join('')}</tr>`).join('');
+    return `<div class="ac">
+      <div class="act">${title}</div>
+      <table class="at">
+        <thead><tr><th>Skupina</th><th style="text-align:right">Igrač</th><th style="text-align:right">Skupaj MIN</th><th style="text-align:right">Skupaj TOČ</th><th style="text-align:right">Avg EFE</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>`;
+  }
+
+  const tableRows=groups.map((g,i)=>{
+    const d=data[g];
+    const n=d.players.length;
+    return [
+      `<span style="color:${AGE_COLORS[i]};font-weight:600">${g}</span>`,
+      n,
+      fmt(d.min,0),
+      d.toc,
+      n>0?fmt(d.efe/n,1):'—'
+    ];
+  });
+
+  document.getElementById('age-wrap').innerHTML=
+    barChart('Skupne minute po starostni skupini',d=>d.min,v=>fmt(v,0))+
+    barChart('Skupaj točke po starostni skupini',d=>d.toc,v=>v)+
+    barChart('Število igralcev po skupini',d=>d.players.length,v=>v)+
+    barChart('Povpr. EFE na tekmo',d=>d.players.length>0?d.efe/d.players.length/Math.max(1,...d.players.map(p=>p[F.T])):0,v=>fmt(v,1))+
+    tableCard('Pregled po starostnih skupinah',tableRows)+
+    `<div class="ac">
+      <div class="act">Legenda skupin (leto roj.)</div>
+      <table class="at">
+        <thead><tr><th>Skupina</th><th>Letnik rojstva</th><th style="text-align:right">Starost (2025)</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#818cf8;font-weight:600">U18</td><td>2007 ali mlajši</td><td style="text-align:right;font-family:var(--fm)">≤ 18</td></tr>
+          <tr><td style="color:#60a5fa;font-weight:600">19–21</td><td>2004 – 2006</td><td style="text-align:right;font-family:var(--fm)">19 – 21</td></tr>
+          <tr><td style="color:#34d399;font-weight:600">22–25</td><td>2000 – 2003</td><td style="text-align:right;font-family:var(--fm)">22 – 25</td></tr>
+          <tr><td style="color:#facc15;font-weight:600">26–30</td><td>1995 – 1999</td><td style="text-align:right;font-family:var(--fm)">26 – 30</td></tr>
+          <tr><td style="color:#f97316;font-weight:600">31–35</td><td>1990 – 1994</td><td style="text-align:right;font-family:var(--fm)">31 – 35</td></tr>
+          <tr><td style="color:#f87171;font-weight:600">35+</td><td>1989 ali starejši</td><td style="text-align:right;font-family:var(--fm)">35+</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── SEARCH ──
+let selectedPlayers=[];
+function doSearch(){
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const tm=document.getElementById('srch-team').value;
+  let res=P;
+  if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q));
+  if(tm)res=res.filter(p=>p[F.team]===tm);
+  // Deduplicate by name+born (Mahkovic plays for 2 teams - show both)
+  const html=res.slice(0,40).map(p=>{
+    const color=TEAM_COLORS[p[F.team]]||'#f97316';
+    const isSel=selectedPlayers.some(s=>s===p);
+    return `<div class="pcard ${isSel?'selected':''}">
+      <div class="pc-name" style="display:flex;align-items:center;justify-content:space-between">
+        <span class="pname-link" onclick="showPlayer(${P.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
+        <span onclick="selectPlayer(${P.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
+      </div>
+      <div class="pc-meta" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
+      <div class="pc-stats">
+        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.toc]/p[F.T])}</div><div class="pc-sl">TOČ/tm</div></div>
+        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt((p[F.nap]+p[F.obr])/p[F.T])}</div><div class="pc-sl">SK/tm</div></div>
+        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.pod]/p[F.T])}</div><div class="pc-sl">POD/tm</div></div>
+        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.efe]/p[F.T])}</div><div class="pc-sl">EFE/tm</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('srch-results').innerHTML=html||'<div class="empty">Ni rezultatov</div>';
+  renderCompare();
+}
+function selectPlayer(idx){
+  const p=P[idx];
+  if(selectedPlayers.includes(p)){
+    selectedPlayers=selectedPlayers.filter(s=>s!==p);
+  } else {
+    if(selectedPlayers.length>=2)selectedPlayers.shift();
+    selectedPlayers.push(p);
+  }
+  doSearch();
+}
+function renderCompare(){
+  const cmp=document.getElementById('cmp-section');
+  if(selectedPlayers.length<2){cmp.style.display='none';return;}
+  cmp.style.display='block';
+  const [a,b]=selectedPlayers;
+  const ca=TEAM_COLORS[a[F.team]]||'#f97316';
+  const cb=TEAM_COLORS[b[F.team]]||'#3b82f6';
+  const rows=[
+    {lbl:'Tekme',va:a[F.T],vb:b[F.T],hi:1},
+    {lbl:'MIN / tm',va:a[F.MIN]/a[F.T],vb:b[F.MIN]/b[F.T],hi:1,dec:1},
+    {lbl:'TOČ / tm',va:a[F.toc]/a[F.T],vb:b[F.toc]/b[F.T],hi:1,dec:1},
+    {lbl:'2T %',va:pct(a[F.fg2m],a[F.fg2a]),vb:pct(b[F.fg2m],b[F.fg2a]),hi:1,dec:1,suf:'%'},
+    {lbl:'3T %',va:pct(a[F.fg3m],a[F.fg3a]),vb:pct(b[F.fg3m],b[F.fg3a]),hi:1,dec:1,suf:'%'},
+    {lbl:'PM %',va:pct(a[F.ftm],a[F.fta]),vb:pct(b[F.ftm],b[F.fta]),hi:1,dec:1,suf:'%'},
+    {lbl:'Skoki / tm',va:(a[F.nap]+a[F.obr])/a[F.T],vb:(b[F.nap]+b[F.obr])/b[F.T],hi:1,dec:1},
+    {lbl:'POD / tm',va:a[F.pod]/a[F.T],vb:b[F.pod]/b[F.T],hi:1,dec:1},
+    {lbl:'BLK / tm',va:a[F.blk]/a[F.T],vb:b[F.blk]/b[F.T],hi:1,dec:1},
+    {lbl:'+/− / tm',va:a[F.pm]/a[F.T],vb:b[F.pm]/b[F.T],hi:1,dec:1},
+    {lbl:'EFE / tm',va:a[F.efe]/a[F.T],vb:b[F.efe]/b[F.T],hi:1,dec:1},
+  ];
+  const rowsHtml=rows.map(r=>{
+    const av=r.va??-999,bv=r.vb??-999;
+    const aWin=av>bv,bWin=bv>av;
+    const suf=r.suf||'';
+    const dec=r.dec??0;
+    return `<div class="cmp-row">
+      <div class="cmp-val left ${aWin?'win':'lose'}" style="color:${aWin?ca:'var(--mut)'}">${fmt(r.va,dec)}${suf}</div>
+      <div class="cmp-lbl">${r.lbl}</div>
+      <div class="cmp-val right ${bWin?'win':'lose'}" style="color:${bWin?cb:'var(--mut)'}">${fmt(r.vb,dec)}${suf}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('cmp-section').innerHTML=`
+    <div class="section-title">PRIMERJAVA</div>
+    <div class="cmp-wrap">
+      <div class="cmp-col">
+        <div class="cmp-hdr">
+          <div style="font-family:var(--fh);font-size:1.1rem;color:${ca}">${a[F.name]}</div>
+          <div style="font-size:.72rem;color:var(--mut)">${a[F.team]} · ${a[F.born]}</div>
+        </div>
+        ${rowsHtml.replace(/class="cmp-val right/g,'style="display:none" class="xx')}
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="cmp-col">
+        <div class="cmp-hdr">
+          <div style="font-family:var(--fh);font-size:1.1rem;color:${cb}">${b[F.name]}</div>
+          <div style="font-size:.72rem;color:var(--mut)">${b[F.team]} · ${b[F.born]}</div>
+        </div>
+      </div>
+    </div>`;
+  // Rebuild properly
+  const fullRows=rows.map(r=>{
+    const av=r.va??-999,bv=r.vb??-999;
+    const aWin=av>bv,bWin=bv>av;
+    const suf=r.suf||'';const dec=r.dec??0;
+    return `<div class="cmp-row">
+      <div class="cmp-val left ${aWin?'win':'lose'}" style="color:${aWin?ca:'var(--mut)'}">${fmt(r.va,dec)}${suf}</div>
+      <div class="cmp-lbl">${r.lbl}</div>
+      <div class="cmp-val right ${bWin?'win':'lose'}" style="color:${bWin?cb:'var(--mut)'}">${fmt(r.vb,dec)}${suf}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('cmp-section').innerHTML=`
+    <div class="section-title">PRIMERJAVA IGRALCEV</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;max-width:700px;margin:0 auto">
+      <div class="cmp-row" style="background:var(--card2);padding:12px 16px">
+        <div style="font-family:var(--fh);font-size:1.1rem;color:${ca};flex:1;text-align:right">${a[F.name]}</div>
+        <div style="width:80px;text-align:center;font-family:var(--fh);font-size:1.2rem;color:var(--mut)">VS</div>
+        <div style="font-family:var(--fh);font-size:1.1rem;color:${cb};flex:1">${b[F.name]}</div>
+      </div>
+      <div class="cmp-row" style="background:rgba(0,0,0,.3);padding:5px 16px">
+        <div style="flex:1;text-align:right;font-size:.7rem;color:${ca}">${a[F.team]}</div>
+        <div style="width:80px"></div>
+        <div style="flex:1;font-size:.7rem;color:${cb}">${b[F.team]}</div>
+      </div>
+      ${fullRows}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLAYER PROFILE
+// ═══════════════════════════════════════════════════════════
+
+function showPlayer(idx) {
+  const p = P[idx];
+  const color = TEAM_COLORS[p[F.team]] || '#f97316';
+  const overlay = document.getElementById('player-overlay');
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Compute league context for radar
+  const leagueQual = P.filter(x => x[F.T] >= 10);
+  function leagueMax(fn) { return Math.max(...leagueQual.map(fn)); }
+  function leagueAvg(fn) { const v = leagueQual.map(fn); return v.reduce((a,b)=>a+b,0)/v.length; }
+
+  const t = p[F.T];
+  const fgm = p[F.fg2m]+p[F.fg3m], fga = p[F.fg2a]+p[F.fg3a];
+  const pts2 = p[F.fg2m]*2, pts3 = p[F.fg3m]*3, ptsFT = p[F.ftm];
+  const totalPts = p[F.toc];
+  const totalSk = p[F.nap]+p[F.obr];
+
+  // TS%
+  const tsDenom = 2*(fga+0.44*p[F.fta]);
+  const tsVal = tsDenom>0 && fga+p[F.fta]>=10 ? Math.round(p[F.toc]/tsDenom*1000)/10 : null;
+
+  // USG%
+  const tm = getTmAgg(p[F.team]);
+  const tmMP = tm.T*5*40;
+  const usgVal = p[F.MIN]>=10 ? Math.round(((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg))*1000)/10 : null;
+
+  // PER
+  const perVal = t>=5 ? perOf(p) : null;
+
+  // A/T
+  const atVal = p[F.izg]>0 ? Math.round(p[F.pod]/p[F.izg]*100)/100 : null;
+
+  // Floor%
+  const flrVal = fgm>=5 ? Math.round(p[F.pod]/(p[F.pod]+fgm)*1000)/10 : null;
+
+  // Radar axes (per game, normalized 0–1 vs league max among qualified)
+  const axes = [
+    { lbl:'TOČ', val: t>0?p[F.toc]/t:0, max: leagueMax(x=>x[F.toc]/x[F.T]) },
+    { lbl:'SK',  val: t>0?totalSk/t:0,   max: leagueMax(x=>(x[F.nap]+x[F.obr])/x[F.T]) },
+    { lbl:'POD', val: t>0?p[F.pod]/t:0,  max: leagueMax(x=>x[F.pod]/x[F.T]) },
+    { lbl:'STO', val: t>0?p[F.sto]/t:0,  max: leagueMax(x=>x[F.sto]/x[F.T]) },
+    { lbl:'BLK', val: t>0?p[F.blk]/t:0,  max: leagueMax(x=>x[F.blk]/x[F.T]) },
+    { lbl:'EFE', val: t>0?p[F.efe]/t:0,  max: leagueMax(x=>x[F.efe]/x[F.T]) },
+  ];
+  // League avg for radar overlay
+  const axesAvg = [
+    leagueAvg(x=>x[F.toc]/x[F.T]),
+    leagueAvg(x=>(x[F.nap]+x[F.obr])/x[F.T]),
+    leagueAvg(x=>x[F.pod]/x[F.T]),
+    leagueAvg(x=>x[F.sto]/x[F.T]),
+    leagueAvg(x=>x[F.blk]/x[F.T]),
+    leagueAvg(x=>x[F.efe]/x[F.T]),
+  ];
+
+  const radarSVG = drawRadar(axes, axesAvg, color);
+  const scoringSVG = drawScoring(pts2, pts3, ptsFT, totalPts, color, t);
+
+  function statBadge(lbl, val, suf, tip, cls='') {
+    if(val===null) return '';
+    return `<div class="pp-stat" title="${tip}">
+      <div class="pp-sv ${cls}">${val}${suf}</div>
+      <div class="pp-sl">${lbl}</div>
+    </div>`;
+  }
+
+  function advBar(lbl, val, min, max, suf, tip, goodHigh=true) {
+    if(val===null) return '';
+    const pct = Math.max(0, Math.min(100, (val-min)/(max-min)*100));
+    const barColor = goodHigh
+      ? (pct>66?'#34d399':pct>33?'#facc15':'#f87171')
+      : (pct<33?'#34d399':pct<66?'#facc15':'#f87171');
+    return `<div class="adv-row" title="${tip}">
+      <div class="adv-lbl">${lbl}</div>
+      <div class="adv-bar-wrap">
+        <div class="adv-bar" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+      <div class="adv-val" style="color:${barColor}">${val}${suf}</div>
+    </div>`;
+  }
+
+  const age2025 = 2025 - p[F.born];
+
+  document.getElementById('player-overlay').innerHTML = `
+  <div class="pp-modal">
+    <div class="pp-close" onclick="closePlayer()">✕</div>
+
+    <!-- HEADER -->
+    <div class="pp-header" style="border-bottom:2px solid ${color}20">
+      <div class="pp-color-bar" style="background:${color}"></div>
+      <div class="pp-header-info">
+        <div class="pp-name">${p[F.name]}</div>
+        <div class="pp-meta">
+          <span style="color:${color};font-weight:600">${p[F.team]}</span>
+          &nbsp;·&nbsp; ${p[F.born]} &nbsp;·&nbsp; ${age2025} let
+          &nbsp;·&nbsp; ${t} tekem
+        </div>
+      </div>
+      <div class="pp-key-stats">
+        ${statBadge('TOČ/tm', fmt(p[F.toc]/t), '', 'Točke na tekmo')}
+        ${statBadge('SK/tm', fmt(totalSk/t), '', 'Skoki na tekmo')}
+        ${statBadge('POD/tm', fmt(p[F.pod]/t), '', 'Podaje na tekmo')}
+        ${statBadge('EFE/tm', fmt(p[F.efe]/t), '', 'Efektivnost na tekmo')}
+      </div>
+    </div>
+
+    <div class="pp-body">
+      <!-- LEFT: charts -->
+      <div class="pp-left">
+        <div class="pp-section-title">PROFIL (vs liga)</div>
+        ${radarSVG}
+        <div class="pp-section-title" style="margin-top:16px">TOČKE PO TIPU META</div>
+        ${scoringSVG}
+      </div>
+
+      <!-- RIGHT: advanced + full stats -->
+      <div class="pp-right">
+        <div class="pp-section-title">NAPREDNA STATISTIKA</div>
+        <div class="adv-grid">
+          ${advBar('TS%', tsVal, 40, 75, '%', 'True Shooting % — učinkovitost strelca')}
+          ${advBar('USG%', usgVal, 5, 40, '%', 'Usage Rate — % napadov skozi tega igralca')}
+          ${advBar('PER', perVal, 0, 35, '', 'Player Efficiency Rating — avg liga ≈ 15')}
+          ${advBar('A/T', atVal, 0, 5, '', 'Assist/Turnover razmerje')}
+          ${advBar('FLR%', flrVal, 0, 70, '%', 'Floor % — organizator vs finišer')}
+          ${advBar('+/−/tm', fmt(p[F.pm]/t), -15, 15, '', 'Plus/Minus na tekmo')}
+        </div>
+
+        <div class="pp-section-title" style="margin-top:16px">STATISTIKA SEZONE</div>
+        <table class="pp-table">
+          <tr><th>STAT</th><th>SKUPNO</th><th>/TM</th></tr>
+          <tr><td>Minute</td><td>${fmt(p[F.MIN],0)}</td><td>${fmt(p[F.MIN]/t,1)}</td></tr>
+          <tr><td>Točke</td><td>${p[F.toc]}</td><td>${fmt(p[F.toc]/t)}</td></tr>
+          <tr><td>2T (zadeti/vrženi)</td><td>${p[F.fg2m]}/${p[F.fg2a]}</td><td class="${pctCls(pct(p[F.fg2m],p[F.fg2a]))}">${fmt(pct(p[F.fg2m],p[F.fg2a]))}%</td></tr>
+          <tr><td>3T (zadeti/vrženi)</td><td>${p[F.fg3m]}/${p[F.fg3a]}</td><td class="${pctCls(pct(p[F.fg3m],p[F.fg3a]))}">${fmt(pct(p[F.fg3m],p[F.fg3a]))}%</td></tr>
+          <tr><td>Prosti meti</td><td>${p[F.ftm]}/${p[F.fta]}</td><td class="${pctCls(pct(p[F.ftm],p[F.fta]))}">${fmt(pct(p[F.ftm],p[F.fta]))}%</td></tr>
+          <tr><td>Skoki (NAP/OBR)</td><td>${totalSk}</td><td>${fmt(totalSk/t)} (${fmt(p[F.nap]/t,1)}n+${fmt(p[F.obr]/t,1)}o)</td></tr>
+          <tr><td>Podaje</td><td>${p[F.pod]}</td><td>${fmt(p[F.pod]/t)}</td></tr>
+          <tr><td>STO / IZS</td><td>${p[F.sto]} / ${p[F.izs]}</td><td>${fmt(p[F.sto]/t)} / ${fmt(p[F.izs]/t)}</td></tr>
+          <tr><td>Izgube</td><td>${p[F.izg]}</td><td>${fmt(p[F.izg]/t)}</td></tr>
+          <tr><td>Osebne napake</td><td>${p[F.pz]}</td><td>${fmt(p[F.pz]/t)}</td></tr>
+          <tr><td>Blokade (dal/pre)</td><td>${p[F.blk]}/${p[F.pre]}</td><td>${fmt(p[F.blk]/t)} / ${fmt(p[F.pre]/t)}</td></tr>
+          <tr><td>+/−</td><td>${p[F.pm]>0?'+':''}${p[F.pm]}</td><td>${fmt(p[F.pm]/t)}</td></tr>
+          <tr><td>EFE</td><td>${p[F.efe]}</td><td>${fmt(p[F.efe]/t)}</td></tr>
+        </table>
+
+        <!-- COMPARE -->
+        <div class="pp-section-title" style="margin-top:16px">PRIMERJAJ Z...</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="si" id="pp-srch" type="text" placeholder="Išči igralca..." oninput="ppSearch()" style="flex:1">
+        </div>
+        <div id="pp-srch-results" style="max-height:180px;overflow-y:auto;border-radius:7px;border:1px solid var(--border)"></div>
+        <div id="pp-cmp-wrap" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>`;
+
+  // Store current player for comparison
+  window._ppPlayer = p;
+  window._ppIdx = idx;
+}
+
+function closePlayer() {
+  document.getElementById('player-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function ppSearch() {
+  const q = document.getElementById('pp-srch').value.toLowerCase();
+  if(!q) { document.getElementById('pp-srch-results').innerHTML=''; return; }
+  const results = P.filter(p => p[F.name].toLowerCase().includes(q) && p !== window._ppPlayer).slice(0,8);
+  const color = TEAM_COLORS;
+  document.getElementById('pp-srch-results').innerHTML = results.map((p,i) => `
+    <div onclick="ppCompare(${P.indexOf(p)})" style="display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(249,115,22,.07)'" onmouseout="this.style.background=''">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color[p[F.team]]||'#888'};flex-shrink:0"></div>
+      <div style="flex:1;font-size:.82rem;font-weight:500">${p[F.name]}</div>
+      <div style="font-size:.7rem;color:${color[p[F.team]]||'#888'}">${p[F.team]}</div>
+      <div style="font-family:var(--fm);font-size:.78rem;color:var(--sub)">${fmt(p[F.toc]/p[F.T])} TOČ</div>
+    </div>`).join('') || '<div class="empty" style="padding:16px">Ni rezultatov</div>';
+}
+
+function ppCompare(idx2) {
+  const a = window._ppPlayer;
+  const b = P[idx2];
+  const ca = TEAM_COLORS[a[F.team]]||'#f97316';
+  const cb = TEAM_COLORS[b[F.team]]||'#3b82f6';
+
+  const cmpStats = [
+    { lbl:'TOČ/tm',   va: a[F.toc]/a[F.T],   vb: b[F.toc]/b[F.T],   dec:1, suf:'' },
+    { lbl:'SK/tm',    va: (a[F.nap]+a[F.obr])/a[F.T], vb: (b[F.nap]+b[F.obr])/b[F.T], dec:1, suf:'' },
+    { lbl:'POD/tm',   va: a[F.pod]/a[F.T],    vb: b[F.pod]/b[F.T],   dec:1, suf:'' },
+    { lbl:'2T%',      va: pct(a[F.fg2m],a[F.fg2a]), vb: pct(b[F.fg2m],b[F.fg2a]), dec:1, suf:'%' },
+    { lbl:'3T%',      va: pct(a[F.fg3m],a[F.fg3a]), vb: pct(b[F.fg3m],b[F.fg3a]), dec:1, suf:'%' },
+    { lbl:'PM%',      va: pct(a[F.ftm],a[F.fta]),   vb: pct(b[F.ftm],b[F.fta]),   dec:1, suf:'%' },
+    { lbl:'EFE/tm',   va: a[F.efe]/a[F.T],    vb: b[F.efe]/b[F.T],   dec:1, suf:'' },
+    { lbl:'USG%',     va: usgOf(a),            vb: usgOf(b),            dec:1, suf:'%' },
+    { lbl:'PER',      va: perOf(a),            vb: perOf(b),            dec:1, suf:'' },
+    { lbl:'TS%',      va: tsOf(a),             vb: tsOf(b),             dec:1, suf:'%' },
+    { lbl:'A/T',      va: a[F.izg]>0?Math.round(a[F.pod]/a[F.izg]*100)/100:null, vb: b[F.izg]>0?Math.round(b[F.pod]/b[F.izg]*100)/100:null, dec:2, suf:'' },
+    { lbl:'+/−/tm',   va: a[F.pm]/a[F.T],     vb: b[F.pm]/b[F.T],    dec:1, suf:'' },
+  ];
+
+  // bar comparison
+  const rows = cmpStats.map(r => {
+    const av = r.va, bv = r.vb;
+    if(av===null&&bv===null) return '';
+    const aWin = av!==null && bv!==null && av>bv;
+    const bWin = av!==null && bv!==null && bv>av;
+    const maxV = Math.max(Math.abs(av||0), Math.abs(bv||0)) || 1;
+    const aPct = av!==null ? Math.abs(av)/maxV*100 : 0;
+    const bPct = bv!==null ? Math.abs(bv)/maxV*100 : 0;
+    return `<div class="cbar-row">
+      <div class="cbar-name" style="text-align:right;color:${aWin?ca:'var(--mut)'}">${av!==null?fmt(av,r.dec)+r.suf:'—'}</div>
+      <div class="cbar-bars">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:2px">
+          <div style="width:${aPct}%;height:6px;background:${ca};border-radius:3px;opacity:${aWin?1:.5}"></div>
+        </div>
+        <div class="cbar-lbl">${r.lbl}</div>
+        <div style="display:flex;margin-top:2px">
+          <div style="width:${bPct}%;height:6px;background:${cb};border-radius:3px;opacity:${bWin?1:.5}"></div>
+        </div>
+      </div>
+      <div class="cbar-name" style="color:${bWin?cb:'var(--mut)'}">${bv!==null?fmt(bv,r.dec)+r.suf:'—'}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('pp-cmp-wrap').innerHTML = `
+    <div class="cbar-hdr">
+      <span style="color:${ca};font-weight:600;font-size:.8rem">${a[F.name]}</span>
+      <span style="color:var(--mut);font-size:.75rem">VS</span>
+      <span style="color:${cb};font-weight:600;font-size:.8rem">${b[F.name]}</span>
+    </div>
+    ${rows}`;
+  document.getElementById('pp-srch-results').innerHTML='';
+  document.getElementById('pp-srch').value='';
+}
+
+function usgOf(p){
+  if(p[F.MIN]<10)return null;
+  const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];
+  return Math.round(((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg))*1000)/10;
+}
+function perOf(p){
+  if(p[F.T]<5)return null;
+  const t=p[F.T],fgm=(p[F.fg2m]+p[F.fg3m])/t,fga=(p[F.fg2a]+p[F.fg3a])/t;
+  const ftm=p[F.ftm]/t,fta=p[F.fta]/t,sk=(p[F.nap]+p[F.obr])/t;
+  const ast=p[F.pod]/t,stl=p[F.sto]/t,blk=p[F.blk]/t,tov=p[F.izg]/t,pf=p[F.pz]/t,pts=p[F.toc]/t;
+  return Math.round((pts+sk+ast*1.5+stl*1.5+blk*1.2-(fga-fgm)*0.7-(fta-ftm)*0.4-tov-pf*0.5)*10)/10;
+}
+function tsOf(p){
+  const fga=p[F.fg2a]+p[F.fg3a],denom=2*(fga+0.44*p[F.fta]);
+  return denom>0&&fga+p[F.fta]>=10?Math.round(p[F.toc]/denom*1000)/10:null;
+}
+
+// ─── RADAR CHART ───
+function drawRadar(axes, avgVals, color) {
+  const N = axes.length;
+  const cx=140, cy=130, r=95;
+  const angleStep = (Math.PI*2)/N;
+  const startAngle = -Math.PI/2;
+
+  function pt(i, ratio) {
+    const a = startAngle + i*angleStep;
+    return [cx + Math.cos(a)*r*ratio, cy + Math.sin(a)*r*ratio];
+  }
+
+  // Grid rings
+  let svg = `<svg viewBox="0 0 280 260" style="width:100%;max-width:280px;display:block;margin:0 auto">`;
+  [.25,.5,.75,1].forEach(ring => {
+    const pts = axes.map((_,i)=>pt(i,ring).join(',')).join(' ');
+    svg += `<polygon points="${pts}" fill="none" stroke="${ring===1?'#2a2a40':'#1a1a30'}" stroke-width="${ring===1?1.5:.5}"/>`;
+  });
+  // Spokes
+  axes.forEach((_,i) => {
+    const [x,y]=pt(i,1);
+    svg += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#1e1e35" stroke-width="1"/>`;
+  });
+  // League avg polygon
+  const avgPts = axes.map((ax,i)=>{
+    const ratio = Math.min(avgVals[i]/ax.max, 1);
+    return pt(i,ratio).join(',');
+  }).join(' ');
+  svg += `<polygon points="${avgPts}" fill="rgba(148,163,184,.08)" stroke="rgba(148,163,184,.4)" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  // Player polygon
+  const playerPts = axes.map((ax,i)=>{
+    const ratio = Math.min(ax.val/ax.max, 1);
+    return pt(i,ratio).join(',');
+  }).join(' ');
+  svg += `<polygon points="${playerPts}" fill="${color}22" stroke="${color}" stroke-width="2"/>`;
+  // Dots
+  axes.forEach((ax,i) => {
+    const ratio = Math.min(ax.val/ax.max, 1);
+    const [x,y]=pt(i,ratio);
+    svg += `<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`;
+  });
+  // Labels
+  axes.forEach((ax,i) => {
+    const [x,y]=pt(i,1.22);
+    const anchor = x<cx-5?'end':x>cx+5?'start':'middle';
+    svg += `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" font-family="DM Sans,sans-serif" fill="#94a3b8" dominant-baseline="middle">${ax.lbl}</text>`;
+    const [xv,yv]=pt(i,Math.min(ax.val/ax.max,1));
+    svg += `<title>${ax.lbl}: ${fmt(ax.val,1)}</title>`;
+  });
+  // Legend
+  svg += `<line x1="10" y1="248" x2="28" y2="248" stroke="${color}" stroke-width="2"/>
+    <circle cx="19" cy="248" r="3" fill="${color}"/>
+    <text x="32" y="248" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Igralec</text>
+    <line x1="85" y1="248" x2="103" y2="248" stroke="rgba(148,163,184,.6)" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="107" y="248" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Povp. lige</text>`;
+  svg += `</svg>`;
+  return svg;
+}
+
+// ─── SCORING BREAKDOWN ───
+function drawScoring(pts2, pts3, ptsFT, total, color, t) {
+  if(total===0) return '<div class="empty">Ni točk</div>';
+  const pct2=pts2/total, pct3=pts3/total, pctFT=ptsFT/total;
+  const w=260, h=36, pad=0;
+  const w2=Math.round(pct2*w), w3=Math.round(pct3*w), wFT=w-w2-w3;
+  const colors=['#f97316','#3b82f6','#22c55e'];
+  const labels=['2T','3T','PM'];
+  const vals=[pts2,pts3,ptsFT];
+  const pcts=[Math.round(pct2*100),Math.round(pct3*100),Math.round(pctFT*100)];
+  const widths=[w2,w3,wFT];
+
+  let bar=`<svg viewBox="0 0 ${w} ${h+60}" style="width:100%;max-width:280px;display:block;margin:0 auto">`;
+  let x=0;
+  widths.forEach((bw,i)=>{
+    if(bw<=0)return;
+    bar+=`<rect x="${x}" y="0" width="${bw}" height="${h}" fill="${colors[i]}" rx="${i===0?4:0}" ry="${i===0?4:0}"/>`;
+    if(bw>28) bar+=`<text x="${x+bw/2}" y="${h/2}" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" fill="white" font-family="DM Mono,monospace">${pcts[i]}%</text>`;
+    x+=bw;
+  });
+  // Legend below
+  let lx=0;
+  labels.forEach((lbl,i)=>{
+    bar+=`<rect x="${lx}" y="${h+12}" width="12" height="12" fill="${colors[i]}" rx="2"/>`;
+    bar+=`<text x="${lx+16}" y="${h+18}" font-size="11" fill="#94a3b8" font-family="DM Sans,sans-serif" dominant-baseline="middle">${lbl}: ${vals[i]} (${pcts[i]}%)</text>`;
+    lx += 86;
+  });
+  bar+=`</svg>`;
+
+  // Below bar: per-game breakdown
+  return bar + `<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+    ${['2T','3T','PM'].map((l,i)=>`<div style="flex:1;min-width:70px;background:var(--card2);border-radius:6px;padding:6px 10px;text-align:center;border-top:2px solid ${colors[i]}">
+      <div style="font-family:var(--fm);font-size:.85rem;color:${colors[i]};font-weight:600">${fmt(vals[i]/t,1)}</div>
+      <div style="font-size:.6rem;color:var(--mut)">${l}/tm</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ── INIT ──
+renderTeam();
+</script>
+</body>
+</html>
