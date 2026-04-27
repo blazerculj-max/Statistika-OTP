@@ -645,6 +645,33 @@ function getTmAgg(team){
   return _tmAgg[team];
 }
 
+// ── MERGED PLAYER LIST (combines players who played for multiple teams) ──
+let _leaguePlayers = null;
+function getLeaguePlayers() {
+  if (_leaguePlayers) return _leaguePlayers;
+  // Group by name+born
+  const groups = {};
+  P.forEach(p => {
+    const key = p[F.name] + '_' + p[F.born];
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+  _leaguePlayers = Object.values(groups).map(grp => {
+    if (grp.length === 1) return grp[0];
+    // Merge: sum all numeric stats, combine team names
+    const merged = [...grp[0]]; // copy first entry
+    merged[F.team] = grp.map(p => p[F.team]).join(' / ');
+    // Sum numeric fields
+    const numFields = [F.T, F.MIN, F.fg2m, F.fg2a, F.fg3m, F.fg3a, F.ftm, F.fta,
+      F.toc, F.nap, F.obr, F.pod, F.sto, F.izs, F.izg, F.pz, F.blk, F.pre, F.pm, F.efe];
+    numFields.forEach(fi => {
+      merged[fi] = grp.reduce((s, p) => s + p[fi], 0);
+    });
+    return merged;
+  });
+  return _leaguePlayers;
+}
+
 function showTab(t){
   document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('active'));
@@ -820,7 +847,7 @@ const LEADER_CATS=[
 
 function renderLeaders(){
   const html=LEADER_CATS.map(cat=>{
-    let entries=P.filter(p=>p[F.T]>=lMin);
+    let entries=getLeaguePlayers().filter(p=>p[F.T]>=lMin);
     let vals;
     if(cat.pct){
       // Per-game shot attempt filter
@@ -892,7 +919,7 @@ function renderLeaders(){
         <div class="lrk ${rankCls(r)}">${r+1}</div>
         <div class="lri">
           <div class="lrn">${p[F.name]}</div>
-          <div class="lrtm" style="color:${TEAM_COLORS[p[F.team]]}">${TEAM_SHORT[p[F.team]]||p[F.team]}</div>
+          <div class="lrtm" style="color:${TEAM_COLORS[p[F.team].split(' / ')[0]]||'#888'}">${p[F.team].split(' / ').map(t=>TEAM_SHORT[t]||t).join('/')}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div class="lrv" style="color:${cat.color}">${cat.pct||cat.ts||cat.usg||cat.flr?fmt(e.v,1)+'%':cat.at?fmt(e.v,2):fmt(e.v,lMode==='avg'?1:0)}</div>
@@ -922,7 +949,7 @@ function renderAge(){
   // Aggregate by age group
   const data={};
   groups.forEach(g=>{data[g]={players:[],min:0,toc:0,efe:0}});
-  P.forEach(p=>{
+  getLeaguePlayers().forEach(p=>{
     const g=ageGroup(p[F.born]);
     if(data[g]){
       // Avoid double-counting Mahkovic (count once per person)
@@ -1004,7 +1031,7 @@ let selectedPlayers=[];
 function doSearch(){
   const q=(document.getElementById('srch').value||'').toLowerCase();
   const tm=document.getElementById('srch-team').value;
-  let res=P;
+  let res=getLeaguePlayers();
   if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q));
   if(tm)res=res.filter(p=>p[F.team]===tm);
   // Deduplicate by name+born (Mahkovic plays for 2 teams - show both)
@@ -1016,7 +1043,7 @@ function doSearch(){
         <span class="pname-link" onclick="showPlayer(${P.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
         <span onclick="selectPlayer(${P.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
       </div>
-      <div class="pc-meta" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
+      <div class="pc-meta" style="color:${TEAM_COLORS[p[F.team].split(' / ')[0]]||'#888'}">${p[F.team]} · ${p[F.T]} tekem</div>
       <div class="pc-stats">
         <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.toc]/p[F.T])}</div><div class="pc-sl">TOČ/tm</div></div>
         <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt((p[F.nap]+p[F.obr])/p[F.T])}</div><div class="pc-sl">SK/tm</div></div>
@@ -1127,7 +1154,7 @@ function showPlayer(idx) {
   document.body.style.overflow = 'hidden';
 
   // Compute league context for radar
-  const leagueQual = P.filter(x => x[F.T] >= 10);
+  const leagueQual = getLeaguePlayers().filter(x => x[F.T] >= 10);
   function leagueMax(fn) { return Math.max(...leagueQual.map(fn)); }
   function leagueAvg(fn) { const v = leagueQual.map(fn); return v.reduce((a,b)=>a+b,0)/v.length; }
 
