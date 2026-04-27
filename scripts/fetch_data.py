@@ -131,3 +131,36 @@ print(f"=== KZS Fetcher {datetime.now(timezone.utc).isoformat()} ===")
 for key, lg in LEAGUES.items():
     process_league(key, lg)
 print("\n=== Done! ===")
+
+def export_attendance(all_leagues_matches):
+    """Export attendance data in format usable by obiski-tekem app."""
+    att_data = {}
+    for league_key, matches in all_leagues_matches.items():
+        att_data[league_key] = [
+            {
+                'id': m['id'],
+                'round': m['round'],
+                'date': m.get('dateTime',''),
+                'home': m['firstTeamName'],
+                'away': m['secondTeamName'],
+                'homeScore': m.get('firstTeamScore'),
+                'awayScore': m.get('secondTeamScore'),
+                'attendance': m.get('attendance', 0),
+                'hall': m.get('sportHallName',''),
+                'phase': m.get('competitions',[{}])[0].get('competitionPhaseName','Redni del'),
+                'status': m.get('status','')
+            }
+            for m in matches if m.get('status') == 'FINISHED'
+        ]
+
+    now = datetime.now(timezone.utc).isoformat()
+    with open('data/attendance.json', 'w') as f:
+        json.dump({'updatedAt': now, 'leagues': att_data}, f,
+                  ensure_ascii=False, separators=(',',':'))
+    print(f"\nSaved data/attendance.json ({os.path.getsize('data/attendance.json')//1024} KB)")
+
+# Call export at end of main (add to existing script)
+# all_matches_by_league = {}
+# for key, lg in LEAGUES.items():
+#     process_league(key, lg)  <- already saves
+# export_attendance(all_matches_by_league)
