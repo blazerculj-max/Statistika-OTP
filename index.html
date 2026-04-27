@@ -821,14 +821,19 @@ function aggregatePlayers(phaseFilter) {
         // IZS = foulReceived
         p.izs += ps.foulReceived;
 
-        // Game log for trend
+        // Game log for trend — deduplicate by matchId
         if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
-        playerGameLog[ps.playerId].push({
-          round, matchId: matchData.matchId, team: teamName,
-          pts: ps.points, reb: ps.offensiveRebounds + ps.defensiveRebounds,
-          ast: ps.assists, efe: ps.efficiencyCustom || ps.efficiency || 0,
-          min: ps.minutes
-        });
+        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
+        if (!alreadyLogged) {
+          playerGameLog[ps.playerId].push({
+            round, matchId: matchData.matchId, team: teamName,
+            pts: ps.points,
+            reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
+            ast: ps.assists || 0,
+            efe: ps.efficiencyCustom || ps.efficiency || 0,
+            min: ps.minutes
+          });
+        }
       });
     });
   });
@@ -1222,7 +1227,7 @@ function renderMiniTrend(pid){
   const bars=last5.map(g=>{
     const h=g.efe>0?Math.max(4,Math.round(g.efe/maxEfe*16)):4;
     const col=g.efe>15?'#34d399':g.efe>8?'#facc15':g.efe>0?'#f97316':'#f87171';
-    const tip=`K${g.round}: ${g.pts}pts ${g.reb}sk ${g.ast}ast EFE:${g.efe}`;
+    const tip=`K${g.round}: ${g.pts} točk · ${g.reb} sk · ${g.ast} ast · EFE: ${g.efe}`;
     return `<div style="width:4px;height:${h}px;background:${col};border-radius:1px;flex-shrink:0;cursor:default" title="${tip}"></div>`;
   }).join('');
   return `<span style="display:inline-flex;align-items:flex-end;gap:1px;margin-left:6px;vertical-align:middle">${bars}</span>`;
@@ -1779,7 +1784,7 @@ function drawTrend(pid, color){
 
     // Invisible hover rect for tooltip
     bars+=`<rect x="${x}" y="${padT}" width="${bw}" height="${chartH}" fill="transparent" class="trend-hover"
-      data-tip="Krog ${g.round}: ${g.pts} točk · ${g.reb} skokov · ${g.ast} asist · EFE: ${g.efe}"
+      data-tip="K${g.round} | ${g.pts} točk · ${g.reb} sk · ${g.ast} ast · EFE: ${g.efe} | ${Math.round(g.min)} min"
       onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()"/>`;
   });
 
