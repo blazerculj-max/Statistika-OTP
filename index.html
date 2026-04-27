@@ -240,6 +240,9 @@ select:focus{outline:none;border-color:var(--acc)}
 .hc-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-family:var(--fh);font-size:.9rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s}
 .hc-btn.liga1{background:var(--acc);color:white}
 .hc-btn.liga2{background:var(--blue);color:white}
+.hc-btn.liga3{background:#a855f7;color:white}
+.hero-card.liga3::before{background:linear-gradient(135deg,rgba(168,85,247,.12),transparent)}
+.hero-card:hover.liga3{border-color:rgba(168,85,247,.5)}
 .hc-btn:hover{opacity:.9;transform:translateX(2px)}
 .hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
 /* STANDINGS */
@@ -301,8 +304,8 @@ select:focus{outline:none;border-color:var(--acc)}
   <div class="hero-wrap">
     <div class="hero-badge">🇸🇮 Sezona 2025/26</div>
     <div class="hero-title">SLOVENSKA<br><span>KOŠARKA</span></div>
-    <div class="hero-sub">Napredna statistika · Live rezultati · Play-by-play analiza</div>
-    <div class="hero-leagues">
+    <div class="hero-sub">1. SKL · 2. SKL · 3. SKL · Napredna statistika · Live rezultati</div>
+    <div class="hero-leagues" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
       <div class="hero-card liga1" onclick="selectLeague('liga1')">
         <div class="hc-badge" style="color:var(--acc)">⭐ Prva liga</div>
         <div class="hc-name">Liga OTP banka</div>
@@ -328,6 +331,18 @@ select:focus{outline:none;border-color:var(--acc)}
         </div>
         <button class="hc-btn liga2">Odpri statistiko →</button>
       </div>
+      <div class="hero-card liga3" onclick="selectLeague('liga3')" style="border-color:rgba(168,85,247,.3)">
+        <div class="hc-badge" style="color:#a855f7">🏀 Tretja liga</div>
+        <div class="hc-name">3. SKL</div>
+        <div class="hc-meta">20 ekip · Vzhod + Zahod · Končnica</div>
+        <div class="hc-teams" id="hero-teams-liga3">
+          <div class="hc-team-pill">Branik Maribor</div>
+          <div class="hc-team-pill">Konjice</div>
+          <div class="hc-team-pill">Hidria</div>
+          <div class="hc-team-pill">+ 17 ekip</div>
+        </div>
+        <button class="hc-btn liga3" style="background:#a855f7;color:white">Odpri statistiko →</button>
+      </div>
     </div>
     <div class="hero-footer">Podatki se samodejno osvežujejo · Vir: KZS API + FIBA LiveStats</div>
   </div>
@@ -352,6 +367,7 @@ select:focus{outline:none;border-color:var(--acc)}
       <div class="tgl" style="margin-right:4px">
         <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
         <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
+        <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')">3. SKL</button>
       </div>
       <span class="hdr-badge" id="league-badge">Liga OTP banka</span>
       <button onclick="cacheClear()" title="Počisti predpomnilnik" style="background:transparent;border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fm)">♻️ cache</button>
@@ -369,6 +385,7 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
   <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
   <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
+  <button class="nb" onclick="showTab('obiski')">👥 OBISKI TEKEM</button>
 </nav>
 
 <div class="content">
@@ -402,6 +419,15 @@ select:focus{outline:none;border-color:var(--acc)}
       <div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div><span>Vodilni v asistencah</span>
       <div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span>Vodilni v EFE</span>
     </div>
+  </div>
+
+  <div id="tab-obiski" class="tab" style="padding:0;height:calc(100vh - 120px)">
+    <iframe
+      id="obiski-iframe"
+      src="about:blank"
+      style="width:100%;height:100%;border:none;border-radius:0 0 10px 10px"
+      allow="clipboard-write"
+    ></iframe>
   </div>
 
   <div id="tab-obisk" class="tab">
@@ -552,11 +578,10 @@ const LEAGUES = {
     color: '#f97316',
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
     pbpUrl:   GITHUB_RAW + '/liga1_pbp.json',
-    cacheStats: 'liga1_stats_v2',
-    cachePbp:   'liga1_pbp_v2',
-    // All phase IDs — fetched together
-    phaseIds: null, // null = fetch all phases for this competitionId
-    teams: ['GGD Šenčur','Krka','Kansai Helios','Laško','Rogaška','Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi','ECE Triglav Kranj'],
+    cacheStats: 'liga1_stats_v3',
+    cachePbp:   'liga1_pbp_v3',
+    phaseIds: null,
+    teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj'],
   },
   'liga2': {
     id: 581,
@@ -565,11 +590,28 @@ const LEAGUES = {
     color: '#60a5fa',
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
     pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
-    cacheStats: 'liga2_stats_v2',
-    cachePbp:   'liga2_pbp_v2',
-    // All phases: Redni del(5813) + Obstanek(5873) + Četrtfinale(5874) + Polfinale(5880)
+    cacheStats: 'liga2_stats_v3',
+    cachePbp:   'liga2_pbp_v3',
     phaseIds: [5813, 5873, 5874, 5880],
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
+  },
+  'liga3': {
+    id: 582,
+    name: '3. SKL',
+    short: '3. SKL',
+    color: '#a855f7',
+    statsUrl: GITHUB_RAW + '/liga3_stats.json',
+    pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
+    cacheStats: 'liga3_stats_v1',
+    cachePbp:   'liga3_pbp_v1',
+    // Redni del (phaseId=5814, vzhod groupId=6093 + zahod groupId=6094) + Četrtfinale(5820) + 1.krog(5819)
+    phaseIds: [5814, 5819, 5820],
+    groups: {5814: [6093, 6094]}, // vzhod + zahod
+    teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
+            'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
+            'Janče ECP Tactical','Kolpa','Konjice','Koper','Kovinarstvo Bučar Miklavž',
+            'Leone Ajdovščina','Litija','Mesarija Prunk Sežana','Nazarje','Tera Tolmin',
+            'Vojnik G7','Vrani Vransko'],
   },
 };
 
@@ -666,9 +708,10 @@ function selectLeague(lg) {
   currentLeague = lg;
   const l = getLg();
   // Update loading title
-  document.getElementById('load-title').innerHTML = l.short === '1. SKL'
-    ? 'LIGA <span style="color:var(--acc)">OTP BANKA</span>'
-    : '2. <span style="color:var(--blue)">SKL</span>';
+  let loadHtml = 'LIGA <span style="color:var(--acc)">OTP BANKA</span>';
+  if(l.short === '2. SKL') loadHtml = '2. <span style="color:var(--blue)">SKL</span>';
+  if(l.short === '3. SKL') loadHtml = '3. <span style="color:#a855f7">SKL</span>';
+  document.getElementById('load-title').innerHTML = loadHtml;
   // Update header
   updateHeader();
   loadAllData();
@@ -678,9 +721,9 @@ function updateHeader() {
   const l = getLg();
   const title = document.getElementById('hdr-title');
   if (title) {
-    title.innerHTML = l.id === 579
-      ? 'LIGA <span>OTP BANKA</span>'
-      : '2. <span>SKL</span>';
+    if(l.id === 579) title.innerHTML = 'LIGA <span>OTP BANKA</span>';
+    else if(l.id === 581) title.innerHTML = '2. <span>SKL</span>';
+    else title.innerHTML = '3. <span>SKL</span>';
   }
   const badge = document.getElementById('league-badge');
   if (badge) {
@@ -770,24 +813,33 @@ async function loadAllData() {
 
     // ── 3. Fallback: direktni API ──
     setProgress(15, 'Nalagam iz API...');
-    // Fetch matches — use phase IDs for 2. SKL to avoid fetching entire KZS database
+    // Fetch matches — use phase IDs to avoid fetching entire KZS database
     setProgress(16, 'Nalagam tekme...');
     const phaseIds = getLg().phaseIds;
+    const phaseGroups = getLg().groups || {};
     let allItems = [];
     if(phaseIds) {
-      // Fetch per phase (precise, fast)
       for(let i=0; i<phaseIds.length; i++) {
-        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${phaseIds[i]}`);
-        const data = await res.json();
-        const items = data.data?.items || [];
-        allItems = allItems.concat(items);
+        const pid = phaseIds[i];
+        const gids = phaseGroups[pid]; // optional group filter
+        if(gids) {
+          // Fetch each group separately (e.g. 3.SKL vzhod/zahod)
+          for(const gid of gids) {
+            const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}&competitionPhaseGroupId=${gid}`);
+            const data = await res.json();
+            allItems = allItems.concat(data.data?.items || []);
+          }
+        } else {
+          const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
+          const data = await res.json();
+          allItems = allItems.concat(data.data?.items || []);
+        }
         setProgress(16 + Math.round((i+1)/phaseIds.length * 10), `Nalagam tekme... faza ${i+1}/${phaseIds.length} (${allItems.length} tekem)`);
       }
-      // Deduplicate
+      // Deduplicate by match ID
       const seen = new Set();
       allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
     } else {
-      // Single page fetch for smaller leagues
       const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}`);
       const data = await res.json();
       allItems = data.data?.items || [];
@@ -1175,9 +1227,14 @@ function showTab(t){
   if(t==='iskanje')doSearch();
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
+  if(t==='obiski'){
+    const iframe=document.getElementById('obiski-iframe');
+    if(iframe.src==='about:blank')
+      iframe.src='https://blazerculj-max.github.io/obiski-tekem/';
+  }
   if(t==='liga'||t==='ekipe'){
     // Show/hide phase filters based on league
-    const hasObstanek = getLg().id === 581;
+    const hasObstanek = getLg().id === 581; // samo 2. SKL ima ligo za obstanek
     const obstBtn = document.getElementById('lph-obstanek');
     if(obstBtn) obstBtn.style.display = hasObstanek ? '' : 'none';
     const phaseFilterEl = document.getElementById('phase-filter');
@@ -1998,14 +2055,16 @@ function renderAttendance() {
     return;
   }
 
-  // Per team stats
+  // Per team stats — include group name for 3. SKL
   const byTeam = {};
   finished.forEach(m => {
-    const home = normalizeTeamName(m.firstTeamName) || m.firstTeamName;
-    if (!byTeam[home]) byTeam[home] = {name:home, total:0, count:0, games:[]};
+    const home = m.firstTeamName;
+    const group = m.competitions?.[0]?.competitionPhaseGroupName || '';
+    if (!byTeam[home]) byTeam[home] = {name:home, total:0, count:0, games:[], group};
     byTeam[home].total += m.attendance;
     byTeam[home].count++;
-    byTeam[home].games.push({round:m.round, att:m.attendance, opp:normalizeTeamName(m.secondTeamName)||m.secondTeamName});
+    byTeam[home].games.push({round:m.round, att:m.attendance, opp:m.secondTeamName,
+      phase:m.competitions?.[0]?.competitionPhaseName||''});
   });
 
   const teams = Object.values(byTeam)
@@ -2020,6 +2079,7 @@ function renderAttendance() {
     const val = attMode==='avg' ? t.avg : t.total;
     const tc = TEAM_COLORS[t.name] || '#888';
     const rk = i<3?['🥇','🥈','🥉'][i]:(i+1);
+    const groupTag = t.group ? `<span style="font-size:.6rem;padding:1px 5px;border-radius:3px;background:rgba(168,85,247,.15);color:#a855f7;margin-left:4px">${t.group}</span>` : '';
     // Mini trend
     const trendGames = [...t.games].sort((a,b)=>a.round-b.round).slice(-8);
     const maxAtt = Math.max(...trendGames.map(g=>g.att),1);
