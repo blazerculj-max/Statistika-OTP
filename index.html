@@ -197,6 +197,33 @@ select:focus{outline:none;border-color:var(--acc)}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* MOMENTUM CHART */
 .momentum-wrap{background:var(--card2);border-radius:8px;padding:12px;margin-bottom:16px}
+/* LIVE SCORES */
+.live-container{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.live-container{grid-template-columns:1fr}}
+.live-section-title{font-family:var(--fh);font-size:1.3rem;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.live-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s;cursor:pointer}
+.live-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.live-card.is-live{border-color:rgba(239,68,68,.4);box-shadow:0 0 20px rgba(239,68,68,.08)}
+.live-card.is-today{border-color:rgba(249,115,22,.25)}
+.live-header{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:.65rem;font-family:var(--fm);color:var(--mut)}
+.live-pulse{display:inline-flex;align-items:center;gap:4px;color:#ef4444;font-weight:700}
+.live-pulse::before{content:'';width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s ease infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+.live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 16px;gap:10px}
+.live-team-name{font-family:var(--fh);font-size:1.05rem;letter-spacing:.03em;line-height:1.2}
+.live-team-name.home{text-align:left}
+.live-team-name.away{text-align:right}
+.live-score{font-family:var(--fh);font-size:2rem;letter-spacing:.04em;text-align:center;min-width:80px;color:var(--text)}
+.live-score.upcoming{font-size:1rem;color:var(--mut)}
+.live-footer{padding:6px 14px 10px;display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-family:var(--fm);color:var(--mut)}
+.live-quarter{background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700;font-size:.68rem}
+.live-ticker{background:var(--card2);border-top:1px solid var(--border);padding:8px 14px;font-size:.7rem;font-family:var(--fm);color:var(--sub);max-height:80px;overflow-y:auto}
+.live-ticker-item{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:8px}
+.live-ticker-time{color:var(--mut);flex-shrink:0;width:36px}
+.live-empty{text-align:center;padding:60px 20px;color:var(--mut);font-size:.85rem}
+.live-empty-icon{font-size:3rem;margin-bottom:12px;opacity:.4}
+.score-updated{animation:scoreFlash .5s ease}
+@keyframes scoreFlash{0%{color:var(--acc)}100%{color:var(--text)}}
 /* ATTENDANCE */
 .att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
 .att-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -377,6 +404,10 @@ select:focus{outline:none;border-color:var(--acc)}
 </header>
 
 <nav class="nav">
+  <button class="nb" id="live-nav-btn" onclick="showTab('live')" style="position:relative">
+    🔴 LIVE
+    <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
+  </button>
   <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
   <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
   <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
@@ -428,6 +459,22 @@ select:focus{outline:none;border-color:var(--acc)}
       style="width:100%;height:100%;border:none;border-radius:0 0 10px 10px"
       allow="clipboard-write"
     ></iframe>
+  </div>
+
+  <div id="tab-live" class="tab">
+    <div class="ctrls" style="flex-wrap:wrap;gap:10px">
+      <div id="live-last-update" style="font-size:.7rem;color:var(--mut);font-family:var(--fm)">Posodabljam...</div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button onclick="refreshLive()" style="background:var(--card2);border:1px solid var(--border2);color:var(--sub);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.7rem;font-family:var(--fm)">↻ Osveži</button>
+        <select id="live-league-filter" onchange="renderLiveTab()" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:6px;padding:4px 10px;font-size:.7rem;font-family:var(--fm)">
+          <option value="all">Vse lige</option>
+          <option value="liga1">1. SKL</option>
+          <option value="liga2">2. SKL</option>
+          <option value="liga3">3. SKL</option>
+        </select>
+      </div>
+    </div>
+    <div id="live-wrap"></div>
   </div>
 
   <div id="tab-obisk" class="tab">
@@ -635,6 +682,9 @@ const TEAM_SHORT = {
 // ═══════════════════════════════════════════════════
 let P = [];           // aggregated players [{...}]
 let pbpData = {};     // matchId → pbp array
+let liveScores = {};  // matchId → {score1, score2, quarter, time, ticker:[]}
+let allLeagueMatches = {}; // liga key → allMatches
+let liveRefreshTimer = null;
 let pbpLoaded = false;
 let nerdView = 'clutch';
 let nerdStats = null; // computed nerd stats cache
@@ -780,6 +830,7 @@ async function loadAllData() {
       setProgress(100, '⚡ Naloženo iz predpomnilnika (' + age + ')');
       setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
       initWebSocket();
+    startLiveRefresh();
       return;
     }
 
@@ -1018,24 +1069,7 @@ function subscribeToLiveMatches() {
   });
 }
 
-function handleLiveScore(msg) {
-  if (!msg?.matchId) return;
-  document.getElementById('live-badge').style.display = 'block';
-  // Update match card if visible
-  const card = document.getElementById('mc-' + msg.matchId);
-  if (card) {
-    card.classList.add('live');
-    const scoreEl = card.querySelector('.mc-score');
-    if (scoreEl && msg.score1 !== undefined) {
-      scoreEl.textContent = `${msg.score1} : ${msg.score2}`;
-    }
-  }
-  // Update match overlay if open
-  if (liveMatchId === msg.matchId) {
-    const el = document.getElementById('mo-score');
-    if (el && msg.score1 !== undefined) el.textContent = `${msg.score1} : ${msg.score2}`;
-  }
-}
+// handleLiveScore moved to LIVE ENGINE section above
 
 // ═══════════════════════════════════════════════════
 // INIT UI
@@ -1227,6 +1261,7 @@ function showTab(t){
   if(t==='iskanje')doSearch();
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
+  if(t==='live')renderLiveTab();
   if(t==='obiski'){
     const iframe=document.getElementById('obiski-iframe');
     if(iframe.src==='about:blank')
@@ -2033,6 +2068,245 @@ function drawScoring(pts2,pts3,ptsFT,total,color,t){
 }
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════
+// LIVE SCORES ENGINE
+// ═══════════════════════════════════════
+
+function getTodayMatches(matchList) {
+  const now = new Date();
+  const todayStart = new Date(now); todayStart.setHours(0,0,0,0);
+  const todayEnd = new Date(now); todayEnd.setHours(23,59,59,999);
+  return matchList.filter(m => {
+    const d = new Date(m.dateTime);
+    return d >= todayStart && d <= todayEnd;
+  });
+}
+
+function getRecentMatches(matchList, days=3) {
+  const now = new Date();
+  const cutoff = new Date(now - days * 24 * 3600 * 1000);
+  return matchList.filter(m => {
+    const d = new Date(m.dateTime);
+    return d >= cutoff && d <= now && m.status === 'FINISHED';
+  }).sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime));
+}
+
+function getUpcomingMatches(matchList, days=7) {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() + days * 24 * 3600 * 1000);
+  return matchList.filter(m => {
+    const d = new Date(m.dateTime);
+    return d > now && d <= cutoff && m.status !== 'FINISHED';
+  }).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+}
+
+function formatMatchTime(dateTime) {
+  const d = new Date(dateTime);
+  const now = new Date();
+  const diff = now - d;
+  const isToday = d.toDateString() === now.toDateString();
+  const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === d.toDateString();
+  const time = d.toLocaleTimeString('sl', {hour:'2-digit', minute:'2-digit'});
+  if(isToday) return 'Danes · ' + time;
+  if(isTomorrow) return 'Jutri · ' + time;
+  return d.toLocaleDateString('sl', {day:'numeric', month:'short'}) + ' · ' + time;
+}
+
+function buildLiveCard(m, lgKey) {
+  const lg = LEAGUES[lgKey];
+  const liveData = liveScores[m.id] || {};
+  const isLive = m.status === 'LIVE' || liveData.isLive;
+  const isFinished = m.status === 'FINISHED';
+  const isUpcoming = !isLive && !isFinished;
+  const c1 = TEAM_COLORS[normalizeTeamName(m.firstTeamName)] || lg.color;
+  const c2 = TEAM_COLORS[normalizeTeamName(m.secondTeamName)] || '#888';
+  const phaseName = m.competitions?.[0]?.competitionPhaseName || 'Redni del';
+  const groupName = m.competitions?.[0]?.competitionPhaseGroupName || '';
+  const groupTag = groupName ? ` · ${groupName}` : '';
+
+  // Score display
+  let scoreHtml = '';
+  let headerRight = '';
+  if(isLive) {
+    const q = liveData.quarter || '?';
+    const t = liveData.time || '';
+    const s1 = liveData.score1 ?? m.firstTeamScore ?? 0;
+    const s2 = liveData.score2 ?? m.secondTeamScore ?? 0;
+    scoreHtml = `<div class="live-score" id="lscore-${m.id}">${s1} : ${s2}</div>`;
+    headerRight = `<span class="live-pulse">V ŽIVO</span> <span class="live-quarter">Q${q} ${t}</span>`;
+  } else if(isFinished) {
+    const s1 = m.firstTeamScore ?? 0;
+    const s2 = m.secondTeamScore ?? 0;
+    const w1 = s1 > s2 ? 'font-weight:700' : 'opacity:.6';
+    const w2 = s2 > s1 ? 'font-weight:700' : 'opacity:.6';
+    scoreHtml = `<div class="live-score"><span style="${w1}">${s1}</span> : <span style="${w2}">${s2}</span></div>`;
+    headerRight = '<span style="color:var(--green);font-weight:600">KONČANO</span>';
+  } else {
+    scoreHtml = `<div class="live-score upcoming">${formatMatchTime(m.dateTime)}</div>`;
+    headerRight = '<span style="color:var(--mut)">NAČRTOVANO</span>';
+  }
+
+  // PBP ticker for live
+  const ticker = liveData.ticker ? liveData.ticker.slice(-5).reverse().map(ev =>
+    `<div class="live-ticker-item"><span class="live-ticker-time">${ev.time}</span><span>${ev.text}</span></div>`
+  ).join('') : '';
+
+  return `<div class="live-card ${isLive?'is-live':''} ${isUpcoming&&new Date(m.dateTime).toDateString()===new Date().toDateString()?'is-today':''}"
+    onclick="openMatch(${m.id})">
+    <div class="live-header">
+      <span style="color:${lg.color};font-weight:600">${lg.short}</span>
+      <span style="color:var(--mut)">K${m.round} · ${phaseName}${groupTag}</span>
+      ${headerRight}
+    </div>
+    <div class="live-teams">
+      <div class="live-team-name home" style="color:${c1}">${m.firstTeamName}</div>
+      ${scoreHtml}
+      <div class="live-team-name away" style="color:${c2}">${m.secondTeamName}</div>
+    </div>
+    <div class="live-footer">
+      <span>${m.sportHallName || ''}</span>
+      ${m.attendance>0 ? `<span>👥 ${m.attendance}</span>` : ''}
+    </div>
+    ${isLive && ticker ? `<div class="live-ticker">${ticker}</div>` : ''}
+  </div>`;
+}
+
+function renderLiveTab() {
+  const wrap = document.getElementById('live-wrap');
+  const filter = document.getElementById('live-league-filter')?.value || 'all';
+  if(!wrap) return;
+
+  // Gather matches from current league (or all if we had all)
+  const matches = allMatches;
+  if(!matches.length) {
+    wrap.innerHTML = `<div class="live-empty"><div class="live-empty-icon">🏀</div>Najprej naloži ligo iz hero page</div>`;
+    return;
+  }
+
+  const lgKey = currentLeague;
+  const liveMatches = matches.filter(m => m.status === 'LIVE');
+  const todayMatches = getTodayMatches(matches).filter(m => m.status !== 'LIVE');
+  const recentMatches = getRecentMatches(matches, 2);
+  const upcomingMatches = getUpcomingMatches(matches, 7);
+
+  let html = '';
+
+  // LIVE section
+  if(liveMatches.length) {
+    html += `<div class="live-section-title" style="color:#ef4444">🔴 V ŽIVO (${liveMatches.length})</div>`;
+    html += `<div class="live-container" style="margin-bottom:24px">`;
+    html += liveMatches.map(m => buildLiveCard(m, lgKey)).join('');
+    html += `</div>`;
+  }
+
+  // TODAY section
+  if(todayMatches.length) {
+    html += `<div class="live-section-title" style="color:var(--acc)">📅 Danes</div>`;
+    html += `<div class="live-container" style="margin-bottom:24px">`;
+    html += todayMatches.map(m => buildLiveCard(m, lgKey)).join('');
+    html += `</div>`;
+  }
+
+  // No live/today
+  if(!liveMatches.length && !todayMatches.length) {
+    html += `<div class="live-empty">
+      <div class="live-empty-icon">📭</div>
+      <div>Danes ni tekem za ${LEAGUES[lgKey].name}</div>
+      <div style="font-size:.75rem;margin-top:8px;color:var(--mut)">Zadnji rezultati in prihajajoče tekme spodaj</div>
+    </div>`;
+  }
+
+  // RECENT section
+  if(recentMatches.length) {
+    html += `<div class="live-section-title" style="color:var(--sub)">✅ Zadnji rezultati</div>`;
+    html += `<div class="live-container" style="margin-bottom:24px">`;
+    html += recentMatches.slice(0,6).map(m => buildLiveCard(m, lgKey)).join('');
+    html += `</div>`;
+  }
+
+  // UPCOMING section
+  if(upcomingMatches.length) {
+    html += `<div class="live-section-title" style="color:var(--mut)">🗓️ Prihajajoče tekme</div>`;
+    html += `<div class="live-container">`;
+    html += upcomingMatches.slice(0,8).map(m => buildLiveCard(m, lgKey)).join('');
+    html += `</div>`;
+  }
+
+  wrap.innerHTML = html || `<div class="live-empty"><div class="live-empty-icon">📭</div>Ni tekem za prikaz</div>`;
+
+  // Update last refresh time
+  const upd = document.getElementById('live-last-update');
+  if(upd) upd.textContent = 'Posodobljeno: ' + new Date().toLocaleTimeString('sl', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function refreshLive() {
+  // Re-subscribe WebSocket and re-render
+  subscribeToLiveMatches();
+  renderLiveTab();
+}
+
+// Enhanced WebSocket handler
+function handleLiveScore(msg) {
+  if (!msg?.matchId) return;
+
+  // Update live scores state
+  if(!liveScores[msg.matchId]) liveScores[msg.matchId] = {ticker:[], isLive:true};
+  const ls = liveScores[msg.matchId];
+  ls.isLive = true;
+  if(msg.score1 !== undefined) {ls.score1 = msg.score1; ls.score2 = msg.score2;}
+  if(msg.quarter) ls.quarter = msg.quarter;
+  if(msg.time) ls.time = msg.time;
+
+  // Add ticker event
+  if(msg.action) {
+    ls.ticker.push({time: msg.time || '', text: msg.action});
+    if(ls.ticker.length > 20) ls.ticker.shift();
+  }
+
+  // Update live badge
+  const liveCount = Object.keys(liveScores).length;
+  const badge = document.getElementById('live-badge');
+  const countBadge = document.getElementById('live-count-badge');
+  if(badge) badge.style.display = 'block';
+  if(countBadge) { countBadge.style.display = 'flex'; countBadge.textContent = liveCount; }
+
+  // Update score in live tab if visible
+  const scoreEl = document.getElementById('lscore-' + msg.matchId);
+  if(scoreEl && msg.score1 !== undefined) {
+    scoreEl.textContent = `${msg.score1} : ${msg.score2}`;
+    scoreEl.classList.add('score-updated');
+    setTimeout(() => scoreEl.classList.remove('score-updated'), 500);
+  }
+
+  // Update match card in TEKME tab
+  const card = document.getElementById('mc-' + msg.matchId);
+  if (card) {
+    card.classList.add('live');
+    const scoreEl2 = card.querySelector('.mc-score');
+    if (scoreEl2 && msg.score1 !== undefined) {
+      scoreEl2.textContent = `${msg.score1} : ${msg.score2}`;
+      scoreEl2.style.color = '#22c55e';
+    }
+  }
+
+  // Update overlay if open
+  if (liveMatchId === msg.matchId) {
+    const el = document.getElementById('mo-score');
+    if (el && msg.score1 !== undefined) el.textContent = `${msg.score1} : ${msg.score2}`;
+  }
+}
+
+// Auto-refresh live tab every 30 seconds when on live tab
+function startLiveRefresh() {
+  if(liveRefreshTimer) clearInterval(liveRefreshTimer);
+  liveRefreshTimer = setInterval(() => {
+    const liveTab = document.getElementById('tab-live');
+    if(liveTab && liveTab.classList.contains('active')) {
+      renderLiveTab();
+    }
+  }, 30000);
+}
 
 // ═══════════════════════════════════════
 // ATTENDANCE
