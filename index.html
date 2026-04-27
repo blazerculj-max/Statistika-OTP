@@ -136,7 +136,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .load-detail{font-size:.72rem;color:var(--mut);font-family:var(--fm);min-height:20px;text-align:center}
 /* MATCHES TAB */
 .round-section{margin-bottom:20px}
-.round-title{font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.round-title{font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:8px;padding:6px 0;border-bottom:2px solid var(--border);transition:color .2s}
 .matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
 .match-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
 .match-card:hover{border-color:var(--acc)}
@@ -890,10 +890,50 @@ function initUI() {
     teams.forEach(t => { const o = document.createElement('option'); o.value = o.textContent = t; el.appendChild(o); });
   });
 
-  // Round filter
-  const rounds = [...new Set(allMatches.map(m => m.round))].sort((a,b)=>a-b);
+  // Round filter — reset first, then add current league options
   const rf = document.getElementById('round-filter');
-  rounds.forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = `Krog ${r}`; rf.appendChild(o); });
+  rf.innerHTML = '<option value="0">Vsi krogli / faze</option>';
+
+  // Group matches by phase for proper labeling
+  const phaseMap = {};
+  allMatches.forEach(m => {
+    const comp = m.competitions?.[0];
+    const phaseId = comp?.competitionPhaseId;
+    const phaseName = comp?.competitionPhaseName || 'Redni del';
+    if (!phaseMap[phaseId]) phaseMap[phaseId] = {name: phaseName, rounds: new Set()};
+    phaseMap[phaseId].rounds.add(m.round);
+  });
+
+  const phases = Object.values(phaseMap);
+  const isMultiPhase = phases.length > 1;
+
+  if (isMultiPhase) {
+    // Show phases as groups
+    phases.forEach(ph => {
+      const rounds = [...ph.rounds].sort((a,b)=>a-b);
+      if (ph.name === 'Redni del') {
+        // Redni del — show individual rounds
+        rounds.forEach(r => {
+          const o = document.createElement('option');
+          o.value = 'r_' + r; o.textContent = 'Krog ' + r;
+          rf.appendChild(o);
+        });
+      } else {
+        // Playoffs — show by phase name
+        const o = document.createElement('option');
+        o.value = 'ph_' + ph.name; o.textContent = ph.name;
+        rf.appendChild(o);
+      }
+    });
+  } else {
+    // Single phase — just rounds
+    const rounds = [...new Set(allMatches.map(m => m.round))].sort((a,b)=>a-b);
+    rounds.forEach(r => {
+      const o = document.createElement('option');
+      o.value = 'r_' + r; o.textContent = 'Krog ' + r;
+      rf.appendChild(o);
+    });
+  }
 
   renderTeam();
   renderMatches();
@@ -1111,33 +1151,87 @@ function sortTeam(i){if(sortCol===i)sortDir*=-1;else{sortCol=i;sortDir=-1;}rende
 // ═══════════════════════════════════════════════════
 // RENDER MATCHES
 // ═══════════════════════════════════════════════════
+function getMatchPhaseName(m) {
+  return m.competitions?.[0]?.competitionPhaseName || 'Redni del';
+}
+
 function renderMatches(){
-  const roundFilter=parseInt(document.getElementById('round-filter').value)||0;
-  const teamFilter=document.getElementById('team-filter-m').value;
-  let matches=allMatches;
-  if(roundFilter>0)matches=matches.filter(m=>m.round===roundFilter);
-  if(teamFilter)matches=matches.filter(m=>normalizeTeamName(m.firstTeamName)===teamFilter||normalizeTeamName(m.secondTeamName)===teamFilter);
+  const filterVal = document.getElementById('round-filter').value;
+  const teamFilter = document.getElementById('team-filter-m').value;
+  let matches = allMatches;
 
-  const byRound={};
-  matches.forEach(m=>{if(!byRound[m.round])byRound[m.round]=[];byRound[m.round].push(m);});
+  // Apply round/phase filter
+  if (filterVal && filterVal !== '0') {
+    if (filterVal.startsWith('r_')) {
+      const r = parseInt(filterVal.replace('r_', ''));
+      matches = matches.filter(m => m.round === r && getMatchPhaseName(m) === 'Redni del');
+    } else if (filterVal.startsWith('ph_')) {
+      const ph = filterVal.replace('ph_', '');
+      matches = matches.filter(m => getMatchPhaseName(m) === ph);
+    }
+  }
 
-  const html=Object.entries(byRound).map(([round,ms])=>{
-    const cards=ms.map(m=>{
-      const t1=normalizeTeamName(m.firstTeamName),t2=normalizeTeamName(m.secondTeamName);
-      const c1=TEAM_COLORS[t1]||'#888',c2=TEAM_COLORS[t2]||'#888';
-      const s1=m.firstTeamScore,s2=m.secondTeamScore;
-      const finished=m.status==='FINISHED';
-      const live=m.status==='LIVE';
-      const scoreHtml=finished?`<div class="mc-score ${s1>s2?'win1':s1<s2?'win2':''}">${s1} : ${s2}</div>`:
-        live?`<div class="mc-score" style="color:#22c55e">LIVE</div>`:
-        `<div class="mc-score" style="font-size:1rem;color:var(--mut)">${new Date(m.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'})}</div>`;
-      const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
-      const statusEl=`<span class="mc-status ${m.status.toLowerCase()}">${m.status==='FINISHED'?'KONČANO':m.status==='LIVE'?'● ŽIVO':'NAČRT.'}</span>`;
+  if (teamFilter) {
+    matches = matches.filter(m =>
+      normalizeTeamName(m.firstTeamName) === teamFilter ||
+      normalizeTeamName(m.secondTeamName) === teamFilter ||
+      m.firstTeamName === teamFilter || m.secondTeamName === teamFilter
+    );
+  }
+
+  // Group by phase → then by round within phase
+  const byPhaseRound = {};
+  matches.forEach(m => {
+    const phase = getMatchPhaseName(m);
+    const key = phase === 'Redni del' ? phase + '|||' + m.round : phase;
+    if (!byPhaseRound[key]) byPhaseRound[key] = {phase, round: m.round, matches: []};
+    byPhaseRound[key].matches.push(m);
+  });
+
+  // Sort groups: redni del first (by round), then playoffs
+  const groups = Object.values(byPhaseRound).sort((a, b) => {
+    const aIsRegular = a.phase === 'Redni del';
+    const bIsRegular = b.phase === 'Redni del';
+    if (aIsRegular && bIsRegular) return a.round - b.round;
+    if (aIsRegular) return -1;
+    if (bIsRegular) return 1;
+    return a.phase.localeCompare(b.phase, 'sl');
+  });
+
+  // Phase colors
+  const phaseColors = {
+    'Redni del': 'var(--mut)',
+    'Liga za obstanek': 'var(--blue)',
+    'Četrtfinale': '#f59e0b',
+    'Polfinale': '#a855f7',
+    'Finale': 'var(--acc)',
+  };
+
+  const html = groups.map(({phase, round, matches: ms}) => {
+    const isRegular = phase === 'Redni del';
+    const groupTitle = isRegular ? 'KROG ' + round : phase.toUpperCase();
+    const phColor = phaseColors[phase] || 'var(--acc)';
+
+    const cards = ms.map(m => {
+      const t1 = normalizeTeamName(m.firstTeamName), t2 = normalizeTeamName(m.secondTeamName);
+      const c1 = TEAM_COLORS[t1] || TEAM_COLORS[m.firstTeamName] || '#888';
+      const c2 = TEAM_COLORS[t2] || TEAM_COLORS[m.secondTeamName] || '#888';
+      const s1 = m.firstTeamScore, s2 = m.secondTeamScore;
+      const finished = m.status === 'FINISHED';
+      const live = m.status === 'LIVE';
+      const scoreHtml = finished
+        ? `<div class="mc-score ${s1>s2?'win1':s1<s2?'win2':''}">${s1} : ${s2}</div>`
+        : live ? `<div class="mc-score" style="color:#22c55e">LIVE</div>`
+        : `<div class="mc-score" style="font-size:1rem;color:var(--mut)">${new Date(m.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'})}</div>`;
+      const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+      const statusEl = `<span class="mc-status ${m.status.toLowerCase()}">${m.status==='FINISHED'?'KONČANO':m.status==='LIVE'?'● ŽIVO':'NAČRT.'}</span>`;
+      const n1 = m.firstTeamCode || t1 || m.firstTeamName;
+      const n2 = m.secondTeamCode || t2 || m.secondTeamName;
       return `<div class="match-card ${live?'live':''}" id="mc-${m.id}" onclick="openMatch(${m.id})">
         <div class="mc-teams">
-          <div class="mc-team" style="color:${c1}">${m.firstTeamCode||t1}</div>
+          <div class="mc-team" style="color:${c1}">${n1}</div>
           ${scoreHtml}
-          <div class="mc-team away" style="color:${c2}">${m.secondTeamCode||t2}</div>
+          <div class="mc-team away" style="color:${c2}">${n2}</div>
         </div>
         <div class="mc-meta">
           <span>${date} · ${m.sportHallName}</span>
@@ -1145,10 +1239,14 @@ function renderMatches(){
         </div>
       </div>`;
     }).join('');
-    return `<div class="round-section"><div class="round-title">KROG ${round}</div><div class="matches-grid">${cards}</div></div>`;
+
+    return `<div class="round-section">
+      <div class="round-title" style="color:${phColor};border-bottom-color:${phColor}20">${groupTitle}</div>
+      <div class="matches-grid">${cards}</div>
+    </div>`;
   }).join('');
 
-  document.getElementById('matches-wrap').innerHTML=html||'<div class="empty">Ni tekem</div>';
+  document.getElementById('matches-wrap').innerHTML = html || '<div class="empty">Ni tekem</div>';
 }
 
 async function openMatch(matchId){
