@@ -91,6 +91,34 @@ select:focus{outline:none;border-color:var(--acc)}
 .pname-link{cursor:pointer;transition:color .15s}
 .pname-link:hover{color:var(--acc)!important;text-decoration:underline}
 .filter-note{font-size:.72rem;color:var(--mut);font-family:var(--fm);padding:6px 0}
+/* STAT TOOLTIPS */
+.stat-tip{position:relative;cursor:help;border-bottom:1px dotted var(--mut)}
+.stat-tip::after{
+  content:attr(data-tip);
+  display:none;
+  position:absolute;
+  bottom:calc(100% + 6px);
+  left:50%;
+  transform:translateX(-50%);
+  background:#1a1a2e;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:8px 12px;
+  font-size:.72rem;
+  font-family:var(--fs);
+  font-weight:400;
+  color:var(--text);
+  white-space:nowrap;
+  z-index:100;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  pointer-events:none;
+  max-width:280px;
+  white-space:normal;
+  width:max-content;
+  text-align:left;
+  line-height:1.5;
+}
+.stat-tip:hover::after{display:block}
 .section-title{font-family:var(--fh);font-size:1.5rem;letter-spacing:.04em;margin-bottom:14px;color:var(--sub)}
 .empty{text-align:center;padding:40px;color:var(--mut);font-size:.9rem}
 /* PLAYER OVERLAY */
@@ -1052,27 +1080,27 @@ const COLS=[
   {k:'name',lbl:'IGRALEC',fmt:(p,m)=>p[F.name],tip:''},
   {k:'T',lbl:'T',fmt:(p,m)=>p[F.T],tip:'Tekme'},
   {k:'MIN',lbl:'MIN',fmt:(p,m)=>m==='avg'?fmt(p[F.MIN]/p[F.T]):fmt(p[F.MIN],0),tip:'Minute'},
-  {k:'fg2',lbl:'2T%',fmt:(p,m)=>{const v=pct(p[F.fg2m],p[F.fg2a]);const sub=m==='avg'?`${fmt(p[F.fg2m]/p[F.T],1)}/${fmt(p[F.fg2a]/p[F.T],1)}`:`${p[F.fg2m]}/${p[F.fg2a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg2a]>0?sub:'—'}</span></div>`},tip:'2T %'},
-  {k:'fg3',lbl:'3T%',fmt:(p,m)=>{const v=pct(p[F.fg3m],p[F.fg3a]);const sub=m==='avg'?`${fmt(p[F.fg3m]/p[F.T],1)}/${fmt(p[F.fg3a]/p[F.T],1)}`:`${p[F.fg3m]}/${p[F.fg3a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg3a]>0?sub:'—'}</span></div>`},tip:'3T %'},
-  {k:'met',lbl:'MET%',fmt:(p,m)=>{const tm=p[F.fg2m]+p[F.fg3m],ta=p[F.fg2a]+p[F.fg3a];const v=pct(tm,ta);const sub=m==='avg'?`${fmt(tm/p[F.T],1)}/${fmt(ta/p[F.T],1)}`:`${tm}/${ta}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${ta>0?sub:'—'}</span></div>`},tip:'MET %'},
-  {k:'pm',lbl:'PM%',fmt:(p,m)=>{const v=pct(p[F.ftm],p[F.fta]);const sub=m==='avg'?`${fmt(p[F.ftm]/p[F.T],1)}/${fmt(p[F.fta]/p[F.T],1)}`:`${p[F.ftm]}/${p[F.fta]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fta]>0?sub:'—'}</span></div>`},tip:'PM %'},
-  {k:'toc',lbl:'TOČ',fmt:(p,m)=>m==='avg'?fmt(p[F.toc]/p[F.T]):p[F.toc],tip:'Točke'},
+  {k:'fg2',lbl:'2T%',fmt:(p,m)=>{const v=pct(p[F.fg2m],p[F.fg2a]);const sub=m==='avg'?`${fmt(p[F.fg2m]/p[F.T],1)}/${fmt(p[F.fg2a]/p[F.T],1)}`:`${p[F.fg2m]}/${p[F.fg2a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg2a]>0?sub:'—'}</span></div>`},tip:'2T% — Odstotek zadetih metov za 2 točki\nZadeti 2T / Vsi 2T meti × 100\n55%+ odlično, 40-55% povprečje'},
+  {k:'fg3',lbl:'3T%',fmt:(p,m)=>{const v=pct(p[F.fg3m],p[F.fg3a]);const sub=m==='avg'?`${fmt(p[F.fg3m]/p[F.T],1)}/${fmt(p[F.fg3a]/p[F.T],1)}`:`${p[F.fg3m]}/${p[F.fg3a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg3a]>0?sub:'—'}</span></div>`},tip:'3T% — Odstotek zadetih metov za 3 točke\nZadeti 3T / Vsi 3T meti × 100\n35%+ odlično, 25-35% povprečje'},
+  {k:'met',lbl:'MET%',fmt:(p,m)=>{const tm=p[F.fg2m]+p[F.fg3m],ta=p[F.fg2a]+p[F.fg3a];const v=pct(tm,ta);const sub=m==='avg'?`${fmt(tm/p[F.T],1)}/${fmt(ta/p[F.T],1)}`:`${tm}/${ta}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${ta>0?sub:'—'}</span></div>`},tip:'MET% — Skupni odstotek zadetih metov\n(Zadeti 2T + Zadeti 3T) / (Vsi 2T + Vsi 3T) × 100\nNe vključuje prostih metov.'},
+  {k:'pm',lbl:'PM%',fmt:(p,m)=>{const v=pct(p[F.ftm],p[F.fta]);const sub=m==='avg'?`${fmt(p[F.ftm]/p[F.T],1)}/${fmt(p[F.fta]/p[F.T],1)}`:`${p[F.ftm]}/${p[F.fta]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fta]>0?sub:'—'}</span></div>`},tip:'PM% — Odstotek zadetih prostih metov\nZadeti PM / Vsi PM × 100\n75%+ odlično, pod 60% slabo'},
+  {k:'toc',lbl:'TOČ',fmt:(p,m)=>m==='avg'?fmt(p[F.toc]/p[F.T]):p[F.toc],tip:'TOČ — Točke\nSkupno ali povprečje na tekmo (per game).'},
   {k:'nap',lbl:'NAP',fmt:(p,m)=>m==='avg'?fmt(p[F.nap]/p[F.T]):p[F.nap],tip:'Napadalni skoki'},
   {k:'obr',lbl:'OBR',fmt:(p,m)=>m==='avg'?fmt(p[F.obr]/p[F.T]):p[F.obr],tip:'Obrambni skoki'},
-  {k:'sk',lbl:'SK',fmt:(p,m)=>{const v=p[F.nap]+p[F.obr];return m==='avg'?fmt(v/p[F.T]):v},tip:'Skupni skoki'},
-  {k:'pod',lbl:'POD',fmt:(p,m)=>m==='avg'?fmt(p[F.pod]/p[F.T]):p[F.pod],tip:'Podaje'},
-  {k:'sto',lbl:'STO',fmt:(p,m)=>m==='avg'?fmt(p[F.sto]/p[F.T]):p[F.sto],tip:'STO'},
-  {k:'izg',lbl:'IZG',fmt:(p,m)=>m==='avg'?fmt(p[F.izg]/p[F.T]):p[F.izg],tip:'Izgube'},
+  {k:'sk',lbl:'SK',fmt:(p,m)=>{const v=p[F.nap]+p[F.obr];return m==='avg'?fmt(v/p[F.T]):v},tip:'SK — Skupni skoki\nNapadalni (NAP) + Obrambni (OBR) skoki.'},
+  {k:'pod',lbl:'POD',fmt:(p,m)=>m==='avg'?fmt(p[F.pod]/p[F.T]):p[F.pod],tip:'POD — Podaje (asistence)\nPodaje ki neposredno vodijo do koša.'},
+  {k:'sto',lbl:'STO',fmt:(p,m)=>m==='avg'?fmt(p[F.sto]/p[F.T]):p[F.sto],tip:'STO — Ukradene žoge'},
+  {k:'izg',lbl:'IZG',fmt:(p,m)=>m==='avg'?fmt(p[F.izg]/p[F.T]):p[F.izg],tip:'IZG — Izgube žoge\nKoliko krat je nasprotnik prevzel žogo.'},
   {k:'pz',lbl:'PŽ',fmt:(p,m)=>m==='avg'?fmt(p[F.pz]/p[F.T]):p[F.pz],tip:'Osebne napake'},
-  {k:'blk',lbl:'BLK',fmt:(p,m)=>m==='avg'?fmt(p[F.blk]/p[F.T]):p[F.blk],tip:'Blokade'},
-  {k:'pm_p',lbl:'+/−',fmt:(p,m)=>m==='avg'?fmt(p[F.pm]/p[F.T]):(p[F.pm]>0?'+':'')+p[F.pm],tip:'+/−'},
-  {k:'efe',lbl:'EFE',fmt:(p,m)=>m==='avg'?fmt(p[F.efe]/p[F.T]):p[F.efe],tip:'EFE'},
-  {k:'ts',lbl:'TS%',fmt:(p,m)=>{const fga=p[F.fg2a]+p[F.fg3a],denom=2*(fga+0.44*p[F.fta]);if(denom<4||fga+p[F.fta]<20)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=Math.round(p[F.toc]/denom*1000)/10;const cls=v>=60?'phi':v>=50?'pmd':'plo';return `<div class="td-pct"><span class="${cls}">${v.toFixed(1)}%</span><span class="td-pct-sub">${fga+p[F.fta]} psk</span></div>`},tip:'True Shooting %'},
-  {k:'at',lbl:'A/T',fmt:(p,m)=>{if(p[F.izg]===0)return p[F.pod]>0?'∞':'—';return fmt(p[F.pod]/p[F.izg],2)},tip:'Assist/Turnover'},
-  {k:'usg',lbl:'USG%',fmt:(p,m)=>{if(p[F.MIN]<10)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];const v=((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));const pv=Math.round(v*1000)/10;const cls=pv>=30?'phi':pv>=20?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+pv.toFixed(1)+'%</span></div>'},tip:'Usage Rate'},
-  {k:'per',lbl:'PER',fmt:(p,m)=>{if(p[F.T]<5)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=perOf(p);const cls=v>=20?'phi':v>=12?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+v.toFixed(1)+'</span></div>'},tip:'PER — avg≈15'},
-  {k:'pip',lbl:'PiP',fmt:(p,m)=>m==='avg'?fmt(p[F.pip]/p[F.T]):p[F.pip],tip:'Točke v raketi'},
-  {k:'fb',lbl:'FB',fmt:(p,m)=>m==='avg'?fmt(p[F.fb]/p[F.T]):p[F.fb],tip:'Fast break točke'},
+  {k:'blk',lbl:'BLK',fmt:(p,m)=>m==='avg'?fmt(p[F.blk]/p[F.T]):p[F.blk],tip:'BLK — Blokade\nBLK = blokirani meti nasprotnikov (dal)\nPRE = lastni meti ki so bili blokirani (prejel)'},
+  {k:'pm_p',lbl:'+/−',fmt:(p,m)=>m==='avg'?fmt(p[F.pm]/p[F.T]):(p[F.pm]>0?'+':'')+p[F.pm],tip:'+/− — Plus/Minus\nRazlika v rezultatu ko je ta igralec na igrišču.\nPozitivno = ekipa vodi ko igra, negativno = zaostaja.'},
+  {k:'efe',lbl:'EFE',fmt:(p,m)=>m==='avg'?fmt(p[F.efe]/p[F.T]):p[F.efe],tip:'EFE — Efektivnost (KZS formula)\nTOČ + SK + POD + STO + BLK - zgrešeni meti - IZG - napake\nUradno merilo KZS. Povprečje ≈ 10-15/tekmo.'},
+  {k:'ts',lbl:'TS%',fmt:(p,m)=>{const fga=p[F.fg2a]+p[F.fg3a],denom=2*(fga+0.44*p[F.fta]);if(denom<4||fga+p[F.fta]<20)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=Math.round(p[F.toc]/denom*1000)/10;const cls=v>=60?'phi':v>=50?'pmd':'plo';return `<div class="td-pct"><span class="${cls}">${v.toFixed(1)}%</span><span class="td-pct-sub">${fga+p[F.fta]} psk</span></div>`},tip:'TS% — True Shooting %\nNajboljši pokazatelj strelske učinkovitosti.\nUpošteva 2T, 3T in proste mete skupaj.\nFormula: Točke / (2 × (FGA + 0.44 × FTA))\nPovprečje lige ≈ 55%, odlično ≥ 60%'},
+  {k:'at',lbl:'A/T',fmt:(p,m)=>{if(p[F.izg]===0)return p[F.pod]>0?'∞':'—';return fmt(p[F.pod]/p[F.izg],2)},tip:'A/T — Assist/Turnover razmerje\nPOD / IZG — koliko asistenc na vsako izgubo.\n2.0+ = dober razdeljevalec\nPod 1.0 = preveč izgub'},
+  {k:'usg',lbl:'USG%',fmt:(p,m)=>{if(p[F.MIN]<10)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];const v=((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));const pv=Math.round(v*1000)/10;const cls=pv>=30?'phi':pv>=20?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+pv.toFixed(1)+'%</span></div>'},tip:'USG% — Usage Rate\n% ekipnih napadov ki gre skozi tega igralca\n(met, prosti met ali izguba žoge).\n30%+ = zvezda ekipe\n15-20% = role player'},
+  {k:'per',lbl:'PER',fmt:(p,m)=>{if(p[F.T]<5)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=perOf(p);const cls=v>=20?'phi':v>=12?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+v.toFixed(1)+'</span></div>'},tip:'PER — Player Efficiency Rating\nEna številka za celotno vrednost igralca na tekmo.\nPovprečje lige ≈ 15, odlično ≥ 20.\nVključuje točke, skoke, asistence, ukrade,\nblokade, minus zgrešene mete in izgube.'},
+  {k:'pip',lbl:'PiP',fmt:(p,m)=>m==='avg'?fmt(p[F.pip]/p[F.T]):p[F.pip],tip:'PiP — Points in the Paint\nTočke dosežene z metom iz raketinega območja.\nPokaže dominanco pod košem.'},
+  {k:'fb',lbl:'FB',fmt:(p,m)=>m==='avg'?fmt(p[F.fb]/p[F.T]):p[F.fb],tip:'FB — Fast Break Points\nTočke dosežene v protinapadih.\nPokaže atletičnost in hitrost prehoda.'},
 ];
 
 const GRPS=[
@@ -1196,7 +1224,7 @@ function renderTeam(){
   function hmStyle(k,p){if(!heatmap||!hmRange[k])return '';const{min,max}=hmRange[k];if(max===min)return '';const raw=sortVal(p,k);if(raw<=-999)return '';let t=(raw-min)/(max-min);if(hmInverse.has(k))t=1-t;if(t<0.15||t>0.85){const op=(t>0.5?(t-0.15):((1-t)-0.15))*0.35;return t>0.5?'background:rgba(52,211,153,'+op.toFixed(2)+') !important':'background:rgba(248,113,113,'+op.toFixed(2)+') !important';}return '';}
 
   const hdrGrpRow=GRPS.map(g=>`<th colspan="${g.span}" class="gr ${g.cls}">${g.lbl}</th>`).join('');
-  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})">${c.lbl}</th>`;}).join('');
+  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span style="font-size:.55rem;color:var(--mut);margin-left:2px">?</span>':''}</th>`;}).join('');
 
   const rows=players.map(p=>{
     const pidx=P.indexOf(p);
@@ -1692,7 +1720,7 @@ function showPlayer(idx){
     if(val===null)return '';
     const pctV=Math.max(0,Math.min(100,(val-min)/(max-min)*100));
     const barColor=goodHigh?(pctV>66?'#34d399':pctV>33?'#facc15':'#f87171'):(pctV<33?'#34d399':pctV<66?'#facc15':'#f87171');
-    return `<div class="adv-row" title="${tip}"><div class="adv-lbl">${lbl}</div><div class="adv-bar-wrap"><div class="adv-bar" style="width:${pctV}%;background:${barColor}"></div></div><div class="adv-val" style="color:${barColor}">${val}${suf}</div></div>`;
+    return `<div class="adv-row"><div class="adv-lbl stat-tip" data-tip="${tip}" style="cursor:help">${lbl} <span style="font-size:.6rem;color:var(--mut)">?</span></div><div class="adv-bar-wrap"><div class="adv-bar" style="width:${pctV}%;background:${barColor}"></div></div><div class="adv-val" style="color:${barColor}">${val}${suf}</div></div>`;
   }
 
   window._ppPlayer=p;window._ppIdx=idx;
@@ -1721,29 +1749,29 @@ function showPlayer(idx){
       <div class="pp-right">
         <div class="pp-section-title">NAPREDNA STATISTIKA</div>
         <div class="adv-grid">
-          ${advBar('TS%',tsVal,40,75,'%','True Shooting %')}
-          ${advBar('USG%',usgVal,5,40,'%','Usage Rate')}
-          ${advBar('PER',perVal,0,35,'','Player Efficiency Rating')}
-          ${advBar('A/T',atVal,0,5,'','Assist/Turnover')}
-          ${advBar('FLR%',flrVal,0,70,'%','Floor %')}
+          ${advBar('TS%',tsVal,40,75,'%','TS% = Točke / (2×(FGA+0.44×FTA)) | Najboljši strelski % | Povp. liga ≈55%')}
+          ${advBar('USG%',usgVal,5,40,'%','USG% = % napadov ki gre skozi tega igralca | 30%+ zvezda | 15-20% role player')}
+          ${advBar('PER',perVal,0,35,'','PER = ena številka za celotno vrednost | Povp. liga ≈15 | 20+ odlično')}
+          ${advBar('A/T',atVal,0,5,'','A/T = Asistence / Izgube | 2.0+ dober razdeljevalec | pod 1.0 preveč izgub')}
+          ${advBar('FLR%',flrVal,0,70,'%','FLR% = AST/(AST+FGM) | Visok % = organizator | Nizek % = finišer/strelec')}
           ${advBar('+/−/tm',fmt(p[F.pm]/t),-15,15,'','+/− na tekmo')}
         </div>
         <div class="pp-section-title" style="margin-top:16px">STATISTIKA SEZONE</div>
         <table class="pp-table">
           <tr><th>STAT</th><th>SKUPNO</th><th>/TM</th></tr>
           <tr><td>Minute</td><td>${fmt(p[F.MIN],0)}</td><td>${fmt(p[F.MIN]/t,1)}</td></tr>
-          <tr><td>Točke</td><td>${p[F.toc]}</td><td>${fmt(p[F.toc]/t)}</td></tr>
-          <tr><td>2T (z/v)</td><td>${p[F.fg2m]}/${p[F.fg2a]}</td><td class="${pctCls(pct(p[F.fg2m],p[F.fg2a]))}">${fmt(pct(p[F.fg2m],p[F.fg2a]))}%</td></tr>
-          <tr><td>3T (z/v)</td><td>${p[F.fg3m]}/${p[F.fg3a]}</td><td class="${pctCls(pct(p[F.fg3m],p[F.fg3a]))}">${fmt(pct(p[F.fg3m],p[F.fg3a]))}%</td></tr>
-          <tr><td>PM (z/v)</td><td>${p[F.ftm]}/${p[F.fta]}</td><td class="${pctCls(pct(p[F.ftm],p[F.fta]))}">${fmt(pct(p[F.ftm],p[F.fta]))}%</td></tr>
-          <tr><td>Skoki (n/o)</td><td>${totalSk}</td><td>${fmt(totalSk/t)} (${fmt(p[F.nap]/t,1)}n+${fmt(p[F.obr]/t,1)}o)</td></tr>
-          <tr><td>Podaje</td><td>${p[F.pod]}</td><td>${fmt(p[F.pod]/t)}</td></tr>
-          <tr><td>STO / IZG</td><td>${p[F.sto]} / ${p[F.izg]}</td><td>${fmt(p[F.sto]/t)} / ${fmt(p[F.izg]/t)}</td></tr>
-          <tr><td>Blokade</td><td>${p[F.blk]}/${p[F.pre]}</td><td>${fmt(p[F.blk]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="TOČ — Skupno število točk v sezoni">Točke</span></td><td>${p[F.toc]}</td><td>${fmt(p[F.toc]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="2T% — Zadeti / Vrženi meti za 2 točki&#10;Odstotek: zadeti/vsi × 100">2T (z/v)</span></td><td>${p[F.fg2m]}/${p[F.fg2a]}</td><td class="${pctCls(pct(p[F.fg2m],p[F.fg2a]))}">${fmt(pct(p[F.fg2m],p[F.fg2a]))}%</td></tr>
+          <tr><td><span class="stat-tip" data-tip="3T% — Zadeti / Vrženi meti za 3 točke&#10;35%+ = dober strelec">3T (z/v)</span></td><td>${p[F.fg3m]}/${p[F.fg3a]}</td><td class="${pctCls(pct(p[F.fg3m],p[F.fg3a]))}">${fmt(pct(p[F.fg3m],p[F.fg3a]))}%</td></tr>
+          <tr><td><span class="stat-tip" data-tip="PM% — Prosti meti: zadeti / vrženi&#10;75%+ = zanesljiv strelec prostih metov">PM (z/v)</span></td><td>${p[F.ftm]}/${p[F.fta]}</td><td class="${pctCls(pct(p[F.ftm],p[F.fta]))}">${fmt(pct(p[F.ftm],p[F.fta]))}%</td></tr>
+          <tr><td><span class="stat-tip" data-tip="SK — Skoki: n = napadalni, o = obrambni&#10;Napadalni dajo ekipi drugo priložnost za napad.">Skoki (n/o)</span></td><td>${totalSk}</td><td>${fmt(totalSk/t)} (${fmt(p[F.nap]/t,1)}n+${fmt(p[F.obr]/t,1)}o)</td></tr>
+          <tr><td><span class="stat-tip" data-tip="POD — Asistence&#10;Podaje ki neposredno vodijo do koša soigralca.">Podaje</span></td><td>${p[F.pod]}</td><td>${fmt(p[F.pod]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="STO / IZG&#10;STO = ukradene žoge&#10;IZG = izgube žoge (nasprotnik prevzame žogo)">STO / IZG</span></td><td>${p[F.sto]} / ${p[F.izg]}</td><td>${fmt(p[F.sto]/t)} / ${fmt(p[F.izg]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="BLK / PRE&#10;BLK = blokade ki si jih dal&#10;PRE = tvoji meti ki so bili blokirani">Blokade</span></td><td>${p[F.blk]}/${p[F.pre]}</td><td>${fmt(p[F.blk]/t)}</td></tr>
           <tr><td>+/−</td><td>${p[F.pm]>0?'+':''}${p[F.pm]}</td><td>${fmt(p[F.pm]/t)}</td></tr>
-          <tr><td>EFE</td><td>${p[F.efe]}</td><td>${fmt(p[F.efe]/t)}</td></tr>
-          <tr><td>Točke v raketi</td><td>${p[F.pip]}</td><td>${fmt(p[F.pip]/t)}</td></tr>
-          <tr><td>Fast break</td><td>${p[F.fb]}</td><td>${fmt(p[F.fb]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="EFE — Efektivnost (KZS)&#10;TOČ+SK+POD+STO+BLK minus zgrešeni meti, izgube in napake.&#10;Povprečje ≈ 10-15/tekmo">EFE</span></td><td>${p[F.efe]}</td><td>${fmt(p[F.efe]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="PiP — Points in the Paint&#10;Točke dosežene z metom iz raketinega območja.">Točke v raketi</span></td><td>${p[F.pip]}</td><td>${fmt(p[F.pip]/t)}</td></tr>
+          <tr><td><span class="stat-tip" data-tip="FB — Fast Break Points&#10;Točke dosežene v protinapadih po ukradeni žogi ali skoku.">Fast break</span></td><td>${p[F.fb]}</td><td>${fmt(p[F.fb]/t)}</td></tr>
         </table>
         <div class="pp-section-title" style="margin-top:16px">PRIMERJAJ Z...</div>
         <input class="si" id="pp-srch" type="text" placeholder="Išči igralca..." oninput="ppSearch()" style="width:100%;margin-bottom:8px">
@@ -1808,11 +1836,14 @@ function showTrendTip(evt, el){
   if(!tip)return;
   tip.textContent=el.getAttribute('data-tip');
   tip.style.display='block';
-  const svg=el.closest('svg');
   const rect=el.getBoundingClientRect();
   const wrap=tip.parentElement.getBoundingClientRect();
-  tip.style.left=(rect.left-wrap.left+rect.width/2-tip.offsetWidth/2)+'px';
-  tip.style.top=(rect.top-wrap.top-tip.offsetHeight-6)+'px';
+  // Center on bar, but clamp so it never goes outside the container
+  const idealLeft=rect.left-wrap.left+rect.width/2-tip.offsetWidth/2;
+  const minLeft=4;
+  const maxLeft=wrap.width-tip.offsetWidth-4;
+  tip.style.left=Math.max(minLeft,Math.min(idealLeft,maxLeft))+'px';
+  tip.style.top=Math.max(2,rect.top-wrap.top-tip.offsetHeight-6)+'px';
 }
 function hideTrendTip(){
   const tip=document.getElementById('trend-tip');
