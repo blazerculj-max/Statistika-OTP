@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch Liga OTP banka + 2. SKL data including all phases and all pages."""
+"""Fetch Liga OTP banka + 2. SKL data using phase IDs to avoid fetching all pages."""
 
 import json, time, urllib.request, os
 from datetime import datetime, timezone
@@ -12,12 +12,16 @@ LEAGUES = {
     'liga1': {
         'id': 579,
         'name': 'Liga OTP banka',
+        # Fetch first page only — liga1 has 135 tekme, fits in 1 page
         'phase_ids': None,
+        'max_pages': 1,
     },
     'liga2': {
         'id': 581,
         'name': '2. SKL',
+        # Fetch by specific phase IDs to avoid getting 60k+ tekme
         'phase_ids': [5813, 5873, 5874, 5880],
+        'max_pages': 1,
     },
 }
 
@@ -32,37 +36,53 @@ def fetch_json(url, retries=3):
             time.sleep(i + 1)
     return None
 
-def fetch_all_matches(comp_id):
-    """Fetch all pages of matches for a competition."""
+def fetch_matches_for_phase(comp_id, phase_id):
+    """Fetch all matches for a specific phase (paginates if needed)."""
     all_items = []
     page = 1
     while True:
-        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}&page={page}"
+        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}&competitionPhaseId={phase_id}&page={page}"
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items:
             break
         all_items.extend(items)
-        print(f"    Page {page}: {len(items)} tekem (skupaj {len(all_items)})")
         if len(items) < 150:
             break
         page += 1
-        time.sleep(0.2)
-    return sorted(all_items, key=lambda m: (m['round'], m.get('dateTime', '')))
+        time.sleep(0.1)
+    return all_items
+
+def fetch_matches_single_page(comp_id):
+    """Fetch single page of matches (for leagues that fit in one page)."""
+    url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
+    data = fetch_json(url)
+    return data.get('data', {}).get('items', []) if data else []
 
 def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
-    all_matches = fetch_all_matches(lg['id'])
 
-    # Filter by phase if specified
     if lg['phase_ids']:
-        matches = [m for m in all_matches
-                   if any(c.get('competitionPhaseId') in lg['phase_ids']
-                          for c in m.get('competitions', []))]
-        print(f"  {len(matches)}/{len(all_matches)} tekem po filtriranju faz")
+        # Fetch by phase IDs — precise, no bloat
+        all_matches = []
+        for phase_id in lg['phase_ids']:
+            items = fetch_matches_for_phase(lg['id'], phase_id)
+            print(f"  Phase {phase_id}: {len(items)} tekem")
+            all_matches.extend(items)
+        # Deduplicate by match ID
+        seen = set()
+        matches = []
+        for m in all_matches:
+            if m['id'] not in seen:
+                seen.add(m['id'])
+                matches.append(m)
+        matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
+        print(f"  Skupaj: {len(matches)} tekem")
     else:
-        matches = all_matches
-        print(f"  {len(matches)} tekem skupaj")
+        # Single page fetch for smaller leagues
+        matches = fetch_matches_single_page(lg['id'])
+        matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
+        print(f"  {len(matches)} tekem (ena stran)")
 
     finished = [m for m in matches if m['status'] == 'FINISHED']
     print(f"  {len(finished)} odigranih")
