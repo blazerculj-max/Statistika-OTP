@@ -341,6 +341,12 @@ select:focus{outline:none;border-color:var(--acc)}
       <div class="tgl">
         <button class="tb" id="btn-hm" onclick="toggleHeatmap()" title="Barvna lestvica">🌡️ HEAT MAP</button>
       </div>
+      <select id="phase-filter" onchange="renderTeam()" style="width:160px">
+        <option value="all">Vse tekme</option>
+        <option value="Redni del">Redni del</option>
+        <option value="playoff">Končnica</option>
+        <option value="Liga za obstanek">Liga za obstanek</option>
+      </select>
     </div>
     <div id="team-hdr-wrap"></div>
     <div class="tw"><table class="st" id="st"></table></div>
@@ -420,6 +426,15 @@ select:focus{outline:none;border-color:var(--acc)}
           <option value="0.3">0.3/tm</option><option value="0.5">0.5/tm</option><option value="0.8" selected>0.8/tm</option>
           <option value="1.0">1.0/tm</option><option value="1.5">1.5/tm</option>
         </select>
+      </div>
+    </div>
+    <div class="ctrls" style="margin-top:-8px">
+      <span class="filter-note">Faza:</span>
+      <div class="tgl">
+        <button class="tb active" id="lph-all" onclick="setLigaPhase('all')">VSE</button>
+        <button class="tb" id="lph-regular" onclick="setLigaPhase('Redni del')">REDNI DEL</button>
+        <button class="tb" id="lph-playoff" onclick="setLigaPhase('playoff')">KONČNICA</button>
+        <button class="tb" id="lph-obstanek" onclick="setLigaPhase('Liga za obstanek')">OBSTANEK</button>
       </div>
     </div>
     <div class="ldrs-grid" id="ldrs-grid"></div>
@@ -656,7 +671,7 @@ async function loadAllData() {
       allMatches = cached.allMatches;
       matchStatsCache = cached.matchStatsCache;
       setProgress(96, 'Agregiram...');
-      aggregatePlayers(); initUI();
+      aggregatePlayers('all'); initUI();
       setProgress(100, '⚡ Naloženo iz predpomnilnika (' + age + ')');
       setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
       initWebSocket();
@@ -679,7 +694,7 @@ async function loadAllData() {
           });
           cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
           setProgress(96, 'Agregiram...');
-          aggregatePlayers(); initUI();
+          aggregatePlayers('all'); initUI();
           setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
           setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
           initWebSocket();
@@ -736,7 +751,7 @@ async function loadAllData() {
 
     cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
     setProgress(96, 'Agregiram...');
-    aggregatePlayers(); initUI();
+    aggregatePlayers('all'); initUI();
     setProgress(100, '✅ Naloženo iz API');
     setTimeout(() => document.getElementById('loading-overlay').style.display='none', 400);
     initWebSocket();
@@ -746,11 +761,27 @@ async function loadAllData() {
   }
 }
 
-function aggregatePlayers() {
+function getPhaseMatchIds(phaseFilter) {
+  if(!phaseFilter || phaseFilter === 'all') return null; // null = all
+  const playoffPhases = ['Četrtfinale','Polfinale','Finale','Zaključni turnir'];
+  return new Set(
+    allMatches
+      .filter(m => {
+        const phaseName = m.competitions?.[0]?.competitionPhaseName || '';
+        if(phaseFilter === 'playoff') return playoffPhases.includes(phaseName);
+        return phaseName === phaseFilter;
+      })
+      .map(m => m.id)
+  );
+}
+
+function aggregatePlayers(phaseFilter) {
   const byPid = {}; // playerId_teamId → stats
 
+  const phaseMatchIds = getPhaseMatchIds(phaseFilter);
   Object.values(matchStatsCache).forEach(matchData => {
     if (!matchData) return;
+    if (phaseMatchIds && !phaseMatchIds.has(matchData.matchId)) return;
     const round = allMatches.find(m => m.id === matchData.matchId)?.round || 0;
 
     [matchData.firstTeam, matchData.secondTeam].forEach(teamData => {
@@ -1076,16 +1107,45 @@ function showTab(t){
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
   if(t==='lestvica')renderStandings();
+  if(t==='liga'||t==='ekipe'){
+    // Show/hide phase filters based on league
+    const hasObstanek = getLg().id === 581;
+    const obstBtn = document.getElementById('lph-obstanek');
+    if(obstBtn) obstBtn.style.display = hasObstanek ? '' : 'none';
+    const phaseFilterEl = document.getElementById('phase-filter');
+    if(phaseFilterEl){
+      // Show/hide liga za obstanek option
+      const obstOpt = phaseFilterEl.querySelector('option[value="Liga za obstanek"]');
+      if(obstOpt) obstOpt.style.display = hasObstanek ? '' : 'none';
+    }
+  }
   if(t==='nerd'){if(!pbpLoaded)loadPBPData();else renderNerd();}
 }
 function setMode(m){mode=m;document.getElementById('btn-tot').classList.toggle('active',m==='tot');document.getElementById('btn-avg').classList.toggle('active',m==='avg');renderTeam();}
 function setLMin(n){lMin=n;[5,10,15].forEach(v=>document.getElementById('lmin'+v).classList.toggle('active',v===n));renderLeaders();}
+let ligaPhase = 'all';
+function setLigaPhase(ph){
+  ligaPhase = ph;
+  ['all','Redni del','playoff','Liga za obstanek'].forEach(p => {
+    const id = 'lph-' + p.replace(/ /g,'_').replace('č','c').replace('č','c');
+    const btn = document.getElementById('lph-' + (p==='all'?'all':p==='Redni del'?'regular':p==='playoff'?'playoff':'obstanek'));
+    if(btn) btn.classList.toggle('active', p === ph);
+  });
+  // Re-aggregate and refresh leaders
+  aggregatePlayers(ph);
+  _leaguePlayers = null; _tmAgg = {};
+  renderLeaders();
+}
 function setLMode(m){lMode=m;document.getElementById('lbtn-avg').classList.toggle('active',m==='avg');document.getElementById('lbtn-tot').classList.toggle('active',m==='tot');renderLeaders();}
 function setMinShots(){min2T=parseFloat(document.getElementById('min2t').value);min3T=parseFloat(document.getElementById('min3t').value);minPM=parseFloat(document.getElementById('minpm').value);renderLeaders();}
 function toggleHeatmap(){heatmap=!heatmap;document.getElementById('btn-hm').classList.toggle('active',heatmap);renderTeam();}
 
 function renderTeam(){
-  if(!P.length)return;
+  if(!Object.keys(matchStatsCache).length)return;
+  // Re-aggregate with phase filter
+  const phaseFilter = document.getElementById('phase-filter')?.value || 'all';
+  aggregatePlayers(phaseFilter);
+  _leaguePlayers = null; _tmAgg = {};
   const team=document.getElementById('team-sel').value;
   const minT=parseInt(document.getElementById('min-sel').value);
   const color=TEAM_COLORS[team]||'#f97316';
@@ -1482,11 +1542,39 @@ function renderAge(){
 // ═══════════════════════════════════════════════════
 // SEARCH & COMPARE
 // ═══════════════════════════════════════════════════
+// LP = cached league players array (same as getLeaguePlayers())
+function getLP(){ return getLeaguePlayers(); }
+let LP = [];
+
+function showPlayerLP(lpIdx){
+  const p = LP[lpIdx];
+  if(!p) return;
+  // Find in P array — try by pid first, then name+born
+  let pIdx = P.findIndex(x => x[F.pid] && x[F.pid] === p[F.pid]);
+  if(pIdx < 0) pIdx = P.findIndex(x => x[F.name] === p[F.name] && x[F.born] === p[F.born]);
+  if(pIdx >= 0) showPlayer(pIdx);
+  else { window._ppPlayer = p; showPlayerDirect(p); }
+}
+
+function showPlayerDirect(p){
+  // Show profile for merged player (multi-team)
+  showPlayer(P.findIndex(x => x[F.name] === p[F.name]));
+}
+
+function selectPlayer2LP(lpIdx){
+  const p = LP[lpIdx];
+  if(!p) return;
+  if(selectedPlayers.includes(p)){selectedPlayers=selectedPlayers.filter(s=>s!==p);}
+  else{if(selectedPlayers.length>=2)selectedPlayers.shift();selectedPlayers.push(p);}
+  doSearch();
+}
+
 function doSearch(){
   if(!P.length)return;
   const q=(document.getElementById('srch').value||'').toLowerCase();
   const tm=document.getElementById('srch-team').value;
-  let res=getLeaguePlayers();
+  LP = getLeaguePlayers();
+  let res=LP;
   if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q));
   if(tm)res=res.filter(p=>p[F.team].includes(tm));
   const html=res.slice(0,40).map(p=>{
@@ -1494,8 +1582,8 @@ function doSearch(){
     const isSel=selectedPlayers.some(s=>s===p);
     return `<div class="pcard ${isSel?'selected':''}">
       <div class="pc-name" style="display:flex;align-items:center;justify-content:space-between">
-        <span class="pname-link" onclick="showPlayer(${P.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
-        <span onclick="selectPlayer2(${P.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
+        <span class="pname-link" onclick="showPlayerLP(${LP.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
+        <span onclick="selectPlayer2LP(${LP.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
       </div>
       <div class="pc-meta" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
       <div class="pc-stats">
@@ -1694,7 +1782,7 @@ function ppSearch(){
   const results=getLeaguePlayers().filter(p=>p[F.name].toLowerCase().includes(q)&&p!==window._ppPlayer).slice(0,8);
   document.getElementById('pp-srch-results').innerHTML=results.map(p=>{
     const c=TEAM_COLORS[p[F.team].split(' / ')[0]]||'#888';
-    return `<div onclick="ppCompare(${P.indexOf(p)})" style="display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(249,115,22,.07)'" onmouseout="this.style.background=''">
+    return `<div onclick="ppCompare(${LP.indexOf(p)})" style="display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(249,115,22,.07)'" onmouseout="this.style.background=''">
       <div style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></div>
       <div style="flex:1;font-size:.82rem;font-weight:500">${p[F.name]}</div>
       <div style="font-size:.7rem;color:${c}">${p[F.team]}</div>
