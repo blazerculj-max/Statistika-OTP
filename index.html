@@ -169,6 +169,25 @@ select:focus{outline:none;border-color:var(--acc)}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* MOMENTUM CHART */
 .momentum-wrap{background:var(--card2);border-radius:8px;padding:12px;margin-bottom:16px}
+/* STANDINGS */
+.standings-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.standings-table thead th{background:var(--card2);color:var(--sub);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
+.standings-table thead th:first-child{text-align:left;padding-left:14px;min-width:200px}
+.standings-table td{padding:8px 10px;text-align:center;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm);white-space:nowrap}
+.standings-table td:first-child{text-align:left;padding-left:14px;font-family:var(--fs)}
+.standings-table tr:hover td{background:rgba(249,115,22,.04)}
+.standings-table tr.my-team td{background:rgba(249,115,22,.06)}
+.pos-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.72rem;font-weight:700;font-family:var(--fm);margin-right:8px;flex-shrink:0}
+.form-dots{display:flex;gap:3px;justify-content:center}
+.form-dot{width:16px;height:16px;border-radius:50%;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:white}
+.form-dot.w{background:#22c55e}.form-dot.l{background:#ef4444}
+.h2h-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.h2h-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.h2h-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);color:var(--sub)}
+.h2h-match{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(26,26,50,.4);font-size:.78rem}
+.h2h-match:last-child{border-bottom:none}
+.h2h-score{font-family:var(--fh);font-size:1.1rem;letter-spacing:.04em}
+.diff-pos{color:#22c55e}.diff-neg{color:#ef4444}.diff-zero{color:var(--mut)}
 /* NERD STATS */
 .nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
 .nerd-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -227,6 +246,7 @@ select:focus{outline:none;border-color:var(--acc)}
 
 <nav class="nav">
   <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
+  <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
   <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
@@ -259,6 +279,27 @@ select:focus{outline:none;border-color:var(--acc)}
       <div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div><span>Vodilni v asistencah</span>
       <div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span>Vodilni v EFE</span>
     </div>
+  </div>
+
+  <div id="tab-lestvica" class="tab">
+    <div class="ctrls">
+      <select id="standings-sort" onchange="renderStandings()">
+        <option value="pts">Po zmagah</option>
+        <option value="ptsdiff">Po point differential</option>
+        <option value="ptsfor">Po točkah za</option>
+      </select>
+      <select id="h2h-team1" onchange="renderH2H()" style="width:200px">
+        <option value="">Head-to-head: Ekipa 1</option>
+      </select>
+      <span style="color:var(--mut);font-size:.8rem">vs</span>
+      <select id="h2h-team2" onchange="renderH2H()" style="width:200px">
+        <option value="">Ekipa 2</option>
+      </select>
+    </div>
+    <div class="tw" style="margin-bottom:20px">
+      <table class="standings-table" id="standings-tbl"></table>
+    </div>
+    <div id="h2h-wrap"></div>
   </div>
 
   <div id="tab-tekme" class="tab">
@@ -665,6 +706,13 @@ function initUI() {
 
   renderTeam();
   renderMatches();
+
+  // Populate H2H selects — teams already declared above
+  ['h2h-team1','h2h-team2'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    teams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;el.appendChild(o);});
+  });
 }
 
 // ═══════════════════════════════════════════════════
@@ -776,6 +824,7 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
+  if(t==='lestvica')renderStandings();
   if(t==='nerd'){if(!pbpLoaded)loadPBPData();else renderNerd();}
 }
 function setMode(m){mode=m;document.getElementById('btn-tot').classList.toggle('active',m==='tot');document.getElementById('btn-avg').classList.toggle('active',m==='avg');renderTeam();}
@@ -1419,6 +1468,151 @@ function drawScoring(pts2,pts3,ptsFT,total,color,t){
 }
 
 // ═══════════════════════════════════════════════════
+
+// ═══════════════════════════════════════
+// STANDINGS
+// ═══════════════════════════════════════
+function computeStandings(){
+  const teams={};
+  allMatches.forEach(m=>{
+    if(m.status!=='FINISHED')return;
+    const t1=normalizeTeamName(m.firstTeamName);
+    const t2=normalizeTeamName(m.secondTeamName);
+    const s1=m.firstTeamScore||0,s2=m.secondTeamScore||0;
+    if(!teams[t1])teams[t1]={name:t1,W:0,L:0,ptsFor:0,ptsAga:0,results:[]};
+    if(!teams[t2])teams[t2]={name:t2,W:0,L:0,ptsFor:0,ptsAga:0,results:[]};
+    teams[t1].ptsFor+=s1;teams[t1].ptsAga+=s2;
+    teams[t2].ptsFor+=s2;teams[t2].ptsAga+=s1;
+    if(s1>s2){teams[t1].W++;teams[t1].results.push('W');teams[t2].L++;teams[t2].results.push('L');}
+    else{teams[t2].W++;teams[t2].results.push('W');teams[t1].L++;teams[t1].results.push('L');}
+  });
+  return Object.values(teams);
+}
+
+function renderStandings(){
+  if(!allMatches.length)return;
+  const sort=document.getElementById('standings-sort')?.value||'pts';
+  const data=computeStandings();
+  data.sort((a,b)=>{
+    if(sort==='pts')return(b.W-b.L)-(a.W-a.L)||b.W-a.W;
+    if(sort==='ptsdiff')return(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga);
+    return b.ptsFor-a.ptsFor;
+  });
+
+  const totalGames=data[0]?data[0].W+data[0].L:0;
+  const leader=data[0];
+
+  const rows=data.map((t,i)=>{
+    const color=TEAM_COLORS[t.name]||'#888';
+    const diff=t.ptsFor-t.ptsAga;
+    const diffCls=diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero';
+    const diffStr=(diff>0?'+':'')+diff;
+    const gb=leader?((leader.W-t.W)+(t.L-leader.L))/2:0;
+    const gbStr=gb===0?'—':gb.toFixed(1);
+    const avgFor=(t.ptsFor/(t.W+t.L)||0).toFixed(1);
+    const avgAga=(t.ptsAga/(t.W+t.L)||0).toFixed(1);
+    // Form — last 5
+    const last5=t.results.slice(-5);
+    const formDots=last5.map(r=>`<div class="form-dot ${r.toLowerCase()}">${r}</div>`).join('');
+    // Pos badge color
+    const posBg=i===0?'#fbbf24':i<3?'#94a3b8':i<6?'#f97316':'var(--border2)';
+    const posColor=i<3?'#000':'var(--text)';
+    return `<tr>
+      <td>
+        <span class="pos-badge" style="background:${posBg};color:${posColor}">${i+1}</span>
+        <span class="pname-link" style="color:${color};font-weight:600" onclick="
+          document.getElementById('h2h-team1').value='${t.name}';
+          document.getElementById('h2h-team2').value='';
+          renderH2H();">${t.name}</span>
+      </td>
+      <td>${t.W+t.L}</td>
+      <td style="color:#22c55e;font-weight:700">${t.W}</td>
+      <td style="color:#ef4444">${t.L}</td>
+      <td>${gbStr}</td>
+      <td style="color:${color};font-weight:600">${(t.W/(t.W+t.L)*100||0).toFixed(1)}%</td>
+      <td>${avgFor}</td>
+      <td>${avgAga}</td>
+      <td class="${diffCls}">${diffStr}</td>
+      <td><div class="form-dots">${formDots}</div></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('standings-tbl').innerHTML=`
+    <thead><tr>
+      <th style="text-align:left;padding-left:14px">EKIPA</th>
+      <th title="Odigrane tekme">T</th>
+      <th title="Zmage" style="color:#22c55e">Z</th>
+      <th title="Porazi" style="color:#ef4444">P</th>
+      <th title="Games behind">GB</th>
+      <th title="Odstotek zmag">Z%</th>
+      <th title="Točke za (avg)">TOČ+</th>
+      <th title="Točke proti (avg)">TOČ-</th>
+      <th title="Point differential">DIFF</th>
+      <th title="Forma (zadnjih 5)">FORMA</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>`;
+
+  renderH2H();
+}
+
+function renderH2H(){
+  const t1=document.getElementById('h2h-team1')?.value;
+  const t2=document.getElementById('h2h-team2')?.value;
+  const wrap=document.getElementById('h2h-wrap');
+  if(!wrap)return;
+  if(!t1||!t2||t1===t2){wrap.innerHTML='';return;}
+
+  const matches=allMatches.filter(m=>{
+    if(m.status!=='FINISHED')return false;
+    const n1=normalizeTeamName(m.firstTeamName),n2=normalizeTeamName(m.secondTeamName);
+    return(n1===t1&&n2===t2)||(n1===t2&&n2===t1);
+  });
+
+  if(!matches.length){wrap.innerHTML='<div class="empty">Ni medsebojnih tekem</div>';return;}
+
+  const c1=TEAM_COLORS[t1]||'#f97316',c2=TEAM_COLORS[t2]||'#3b82f6';
+  let w1=0,w2=0,pts1=0,pts2=0;
+  const matchRows=matches.map(m=>{
+    const n1=normalizeTeamName(m.firstTeamName);
+    const s1=n1===t1?m.firstTeamScore:m.secondTeamScore;
+    const s2=n1===t1?m.secondTeamScore:m.firstTeamScore;
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    const winner=s1>s2?t1:t2;
+    pts1+=s1;pts2+=s2;
+    if(s1>s2)w1++;else w2++;
+    return `<div class="h2h-match">
+      <span style="font-size:.7rem;color:var(--mut)">K${m.round} · ${date}</span>
+      <span class="h2h-score">
+        <span style="color:${s1>s2?c1:'var(--mut)'}">${s1}</span>
+        <span style="color:var(--mut);margin:0 4px">:</span>
+        <span style="color:${s2>s1?c2:'var(--mut)'}">${s2}</span>
+      </span>
+      <span style="font-size:.7rem;color:${winner===t1?c1:c2};font-weight:600">${winner===t1?TEAM_SHORT[t1]||t1:TEAM_SHORT[t2]||t2}</span>
+    </div>`;
+  }).join('');
+
+  const n=matches.length;
+  wrap.innerHTML=`
+    <div class="h2h-wrap">
+      <div class="h2h-card">
+        <div class="h2h-title">HEAD-TO-HEAD: <span style="color:${c1}">${t1}</span> vs <span style="color:${c2}">${t2}</span></div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px 20px;gap:10px;border-bottom:1px solid var(--border)">
+          <div style="text-align:center">
+            <div style="font-family:var(--fh);font-size:2.5rem;color:${c1}">${w1}</div>
+            <div style="font-size:.7rem;color:var(--mut)">ZMAGE</div>
+            <div style="font-size:.75rem;color:${c1};margin-top:4px">${(pts1/n).toFixed(1)} TOČ/tm</div>
+          </div>
+          <div style="font-family:var(--fh);font-size:1.2rem;color:var(--mut)">${n} TEKEM</div>
+          <div style="text-align:center">
+            <div style="font-family:var(--fh);font-size:2.5rem;color:${c2}">${w2}</div>
+            <div style="font-size:.7rem;color:var(--mut)">ZMAGE</div>
+            <div style="font-size:.75rem;color:${c2};margin-top:4px">${(pts2/n).toFixed(1)} TOČ/tm</div>
+          </div>
+        </div>
+        ${matchRows}
+      </div>
+    </div>`;
+}
 
 // ═══════════════════════════════════════
 // NERD STATS — PBP ENGINE
