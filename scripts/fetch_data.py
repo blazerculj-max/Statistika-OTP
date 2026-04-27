@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch Liga OTP banka + 2. SKL data including all phases."""
+"""Fetch Liga OTP banka + 2. SKL data including all phases and all pages."""
 
 import json, time, urllib.request, os
 from datetime import datetime, timezone
@@ -12,12 +12,12 @@ LEAGUES = {
     'liga1': {
         'id': 579,
         'name': 'Liga OTP banka',
-        'phase_ids': None,  # fetch all phases
+        'phase_ids': None,
     },
     'liga2': {
         'id': 581,
         'name': '2. SKL',
-        'phase_ids': [5813, 5873, 5874, 5880],  # redni + obstanek + cetrtfinale + polfinale
+        'phase_ids': [5813, 5873, 5874, 5880],
     },
 }
 
@@ -32,24 +32,37 @@ def fetch_json(url, retries=3):
             time.sleep(i + 1)
     return None
 
+def fetch_all_matches(comp_id):
+    """Fetch all pages of matches for a competition."""
+    all_items = []
+    page = 1
+    while True:
+        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}&page={page}"
+        data = fetch_json(url)
+        items = data.get('data', {}).get('items', []) if data else []
+        if not items:
+            break
+        all_items.extend(items)
+        print(f"    Page {page}: {len(items)} tekem (skupaj {len(all_items)})")
+        if len(items) < 150:
+            break
+        page += 1
+        time.sleep(0.2)
+    return sorted(all_items, key=lambda m: (m['round'], m.get('dateTime', '')))
+
 def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
-    data = fetch_json(f"{API_BASE}/matches/?competitionId={lg['id']}&seasonId={SEASON_ID}")
-    if not data:
-        print("  FAILED"); return
-
-    all_matches = sorted(data['data']['items'],
-                         key=lambda m: (m['round'], m.get('dateTime', '')))
+    all_matches = fetch_all_matches(lg['id'])
 
     # Filter by phase if specified
     if lg['phase_ids']:
         matches = [m for m in all_matches
                    if any(c.get('competitionPhaseId') in lg['phase_ids']
                           for c in m.get('competitions', []))]
-        print(f"  {len(matches)}/{len(all_matches)} tekem (filtrirano po fazah)")
+        print(f"  {len(matches)}/{len(all_matches)} tekem po filtriranju faz")
     else:
         matches = all_matches
-        print(f"  {len(matches)} tekem")
+        print(f"  {len(matches)} tekem skupaj")
 
     finished = [m for m in matches if m['status'] == 'FINISHED']
     print(f"  {len(finished)} odigranih")
