@@ -1,0 +1,35 @@
+name: Posodobi podatke Lige OTP banka
+
+on:
+  schedule:
+    # Vsake 6 ur (stats za tekme)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    # Ročni zagon — gumb "Run workflow" na GitHub Actions strani
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Fetch podatke
+        run: python scripts/fetch_data.py
+
+      - name: Commit in push
+        run: |
+          git config --global user.name  "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "Auto: posodobi podatke $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
