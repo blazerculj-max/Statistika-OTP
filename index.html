@@ -233,11 +233,15 @@ select:focus{outline:none;border-color:var(--acc)}
 <div id="match-overlay" onclick="if(event.target===this)closeMatch()"></div>
 
 <header class="hdr">
-  <div class="hdr-title">LIGA <span>OTP BANKA</span></div>
+  <div class="hdr-title" id="hdr-title">LIGA <span>OTP BANKA</span></div>
   <div class="hdr-right">
     <span class="hdr-season">SEZONA 2025/26</span>
     <div style="display:flex;gap:6px;align-items:center">
-      <span class="hdr-badge">SLOVENIJA</span>
+      <div class="tgl" style="margin-right:4px">
+        <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
+        <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
+      </div>
+      <span class="hdr-badge" id="league-badge">Liga OTP banka</span>
       <button onclick="cacheClear()" title="Počisti predpomnilnik" style="background:transparent;border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fm)">♻️ cache</button>
       <span id="live-badge" style="display:none;background:#22c55e;color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;animation:pulse-border 1.5s infinite">● LIVE</span>
     </div>
@@ -393,11 +397,34 @@ select:focus{outline:none;border-color:var(--acc)}
 // ═══════════════════════════════════════════════════
 const API = 'https://api.kzs.si/api/v1/public';
 const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
-const GITHUB_STATS_URL = GITHUB_RAW + '/stats.json';
-const GITHUB_PBP_URL   = GITHUB_RAW + '/pbp.json';
-const GITHUB_MAX_AGE   = 6 * 3600 * 1000; // 6 ur
-const COMP_ID = 579;
+const GITHUB_MAX_AGE = 6 * 3600 * 1000;
 const SEASON_ID = 26;
+
+const LEAGUES = {
+  'liga1': {
+    id: 579,
+    name: 'Liga OTP banka',
+    short: '1. SKL',
+    color: '#f97316',
+    statsUrl: GITHUB_RAW + '/liga1_stats.json',
+    pbpUrl:   GITHUB_RAW + '/liga1_pbp.json',
+    cacheStats: 'liga1_stats_v1',
+    cachePbp:   'liga1_pbp_v1',
+  },
+  'liga2': {
+    id: 581,
+    name: '2. slovenska košarkarska liga',
+    short: '2. SKL',
+    color: '#60a5fa',
+    statsUrl: GITHUB_RAW + '/liga2_stats.json',
+    pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
+    cacheStats: 'liga2_stats_v1',
+    cachePbp:   'liga2_pbp_v1',
+  },
+};
+
+let currentLeague = 'liga1';
+function getLg() { return LEAGUES[currentLeague]; }
 
 const TEAM_COLORS = {
   'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
@@ -441,17 +468,14 @@ function setProgress(pct, msg) {
 // ═══════════════════════════════════════
 // CACHE — localStorage z TTL
 // ═══════════════════════════════════════
-const CACHE_KEY_STATS = 'liga_stats_v3';
-const CACHE_KEY_PBP   = 'liga_pbp_v3';
-const TTL_STATS = 6 * 3600 * 1000;   // 6 ur (nova tekma se doda)
-const TTL_PBP   = 7 * 24 * 3600 * 1000; // 7 dni (PBP se ne spreminja)
+const TTL_STATS = 6 * 3600 * 1000;
+const TTL_PBP   = 7 * 24 * 3600 * 1000;
 
-function cacheGet(key) {
+function cacheGet(key, ttl=TTL_STATS) {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const {ts, data} = JSON.parse(raw);
-    const ttl = key === CACHE_KEY_PBP ? TTL_PBP : TTL_STATS;
     if (Date.now() - ts > ttl) { localStorage.removeItem(key); return null; }
     return data;
   } catch(e) { return null; }
@@ -478,17 +502,52 @@ function cacheInfo(key) {
 }
 
 function cacheClear() {
-  localStorage.removeItem(CACHE_KEY_STATS);
-  localStorage.removeItem(CACHE_KEY_PBP);
-  alert('Cache počiščen. Ob naslednjem odpiranju se bodo podatki naložili na novo.');
+  Object.values(LEAGUES).forEach(lg => {
+    localStorage.removeItem(lg.cacheStats);
+    localStorage.removeItem(lg.cachePbp);
+  });
+  alert('Cache počiščen za vse lige. Podatki se bodo naložili na novo.');
+}
+
+async function switchLeague(lg) {
+  if (currentLeague === lg) return;
+  currentLeague = lg;
+  const l = getLg();
+  // Update UI
+  Object.keys(LEAGUES).forEach(k => {
+    const btn = document.getElementById('lg-btn-' + k);
+    if (btn) btn.classList.toggle('active', k === lg);
+  });
+  document.getElementById('league-badge').textContent = l.name;
+  document.getElementById('league-badge').style.background = l.color;
+  // Reset state
+  P = []; allMatches = []; matchStatsCache = {}; pbpData = {};
+  pbpLoaded = false; nerdStats = null; _leaguePlayers = null; _tmAgg = {};
+  sortCol = -1;
+  // Show loading and reload
+  document.getElementById('loading-overlay').style.display = 'flex';
+  document.getElementById('load-bar').style.width = '0%';
+  document.getElementById('load-detail').textContent = 'Nalagam ' + l.name + '...';
+  await loadAllData();
+  // Reset to ekipe tab
+  showTabDirect('ekipe');
+}
+
+function showTabDirect(t) {
+  document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(e => e.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  const btn = [...document.querySelectorAll('.nb')].find(b => b.onclick?.toString().includes("'" + t + "'"));
+  if (btn) btn.classList.add('active');
+  if (t === 'ekipe') renderTeam();
 }
 
 async function loadAllData() {
   try {
     // ── 1. Preveri localStorage cache ──
-    const cached = cacheGet(CACHE_KEY_STATS);
+    const cached = cacheGet(getLg().cacheStats, TTL_STATS);
     if (cached) {
-      const age = cacheInfo(CACHE_KEY_STATS);
+      const age = cacheInfo(getLg().cacheStats);
       setProgress(85, '⚡ Iz predpomnilnika (' + age + ' star)...');
       allMatches = cached.allMatches;
       matchStatsCache = cached.matchStatsCache;
@@ -503,7 +562,7 @@ async function loadAllData() {
     // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
     setProgress(10, '🐙 Nalagam iz GitHub...');
     try {
-      const ghRes = await fetch(GITHUB_STATS_URL + '?t=' + Date.now());
+      const ghRes = await fetch(getLg().statsUrl + '?t=' + Date.now());
       if (ghRes.ok) {
         const ghData = await ghRes.json();
         const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
@@ -514,7 +573,7 @@ async function loadAllData() {
           Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
             matchStatsCache[parseInt(id)] = stats;
           });
-          cacheSet(CACHE_KEY_STATS, {allMatches, matchStatsCache});
+          cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
           setProgress(96, 'Agregiram...');
           aggregatePlayers(); initUI();
           setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
@@ -530,7 +589,7 @@ async function loadAllData() {
 
     // ── 3. Fallback: direktni API ──
     setProgress(15, 'Nalagam iz API...');
-    const res = await fetch(`${API}/matches/?competitionId=${COMP_ID}&seasonId=${SEASON_ID}`);
+    const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}`);
     const data = await res.json();
     allMatches = data.data.items.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
 
@@ -551,7 +610,7 @@ async function loadAllData() {
       setProgress(Math.min(pct,90), `Statistika... ${Math.min(i+batchSize, finished.length)}/${finished.length}`);
     }
 
-    cacheSet(CACHE_KEY_STATS, {allMatches, matchStatsCache});
+    cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
     setProgress(96, 'Agregiram...');
     aggregatePlayers(); initUI();
     setProgress(100, '✅ Naloženo iz API');
@@ -1657,12 +1716,12 @@ function setNerdView(v){
 
 async function loadPBPData(){
   // ── 1. Preveri localStorage cache ──
-  const cachedPBP = cacheGet(CACHE_KEY_PBP);
+  const cachedPBP = cacheGet(getLg().cachePbp, TTL_PBP);
   if (cachedPBP) {
     const age = cacheInfo(CACHE_KEY_PBP);
     pbpData = cachedPBP;
     pbpLoaded = true; nerdStats = null;
-    document.getElementById('nerd-status').textContent = '⚡ PBP iz predpomnilnika (' + age + ')';
+    document.getElementById('nerd-status').textContent = '⚡ PBP iz predpomnilnika (' + cacheInfo(getLg().cachePbp) + ')';
     renderNerd();
     return;
   }
@@ -1673,14 +1732,14 @@ async function loadPBPData(){
   // ── 2. Poskusi GitHub ──
   try {
     setNerdStatus('🐙 Nalagam PBP iz GitHub...');
-    const ghRes = await fetch(GITHUB_PBP_URL + '?t=' + Date.now());
+    const ghRes = await fetch(getLg().pbpUrl + '?t=' + Date.now());
     if (ghRes.ok) {
       const ghData = await ghRes.json();
       // Convert: GitHub format has string keys, we need int keys
       Object.entries(ghData.pbp || {}).forEach(([id, events]) => {
         pbpData[parseInt(id)] = {pbp: events, matchId: parseInt(id)};
       });
-      cacheSet(CACHE_KEY_PBP, pbpData);
+      cacheSet(getLg().cachePbp, pbpData);
       pbpLoaded = true; nerdStats = null;
       const age = Math.round((Date.now() - new Date(ghData.updatedAt).getTime()) / 60000);
       document.getElementById('nerd-status').textContent = '🐙 PBP iz GitHub (' + age + ' min)';
@@ -1722,7 +1781,7 @@ async function loadPBPData(){
   }
 
   // ── Save PBP to cache ──
-  cacheSet(CACHE_KEY_PBP, pbpData);
+  cacheSet(getLg().cachePbp, pbpData);
 
   pbpLoaded=true;
   nerdStats=null;
