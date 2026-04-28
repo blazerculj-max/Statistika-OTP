@@ -30,8 +30,11 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        'phase_ids': [5814],
-        'groups': {}  # brez group filtra — paginacija ne dela,
+        # NI phase_ids — phase filter je pokvarjen (vrača tekme iz vseh tekmovanj)
+        # Fetchamo strani 1+2 za competitionId=582 in filtriramo po ekipah
+        'phase_ids': None,
+        'max_pages': 3,  # fetch 3 strani da ujamemo vse
+        'groups': {},
         'max_pages': 99,
     },
 }
@@ -84,11 +87,21 @@ def fetch_all_matches(key, lg):
     else:
         matches = fetch_phase(lg['id'], max_pages=max_p)
 
-    # Filtriraj samo tekme ki spadajo k tej ligi (po competitionId)
-    # To izključi ženske tekme ki se mešajo pri liga3
-    matches = [m for m in matches
-               if any(c.get('competitionId') == lg['id']
-                      for c in m.get('competitions', [{}]))]
+    # Filtriraj samo tekme ki spadajo k tej ligi
+    # Za liga3: dodatno filtriraj po znanih ekipah (phase filter je pokvarjen)
+    LIGA3_TEAMS = {
+        'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
+        'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
+        'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
+        'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'
+    }
+    if key == 'liga3':
+        matches = [m for m in matches
+                   if m['firstTeamName'] in LIGA3_TEAMS and m['secondTeamName'] in LIGA3_TEAMS]
+    else:
+        matches = [m for m in matches
+                   if any(c.get('competitionId') == lg['id']
+                          for c in m.get('competitions', [{}]))]
 
     matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
     return matches
