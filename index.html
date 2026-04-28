@@ -292,24 +292,28 @@ select:focus{outline:none;border-color:var(--acc)}
 .h2h-score{font-family:var(--fh);font-size:1.1rem;letter-spacing:.04em}
 .diff-pos{color:#22c55e}.diff-neg{color:#ef4444}.diff-zero{color:var(--mut)}
 /* PLAYOFF BRACKET */
-.bracket-wrap{overflow-x:auto;padding:10px 0}
-.bracket{display:flex;gap:0;align-items:stretch;min-width:600px}
-.bracket-round{display:flex;flex-direction:column;justify-content:space-around;min-width:180px;position:relative}
-.bracket-round-title{font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);text-align:center;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
-.bracket-series{background:var(--card);border:1px solid var(--border);border-radius:8px;margin:6px 8px;overflow:hidden;cursor:default;transition:border-color .2s}
-.bracket-series:hover{border-color:var(--border2)}
-.bracket-series.done{border-color:rgba(34,197,94,.25)}
-.bracket-series.live{border-color:rgba(239,68,68,.4);box-shadow:0 0 12px rgba(239,68,68,.1)}
-.bracket-team{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;gap:6px}
+.bracket-wrap{overflow-x:auto;padding:16px 0}
+.bracket-grid{display:flex;gap:0;align-items:flex-start;min-width:700px}
+.bracket-col{display:flex;flex-direction:column;flex:1;padding:0 4px;position:relative}
+.bracket-col-title{font-family:var(--fh);font-size:.72rem;letter-spacing:.1em;text-align:center;padding:6px 0 10px;text-transform:uppercase}
+.bracket-pair{position:relative;margin-bottom:8px}
+.bracket-series{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .2s;margin:0}
+.bracket-series.done{border-color:rgba(34,197,94,.3)}
+.bracket-series.live{border-color:rgba(239,68,68,.5);box-shadow:0 0 16px rgba(239,68,68,.12)}
+.bracket-series.pending{opacity:.6}
+.bracket-team{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:8px}
 .bracket-team:first-child{border-bottom:1px solid var(--border)}
-.bracket-team-name{font-size:.75rem;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bracket-team-score{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;flex-shrink:0;min-width:16px;text-align:right}
-.bracket-team.winner .bracket-team-name{font-weight:700;color:var(--text)}
-.bracket-team.winner .bracket-team-score{color:#22c55e}
-.bracket-team.loser{opacity:.5}
-.bracket-connector{position:absolute;right:0;top:0;bottom:0;width:16px;pointer-events:none}
-.group-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-@media(max-width:700px){.group-split{grid-template-columns:1fr}}
+.bracket-team-name{font-size:.78rem;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bracket-team-score{font-family:var(--fh);font-size:1.05rem;flex-shrink:0;min-width:18px;text-align:right}
+.bracket-team.winner .bracket-team-name{font-weight:700}
+.bracket-team.winner .bracket-team-score{color:#22c55e;font-weight:700}
+.bracket-team.loser .bracket-team-name{opacity:.45}
+.bracket-team.loser .bracket-team-score{opacity:.45}
+/* Connector lines between rounds */
+.bracket-connector-right{position:absolute;right:-4px;top:50%;width:12px;height:2px;background:var(--border2)}
+.bracket-connector-top{position:absolute;right:-4px;bottom:50%;width:2px;background:var(--border2)}
+.bracket-connector-bot{position:absolute;right:-4px;top:50%;width:2px;background:var(--border2)}
+.group-split{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
 .group-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .group-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.06em;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 /* NERD STATS */
@@ -2595,86 +2599,208 @@ function computePlayoffSeries(){
   return Object.values(series);
 }
 
+function seriesCard(s, extraCls=''){
+  if(!s) {
+    return `<div class="bracket-series pending">
+      <div class="bracket-team"><span class="bracket-team-name" style="color:var(--mut)">TBD</span></div>
+      <div class="bracket-team"><span class="bracket-team-name" style="color:var(--mut)">TBD</span></div>
+    </div>`;
+  }
+  const w1=s.winner===s.t1,w2=s.winner===s.t2;
+  const c1=TEAM_COLORS[s.t1]||'#888', c2=TEAM_COLORS[s.t2]||'#888';
+  const label = s.isAggregate
+    ? `<div style="font-size:.6rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK GOLOV</div>`
+    : '';
+  return `<div class="bracket-series ${s.done?'done':''} ${s.isLive?'live':''} ${extraCls}">
+    ${label}
+    <div class="bracket-team ${w1?'winner':w2?'loser':''}">
+      <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
+      <span class="bracket-team-score">${s.isAggregate ? (s.pts1||0) : s.w1}</span>
+    </div>
+    <div class="bracket-team ${w2?'winner':w1?'loser':''}">
+      <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
+      <span class="bracket-team-score">${s.isAggregate ? (s.pts2||0) : s.w2}</span>
+    </div>
+  </div>`;
+}
+
+function buildBracketTree(byPhase) {
+  // Build ordered bracket: figure out which QF feeds which SF
+  const qf = byPhase['Četrtfinale'] || [];
+  const sf = byPhase['Polfinale'] || [];
+  const fin = byPhase['Finale'] || [];
+
+  // Map winners to SF
+  function findSF(team) {
+    return sf.find(s => s.t1 === team || s.t2 === team);
+  }
+
+  // Group QFs by which SF they feed
+  const pairs = [];
+  const usedQF = new Set();
+
+  sf.forEach(sfSeries => {
+    // Find two QF winners that match this SF
+    const qf1 = qf.find(q => !usedQF.has(q) && (q.winner === sfSeries.t1 || q.winner === sfSeries.t2 || (!sfSeries.t1 && !sfSeries.t2)));
+    const qf2 = qf.find(q => !usedQF.has(q) && q !== qf1 && (q.winner === sfSeries.t1 || q.winner === sfSeries.t2));
+    if(qf1) usedQF.add(qf1);
+    if(qf2) usedQF.add(qf2);
+    pairs.push({qf1, qf2, sf: sfSeries});
+  });
+
+  // Handle leftover QFs
+  const remaining = qf.filter(q => !usedQF.has(q));
+  for(let i=0; i<remaining.length; i+=2) {
+    pairs.push({qf1: remaining[i], qf2: remaining[i+1]||null, sf: null});
+  }
+
+  return {pairs, fin: fin[0]||null};
+}
+
+function renderBracketHTML(byPhase, phaseColors) {
+  const {pairs, fin} = buildBracketTree(byPhase);
+  if(!pairs.length && !fin) return '';
+
+  const hasQF = byPhase['Četrtfinale']?.length > 0;
+  const hasSF = byPhase['Polfinale']?.length > 0;
+  const hasFin = byPhase['Finale']?.length > 0;
+
+  let html = `<div class="bracket-wrap"><div class="bracket-grid">`;
+
+  // QF column
+  if(hasQF) {
+    html += `<div class="bracket-col">
+      <div class="bracket-col-title" style="color:${phaseColors['Četrtfinale']}">Četrtfinale</div>`;
+    pairs.forEach((p, pi) => {
+      html += `<div class="bracket-pair" style="margin-bottom:${hasSF?'4px':'8px'}">`;
+      if(p.qf1) html += seriesCard(p.qf1);
+      html += `<div style="height:4px"></div>`;
+      if(p.qf2) html += seriesCard(p.qf2);
+      html += `</div>`;
+      if(pi < pairs.length-1) html += `<div style="height:12px"></div>`;
+    });
+    html += `</div>`;
+    // Connector
+    html += `<div style="display:flex;flex-direction:column;justify-content:space-around;width:20px;padding-top:36px">`;
+    pairs.forEach((_,pi)=>{
+      html += `<div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <div style="width:100%;height:2px;background:var(--border2)"></div>
+      </div>`;
+      if(pi<pairs.length-1) html+=`<div style="height:12px"></div>`;
+    });
+    html += `</div>`;
+  }
+
+  // SF column
+  if(hasSF) {
+    html += `<div class="bracket-col">
+      <div class="bracket-col-title" style="color:${phaseColors['Polfinale']}">Polfinale</div>`;
+    pairs.forEach((p, pi) => {
+      const sfH = p.qf1 && p.qf2 ? 'calc(100% + 4px)' : 'auto';
+      html += `<div class="bracket-pair" style="margin-bottom:8px;margin-top:${p.qf1&&p.qf2?'28px':'0'}">`;
+      html += seriesCard(p.sf);
+      html += `</div>`;
+      if(pi < pairs.length-1) html += `<div style="height:12px"></div>`;
+    });
+    html += `</div>`;
+    if(hasFin) {
+      html += `<div style="display:flex;align-items:center;width:20px;padding-top:36px">
+        <div style="width:100%;height:2px;background:var(--border2)"></div>
+      </div>`;
+    }
+  }
+
+  // Final column
+  if(hasFin || byPhase['Finale']) {
+    html += `<div class="bracket-col">
+      <div class="bracket-col-title" style="color:${phaseColors['Finale']}">🏆 Finale</div>
+      <div style="margin-top:${pairs.length>1?'40px':'0'}">`;
+    html += seriesCard(byPhase['Finale']?.[0] || null);
+    html += `</div></div>`;
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
 function renderPlayoffBracket(){
   const wrap = document.getElementById('playoff-wrap');
   if(!wrap) return;
   const series = computePlayoffSeries();
   if(!series.length){ wrap.innerHTML=''; return; }
 
-  const phaseOrder = ['Liga za obstanek','Četrtfinale','Polfinale','Finale'];
   const phaseColors = {
-    'Četrtfinale':'#f59e0b','Polfinale':'#a855f7','Finale':'#f97316','Liga za obstanek':'#3b82f6'
+    'Četrtfinale':'#f59e0b','Polfinale':'#a855f7','Finale':'#f97316',
+    'Liga za obstanek':'#3b82f6','1. krog':'#60a5fa'
   };
 
-  // Split by phase
   const byPhase = {};
   series.forEach(s=>{
     if(!byPhase[s.phase]) byPhase[s.phase]=[];
     byPhase[s.phase].push(s);
   });
 
-  // Separate obstanek from playoff
   const obstanekSeries = byPhase['Liga za obstanek']||[];
-  const playoffPhases = ['Četrtfinale','Polfinale','Finale'].filter(p=>byPhase[p]);
+  const playoffByPhase = {};
+  ['Četrtfinale','Polfinale','Finale'].forEach(p=>{ if(byPhase[p]) playoffByPhase[p]=byPhase[p]; });
 
   let html = '';
 
   // Playoff bracket
-  if(playoffPhases.length) {
-    html += `<div style="font-family:var(--fh);font-size:1.2rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
-    html += `<div class="bracket-wrap"><div class="bracket">`;
-
-    playoffPhases.forEach(phase=>{
-      const color = phaseColors[phase]||'#888';
-      const pSeries = byPhase[phase]||[];
-      html += `<div class="bracket-round">
-        <div class="bracket-round-title" style="color:${color}">${phase.toUpperCase()}</div>`;
-
-      pSeries.forEach(s=>{
-        const w1cls = s.winner===s.t1?'winner':s.winner?'loser':'';
-        const w2cls = s.winner===s.t2?'winner':s.winner?'loser':'';
-        const c1 = TEAM_COLORS[s.t1]||'#888';
-        const c2 = TEAM_COLORS[s.t2]||'#888';
-        html += `<div class="bracket-series ${s.done?'done':''}">
-          <div class="bracket-team ${w1cls}">
-            <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
-            <span class="bracket-team-score">${s.w1}</span>
-          </div>
-          <div class="bracket-team ${w2cls}">
-            <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
-            <span class="bracket-team-score">${s.w2}</span>
-          </div>
-        </div>`;
-      });
-      html += `</div>`;
-    });
-    html += `</div></div>`;
+  if(Object.keys(playoffByPhase).length) {
+    html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
+    html += renderBracketHTML(playoffByPhase, phaseColors);
   }
 
   // Liga za obstanek
   if(obstanekSeries.length) {
-    html += `<div style="font-family:var(--fh);font-size:1.2rem;letter-spacing:.06em;margin:20px 0 12px;color:#3b82f6">🔵 LIGA ZA OBSTANEK</div>`;
-    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">`;
-    obstanekSeries.forEach(s=>{
-      const w1cls = s.winner===s.t1?'winner':s.winner?'loser':'';
-      const w2cls = s.winner===s.t2?'winner':s.winner?'loser':'';
-      const c1 = TEAM_COLORS[s.t1]||'#888';
-      const c2 = TEAM_COLORS[s.t2]||'#888';
-      html += `<div class="bracket-series ${s.done?'done':''}">
-        <div class="bracket-team ${w1cls}">
-          <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
-          <span class="bracket-team-score">${s.w1}</span>
-        </div>
-        <div class="bracket-team ${w2cls}">
-          <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
-          <span class="bracket-team-score">${s.w2}</span>
-        </div>
-      </div>`;
+    // Compute standings within obstanek
+    const obstTeams = {};
+    allMatches.forEach(m=>{
+      if(m.status!=='FINISHED') return;
+      const ph = m.competitions?.[0]?.competitionPhaseName||'';
+      if(ph !== 'Liga za obstanek') return;
+      const a=m.firstTeamName, b=m.secondTeamName;
+      const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
+      if(!obstTeams[a]) obstTeams[a]={name:a,W:0,L:0,ptsFor:0,ptsAga:0};
+      if(!obstTeams[b]) obstTeams[b]={name:b,W:0,L:0,ptsFor:0,ptsAga:0};
+      obstTeams[a].ptsFor+=s1; obstTeams[a].ptsAga+=s2;
+      obstTeams[b].ptsFor+=s2; obstTeams[b].ptsAga+=s1;
+      if(s1>s2){obstTeams[a].W++;obstTeams[b].L++;}
+      else{obstTeams[b].W++;obstTeams[a].L++;}
     });
-    html += `</div>`;
+    const obstArr = Object.values(obstTeams).sort((a,b)=>(b.W-b.L)-(a.W-a.L)||b.W-a.W);
+
+    html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin:24px 0 12px;color:#3b82f6">🔵 LIGA ZA OBSTANEK</div>`;
+
+    if(obstArr.length) {
+      html += `<div class="tw" style="margin-bottom:12px">
+        <table class="standings-table">
+          <thead><tr>
+            <th style="text-align:left;padding-left:14px">EKIPA</th>
+            <th>T</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th>
+            <th>TOČ+</th><th>TOČ-</th><th>DIFF</th>
+          </tr></thead>
+          <tbody>${obstArr.map((t,i)=>{
+            const d=t.ptsFor-t.ptsAga;
+            const bg=i===0?'#fbbf24':i<3?'#94a3b8':'var(--border2)';
+            return `<tr>
+              <td><span class="pos-badge" style="background:${bg};color:${i<3?'#000':'var(--text)'}">${i+1}</span>
+              <span style="font-weight:500">${t.name}</span></td>
+              <td>${t.W+t.L}</td>
+              <td style="color:#22c55e;font-weight:700">${t.W}</td>
+              <td style="color:#ef4444">${t.L}</td>
+              <td>${(t.ptsFor/(t.W+t.L)||0).toFixed(1)}</td>
+              <td>${(t.ptsAga/(t.W+t.L)||0).toFixed(1)}</td>
+              <td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${(d>0?'+':'')+d}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+    }
   }
 
-  wrap.innerHTML = html;
+  wrap.innerHTML = html || '';
 }
 
 function renderStandings(){
