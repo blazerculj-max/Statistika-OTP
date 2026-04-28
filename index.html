@@ -225,6 +225,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .score-updated{animation:scoreFlash .5s ease}
 @keyframes scoreFlash{0%{color:var(--acc)}100%{color:var(--text)}}
 /* ATTENDANCE */
+.att-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--sub);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
 .att-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .att-card-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
@@ -437,6 +438,8 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
   <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
   <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
+  <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
+  <button class="nb" onclick="showTab('forma')">📈 FORMA</button>
   <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
@@ -600,6 +603,15 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
+  <div id="tab-compare" class="tab">
+    <div class="ctrls">
+      <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Primerjaj dva igralca po povprečju na tekmo</div>
+    </div>
+    <div id="compare-wrap"></div>
+  </div>
+  <div id="tab-forma" class="tab">
+    <div id="form-wrap"></div>
+  </div>
   <div id="tab-starost" class="tab">
     <div class="age-wrap" id="age-wrap"></div>
   </div>
@@ -1330,6 +1342,8 @@ function showTab(t){
   if(t==='iskanje')doSearch();
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
+  if(t==='compare')renderPlayerCompare();
+  if(t==='forma')renderTeamForm();
   if(t==='live')renderLiveTab();
   if(t==='obiski'){
     const iframe=document.getElementById('obiski-iframe');
@@ -2596,6 +2610,227 @@ function setAttMode(m) {
   document.getElementById('att-avg-btn').classList.toggle('active', m==='avg');
   document.getElementById('att-tot-btn').classList.toggle('active', m==='total');
   renderAttendance();
+}
+
+// ═══════════════════════════════════════
+// PLAYER COMPARISON
+// ═══════════════════════════════════════
+let compareIdx1 = -1, compareIdx2 = -1;
+
+function renderPlayerCompare() {
+  const wrap = document.getElementById('compare-wrap');
+  if(!wrap) return;
+
+  const statFields = [
+    {key:F.sc,   label:'Točke',    color:'#f97316', max:30},
+    {key:F.nap,  label:'Nap.sk.',  color:'#22c55e', max:8},
+    {key:F.obr,  label:'Obr.sk.',  color:'#3b82f6', max:8},
+    {key:F.nap,  label:'Sk.skupaj',color:'#22c55e', max:12, computed:true},
+    {key:F.pod,  label:'Asistence',color:'#a855f7', max:8},
+    {key:F.sto,  label:'Ukr.žoga', color:'#fbbf24', max:3},
+    {key:F.blk,  label:'Bloki',    color:'#60a5fa', max:3},
+    {key:F.izs,  label:'Izg.žoge', color:'#ef4444', max:5},
+    {key:F.efe,  label:'EFE',      color:'#f97316', max:25},
+  ];
+
+  const selOpts = P.map((p,i) => `<option value="${i}">${p[F.name]} (${TEAM_SHORT[p[F.team]]||p[F.team]})</option>`).join('');
+
+  function radarSvg(p1, p2) {
+    if(!p1 && !p2) return '';
+    const W=280, H=260, cx=W/2, cy=H/2, r=95;
+    const n = statFields.length;
+    const angle = i => (i/n)*Math.PI*2 - Math.PI/2;
+
+    // Grid
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:320px">`;
+    [0.25,0.5,0.75,1].forEach(frac => {
+      const pts = statFields.map((_,i)=>{
+        const a=angle(i);
+        return `${cx+Math.cos(a)*r*frac},${cy+Math.sin(a)*r*frac}`;
+      }).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
+    });
+    // Axes
+    statFields.forEach((_,i)=>{
+      const a=angle(i);
+      svg += `<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r}" y2="${cy+Math.sin(a)*r}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
+      const lx=cx+Math.cos(a)*(r+14), ly=cy+Math.sin(a)*(r+14);
+      svg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#888" font-size="9">${statFields[i].label}</text>`;
+    });
+
+    // Player polygons
+    [p1&&{p:p1,color:'#f97316',opacity:.35}, p2&&{p:p2,color:'#3b82f6',opacity:.35}].filter(Boolean).forEach(({p,color,opacity})=>{
+      const pts = statFields.map((f,i)=>{
+        const val = f.computed ? (p[F.nap]||0)+(p[F.obr]||0) : (p[f.key]||0)/p[F.T];
+        const frac = Math.min(val/(f.max||1), 1);
+        const a=angle(i);
+        return `${cx+Math.cos(a)*r*frac},${cy+Math.sin(a)*r*frac}`;
+      }).join(' ');
+      svg += `<polygon points="${pts}" fill="${color}" fill-opacity="${opacity}" stroke="${color}" stroke-width="1.5"/>`;
+    });
+    svg += '</svg>';
+    return svg;
+  }
+
+  function statBar(label, v1, v2, max, color) {
+    const pct1 = Math.min((v1||0)/max*100, 100);
+    const pct2 = Math.min((v2||0)/max*100, 100);
+    const winner = v1>v2?'left':v2>v1?'right':'tie';
+    return `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--mut);margin-bottom:3px">
+        <span style="font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--sub)'}">${(v1||0).toFixed(1)}</span>
+        <span style="font-size:.65rem;color:var(--mut)">${label}</span>
+        <span style="font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--sub)'}">${(v2||0).toFixed(1)}</span>
+      </div>
+      <div style="display:flex;gap:3px;height:6px">
+        <div style="flex:1;display:flex;justify-content:flex-end">
+          <div style="width:${pct1}%;background:#f97316;border-radius:2px 0 0 2px;opacity:${winner==='left'?1:.5}"></div>
+        </div>
+        <div style="width:2px;background:var(--border2)"></div>
+        <div style="flex:1">
+          <div style="width:${pct2}%;background:#3b82f6;border-radius:0 2px 2px 0;opacity:${winner==='right'?1:.5}"></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const p1 = compareIdx1 >= 0 ? P[compareIdx1] : null;
+  const p2 = compareIdx2 >= 0 ? P[compareIdx2] : null;
+  const c1 = p1 ? (TEAM_COLORS[p1[F.team]]||'#f97316') : '#f97316';
+  const c2 = p2 ? (TEAM_COLORS[p2[F.team]]||'#3b82f6') : '#3b82f6';
+
+  const statBars = p1||p2 ? statFields.map(f => {
+    const v1 = f.computed ? ((p1?.[F.nap]||0)+(p1?.[F.obr]||0)) : (p1?.[f.key]||0);
+    const v2 = f.computed ? ((p2?.[F.nap]||0)+(p2?.[F.obr]||0)) : (p2?.[f.key]||0);
+    return statBar(f.label, v1, v2, f.max, f.color);
+  }).join('') : '';
+
+  wrap.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <select onchange="compareIdx1=parseInt(this.value);renderPlayerCompare()"
+        style="background:var(--card2);border:1px solid var(--border2);color:#f97316;border-radius:8px;padding:8px;font-size:.8rem">
+        <option value="-1">— Izberi igralca 1 —</option>${selOpts}
+      </select>
+      <select onchange="compareIdx2=parseInt(this.value);renderPlayerCompare()"
+        style="background:var(--card2);border:1px solid var(--border2);color:#3b82f6;border-radius:8px;padding:8px;font-size:.8rem">
+        <option value="-1">— Izberi igralca 2 —</option>${selOpts}
+      </select>
+    </div>
+    ${p1||p2 ? `
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center">
+      <div style="text-align:center">
+        ${p1?`<div style="font-size:1.1rem;font-weight:700;color:${c1}">${p1[F.name]}</div>
+        <div style="font-size:.75rem;color:${c1};opacity:.7">${TEAM_SHORT[p1[F.team]]||p1[F.team]}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${p1[F.T]} tekem</div>`:'<div style="color:var(--mut)">—</div>'}
+      </div>
+      <div style="text-align:center">${radarSvg(p1,p2)}</div>
+      <div style="text-align:center">
+        ${p2?`<div style="font-size:1.1rem;font-weight:700;color:${c2}">${p2[F.name]}</div>
+        <div style="font-size:.75rem;color:${c2};opacity:.7">${TEAM_SHORT[p2[F.team]]||p2[F.team]}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${p2[F.T]} tekem</div>`:'<div style="color:var(--mut)">—</div>'}
+      </div>
+    </div>
+    <div style="margin-top:16px">${statBars}</div>
+    ` : `<div class="empty">Izberi dva igralca za primerjavo</div>`}`;
+}
+
+// ═══════════════════════════════════════
+// TEAM FORM (rolling average)
+// ═══════════════════════════════════════
+function renderTeamForm() {
+  const wrap = document.getElementById('form-wrap');
+  if(!wrap || !allMatches.length) return;
+
+  const finished = allMatches.filter(m=>m.status==='FINISHED'&&
+    m.competitions?.[0]?.competitionPhaseName==='Redni del')
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+
+  // Per team rolling 5-game average
+  const byTeam = {};
+  finished.forEach(m => {
+    [m.firstTeamName, m.secondTeamName].forEach((t,ti) => {
+      if(!byTeam[t]) byTeam[t] = [];
+      const pts = ti===0 ? m.firstTeamScore : m.secondTeamScore;
+      const opp = ti===0 ? m.secondTeamScore : m.firstTeamScore;
+      const won = pts > opp;
+      byTeam[t].push({round:m.round, pts, opp, won, date:m.dateTime});
+    });
+  });
+
+  // Top 6 teams by total wins
+  const topTeams = Object.entries(byTeam)
+    .sort((a,b) => b[1].filter(g=>g.won).length - a[1].filter(g=>g.won).length)
+    .slice(0, 6);
+
+  // Monthly stats
+  const monthly = {};
+  finished.forEach(m => {
+    const month = new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'});
+    if(!monthly[month]) monthly[month]={month,games:0,totalPts:0,wins:0};
+    monthly[month].games++;
+    monthly[month].totalPts += (m.firstTeamScore||0) + (m.secondTeamScore||0);
+  });
+
+  const months = Object.values(monthly).sort((a,b)=>
+    Object.keys(monthly).indexOf(a.month)-Object.keys(monthly).indexOf(b.month));
+
+  // Form chart per team (last 10 games W/L)
+  const formCards = topTeams.map(([name, games]) => {
+    const tc = TEAM_COLORS[name]||'#888';
+    const last10 = [...games].slice(-10);
+    const dots = last10.map(g =>
+      `<div style="width:10px;height:10px;border-radius:50%;background:${g.won?'#22c55e':'#ef4444'};
+       flex-shrink:0" title="${g.won?'Z':'P'} ${g.pts}:${g.opp}"></div>`
+    ).join('');
+    const avgPts = (games.reduce((s,g)=>s+g.pts,0)/games.length).toFixed(1);
+    const avgOpp = (games.reduce((s,g)=>s+g.opp,0)/games.length).toFixed(1);
+    const winPct = Math.round(games.filter(g=>g.won).length/games.length*100);
+    // Rolling 5-game W%
+    const rolling = [];
+    for(let i=4;i<games.length;i++) {
+      const slice = games.slice(i-4,i+1);
+      rolling.push(Math.round(slice.filter(g=>g.won).length/5*100));
+    }
+    const maxRoll = Math.max(...rolling, 1);
+    const sparkLine = rolling.map((v,i) => {
+      const x = Math.round(i/(rolling.length-1||1)*100);
+      const y = Math.round((1-v/100)*40);
+      return `${x},${y}`;
+    }).join(' ');
+
+    return `<div class="nerd-card">
+      <div class="nerd-card-title" style="color:${tc}">${name}</div>
+      <div style="display:flex;gap:16px;margin-bottom:10px">
+        <div style="text-align:center"><div style="font-size:1.2rem;font-weight:700;color:#22c55e">${winPct}%</div><div style="font-size:.65rem;color:var(--mut)">zmag</div></div>
+        <div style="text-align:center"><div style="font-size:1.2rem;font-weight:700;color:${tc}">${avgPts}</div><div style="font-size:.65rem;color:var(--mut)">avg točk</div></div>
+        <div style="text-align:center"><div style="font-size:1.2rem;font-weight:700;color:#ef4444">${avgOpp}</div><div style="font-size:.65rem;color:var(--mut)">avg prej.</div></div>
+      </div>
+      ${rolling.length>1?`<svg viewBox="0 0 100 45" style="width:100%;height:40px;margin-bottom:8px">
+        <polyline points="${sparkLine}" fill="none" stroke="${tc}" stroke-width="2" stroke-linecap="round"/>
+        <line x1="0" y1="20" x2="100" y2="20" stroke="rgba(255,255,255,.08)" stroke-width="1" stroke-dasharray="3,3"/>
+      </svg>`:''}
+      <div style="font-size:.65rem;color:var(--mut);margin-bottom:4px">Zadnjih ${last10.length} tekem:</div>
+      <div style="display:flex;gap:3px;flex-wrap:wrap">${dots}</div>
+    </div>`;
+  }).join('');
+
+  // Monthly scoring average
+  const monthBars = months.map(m => {
+    const avg = m.games>0 ? Math.round(m.totalPts/m.games) : 0;
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+      <div style="font-size:.7rem;color:#60a5fa;font-weight:600">${avg}</div>
+      <div style="width:100%;background:#60a5fa;border-radius:2px 2px 0 0;height:${Math.round(avg/200*80)}px;min-height:4px"></div>
+      <div style="font-size:.55rem;color:var(--mut);text-align:center">${m.month.split(' ')[0].slice(0,3)}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">📅 TOČKE PO MESECIH (skupaj na tekmo)</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;align-items:flex-end;gap:6px;height:100px">${monthBars}</div>
+    </div>
+    <div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">📈 FORMA EKIP (rolling 5-tekemski W%)</div>
+    <div class="nerd-grid">${formCards}</div>`;
 }
 
 function renderAttendance() {
@@ -3877,7 +4112,6 @@ function renderRuns({scoringRuns}){
 
 // START
 // ═══════════════════════════════════════════════════
-// Show hero page on load — user selects league
 document.getElementById('loading-overlay').style.display = 'none';
 </script>
 </body>
