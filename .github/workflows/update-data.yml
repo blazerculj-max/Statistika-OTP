@@ -1,9 +1,21 @@
-name: Posodobi podatke (Liga OTP banka + 2. SKL)
+name: Posodobi podatke (vse 3 SKL)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */6 * * *'    # vsake 6 ur — stats (hiter, ~3 min)
+    - cron: '0 2 * * 1'      # vsak ponedeljek ob 2:00 — PBP za nove tekme
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Fetch mode'
+        required: false
+        default: 'incremental'
+        type: choice
+        options:
+          - incremental        # samo stats (hiter)
+          - incremental+pbp    # stats + PBP za nove tekme
+          - full               # vse od začetka (počasen)
+          - full+pbp           # vse + PBP (zelo počasen, 1h+)
 
 permissions:
   contents: write
@@ -11,13 +23,31 @@ permissions:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
+    timeout-minutes: 30      # max 30 min, ne 6h
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Fetch podatke
+
+      - name: Incremental (stats only)
+        if: github.event.inputs.mode == 'incremental' || github.event.inputs.mode == ''
         run: python scripts/fetch_data.py
+
+      - name: Incremental + PBP
+        if: github.event.inputs.mode == 'incremental+pbp' || github.event_name == 'schedule' && github.event.schedule == '0 2 * * 1'
+        run: python scripts/fetch_data.py --pbp
+
+      - name: Full fetch
+        if: github.event.inputs.mode == 'full'
+        run: python scripts/fetch_data.py --full
+
+      - name: Full fetch + PBP
+        if: github.event.inputs.mode == 'full+pbp'
+        run: python scripts/fetch_data.py --full --pbp
+        timeout-minutes: 120
+
       - name: Commit in push
         run: |
           git config --global user.name "GitHub Actions Bot"
