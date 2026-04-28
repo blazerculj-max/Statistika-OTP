@@ -2757,6 +2757,188 @@ function renderBracketHTML(byPhase, phaseColors) {
   return html;
 }
 
+// ── STATIC PLAYOFF DATA (not in API yet) ──
+const STATIC_PLAYOFF = {
+  'liga2': {
+    playoff: [
+      // Četrtfinale
+      {phase:'Četrtfinale', t1:'Plama Pur Ilirska Bistrica', t2:'Celje',        w1:2, w2:1, done:true,  winner:'Plama Pur Ilirska Bistrica'},
+      {phase:'Četrtfinale', t1:'LTH Castings',               t2:'Voga Grosuplje', w1:2, w2:0, done:true,  winner:'LTH Castings'},
+      {phase:'Četrtfinale', t1:'Gorica',                     t2:'Slovan',         w1:2, w2:0, done:true,  winner:'Gorica'},
+      {phase:'Četrtfinale', t1:'Ipros Vrhnika',              t2:'Portorož',       w1:2, w2:1, done:true,  winner:'Ipros Vrhnika'},
+      // Polfinale
+      {phase:'Polfinale',   t1:'Plama Pur Ilirska Bistrica', t2:'LTH Castings',   w1:2, w2:0, done:true,  winner:'Plama Pur Ilirska Bistrica'},
+      {phase:'Polfinale',   t1:'Gorica',                     t2:'Ipros Vrhnika',  w1:2, w2:0, done:true,  winner:'Gorica'},
+      // Finale
+      {phase:'Finale',      t1:'Plama Pur Ilirska Bistrica', t2:'Gorica',         w1:0, w2:2, done:true,  winner:'Gorica'},
+    ],
+    obstanek: [
+      {name:'Hidria',    W:7, L:5, ptsFor:977,  ptsAga:975},
+      {name:'Ježica',    W:7, L:5, ptsFor:988,  ptsAga:1007},
+      {name:'Postojna',  W:6, L:6, ptsFor:1029, ptsAga:971},
+      {name:'Ljubljana', W:4, L:8, ptsFor:966,  ptsAga:1007},
+    ]
+  },
+  'liga3': {
+    // 1/8 finale — seštevek košev (2 tekmi skupaj)
+    osmina: [
+      {t1:'Janče ECP Tactical',          t2:'Konjice',                     pts1:147, pts2:189, winner:'Konjice'},
+      {t1:'Vojnik G7',                   t2:'Koper',                       pts1:134, pts2:145, winner:'Koper'},
+      {t1:'Hrastnik',                    t2:'Armicafe Troti',              pts1:165, pts2:181, winner:'Armicafe Troti'},
+      {t1:'Kolpa',                       t2:'Bistrica Kety Emmi',          pts1:140, pts2:176, winner:'Bistrica Kety Emmi'},
+      {t1:'Litija',                      t2:'Branik Maribor',              pts1:158, pts2:167, winner:'Branik Maribor'},
+      {t1:'Elektra Šoštanj',             t2:'Cedevita Olimpija mladi',     pts1:157, pts2:219, winner:'Cedevita Olimpija mladi'},
+      {t1:'Vrani Vransko',               t2:'Leone Ajdovščina',            pts1:152, pts2:219, winner:'Leone Ajdovščina'},
+      {t1:'Mesarija Prunk Sežana',       t2:'Innoduler Dravograd Koroška', pts1:167, pts2:153, winner:'Mesarija Prunk Sežana'},
+    ],
+    // Četrtfinale — seštevek košev
+    cetrtfinale: [
+      {t1:'Koper',                  t2:'Konjice',                 pts1:158, pts2:166, winner:'Konjice'},
+      {t1:'Bistrica Kety Emmi',     t2:'Armicafe Troti',          pts1:161, pts2:173, winner:'Armicafe Troti'},
+      {t1:'Cedevita Olimpija mladi',t2:'Branik Maribor',          pts1:151, pts2:150, winner:'Cedevita Olimpija mladi'},
+      {t1:'Mesarija Prunk Sežana',  t2:'Leone Ajdovščina',        pts1:130, pts2:186, winner:'Leone Ajdovščina'},
+    ],
+    // Polfinale — na 2 zmagi (še ni odigranega)
+    polfinale: [
+      {t1:'Konjice',                t2:'Armicafe Troti',          w1:0, w2:0, done:false},
+      {t1:'Leone Ajdovščina',       t2:'Cedevita Olimpija mladi', w1:0, w2:0, done:false},
+    ],
+    obstanek: [
+      {name:'Kovinarstvo Bučar Miklavž', W:4, L:2, ptsFor:482, ptsAga:448},
+      {name:'Tera Tolmin',               W:4, L:2, ptsFor:470, ptsAga:446},
+      {name:'Gorenja vas',               W:3, L:3, ptsFor:491, ptsAga:456},
+      {name:'Nazarje',                   W:1, L:5, ptsFor:439, ptsAga:532},
+    ]
+  }
+};
+
+function renderStaticPlayoff(lgKey) {
+  const data = STATIC_PLAYOFF[lgKey];
+  if(!data) return '';
+  const phaseColors = {'Četrtfinale':'#f59e0b','Polfinale':'#a855f7','Finale':'#f97316'};
+  let html = '';
+
+  if(lgKey === 'liga2') {
+    // Build bracket from static data
+    const byPhase = {};
+    data.playoff.forEach(s => {
+      if(!byPhase[s.phase]) byPhase[s.phase] = [];
+      byPhase[s.phase].push(s);
+    });
+    html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
+    html += renderStaticBracket(byPhase, phaseColors);
+    html += renderObstanekSection(data.obstanek, '2. SKL');
+  }
+
+  if(lgKey === 'liga3') {
+    html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:#a855f7">🏆 KONČNICA 3. SKL</div>`;
+    html += `<div style="font-size:.72rem;color:var(--mut);margin-bottom:12px;font-family:var(--fm)">
+      1/8 in četrtfinale: seštevek košev dveh tekem · Polfinale in finale: na 2 zmagi</div>`;
+
+    // 1/8 finale
+    html += `<div style="font-family:var(--fh);font-size:.85rem;letter-spacing:.06em;color:#60a5fa;margin-bottom:8px">1/8 FINALE — SEŠTEVEK KOŠEV</div>`;
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-bottom:20px">`;
+    data.osmina.forEach(s => {
+      const c1=TEAM_COLORS[s.t1]||'#888', c2=TEAM_COLORS[s.t2]||'#888';
+      html += `<div class="bracket-series done">
+        <div class="bracket-team ${s.winner===s.t1?'winner':'loser'}">
+          <span class="bracket-team-name" style="color:${c1}">${s.t1}</span>
+          <span class="bracket-team-score">${s.pts1}</span>
+        </div>
+        <div class="bracket-team ${s.winner===s.t2?'winner':'loser'}">
+          <span class="bracket-team-name" style="color:${c2}">${s.t2}</span>
+          <span class="bracket-team-score">${s.pts2}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Četrtfinale + Polfinale bracket
+    const byPhase = {
+      'Četrtfinale': data.cetrtfinale.map(s=>({...s, w1:s.pts1, w2:s.pts2, isAggregate:true, done:true})),
+      'Polfinale': data.polfinale
+    };
+    html += renderStaticBracket(byPhase, phaseColors);
+    html += renderObstanekSection(data.obstanek, '3. SKL');
+  }
+
+  return html;
+}
+
+function renderStaticBracket(byPhase, phaseColors) {
+  const phases = Object.keys(byPhase).filter(p=>['Četrtfinale','Polfinale','Finale'].includes(p));
+  if(!phases.length) return '';
+
+  let html = `<div class="bracket-wrap"><div class="bracket-grid">`;
+  phases.forEach((phase, pi) => {
+    const color = phaseColors[phase]||'#888';
+    const pSeries = byPhase[phase]||[];
+    html += `<div class="bracket-col">
+      <div class="bracket-col-title" style="color:${color}">${phase}</div>`;
+
+    pSeries.forEach(s => {
+      const w1 = s.winner===s.t1 || s.w1 > s.w2;
+      const w2 = s.winner===s.t2 || s.w2 > s.w1;
+      const c1=TEAM_COLORS[s.t1]||'#888', c2=TEAM_COLORS[s.t2]||'#888';
+      const score1 = s.isAggregate ? s.pts1 : s.w1;
+      const score2 = s.isAggregate ? s.pts2 : s.w2;
+      const label = s.isAggregate
+        ? `<div style="font-size:.58rem;color:var(--mut);text-align:center;padding:2px 4px;border-bottom:1px solid var(--border)">SEŠTEVEK KOŠEV</div>`
+        : '';
+      html += `<div class="bracket-series ${s.done?'done':''}" style="margin-bottom:8px">
+        ${label}
+        <div class="bracket-team ${w1&&s.done?'winner':!s.done?'':'loser'}">
+          <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
+          <span class="bracket-team-score">${score1}</span>
+        </div>
+        <div class="bracket-team ${w2&&s.done?'winner':!s.done?'':'loser'}">
+          <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
+          <span class="bracket-team-score">${score2}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+    // Connector
+    if(pi < phases.length-1) {
+      html += `<div style="width:20px;display:flex;align-items:center;padding-top:36px">
+        <div style="width:100%;height:2px;background:var(--border2)"></div>
+      </div>`;
+    }
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function renderObstanekSection(teams, label) {
+  if(!teams?.length) return '';
+  const sorted = [...teams].sort((a,b)=>(b.W-b.L)-(a.W-a.L));
+  const rows = sorted.map((t,i)=>{
+    const d=t.ptsFor-t.ptsAga;
+    const bg=i===0?'#fbbf24':i<2?'#94a3b8':'var(--border2)';
+    return `<tr>
+      <td><span class="pos-badge" style="background:${bg};color:${i<2?'#000':'var(--text)'}">${i+1}</span>
+      <span style="font-weight:500">${t.name}</span></td>
+      <td>${t.W+t.L}</td>
+      <td style="color:#22c55e;font-weight:700">${t.W}</td>
+      <td style="color:#ef4444">${t.L}</td>
+      <td>${(t.ptsFor/(t.W+t.L)).toFixed(1)}</td>
+      <td>${(t.ptsAga/(t.W+t.L)).toFixed(1)}</td>
+      <td class="${d>0?'diff-pos':d<0?'diff-neg':'diff-zero'}">${(d>0?'+':'')+d}</td>
+    </tr>`;
+  }).join('');
+  return `
+    <div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin:24px 0 12px;color:#3b82f6">🔵 LIGA ZA OBSTANEK</div>
+    <div class="tw"><table class="standings-table">
+      <thead><tr>
+        <th style="text-align:left;padding-left:14px">EKIPA</th>
+        <th>T</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th>
+        <th>TOČ+</th><th>TOČ-</th><th>DIFF</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
 function renderPlayoffBracket(){
   const wrap = document.getElementById('playoff-wrap');
   if(!wrap) return;
@@ -2778,9 +2960,17 @@ function renderPlayoffBracket(){
   const playoffByPhase = {};
   ['Četrtfinale','Polfinale','Finale'].forEach(p=>{ if(byPhase[p]) playoffByPhase[p]=byPhase[p]; });
 
+  const lgKey = currentLeague;
+
+  // Use static data if API has no playoff data
+  if(STATIC_PLAYOFF[lgKey]) {
+    wrap.innerHTML = renderStaticPlayoff(lgKey);
+    return;
+  }
+
   let html = '';
 
-  // Playoff bracket
+  // Playoff bracket from API
   if(Object.keys(playoffByPhase).length) {
     html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
     html += renderBracketHTML(playoffByPhase, phaseColors);
