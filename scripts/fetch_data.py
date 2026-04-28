@@ -31,7 +31,7 @@ LEAGUES = {
         'id': 582,
         'name': '3. SKL',
         'phase_ids': [5814],
-        'groups': {5814: [6093, 6094]},
+        'groups': {}  # brez group filtra — paginacija ne dela,
         'max_pages': 99,
     },
 }
