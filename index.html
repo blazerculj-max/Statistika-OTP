@@ -3507,17 +3507,25 @@ function computeNerdStats(){
   if(nerdStats)return nerdStats;
   const minT=parseInt(document.getElementById('nerd-min-sel')?document.getElementById('nerd-min-sel').value:5);
 
+  const normalizeKey = s => s.toLowerCase()
+    .replace(/[čć]/g,'c').replace(/š/g,'s').replace(/ž/g,'z')
+    .replace(/đ/g,'d').replace(/[àáâãäå]/g,'a').replace(/[èéêë]/g,'e')
+    .replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u')
+    .replace(/ñ/g,'n').replace(/[^\w\s-]/g,'');
   const nameMap={};
   P.forEach((p,idx)=>{
     const parts=p[F.name].split(' ');
-    const lastName=parts[parts.length-1].toLowerCase().replace(/[čćšžđ]/g,c=>({'č':'c','ć':'c','š':'s','ž':'z','đ':'d'}[c]||c));
+    const rawLast=parts[parts.length-1];
+    const lastName=normalizeKey(rawLast);
     if(!nameMap[lastName])nameMap[lastName]=[];
     nameMap[lastName].push({p,idx});
   });
 
   function findPlayer(ev){
     if(!ev.familyName)return null;
-    const key=(ev.internationalFamilyName||ev.familyName).toLowerCase();
+    const rawName = ev.internationalFamilyName||ev.familyName;
+    // Normalize PBP name same way as P array
+    const key = normalizeKey(rawName);
     const candidates=nameMap[key]||[];
     if(!candidates.length)return null;
     if(candidates.length===1)return candidates[0];
@@ -3763,9 +3771,11 @@ function renderShotTypes({stats}){
     {k:'turnaroundjumpshot',lbl:'Turnaround',icon:'↕️',color:'#a78bfa'},
   ];
   const cards=types.map(t=>
-    mkCard(t.lbl,t.color,t.icon,e.filter(([,s])=>s.shots[t.k]&&s.shots[t.k].a>=3),
+    mkCard(t.lbl,t.color,t.icon,
+      // Filter: at least 1 made shot (except dunks/alleyoop where even attempts count)
+      e.filter(([,s])=>s.shots[t.k]&&s.shots[t.k].m>=1),
       s=>(s.shots[t.k]||{m:0}).m,
-      (v,s)=>v+' <small style="font-size:.65rem;color:var(--mut)">'+(s.shots[t.k]?Math.round(s.shots[t.k].m/Math.max(s.shots[t.k].a,1)*100)+'%':'')+'</small>')
+      (v,s)=>v+' <small style="font-size:.65rem;color:var(--mut)">'+(s.shots[t.k]&&s.shots[t.k].a>0?Math.round(s.shots[t.k].m/s.shots[t.k].a*100)+'%':'')+'</small>')
   ).join('');
   return '<div class="nerd-grid">'+cards+'</div>';
 }
