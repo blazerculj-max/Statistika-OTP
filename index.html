@@ -664,7 +664,7 @@ const LEAGUES = {
     cacheStats: 'liga2_stats_v3',
     cachePbp:   'liga2_pbp_v3',
     // Phase IDs so točni za 2. SKL — polfinale(5880) ima 2 strani
-    phaseIds: [5813, 5873, 5874, 5880],
+    phaseIds: [5813, 5873, 5874, 5880, 5885], // 5885 = Finale
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
   'liga3': {
@@ -2764,26 +2764,9 @@ function renderBracketHTML(byPhase, phaseColors) {
 
 // ── STATIC PLAYOFF DATA (not in API yet) ──
 const STATIC_PLAYOFF = {
-  'liga2': {
-    playoff: [
-      // Četrtfinale
-      {phase:'Četrtfinale', t1:'Plama Pur Ilirska Bistrica', t2:'Celje',        w1:2, w2:1, done:true,  winner:'Plama Pur Ilirska Bistrica'},
-      {phase:'Četrtfinale', t1:'LTH Castings',               t2:'Voga Grosuplje', w1:2, w2:0, done:true,  winner:'LTH Castings'},
-      {phase:'Četrtfinale', t1:'Gorica',                     t2:'Slovan',         w1:2, w2:0, done:true,  winner:'Gorica'},
-      {phase:'Četrtfinale', t1:'Ipros Vrhnika',              t2:'Portorož',       w1:2, w2:1, done:true,  winner:'Ipros Vrhnika'},
-      // Polfinale
-      {phase:'Polfinale',   t1:'Plama Pur Ilirska Bistrica', t2:'LTH Castings',   w1:2, w2:0, done:true,  winner:'Plama Pur Ilirska Bistrica'},
-      {phase:'Polfinale',   t1:'Gorica',                     t2:'Ipros Vrhnika',  w1:2, w2:0, done:true,  winner:'Gorica'},
-      // Finale
-      {phase:'Finale',      t1:'Plama Pur Ilirska Bistrica', t2:'Gorica',         w1:0, w2:2, done:true,  winner:'Gorica'},
-    ],
-    obstanek: [
-      {name:'Hidria',    W:7, L:5, ptsFor:977,  ptsAga:975},
-      {name:'Ježica',    W:7, L:5, ptsFor:988,  ptsAga:1007},
-      {name:'Postojna',  W:6, L:6, ptsFor:1029, ptsAga:971},
-      {name:'Ljubljana', W:4, L:8, ptsFor:966,  ptsAga:1007},
-    ]
-  },
+  // liga2 playoff je zdaj v celoti v API-ju (phase 5885 = Finale)
+  // STATIC_PLAYOFF za liga2 ni več potreben — API vrne vse
+  // Ohranjen samo za fallback če API ne deluje
   'liga3': {
     // 1/8 finale — seštevek košev (2 tekmi skupaj)
     osmina: [
@@ -2967,8 +2950,9 @@ function renderPlayoffBracket(){
 
   const lgKey = currentLeague;
 
-  // Use static data if API has no playoff data
-  if(STATIC_PLAYOFF[lgKey]) {
+  // Use static data only for liga3 (playoff not in API)
+  // Liga2 now has full API data including finale (phase 5885)
+  if(lgKey === 'liga3') {
     wrap.innerHTML = renderStaticPlayoff(lgKey);
     return;
   }
