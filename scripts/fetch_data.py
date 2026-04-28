@@ -84,9 +84,11 @@ def fetch_all_matches(key, lg):
     else:
         matches = fetch_phase(lg['id'], max_pages=max_p)
 
-    # Filtriraj samo moške ekipe — izključi ekipe z "ž" v imenu lige
+    # Filtriraj samo tekme ki spadajo k tej ligi (po competitionId)
+    # To izključi ženske tekme ki se mešajo pri liga3
     matches = [m for m in matches
-               if 'ž' not in (m.get('competitions',[{}])[0].get('competitionName','').lower())]
+               if any(c.get('competitionId') == lg['id']
+                      for c in m.get('competitions', [{}]))]
 
     matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
     return matches
