@@ -1007,7 +1007,9 @@ function aggregatePlayers(phaseFilter) {
       const teamName = normalizeTeamName(teamData.teamName);
 
       teamData.playerStats.forEach(ps => {
-        if (!ps.played || ps.minutes === 0) return;
+        // Liga3 ne beleži minut (minutes=0) — filtriramo samo po played + ali ima vsaj točke
+      const hasStats = ps.points > 0 || ps.twoPM > 0 || ps.threePM > 0 || ps.fTM > 0;
+      if (!ps.played || (!hasStats && ps.minutes === 0)) return;
         const key = ps.playerId + '_' + teamName;
 
         if (!byPid[key]) {
