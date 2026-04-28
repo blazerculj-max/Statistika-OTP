@@ -671,9 +671,10 @@ const LEAGUES = {
     pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
     cacheStats: 'liga3_stats_v1',
     cachePbp:   'liga3_pbp_v1',
-    // Redni del (phaseId=5814, vzhod groupId=6093 + zahod groupId=6094) + Četrtfinale(5820) + 1.krog(5819)
-    phaseIds: [5814, 5819, 5820],
-    groups: {5814: [6093, 6094]}, // vzhod + zahod
+    // Samo redni del — playoff 3. SKL še ni v API-ju
+    // Ko bo dodan: preveriti s fetch + dodati phase ID
+    phaseIds: [5814],
+    groups: {5814: [6093, 6094]}, // vzhod (6093) + zahod (6094)
     teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
             'Janče ECP Tactical','Kolpa','Konjice','Koper','Kovinarstvo Bučar Miklavž',
@@ -2349,7 +2350,7 @@ function renderAttendance() {
     return;
   }
 
-  // Per team stats — include group name for 3. SKL
+  // Per team stats — include ALL phases (redni del + končnica + obstanek)
   const byTeam = {};
   finished.forEach(m => {
     const home = m.firstTeamName;
@@ -2495,8 +2496,9 @@ function computeStandings(matchFilter){
   matches.forEach(m=>{
     if(m.status!=='FINISHED')return;
     const phaseName = m.competitions?.[0]?.competitionPhaseName||'';
-    // Only redni del for standings
-    if(phaseName && phaseName !== 'Redni del') return;
+    // Skip playoff phases for standing table (shown in bracket instead)
+    const playoffPhases = ['Četrtfinale','Polfinale','Finale','Liga za obstanek','1. krog'];
+    if(phaseName && playoffPhases.includes(phaseName)) return;
     const t1=m.firstTeamName, t2=m.secondTeamName;
     const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
     if(!teams[t1])teams[t1]={name:t1,W:0,L:0,ptsFor:0,ptsAga:0,results:[],group:m.competitions?.[0]?.competitionPhaseGroupName||''};
