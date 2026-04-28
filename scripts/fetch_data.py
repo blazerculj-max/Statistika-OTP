@@ -30,7 +30,7 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        'phase_ids': [5814, 5819, 5820],
+        'phase_ids': [5814],
         'groups': {5814: [6093, 6094]},
         'max_pages': 99,
     },
