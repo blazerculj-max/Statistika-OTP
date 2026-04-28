@@ -610,6 +610,8 @@ select:focus{outline:none;border-color:var(--acc)}
         <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">⏱ ČETRTINE</button>
         <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">🏹 TIPI METOV</button>
         <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">🔥 SCORING RUNS</button>
+        <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">❌ IZGUBE ŽOGE</button>
+        <button class="tb" id="nerd-reb-btn" onclick="setNerdView('rebounds')">💪 SKOKI</button>
       </div>
       <select id="nerd-min-sel" onchange="renderNerd()" style="width:140px">
         <option value="5">Min 5 tekem</option>
@@ -1596,6 +1598,16 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   // Show last 20 events, newest first
   const recent = [...events].reverse().slice(0, 25);
 
+  const shotEmoji = {
+    dunk:'🔥', drivinglayup:'🏃', layup:'🏃', reverselayup:'🏃',
+    tipinlayup:'🤙', jumpshot:'🏀', pullupjumpshot:'🏀',
+    stepbackjumpshot:'↩️', floatingjumpshot:'🌊', hookshot:'🪝',
+    fadeaway:'⬅️', turnaroundjumpshot:'🔄', alleyoop:'🙌',
+    turnaroundjumphsot:'🔄'
+  };
+  const tovEmoji = {
+    badpass:'🎯', ballhandling:'💨', travel:'🚶', '24sec':'⏱️', '3sec':'⏱️'
+  };
   const actionEmoji = {
     '2pt': '🏀', '3pt': '🎯', 'freethrow': '⚪', 'turnover': '❌',
     'foul': '✋', 'rebound': '💪'
@@ -1603,6 +1615,15 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   const actionName = {
     '2pt': '2 točki', '3pt': '3 točke', 'freethrow': 'Prosta met',
     'turnover': 'Izguba žoge', 'foul': 'Napaka', 'rebound': 'Skok'
+  };
+  const subName = {
+    dunk:'Zabijanje 🔥', drivinglayup:'Driving layup', layup:'Layup',
+    reverselayup:'Reverse layup', tipinlayup:'Tip-in', jumpshot:'Jump shot',
+    pullupjumpshot:'Pull-up', stepbackjumpshot:'Step-back', floatingjumpshot:'Floater',
+    hookshot:'Hook shot', fadeaway:'Fadeaway', turnaroundjumpshot:'Turnaround',
+    alleyoop:'Alley-oop 🙌', badpass:'Slaba podaja', ballhandling:'Izguba žoge',
+    travel:'Korakanje', offensive:'Napad. skok', defensive:'Obr. skok',
+    '24sec':'24 sekund', '3sec':'3 sekunde'
   };
 
   // Current score from liveScores
@@ -1622,8 +1643,9 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
     const isHome = ev.tno === 1;
     const teamColor = isHome ? c1 : c2;
     const teamName = isHome ? t1 : t2;
-    const emoji = actionEmoji[ev.action] || '•';
-    const name = actionName[ev.action] || ev.action;
+    const isDunk = ev.sub === 'dunk';
+    const emoji = isDunk ? '🔥' : (shotEmoji[ev.sub] || actionEmoji[ev.action] || '•');
+    const name = subName[ev.sub] || actionName[ev.action] || ev.action;
     const success = ev.success === false ? '<span style="color:#ef4444;font-size:.65rem"> ZGREŠEN</span>' : '';
     const pts = ev.action==='3pt'&&ev.success ? '+3' : ev.action==='2pt'&&ev.success ? '+2' : ev.action==='freethrow'&&ev.success ? '+1' : '';
 
@@ -3509,7 +3531,11 @@ function computeNerdStats(){
       q:{1:{pts:0,fga:0,fgm:0},2:{pts:0,fga:0,fgm:0},3:{pts:0,fga:0,fgm:0},4:{pts:0,fga:0,fgm:0},5:{pts:0,fga:0,fgm:0}},
       shots:{drivinglayup:{a:0,m:0},jumpshot:{a:0,m:0},pullupjumpshot:{a:0,m:0},
              stepbackjumpshot:{a:0,m:0},floatingjumpshot:{a:0,m:0},hookshot:{a:0,m:0},
-             layup:{a:0,m:0},dunk:{a:0,m:0},alleyoop:{a:0,m:0},fadeaway:{a:0,m:0}},
+             layup:{a:0,m:0},reverselayup:{a:0,m:0},tipinlayup:{a:0,m:0},
+             dunk:{a:0,m:0},alleyoop:{a:0,m:0},fadeaway:{a:0,m:0},
+             turnaroundjumpshot:{a:0,m:0}},
+      tovReasons:{badpass:0,ballhandling:0,travel:0,'24sec':0,'3sec':0,offensive:0},
+      rebounds:{offensive:0,defensive:0},
     };
     return stats[idx];
   }
@@ -3564,6 +3590,17 @@ function computeNerdStats(){
       }
       if(ev.actionType==='turnover'&&isClutch(ev))s.clutch.tov++;
       if(ev.actionType==='assist'&&isClutch(ev))s.clutch.ast++;
+      // Turnover reasons
+      if(ev.actionType==='turnover'&&ev.subType){
+        const sub=ev.subType;
+        if(s.tovReasons[sub]!==undefined)s.tovReasons[sub]++;
+        else s.tovReasons[sub]=(s.tovReasons[sub]||0)+1;
+      }
+      // Rebounds
+      if(ev.actionType==='rebound'&&ev.subType){
+        if(ev.subType==='offensive')s.rebounds.offensive++;
+        else if(ev.subType==='defensive')s.rebounds.defensive++;
+      }
     });
   });
 
@@ -3580,6 +3617,48 @@ function renderNerd(){
   else if(nerdView==='quarters')wrap.innerHTML=renderQuarters(nd);
   else if(nerdView==='shots')wrap.innerHTML=renderShotTypes(nd);
   else if(nerdView==='runs')wrap.innerHTML=renderRuns(nd);
+  else if(nerdView==='turnovers')wrap.innerHTML=renderTurnovers(nd);
+  else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds(nd);
+}
+
+function renderTurnovers({stats}){
+  const e=Object.entries(stats);
+  const tovLabels={
+    badpass:'Slaba podaja',ballhandling:'Izguba žoge',travel:'Korakanje',
+    '24sec':'24 sekund','3sec':'3 sekunde',offensive:'Ofenzivna napaka'
+  };
+  const html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">` +
+  [
+    {k:'badpass',     lbl:'Slaba podaja',   color:'#ef4444', icon:'🎯'},
+    {k:'ballhandling',lbl:'Izguba žoge',    color:'#f97316', icon:'🏀'},
+    {k:'travel',      lbl:'Korakanje',      color:'#a855f7', icon:'🚶'},
+  ].map(t=>
+    mkCard(t.lbl,t.color,t.icon,e.filter(([,s])=>s.tovReasons[t.k]>0),
+      s=>s.tovReasons[t.k]||0,
+      v=>v+' <small style="font-size:.65rem;color:var(--mut)">izgub</small>')
+  ).join('') + `</div>` +
+  `<div style="margin-top:16px">` +
+  mkCard('Skupaj izgub žoge','#ef4444','❌',e.filter(([,s])=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0)>0),
+    s=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0),
+    v=>v) + `</div>`;
+  return html;
+}
+
+function renderRebounds({stats}){
+  const e=Object.entries(stats);
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">` +
+  mkCard('Napadalni skoki','#f97316','🏃',e.filter(([,s])=>s.rebounds.offensive>0),
+    s=>s.rebounds.offensive,
+    v=>v+' <small style="font-size:.65rem;color:var(--mut)">napad. sk.</small>') +
+  mkCard('Obrambni skoki','#3b82f6','🛡️',e.filter(([,s])=>s.rebounds.defensive>0),
+    s=>s.rebounds.defensive,
+    v=>v+' <small style="font-size:.65rem;color:var(--mut)">obr. sk.</small>') +
+  `</div><div style="margin-top:16px">` +
+  mkCard('Skupaj skoki (PBP)','#22c55e','💪',e.filter(([,s])=>s.rebounds.offensive+s.rebounds.defensive>0),
+    s=>s.rebounds.offensive+s.rebounds.defensive,
+    v=>v,
+    (v,s)=>`OFF: ${s.rebounds.offensive} · DEF: ${s.rebounds.defensive}`) +
+  `</div>`;
 }
 
 function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
