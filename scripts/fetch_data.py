@@ -30,15 +30,16 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        # NI phase_ids — phase filter je pokvarjen
-        'phase_ids': None,
-        'max_pages': 3,
+        # Redni del + celoten playoff (phase IDs potrjeni 28.4.2026)
+        # 5814=Redni del, 5868=Osmina finala, 5869=Liga za obstanek
+        # 5878=Četrtfinale, 5884=Polfinale
+        'phase_ids': [5814, 5868, 5869, 5878, 5884],
+        'max_pages': 2,
         'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
                         'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
                         'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
                         'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'},
         'groups': {},
-        'max_pages': 99,
     },
 }
 
