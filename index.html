@@ -3515,18 +3515,40 @@ function computeNerdStats(){
   const nameMap={};
   P.forEach((p,idx)=>{
     const parts=p[F.name].split(' ');
-    const rawLast=parts[parts.length-1];
-    const lastName=normalizeKey(rawLast);
-    if(!nameMap[lastName])nameMap[lastName]=[];
-    nameMap[lastName].push({p,idx});
+    // Index by multiple keys: last word, each word, without Jr/Sr/II/III
+    const allParts = p[F.name].split(/\s+/).filter(Boolean);
+    const keysToAdd = new Set();
+    // Primary: last word
+    keysToAdd.add(normalizeKey(allParts[allParts.length-1]));
+    // Without Jr/Sr/II/III suffixes
+    const suffixes = new Set(['jr','sr','ii','iii','iv']);
+    const withoutSuffix = allParts.filter(w=>!suffixes.has(w.toLowerCase()));
+    if(withoutSuffix.length) keysToAdd.add(normalizeKey(withoutSuffix[withoutSuffix.length-1]));
+    // Each word separately (for compound names)
+    allParts.forEach(w=>{ if(w.length>2) keysToAdd.add(normalizeKey(w)); });
+    keysToAdd.forEach(k=>{
+      if(!nameMap[k])nameMap[k]=[];
+      if(!nameMap[k].find(x=>x.idx===idx))nameMap[k].push({p,idx});
+    });
   });
 
   function findPlayer(ev){
     if(!ev.familyName)return null;
-    const rawName = ev.internationalFamilyName||ev.familyName;
-    // Normalize PBP name same way as P array
-    const key = normalizeKey(rawName);
-    const candidates=nameMap[key]||[];
+    const rawName = ev.internationalFamilyName||ev.familyName||'';
+    if(!rawName) return null;
+    // Try multiple keys: full name, without Jr/Sr, each word
+    const suffixes = new Set(['jr','sr','ii','iii','iv']);
+    const nameParts = rawName.split(/[\s-]+/).filter(Boolean);
+    const keysToTry = [
+      normalizeKey(rawName),
+      ...nameParts.map(w=>normalizeKey(w)),
+      normalizeKey(nameParts.filter(w=>!suffixes.has(w.toLowerCase())).join(' ')),
+    ];
+    let candidates = [];
+    for(const k of keysToTry) {
+      candidates = nameMap[k]||[];
+      if(candidates.length) break;
+    }
     if(!candidates.length)return null;
     if(candidates.length===1)return candidates[0];
     const fi=(ev.internationalFirstName||ev.firstName||'')[0]||'';
