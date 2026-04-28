@@ -2783,7 +2783,8 @@ function applyFibaTiebreakers(data, allMatchesRef) {
   // Group by W-L record
   const groups = {};
   data.forEach(t => {
-    const key = t.W + '-' + t.L;
+    // Group by European points (2*W + L)
+    const key = (t.W*2 + t.L).toString();
     if(!groups[key]) groups[key] = [];
     groups[key].push(t);
   });
@@ -2834,8 +2835,10 @@ function applyFibaTiebreakers(data, allMatchesRef) {
 
 function buildStandingsTable(data, sort, title, color){
   if(sort === 'pts') {
-    // First sort by W-L, then apply FIBA tiebreakers within tied groups
-    data.sort((a,b) => (b.W-b.L)-(a.W-a.L) || b.W-a.W);
+    // European points system: 2 per win + 1 per loss (participation)
+    // This means more games played = more points (even with same W-L differential)
+    const euPts = t => t.W*2 + t.L;
+    data.sort((a,b) => euPts(b)-euPts(a) || b.W-a.W);
     data = applyFibaTiebreakers(data, allMatches);
   } else if(sort === 'ptsdiff') {
     data.sort((a,b) => (b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga));
