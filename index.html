@@ -2819,30 +2819,44 @@ function buildStandingsTable(data, sort, title, color){
 
 // ── PLAYOFF BRACKET ──
 function computePlayoffSeries(){
-  // Group playoff matches by phase + pair of teams → series
   const playoffPhases = ['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
-  const series = {}; // key: "phase|teamA|teamB" → {phase, t1, t2, w1, w2, matches, done}
+  // For liga3: Osmina finala and Četrtfinale are aggregate (seštevek košev)
+  const aggregatePhases = getLg().id === 582
+    ? new Set(['Osmina finala','Četrtfinale'])
+    : new Set();
 
+  const series = {};
   allMatches.forEach(m=>{
     if(m.status!=='FINISHED') return;
     const phase = m.competitions?.[0]?.competitionPhaseName||'';
     if(!playoffPhases.includes(phase)) return;
     const a=m.firstTeamName, b=m.secondTeamName;
     const key = phase + '|' + [a,b].sort().join('|');
-    if(!series[key]) series[key]={phase, t1:a, t2:b, w1:0, w2:0, matches:[], done:false};
+    if(!series[key]) series[key]={
+      phase, t1:a, t2:b, w1:0, w2:0,
+      pts1:0, pts2:0, // aggregate points
+      matches:[], done:false,
+      isAggregate: aggregatePhases.has(phase)
+    };
     const s=series[key];
     s.matches.push(m);
-    if(m.firstTeamScore > m.secondTeamScore) {
-      if(s.t1===a) s.w1++; else s.w2++;
-    } else {
-      if(s.t2===b) s.w2++; else s.w1++;
-    }
+    const sc1=m.firstTeamScore||0, sc2=m.secondTeamScore||0;
+    // Track wins for non-aggregate phases
+    if(sc1 > sc2) { if(s.t1===a) s.w1++; else s.w2++; }
+    else          { if(s.t2===b) s.w2++; else s.w1++; }
+    // Track aggregate points
+    if(s.t1===a) { s.pts1+=sc1; s.pts2+=sc2; }
+    else         { s.pts1+=sc2; s.pts2+=sc1; }
   });
 
-  // Mark done (2 wins)
   Object.values(series).forEach(s=>{
-    s.done = s.w1>=2 || s.w2>=2;
-    s.winner = s.w1>=2 ? s.t1 : s.w2>=2 ? s.t2 : null;
+    if(s.isAggregate) {
+      s.done = s.matches.length >= 2; // 2 tekmi = konec
+      s.winner = s.done ? (s.pts1 > s.pts2 ? s.t1 : s.t2) : null;
+    } else {
+      s.done = s.w1>=2 || s.w2>=2;
+      s.winner = s.w1>=2 ? s.t1 : s.w2>=2 ? s.t2 : null;
+    }
   });
   return Object.values(series);
 }
@@ -3172,7 +3186,42 @@ function renderPlayoffBracket(){
   // Playoff bracket from API
   if(Object.keys(playoffByPhase).length) {
     html += `<div style="font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
-    html += renderBracketHTML(playoffByPhase, phaseColors);
+
+    // Liga3: Osmina finala shown separately as grid (aggregate), rest as bracket
+    const isLiga3 = getLg().id === 582;
+    if(isLiga3 && playoffByPhase['Osmina finala']) {
+      html += `<div style="font-family:var(--fh);font-size:.85rem;letter-spacing:.06em;color:#60a5fa;margin-bottom:8px">
+        1/8 FINALE <span style="font-size:.65rem;color:var(--mut);font-family:var(--fm)">— seštevek košev dveh tekem</span></div>`;
+      html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:20px">`;
+      playoffByPhase['Osmina finala'].forEach(s => {
+        const c1=TEAM_COLORS[s.t1]||'#888', c2=TEAM_COLORS[s.t2]||'#888';
+        const w1=s.winner===s.t1, w2=s.winner===s.t2;
+        html += `<div class="bracket-series ${s.done?'done':''}">
+          <div style="font-size:.58rem;color:var(--mut);text-align:center;padding:2px 4px;border-bottom:1px solid var(--border)">SEŠTEVEK KOŠEV</div>
+          <div class="bracket-team ${w1?'winner':w2?'loser':''}">
+            <span class="bracket-team-name" style="color:${c1}">${s.t1}</span>
+            <span class="bracket-team-score">${s.pts1}</span>
+          </div>
+          <div class="bracket-team ${w2?'winner':w1?'loser':''}">
+            <span class="bracket-team-name" style="color:${c2}">${s.t2}</span>
+            <span class="bracket-team-score">${s.pts2}</span>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+      // Render QF→SF→F bracket without Osmina finala
+      const bracketPhases = {};
+      ['Četrtfinale','Polfinale','Finale'].forEach(p=>{ if(playoffByPhase[p]) bracketPhases[p]=playoffByPhase[p]; });
+      if(Object.keys(bracketPhases).length) {
+        // Add aggregate label to QF for liga3
+        if(bracketPhases['Četrtfinale']) {
+          bracketPhases['Četrtfinale'].forEach(s => s.isAggregate = true);
+        }
+        html += renderBracketHTML(bracketPhases, phaseColors);
+      }
+    } else {
+      html += renderBracketHTML(playoffByPhase, phaseColors);
+    }
   }
 
   // Liga za obstanek
