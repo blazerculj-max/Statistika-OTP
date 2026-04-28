@@ -1555,6 +1555,94 @@ function renderMatches(){
   document.getElementById('matches-wrap').innerHTML = html || '<div class="empty">Ni tekem</div>';
 }
 
+// Live PBP cache: matchId → [{period, gt, action, player, team, score}]
+const livePbpCache = {};
+let pbpRefreshTimer = null;
+
+async function fetchLivePbp(matchInfo) {
+  if(!matchInfo.fibaLiveStatsUrl) return [];
+  const fibaId = matchInfo.fibaLiveStatsUrl.match(/\/([0-9]+)\/?$/)?.[1];
+  if(!fibaId) return [];
+  try {
+    const proxy = 'https://api.codetabs.com/v1/proxy?quest=';
+    const url = `https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json`;
+    const res = await fetch(proxy + encodeURIComponent(url));
+    const d = await res.json();
+    if(!d.pbp) return [];
+    // Parse PBP events
+    return d.pbp
+      .filter(ev => ['2pt','3pt','freethrow','turnover','foul','rebound'].includes(ev.actionType))
+      .map(ev => ({
+        period:  ev.period,
+        gt:      ev.gt || '',
+        action:  ev.actionType,
+        sub:     ev.subType || '',
+        success: ev.success,
+        player:  (ev.firstName||'') + ' ' + (ev.familyName||''),
+        tno:     ev.tno, // 1=home, 2=away
+        s1:      ev.lead >= 0 ? (ev.lead + (ev.tno===2?(parseInt(ev.gt)||0):0)) : 0,
+        s2:      ev.lead < 0  ? (Math.abs(ev.lead) + (ev.tno===1?(parseInt(ev.gt)||0):0)) : 0,
+      }));
+  } catch(e) { return []; }
+}
+
+function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
+  if(!events.length) {
+    return `<div class="empty" style="padding:20px">Play-by-play se nalaga...</div>`;
+  }
+
+  // Show last 20 events, newest first
+  const recent = [...events].reverse().slice(0, 25);
+
+  const actionEmoji = {
+    '2pt': '🏀', '3pt': '🎯', 'freethrow': '⚪', 'turnover': '❌',
+    'foul': '✋', 'rebound': '💪'
+  };
+  const actionName = {
+    '2pt': '2 točki', '3pt': '3 točke', 'freethrow': 'Prosta met',
+    'turnover': 'Izguba žoge', 'foul': 'Napaka', 'rebound': 'Skok'
+  };
+
+  // Current score from liveScores
+  const ls = liveScore || {};
+  const scoreHtml = ls.score1 !== undefined
+    ? `<div style="font-family:var(--fh);font-size:2rem;text-align:center;margin-bottom:4px">
+        <span style="color:${c1}">${ls.score1}</span>
+        <span style="color:var(--mut);margin:0 8px">:</span>
+        <span style="color:${c2}">${ls.score2}</span>
+       </div>
+       <div style="text-align:center;font-size:.75rem;color:var(--mut);margin-bottom:16px">
+         Q${ls.quarter} · ${ls.time}
+       </div>`
+    : '';
+
+  const rows = recent.map(ev => {
+    const isHome = ev.tno === 1;
+    const teamColor = isHome ? c1 : c2;
+    const teamName = isHome ? t1 : t2;
+    const emoji = actionEmoji[ev.action] || '•';
+    const name = actionName[ev.action] || ev.action;
+    const success = ev.success === false ? '<span style="color:#ef4444;font-size:.65rem"> ZGREŠEN</span>' : '';
+    const pts = ev.action==='3pt'&&ev.success ? '+3' : ev.action==='2pt'&&ev.success ? '+2' : ev.action==='freethrow'&&ev.success ? '+1' : '';
+
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border);${isHome?'':'flex-direction:row-reverse;text-align:right'}">
+      <div style="font-size:1.1rem;flex-shrink:0">${emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.78rem;font-weight:600;color:${teamColor}">${ev.player.trim()||teamName}${success}</div>
+        <div style="font-size:.68rem;color:var(--mut)">${name}${ev.sub?' · '+ev.sub:''} · Q${ev.period} ${ev.gt}</div>
+      </div>
+      ${pts?`<div style="font-family:var(--fh);font-size:.9rem;color:#22c55e;flex-shrink:0">${pts}</div>`:''}
+    </div>`;
+  }).join('');
+
+  return `
+    ${scoreHtml}
+    <div style="font-family:var(--fh);font-size:.8rem;letter-spacing:.06em;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--border)">
+      PLAY BY PLAY <span style="font-size:.65rem;color:var(--mut)">(zadnjih ${recent.length} eventov)</span>
+    </div>
+    <div style="max-height:400px;overflow-y:auto">${rows}</div>`;
+}
+
 async function openMatch(matchId){
   const matchData=matchStatsCache[matchId];
   const matchInfo=allMatches.find(m=>m.id===matchId);
@@ -1567,15 +1655,32 @@ async function openMatch(matchId){
 
   const t1=matchInfo.firstTeamName,t2=matchInfo.secondTeamName;
   const c1=TEAM_COLORS[normalizeTeamName(t1)]||'#f97316',c2=TEAM_COLORS[normalizeTeamName(t2)]||'#3b82f6';
-  const s1=matchInfo.firstTeamScore||0,s2=matchInfo.secondTeamScore||0;
+  const ls=liveScores[matchId]||{};
+  const s1=ls.score1??matchInfo.firstTeamScore??0;
+  const s2=ls.score2??matchInfo.secondTeamScore??0;
+  const isLive=matchInfo.status==='LIVE'||ls.isLive;
   const date=new Date(matchInfo.dateTime).toLocaleDateString('sl',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
-  let momentumSVG='',boxScore='';
+  let momentumSVG='',boxScore='',pbpHtml='';
   if(matchData&&matchData.scoreChanges&&matchData.scoreChanges.length>0){
     momentumSVG=drawMomentum(matchData.scoreChanges,c1,c2,t1,t2);
   }
   if(matchData){
     boxScore=drawBoxScore(matchData,c1,c2);
+  }
+
+  // PBP za live in finished tekme
+  const hasFiba = !!matchInfo.fibaLiveStatsUrl;
+
+  // Score display
+  let scoreDisplay;
+  if(isLive) {
+    scoreDisplay = `<div class="mo-score" id="mo-score" style="color:#ef4444">${s1} : ${s2}</div>
+      <div style="font-size:.75rem;color:#ef4444;text-align:center;margin-top:4px">
+        <span style="animation:livePulse 1.2s infinite">●</span> Q${ls.quarter||'?'} · ${ls.time||''}
+      </div>`;
+  } else {
+    scoreDisplay = `<div class="mo-score" id="mo-score">${matchInfo.status==='FINISHED'?s1+' : '+s2:'—'}</div>`;
   }
 
   overlay.innerHTML=`
@@ -1584,19 +1689,46 @@ async function openMatch(matchId){
     <div class="mo-header">
       <div class="mo-score-row">
         <div class="mo-team" style="color:${c1}">${t1}</div>
-        <div class="mo-score" id="mo-score">${matchInfo.status==='FINISHED'?`${s1} : ${s2}`:'—'}</div>
+        ${scoreDisplay}
         <div class="mo-team away" style="color:${c2}">${t2}</div>
       </div>
-      <div class="mo-meta">${date} · ${matchInfo.sportHallName} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
+      <div class="mo-meta">${date} · ${matchInfo.sportHallName||''} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
     </div>
     <div class="mo-body">
-      ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME (točke po minutah)</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
-      ${boxScore?`<div class="mo-section">${boxScore}</div>`:'<div class="empty">Statistika ni na voljo</div>'}
+      ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
+      ${boxScore
+        ? `<div class="mo-section">${boxScore}</div>`
+        : hasFiba
+          ? `<div class="mo-section" id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>`
+          : `<div class="empty">Statistika ni na voljo</div>`
+      }
     </div>
   </div>`;
+
+  // Fetch PBP if no box score
+  if(!boxScore && hasFiba) {
+    const events = await fetchLivePbp(matchInfo);
+    livePbpCache[matchId] = events;
+    const pbpSection = document.getElementById('pbp-section');
+    if(pbpSection) {
+      pbpSection.innerHTML = renderPbpFeed(events, t1, t2, c1, c2, ls);
+    }
+
+    // Auto-refresh PBP every 15s for live matches
+    if(isLive) {
+      if(pbpRefreshTimer) clearInterval(pbpRefreshTimer);
+      pbpRefreshTimer = setInterval(async () => {
+        if(liveMatchId !== matchId) { clearInterval(pbpRefreshTimer); return; }
+        const newEvents = await fetchLivePbp(matchInfo);
+        livePbpCache[matchId] = newEvents;
+        const sec = document.getElementById('pbp-section');
+        if(sec) sec.innerHTML = renderPbpFeed(newEvents, t1, t2, c1, c2, liveScores[matchId]||ls);
+      }, 15000);
+    }
+  }
 }
 
-function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';liveMatchId=null;}
+function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}}
 
 function drawMomentum(changes,c1,c2,t1,t2){
   const w=600,h=140,pad=30;
