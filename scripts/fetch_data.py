@@ -201,7 +201,7 @@ def fetch_pbp_incremental(matches, existing_pbp):
                 {k: ev.get(k,'') for k in
                  ('gt','period','periodType','lead','tno','actionType','subType','success','firstName','familyName')}
                 for ev in d['pbp']
-                if ev.get('actionType') in ('2pt','3pt','freethrow','turnover','assist')
+                if ev.get('actionType') in ('2pt','3pt','freethrow','turnover','assist','rebound','block','steal')
             ]
         if (i+1) % 5 == 0:
             print(f"  PBP {i+1}/{len(needs)}")
