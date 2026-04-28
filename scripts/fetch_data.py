@@ -233,13 +233,21 @@ def process_league(key, lg):
 
     # PBP — samo če zahtevano z --pbp flagom
     if FETCH_PBP:
-        existing_pbp = load_existing_pbp(key)
-        pbp = fetch_pbp_incremental(matches, existing_pbp)
-        pbp_file = f"data/{key}_pbp.json"
-        with open(pbp_file, 'w') as f:
-            json.dump({'updatedAt': now, 'pbp': pbp},
-                      f, ensure_ascii=False, separators=(',',':'))
-        print(f"  ✅ {pbp_file} ({os.path.getsize(pbp_file)//1024} KB)")
+        # Liga3 PBP: FIBA blokira GitHub Actions — preskočimo
+        if key == 'liga3':
+            print(f"  PBP: liga3 preskočena (FIBA blokira GitHub Actions IP)")
+            pbp_file = f"data/{key}_pbp.json"
+            if not os.path.exists(pbp_file):
+                with open(pbp_file, 'w') as f:
+                    json.dump({'updatedAt': now, 'pbp': {}}, f)
+        else:
+            existing_pbp = load_existing_pbp(key)
+            pbp = fetch_pbp_incremental(matches, existing_pbp)
+            pbp_file = f"data/{key}_pbp.json"
+            with open(pbp_file, 'w') as f:
+                json.dump({'updatedAt': now, 'pbp': pbp},
+                          f, ensure_ascii=False, separators=(',',':'))
+            print(f"  ✅ {pbp_file} ({os.path.getsize(pbp_file)//1024} KB)")
     else:
         print(f"  PBP: preskočen (dodaj --pbp za fetch)")
 
