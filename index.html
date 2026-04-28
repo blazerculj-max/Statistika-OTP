@@ -1575,7 +1575,7 @@ async function fetchLivePbp(matchInfo) {
     if(!d.pbp) return [];
     // Parse PBP events
     return d.pbp
-      .filter(ev => ['2pt','3pt','freethrow','turnover','foul','rebound'].includes(ev.actionType))
+      .filter(ev => ['2pt','3pt','freethrow','turnover','foul','rebound','block','steal'].includes(ev.actionType))
       .map(ev => ({
         period:  ev.period,
         gt:      ev.gt || '',
@@ -3596,10 +3596,10 @@ function computeNerdStats(){
         if(s.tovReasons[sub]!==undefined)s.tovReasons[sub]++;
         else s.tovReasons[sub]=(s.tovReasons[sub]||0)+1;
       }
-      // Rebounds
-      if(ev.actionType==='rebound'&&ev.subType){
+      // Rebounds — track both offensive and defensive
+      if(ev.actionType==='rebound'){
         if(ev.subType==='offensive')s.rebounds.offensive++;
-        else if(ev.subType==='defensive')s.rebounds.defensive++;
+        else if(ev.subType==='defensive'||!ev.subType)s.rebounds.defensive++;
       }
     });
   });
