@@ -1597,7 +1597,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   }
 
   // Show last 20 events, newest first
-  const recent = [...events].reverse().slice(0, 25);
+  const recent = [...events].reverse().slice(0, 30);
 
   const shotEmoji = {
     dunk:'🔥', drivinglayup:'🏃', layup:'🏃', reverselayup:'🏃',
@@ -1662,8 +1662,9 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
 
   return `
     ${scoreHtml}
-    <div style="font-family:var(--fh);font-size:.8rem;letter-spacing:.06em;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--border)">
-      PLAY BY PLAY <span style="font-size:.65rem;color:var(--mut)">(zadnjih ${recent.length} eventov)</span>
+    <div style="font-family:var(--fh);font-size:.8rem;letter-spacing:.06em;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span>PLAY BY PLAY <span style="font-size:.65rem">(zadnjih ${recent.length} eventov)</span></span>
+      <span style="font-size:.6rem;color:var(--mut)">↻ 20s</span>
     </div>
     <div style="max-height:400px;overflow-y:auto">${rows}</div>`;
 }
@@ -1739,16 +1740,27 @@ async function openMatch(matchId){
       pbpSection.innerHTML = renderPbpFeed(events, t1, t2, c1, c2, ls);
     }
 
-    // Auto-refresh PBP every 15s for live matches
+    // Auto-refresh PBP every 20s for live matches
     if(isLive) {
       if(pbpRefreshTimer) clearInterval(pbpRefreshTimer);
       pbpRefreshTimer = setInterval(async () => {
         if(liveMatchId !== matchId) { clearInterval(pbpRefreshTimer); return; }
         const newEvents = await fetchLivePbp(matchInfo);
-        livePbpCache[matchId] = newEvents;
+        if(newEvents.length > 0) livePbpCache[matchId] = newEvents;
         const sec = document.getElementById('pbp-section');
-        if(sec) sec.innerHTML = renderPbpFeed(newEvents, t1, t2, c1, c2, liveScores[matchId]||ls);
-      }, 15000);
+        const currentLs = liveScores[matchId] || ls;
+        if(sec) sec.innerHTML = renderPbpFeed(
+          livePbpCache[matchId]||newEvents, t1, t2, c1, c2, currentLs);
+        // Update score in overlay
+        if(currentLs.score1 !== undefined) {
+          const scoreEl = document.querySelector('.mo-score');
+          if(scoreEl) {
+            scoreEl.innerHTML = `<span style="color:#ef4444">${currentLs.score1} : ${currentLs.score2}</span>
+              <div style="font-size:.75rem;color:#ef4444;text-align:center;margin-top:4px">
+                Q${currentLs.quarter||'?'} · ${currentLs.time||''}</div>`;
+          }
+        }
+      }, 20000);
     }
   }
 }
