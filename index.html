@@ -3121,12 +3121,27 @@ function renderPlayoffBracket(){
   // Liga za obstanek
   if(obstanekSeries.length) {
     // Compute standings within obstanek
+    // Liga za obstanek: upoštevamo prenesene medsebojne tekme iz rednega dela + nove tekme
     const obstTeams = {};
+    
+    // Najprej ugotovimo katere ekipe so v ligi za obstanek
+    const obstEkipe = new Set();
+    allMatches.forEach(m=>{
+      if(m.competitions?.[0]?.competitionPhaseName==='Liga za obstanek') {
+        obstEkipe.add(m.firstTeamName);
+        obstEkipe.add(m.secondTeamName);
+      }
+    });
+
+    // Štejemo VSE tekme med temi ekipami (redni del + liga za obstanek)
     allMatches.forEach(m=>{
       if(m.status!=='FINISHED') return;
-      const ph = m.competitions?.[0]?.competitionPhaseName||'';
-      if(ph !== 'Liga za obstanek') return;
       const a=m.firstTeamName, b=m.secondTeamName;
+      // Samo tekme med obstanek ekipami
+      if(!obstEkipe.has(a)||!obstEkipe.has(b)) return;
+      const ph = m.competitions?.[0]?.competitionPhaseName||'';
+      // Upoštevamo redni del in ligo za obstanek
+      if(!['Redni del','Liga za obstanek'].includes(ph)) return;
       const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
       if(!obstTeams[a]) obstTeams[a]={name:a,W:0,L:0,ptsFor:0,ptsAga:0};
       if(!obstTeams[b]) obstTeams[b]={name:b,W:0,L:0,ptsFor:0,ptsAga:0};
