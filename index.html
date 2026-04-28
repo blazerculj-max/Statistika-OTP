@@ -663,7 +663,8 @@ const LEAGUES = {
     pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
     cacheStats: 'liga2_stats_v3',
     cachePbp:   'liga2_pbp_v3',
-    phaseIds: [5813, 5873, 5874, 5880],
+    // Phase filter je problematičen — fetchamo po straneh, filtriramo po ekipah
+    phaseIds: null,
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
   'liga3': {
@@ -893,39 +894,44 @@ async function loadAllData() {
     // Fetch matches
     setProgress(16, 'Nalagam tekme...');
     const phaseIds = getLg().phaseIds;
-    const isLiga3 = getLg().id === 582;
+    const lgId = getLg().id;
+    const isLiga3 = lgId === 582;
+    const isLiga2 = lgId === 581;
     let allItems = [];
 
-    if(phaseIds && !isLiga3) {
-      // Use phase filter (liga1, liga2) — works correctly for these
+    if(phaseIds) {
+      // Liga1: use phase filter (works correctly)
       for(let i=0; i<phaseIds.length; i++) {
         const pid = phaseIds[i];
-        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
+        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
         const data = await res.json();
         allItems = allItems.concat(data.data?.items || []);
-        setProgress(16 + Math.round((i+1)/phaseIds.length * 10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
+        setProgress(16 + Math.round((i+1)/phaseIds.length*10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
       }
     } else {
-      // Liga3: fetch multiple pages (phase filter is broken, use team name filter instead)
+      // Liga2 + Liga3: phase filter pokvarjen — fetchamo po straneh
+      const knownTeams = isLiga2 ? LIGA2_TEAMS : new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
       let page = 1;
       while(page <= 5) {
-        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&page=${page}`);
+        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&page=${page}`);
         const data = await res.json();
         const items = data.data?.items || [];
         if(!items.length) break;
         allItems = allItems.concat(items);
-        setProgress(18 + page*3, `Nalagam tekme... stran ${page} (${allItems.length} tekem)`);
+        setProgress(17 + page*4, `Nalagam tekme... stran ${page} (${allItems.length})`);
         if(items.length < 150) break;
-        // Stop early if no more liga3 teams in results
-        const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
-        const hasLiga3 = items.some(m => liga3Teams.has(m.firstTeamName));
-        if(!hasLiga3) break;
+        // Stop if no known teams on this page
+        if(!items.some(m => knownTeams.has(m.firstTeamName))) break;
         page++;
       }
     }
 
-    // For liga3: filter by known team names to remove garbage from other competitions
-    if(isLiga3) {
+    // Filter by known teams (liga2 + liga3)
+    if(isLiga2) {
+      allItems = allItems.filter(m =>
+        LIGA2_TEAMS.has(m.firstTeamName) && LIGA2_TEAMS.has(m.secondTeamName)
+      );
+    } else if(isLiga3) {
       const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
       allItems = allItems.filter(m =>
         liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
@@ -2504,6 +2510,10 @@ function renderAttendance() {
 // STANDINGS
 // ═══════════════════════════════════════
 // 3. SKL group definitions (from API competitionPhaseGroupName)
+// 2. SKL teams — za client-side filter (phase filter je pokvarjen)
+const LIGA2_TEAMS = new Set(['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica',
+  'LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan']);
+
 // 3. SKL groups — client-side split since API group filter breaks pagination
 const LIGA3_VZHOD = new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
   'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
