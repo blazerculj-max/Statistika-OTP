@@ -89,13 +89,20 @@ def fetch_all_matches(key, lg):
 
     # Filtriraj samo tekme ki spadajo k tej ligi
     # Za liga3: dodatno filtriraj po znanih ekipah (phase filter je pokvarjen)
+    LIGA2_TEAMS = {
+        'Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica',
+        'LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'
+    }
     LIGA3_TEAMS = {
         'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
         'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
         'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
         'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'
     }
-    if key == 'liga3':
+    if key == 'liga2':
+        matches = [m for m in matches
+                   if m['firstTeamName'] in LIGA2_TEAMS and m['secondTeamName'] in LIGA2_TEAMS]
+    elif key == 'liga3':
         matches = [m for m in matches
                    if m['firstTeamName'] in LIGA3_TEAMS and m['secondTeamName'] in LIGA3_TEAMS]
     else:
