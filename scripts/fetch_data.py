@@ -30,10 +30,13 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        # NI phase_ids — phase filter je pokvarjen (vrača tekme iz vseh tekmovanj)
-        # Fetchamo strani 1+2 za competitionId=582 in filtriramo po ekipah
+        # NI phase_ids — phase filter je pokvarjen
         'phase_ids': None,
-        'max_pages': 3,  # fetch 3 strani da ujamemo vse
+        'max_pages': 3,
+        'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
+                        'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
+                        'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
+                        'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'},
         'groups': {},
         'max_pages': 99,
     },
@@ -54,7 +57,7 @@ def fetch_json(url, retries=3):
             time.sleep(i + 1)
     return None
 
-def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99):
+def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99, known_teams=None):
     all_items = []
     page = 1
     while page <= max_pages:
@@ -65,7 +68,16 @@ def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99):
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items: break
-        all_items.extend(items)
+        # If known_teams provided, stop if no known teams on this page
+        if known_teams:
+            page_known = [m for m in items
+                         if m['firstTeamName'] in known_teams and m['secondTeamName'] in known_teams]
+            if not page_known and page > 1:
+                print(f"    Stran {page}: ni znanih ekip → ustavljam")
+                break
+            all_items.extend(items)
+        else:
+            all_items.extend(items)
         if len(items) < 150: break
         page += 1
         time.sleep(0.1)
@@ -73,6 +85,8 @@ def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99):
 
 def fetch_all_matches(key, lg):
     max_p = lg.get('max_pages', 99)
+    # Known teams for liga2/liga3 to stop pagination early
+    known = lg.get('known_teams')
     if lg['phase_ids']:
         all_items = []
         for pid in lg['phase_ids']:
@@ -85,7 +99,10 @@ def fetch_all_matches(key, lg):
         seen = set()
         matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
     else:
-        matches = fetch_phase(lg['id'], max_pages=max_p)
+        # No phase filter — paginate but stop when no known teams
+        all_items = fetch_phase(lg['id'], max_pages=max_p, known_teams=known)
+        seen = set()
+        matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
 
     # Filtriraj samo tekme ki spadajo k tej ligi
     # Za liga3: dodatno filtriraj po znanih ekipah (phase filter je pokvarjen)
