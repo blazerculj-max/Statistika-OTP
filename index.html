@@ -1100,8 +1100,19 @@ function initWebSocket() {
   ws.onopen = () => subscribeToLiveMatches();
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    if (data.type === undefined && data.message) {
-      handleLiveScore(data.message);
+    if (data.type === 'ping') return;
+    if (data.message && data.message.matchId) {
+      const msg = data.message;
+      // KZS format: {matchId, homeTeamScore, awayTeamScore, quarter, minute, started, ended}
+      handleLiveScore({
+        matchId: msg.matchId,
+        score1:  msg.homeTeamScore,
+        score2:  msg.awayTeamScore,
+        quarter: msg.quarter,
+        time:    msg.minute ? msg.minute + "'" : '',
+        ended:   msg.ended,
+        started: msg.started,
+      });
     }
   };
   ws.onclose = () => setTimeout(initWebSocket, 5000);
@@ -2306,10 +2317,19 @@ function handleLiveScore(msg) {
   // Update live scores state
   if(!liveScores[msg.matchId]) liveScores[msg.matchId] = {ticker:[], isLive:true};
   const ls = liveScores[msg.matchId];
-  ls.isLive = true;
+  ls.isLive = msg.started && !msg.ended;
+  ls.ended = msg.ended;
   if(msg.score1 !== undefined) {ls.score1 = msg.score1; ls.score2 = msg.score2;}
   if(msg.quarter) ls.quarter = msg.quarter;
   if(msg.time) ls.time = msg.time;
+  // Mark match as ended in allMatches
+  if(msg.ended) {
+    const m = allMatches.find(x => x.id === msg.matchId);
+    if(m) { m.status = 'FINISHED'; m.firstTeamScore = msg.score1; m.secondTeamScore = msg.score2; }
+  } else if(msg.started) {
+    const m = allMatches.find(x => x.id === msg.matchId);
+    if(m) m.status = 'LIVE';
+  }
 
   // Add ticker event
   if(msg.action) {
