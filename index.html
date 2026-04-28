@@ -890,37 +890,51 @@ async function loadAllData() {
 
     // ── 3. Fallback: direktni API ──
     setProgress(15, 'Nalagam iz API...');
-    // Fetch matches — use phase IDs to avoid fetching entire KZS database
+    // Fetch matches
     setProgress(16, 'Nalagam tekme...');
     const phaseIds = getLg().phaseIds;
-    const phaseGroups = getLg().groups || {};
+    const isLiga3 = getLg().id === 582;
     let allItems = [];
-    if(phaseIds) {
+
+    if(phaseIds && !isLiga3) {
+      // Use phase filter (liga1, liga2) — works correctly for these
       for(let i=0; i<phaseIds.length; i++) {
         const pid = phaseIds[i];
-        const gids = phaseGroups[pid]; // optional group filter
-        if(gids) {
-          // Fetch each group separately (e.g. 3.SKL vzhod/zahod)
-          for(const gid of gids) {
-            const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}&competitionPhaseGroupId=${gid}`);
-            const data = await res.json();
-            allItems = allItems.concat(data.data?.items || []);
-          }
-        } else {
-          const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
-          const data = await res.json();
-          allItems = allItems.concat(data.data?.items || []);
-        }
-        setProgress(16 + Math.round((i+1)/phaseIds.length * 10), `Nalagam tekme... faza ${i+1}/${phaseIds.length} (${allItems.length} tekem)`);
+        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
+        const data = await res.json();
+        allItems = allItems.concat(data.data?.items || []);
+        setProgress(16 + Math.round((i+1)/phaseIds.length * 10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
       }
-      // Deduplicate by match ID
-      const seen = new Set();
-      allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
     } else {
-      const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}`);
-      const data = await res.json();
-      allItems = data.data?.items || [];
+      // Liga3: fetch multiple pages (phase filter is broken, use team name filter instead)
+      let page = 1;
+      while(page <= 5) {
+        const res = await fetch(`${API}/matches/?competitionId=${getLg().id}&seasonId=${SEASON_ID}&page=${page}`);
+        const data = await res.json();
+        const items = data.data?.items || [];
+        if(!items.length) break;
+        allItems = allItems.concat(items);
+        setProgress(18 + page*3, `Nalagam tekme... stran ${page} (${allItems.length} tekem)`);
+        if(items.length < 150) break;
+        // Stop early if no more liga3 teams in results
+        const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
+        const hasLiga3 = items.some(m => liga3Teams.has(m.firstTeamName));
+        if(!hasLiga3) break;
+        page++;
+      }
     }
+
+    // For liga3: filter by known team names to remove garbage from other competitions
+    if(isLiga3) {
+      const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
+      allItems = allItems.filter(m =>
+        liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
+      );
+    }
+
+    // Deduplicate
+    const seen = new Set();
+    allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
     allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
 
     const finished = allMatches.filter(m => m.status === 'FINISHED');
