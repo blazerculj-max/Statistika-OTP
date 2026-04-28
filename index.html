@@ -912,7 +912,8 @@ async function loadAllData() {
       // Liga2 + Liga3: phase filter pokvarjen — fetchamo po straneh
       const knownTeams = isLiga2 ? LIGA2_TEAMS : new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
       let page = 1;
-      while(page <= 5) {
+      const maxPages = isLiga2 ? 2 : 2; // API returns duplicates on page 3+
+      while(page <= maxPages) {
         const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&page=${page}`);
         const data = await res.json();
         const items = data.data?.items || [];
@@ -938,10 +939,11 @@ async function loadAllData() {
       );
     }
 
-    // Deduplicate
+    // Deduplicate by match ID (API returns duplicates on later pages)
     const seen = new Set();
     allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
     allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
+    console.log(`${getLg().name}: ${allMatches.length} tekem naloženih`);
 
     const finished = allMatches.filter(m => m.status === 'FINISHED');
     setProgress(20, `${allMatches.length} tekem, ${finished.length} odigranih...`);
