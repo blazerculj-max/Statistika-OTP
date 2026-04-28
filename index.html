@@ -2706,12 +2706,69 @@ function computeStandings(matchFilter){
   return Object.values(teams);
 }
 
-function buildStandingsTable(data, sort, title, color){
-  data.sort((a,b)=>{
-    if(sort==='pts')return(b.W-b.L)-(a.W-a.L)||b.W-a.W;
-    if(sort==='ptsdiff')return(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga);
-    return b.ptsFor-a.ptsFor;
+function applyFibaTiebreakers(data, allMatchesRef) {
+  // Group by W-L record
+  const groups = {};
+  data.forEach(t => {
+    const key = t.W + '-' + t.L;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(t);
   });
+
+  const result = [];
+  Object.values(groups).forEach(group => {
+    if(group.length === 1) { result.push(...group); return; }
+
+    // Multiple teams with same W-L — apply tiebreakers
+    const names = new Set(group.map(t => t.name));
+
+    // 1. Head-to-head W-L among tied teams
+    const h2h = {};
+    group.forEach(t => h2h[t.name] = {W:0,L:0,ptsFor:0,ptsAga:0});
+
+    allMatchesRef.forEach(m => {
+      if(m.status !== 'FINISHED') return;
+      const ph = m.competitions?.[0]?.competitionPhaseName || '';
+      if(ph && ['Četrtfinale','Polfinale','Finale','Liga za obstanek','Osmina finala'].includes(ph)) return;
+      if(!names.has(m.firstTeamName) || !names.has(m.secondTeamName)) return;
+      const s1 = m.firstTeamScore||0, s2 = m.secondTeamScore||0;
+      h2h[m.firstTeamName].ptsFor += s1; h2h[m.firstTeamName].ptsAga += s2;
+      h2h[m.secondTeamName].ptsFor += s2; h2h[m.secondTeamName].ptsAga += s1;
+      if(s1 > s2) { h2h[m.firstTeamName].W++; h2h[m.secondTeamName].L++; }
+      else        { h2h[m.secondTeamName].W++; h2h[m.firstTeamName].L++; }
+    });
+
+    group.sort((a,b) => {
+      const ha = h2h[a.name], hb = h2h[b.name];
+      // 1. H2H wins
+      const h2hDiff = (hb.W - hb.L) - (ha.W - ha.L);
+      if(h2hDiff !== 0) return h2hDiff;
+      // 2. H2H point differential
+      const h2hPD = (hb.ptsFor-hb.ptsAga) - (ha.ptsFor-ha.ptsAga);
+      if(h2hPD !== 0) return h2hPD;
+      // 3. Overall point differential
+      const pd = (b.ptsFor-b.ptsAga) - (a.ptsFor-a.ptsAga);
+      if(pd !== 0) return pd;
+      // 4. Total points scored
+      return b.ptsFor - a.ptsFor;
+    });
+    result.push(...group);
+  });
+
+  // Preserve overall W-L sort order but with tiebreakers applied within groups
+  return result;
+}
+
+function buildStandingsTable(data, sort, title, color){
+  if(sort === 'pts') {
+    // First sort by W-L, then apply FIBA tiebreakers within tied groups
+    data.sort((a,b) => (b.W-b.L)-(a.W-a.L) || b.W-a.W);
+    data = applyFibaTiebreakers(data, allMatches);
+  } else if(sort === 'ptsdiff') {
+    data.sort((a,b) => (b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga));
+  } else {
+    data.sort((a,b) => b.ptsFor-a.ptsFor);
+  }
   const leader=data[0];
   const rows=data.map((t,i)=>{
     const tc=TEAM_COLORS[t.name]||'#888';
