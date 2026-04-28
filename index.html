@@ -675,10 +675,11 @@ const LEAGUES = {
     pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
     cacheStats: 'liga3_stats_v1',
     cachePbp:   'liga3_pbp_v1',
-    // Samo redni del — playoff 3. SKL še ni v API-ju
-    // Ko bo dodan: preveriti s fetch + dodati phase ID
+    // Redni del — brez group filtra (paginacija ne dela z group filtrom)
+    // Client-side delimo v Vzhod/Zahod po znanih ekipah
+    // Playoff 3. SKL še ni v API-ju
     phaseIds: [5814],
-    groups: {5814: [6093, 6094]}, // vzhod (6093) + zahod (6094)
+    groups: {}, // brez group filtra — client-side split
     teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
             'Janče ECP Tactical','Kolpa','Konjice','Koper','Kovinarstvo Bučar Miklavž',
@@ -2489,10 +2490,17 @@ function renderAttendance() {
 // STANDINGS
 // ═══════════════════════════════════════
 // 3. SKL group definitions (from API competitionPhaseGroupName)
-const LIGA3_VZHOD = ['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
-  'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje'];
-const LIGA3_ZAHOD = ['Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
-  'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'];
+// 3. SKL groups — client-side split since API group filter breaks pagination
+const LIGA3_VZHOD = new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
+  'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
+const LIGA3_ZAHOD = new Set(['Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
+  'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin']);
+
+function getLiga3Group(teamName) {
+  if(LIGA3_VZHOD.has(teamName)) return 'Vzhod';
+  if(LIGA3_ZAHOD.has(teamName)) return 'Zahod';
+  return null;
+}
 
 function computeStandings(matchFilter){
   const teams={};
@@ -2609,17 +2617,17 @@ function seriesCard(s, extraCls=''){
   const w1=s.winner===s.t1,w2=s.winner===s.t2;
   const c1=TEAM_COLORS[s.t1]||'#888', c2=TEAM_COLORS[s.t2]||'#888';
   const label = s.isAggregate
-    ? `<div style="font-size:.6rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK GOLOV</div>`
+    ? `<div style="font-size:.6rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK KOŠEV</div>`
     : '';
   return `<div class="bracket-series ${s.done?'done':''} ${s.isLive?'live':''} ${extraCls}">
     ${label}
     <div class="bracket-team ${w1?'winner':w2?'loser':''}">
       <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
-      <span class="bracket-team-score">${s.isAggregate ? (s.pts1||0) : s.w1}</span>
+      <span class="bracket-team-score">${s.isAggregate ? (s.pts1||0)+"pt" : s.w1}</span>
     </div>
     <div class="bracket-team ${w2?'winner':w1?'loser':''}">
       <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
-      <span class="bracket-team-score">${s.isAggregate ? (s.pts2||0) : s.w2}</span>
+      <span class="bracket-team-score">${s.isAggregate ? (s.pts2||0)+"pt" : s.w2}</span>
     </div>
   </div>`;
 }
@@ -2811,10 +2819,10 @@ function renderStandings(){
 
   if(isLiga3){
     // Split into Vzhod and Zahod
-    const vzhod = computeStandings(m=>LIGA3_VZHOD.includes(m.firstTeamName)||LIGA3_VZHOD.includes(m.secondTeamName))
-      .filter(t=>LIGA3_VZHOD.includes(t.name));
-    const zahod = computeStandings(m=>LIGA3_ZAHOD.includes(m.firstTeamName)||LIGA3_ZAHOD.includes(m.secondTeamName))
-      .filter(t=>LIGA3_ZAHOD.includes(t.name));
+    const vzhod = computeStandings(m=>LIGA3_VZHOD.has(m.firstTeamName)&&LIGA3_VZHOD.has(m.secondTeamName))
+      .filter(t=>LIGA3_VZHOD.has(t.name));
+    const zahod = computeStandings(m=>LIGA3_ZAHOD.has(m.firstTeamName)&&LIGA3_ZAHOD.has(m.secondTeamName))
+      .filter(t=>LIGA3_ZAHOD.has(t.name));
 
     wrap.innerHTML = `
       <div class="group-split">
