@@ -1649,7 +1649,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
     const emoji = isDunk ? '🔥' : (shotEmoji[ev.sub] || actionEmoji[ev.action] || '•');
     const name = subName[ev.sub] || actionName[ev.action] || ev.action;
     const success = ev.success === false ? '<span style="color:#ef4444;font-size:.65rem"> ZGREŠEN</span>' : '';
-    const pts = ev.action==='3pt'&&ev.success ? '+3' : ev.action==='2pt'&&ev.success ? '+2' : ev.action==='freethrow'&&ev.success ? '+1' : '';
+    const pts = ev.action==='3pt'&&ev.success===1 ? '+3' : ev.action==='2pt'&&ev.success===1 ? '+2' : ev.action==='freethrow'&&ev.success===1 ? '+1' : '';
 
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border);${isHome?'':'flex-direction:row-reverse;text-align:right'}">
       <div style="font-size:1.1rem;flex-shrink:0">${emoji}</div>
@@ -3610,11 +3610,11 @@ function computeNerdStats(){
     // Scoring runs
     let run1=0,run2=0,maxRun={pts:0,tno:0,matchId,period:1};
     events.forEach(ev=>{
-      if((ev.actionType==='2pt'||ev.actionType==='3pt')&&ev.success===0){
+      if((ev.actionType==='2pt'||ev.actionType==='3pt')&&ev.success===1){
         const pts=ev.actionType==='3pt'?3:2;
         if(ev.tno===1){run1+=pts;run2=0;if(run1>maxRun.pts)maxRun={pts:run1,tno:1,matchId,period:ev.period};}
         else if(ev.tno===2){run2+=pts;run1=0;if(run2>maxRun.pts)maxRun={pts:run2,tno:2,matchId,period:ev.period};}
-      } else if(ev.actionType==='freethrow'&&ev.success===0){
+      } else if(ev.actionType==='freethrow'&&ev.success===1){
         if(ev.tno===1){run1+=1;run2=0;}
         else if(ev.tno===2){run2+=1;run1=0;}
       } else if(ev.actionType&&ev.tno>0){
@@ -3634,7 +3634,7 @@ function computeNerdStats(){
 
       if(ev.actionType==='2pt'||ev.actionType==='3pt'){
         const pts=ev.actionType==='3pt'?3:2;
-        const made=ev.success===0;
+        const made=ev.success===1;
         const st=ev.subType||'';
         s.q[q].fga++;
         if(made){s.q[q].fgm++;s.q[q].pts+=pts;}
