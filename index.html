@@ -291,6 +291,27 @@ select:focus{outline:none;border-color:var(--acc)}
 .h2h-match:last-child{border-bottom:none}
 .h2h-score{font-family:var(--fh);font-size:1.1rem;letter-spacing:.04em}
 .diff-pos{color:#22c55e}.diff-neg{color:#ef4444}.diff-zero{color:var(--mut)}
+/* PLAYOFF BRACKET */
+.bracket-wrap{overflow-x:auto;padding:10px 0}
+.bracket{display:flex;gap:0;align-items:stretch;min-width:600px}
+.bracket-round{display:flex;flex-direction:column;justify-content:space-around;min-width:180px;position:relative}
+.bracket-round-title{font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);text-align:center;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
+.bracket-series{background:var(--card);border:1px solid var(--border);border-radius:8px;margin:6px 8px;overflow:hidden;cursor:default;transition:border-color .2s}
+.bracket-series:hover{border-color:var(--border2)}
+.bracket-series.done{border-color:rgba(34,197,94,.25)}
+.bracket-series.live{border-color:rgba(239,68,68,.4);box-shadow:0 0 12px rgba(239,68,68,.1)}
+.bracket-team{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;gap:6px}
+.bracket-team:first-child{border-bottom:1px solid var(--border)}
+.bracket-team-name{font-size:.75rem;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bracket-team-score{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;flex-shrink:0;min-width:16px;text-align:right}
+.bracket-team.winner .bracket-team-name{font-weight:700;color:var(--text)}
+.bracket-team.winner .bracket-team-score{color:#22c55e}
+.bracket-team.loser{opacity:.5}
+.bracket-connector{position:absolute;right:0;top:0;bottom:0;width:16px;pointer-events:none}
+.group-split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:700px){.group-split{grid-template-columns:1fr}}
+.group-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.group-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.06em;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 /* NERD STATS */
 .nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
 .nerd-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
@@ -508,10 +529,9 @@ select:focus{outline:none;border-color:var(--acc)}
         <option value="">Ekipa 2</option>
       </select>
     </div>
-    <div class="tw" style="margin-bottom:20px">
-      <table class="standings-table" id="standings-tbl"></table>
-    </div>
-    <div id="h2h-wrap"></div>
+    <div id="standings-wrap"></div>
+    <div id="playoff-wrap" style="margin-top:24px"></div>
+    <div id="h2h-wrap" style="margin-top:16px"></div>
   </div>
 
   <div id="tab-tekme" class="tab">
@@ -2463,55 +2483,55 @@ function renderAttendance() {
 // ═══════════════════════════════════════
 // STANDINGS
 // ═══════════════════════════════════════
-function computeStandings(){
+// 3. SKL group definitions (from API competitionPhaseGroupName)
+const LIGA3_VZHOD = ['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
+  'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje'];
+const LIGA3_ZAHOD = ['Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
+  'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'];
+
+function computeStandings(matchFilter){
   const teams={};
-  allMatches.forEach(m=>{
+  const matches = matchFilter ? allMatches.filter(matchFilter) : allMatches;
+  matches.forEach(m=>{
     if(m.status!=='FINISHED')return;
-    const t1=normalizeTeamName(m.firstTeamName);
-    const t2=normalizeTeamName(m.secondTeamName);
-    const s1=m.firstTeamScore||0,s2=m.secondTeamScore||0;
-    if(!teams[t1])teams[t1]={name:t1,W:0,L:0,ptsFor:0,ptsAga:0,results:[]};
-    if(!teams[t2])teams[t2]={name:t2,W:0,L:0,ptsFor:0,ptsAga:0,results:[]};
-    teams[t1].ptsFor+=s1;teams[t1].ptsAga+=s2;
-    teams[t2].ptsFor+=s2;teams[t2].ptsAga+=s1;
+    const phaseName = m.competitions?.[0]?.competitionPhaseName||'';
+    // Only redni del for standings
+    if(phaseName && phaseName !== 'Redni del') return;
+    const t1=m.firstTeamName, t2=m.secondTeamName;
+    const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
+    if(!teams[t1])teams[t1]={name:t1,W:0,L:0,ptsFor:0,ptsAga:0,results:[],group:m.competitions?.[0]?.competitionPhaseGroupName||''};
+    if(!teams[t2])teams[t2]={name:t2,W:0,L:0,ptsFor:0,ptsAga:0,results:[],group:m.competitions?.[0]?.competitionPhaseGroupName||''};
+    teams[t1].ptsFor+=s1; teams[t1].ptsAga+=s2;
+    teams[t2].ptsFor+=s2; teams[t2].ptsAga+=s1;
     if(s1>s2){teams[t1].W++;teams[t1].results.push('W');teams[t2].L++;teams[t2].results.push('L');}
     else{teams[t2].W++;teams[t2].results.push('W');teams[t1].L++;teams[t1].results.push('L');}
   });
   return Object.values(teams);
 }
 
-function renderStandings(){
-  if(!allMatches.length)return;
-  const sort=document.getElementById('standings-sort')?.value||'pts';
-  const data=computeStandings();
+function buildStandingsTable(data, sort, title, color){
   data.sort((a,b)=>{
     if(sort==='pts')return(b.W-b.L)-(a.W-a.L)||b.W-a.W;
     if(sort==='ptsdiff')return(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga);
     return b.ptsFor-a.ptsFor;
   });
-
-  const totalGames=data[0]?data[0].W+data[0].L:0;
   const leader=data[0];
-
   const rows=data.map((t,i)=>{
-    const color=TEAM_COLORS[t.name]||'#888';
+    const tc=TEAM_COLORS[t.name]||'#888';
     const diff=t.ptsFor-t.ptsAga;
     const diffCls=diff>0?'diff-pos':diff<0?'diff-neg':'diff-zero';
-    const diffStr=(diff>0?'+':'')+diff;
     const gb=leader?((leader.W-t.W)+(t.L-leader.L))/2:0;
     const gbStr=gb===0?'—':gb.toFixed(1);
     const avgFor=(t.ptsFor/(t.W+t.L)||0).toFixed(1);
     const avgAga=(t.ptsAga/(t.W+t.L)||0).toFixed(1);
-    // Form — last 5
     const last5=t.results.slice(-5);
     const formDots=last5.map(r=>`<div class="form-dot ${r.toLowerCase()}">${r}</div>`).join('');
-    // Pos badge color
-    const posBg=i===0?'#fbbf24':i<3?'#94a3b8':i<6?'#f97316':'var(--border2)';
+    const posBg=i===0?'#fbbf24':i<3?'#94a3b8':i<4?'#f97316':'var(--border2)';
     const posColor=i<3?'#000':'var(--text)';
     return `<tr>
       <td>
         <span class="pos-badge" style="background:${posBg};color:${posColor}">${i+1}</span>
-        <span class="pname-link" style="color:${color};font-weight:600" onclick="
+        <span class="pname-link" style="color:${tc};font-weight:600" onclick="
           document.getElementById('h2h-team1').value='${t.name}';
           document.getElementById('h2h-team2').value='';
           renderH2H();">${t.name}</span>
@@ -2520,29 +2540,172 @@ function renderStandings(){
       <td style="color:#22c55e;font-weight:700">${t.W}</td>
       <td style="color:#ef4444">${t.L}</td>
       <td>${gbStr}</td>
-      <td style="color:${color};font-weight:600">${(t.W/(t.W+t.L)*100||0).toFixed(1)}%</td>
-      <td>${avgFor}</td>
-      <td>${avgAga}</td>
-      <td class="${diffCls}">${diffStr}</td>
+      <td style="color:${tc}">${(t.W/(t.W+t.L)*100||0).toFixed(1)}%</td>
+      <td>${avgFor}</td><td>${avgAga}</td>
+      <td class="${diffCls}">${(diff>0?'+':'')+diff}</td>
       <td><div class="form-dots">${formDots}</div></td>
     </tr>`;
   }).join('');
 
-  document.getElementById('standings-tbl').innerHTML=`
-    <thead><tr>
-      <th style="text-align:left;padding-left:14px">EKIPA</th>
-      <th title="Odigrane tekme">T</th>
-      <th title="Zmage" style="color:#22c55e">Z</th>
-      <th title="Porazi" style="color:#ef4444">P</th>
-      <th title="Games behind">GB</th>
-      <th title="Odstotek zmag">Z%</th>
-      <th title="Točke za (avg)">TOČ+</th>
-      <th title="Točke proti (avg)">TOČ-</th>
-      <th title="Point differential">DIFF</th>
-      <th title="Forma (zadnjih 5)">FORMA</th>
-    </tr></thead>
-    <tbody>${rows}</tbody>`;
+  const hdr = `<thead><tr>
+    <th style="text-align:left;padding-left:14px">${title||'EKIPA'}</th>
+    <th title="Odigrane tekme">T</th>
+    <th title="Zmage" style="color:#22c55e">Z</th>
+    <th title="Porazi" style="color:#ef4444">P</th>
+    <th title="Games behind">GB</th>
+    <th title="Odstotek zmag">Z%</th>
+    <th title="Točke za (avg)">TOČ+</th>
+    <th title="Točke proti (avg)">TOČ-</th>
+    <th title="Point differential">DIFF</th>
+    <th title="Forma (zadnjih 5)">FORMA</th>
+  </tr></thead>`;
 
+  return `<table class="standings-table">${hdr}<tbody>${rows}</tbody></table>`;
+}
+
+// ── PLAYOFF BRACKET ──
+function computePlayoffSeries(){
+  // Group playoff matches by phase + pair of teams → series
+  const playoffPhases = ['Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  const series = {}; // key: "phase|teamA|teamB" → {phase, t1, t2, w1, w2, matches, done}
+
+  allMatches.forEach(m=>{
+    if(m.status!=='FINISHED') return;
+    const phase = m.competitions?.[0]?.competitionPhaseName||'';
+    if(!playoffPhases.includes(phase)) return;
+    const a=m.firstTeamName, b=m.secondTeamName;
+    const key = phase + '|' + [a,b].sort().join('|');
+    if(!series[key]) series[key]={phase, t1:a, t2:b, w1:0, w2:0, matches:[], done:false};
+    const s=series[key];
+    s.matches.push(m);
+    if(m.firstTeamScore > m.secondTeamScore) {
+      if(s.t1===a) s.w1++; else s.w2++;
+    } else {
+      if(s.t2===b) s.w2++; else s.w1++;
+    }
+  });
+
+  // Mark done (2 wins)
+  Object.values(series).forEach(s=>{
+    s.done = s.w1>=2 || s.w2>=2;
+    s.winner = s.w1>=2 ? s.t1 : s.w2>=2 ? s.t2 : null;
+  });
+  return Object.values(series);
+}
+
+function renderPlayoffBracket(){
+  const wrap = document.getElementById('playoff-wrap');
+  if(!wrap) return;
+  const series = computePlayoffSeries();
+  if(!series.length){ wrap.innerHTML=''; return; }
+
+  const phaseOrder = ['Liga za obstanek','Četrtfinale','Polfinale','Finale'];
+  const phaseColors = {
+    'Četrtfinale':'#f59e0b','Polfinale':'#a855f7','Finale':'#f97316','Liga za obstanek':'#3b82f6'
+  };
+
+  // Split by phase
+  const byPhase = {};
+  series.forEach(s=>{
+    if(!byPhase[s.phase]) byPhase[s.phase]=[];
+    byPhase[s.phase].push(s);
+  });
+
+  // Separate obstanek from playoff
+  const obstanekSeries = byPhase['Liga za obstanek']||[];
+  const playoffPhases = ['Četrtfinale','Polfinale','Finale'].filter(p=>byPhase[p]);
+
+  let html = '';
+
+  // Playoff bracket
+  if(playoffPhases.length) {
+    html += `<div style="font-family:var(--fh);font-size:1.2rem;letter-spacing:.06em;margin-bottom:12px;color:var(--sub)">🏆 KONČNICA</div>`;
+    html += `<div class="bracket-wrap"><div class="bracket">`;
+
+    playoffPhases.forEach(phase=>{
+      const color = phaseColors[phase]||'#888';
+      const pSeries = byPhase[phase]||[];
+      html += `<div class="bracket-round">
+        <div class="bracket-round-title" style="color:${color}">${phase.toUpperCase()}</div>`;
+
+      pSeries.forEach(s=>{
+        const w1cls = s.winner===s.t1?'winner':s.winner?'loser':'';
+        const w2cls = s.winner===s.t2?'winner':s.winner?'loser':'';
+        const c1 = TEAM_COLORS[s.t1]||'#888';
+        const c2 = TEAM_COLORS[s.t2]||'#888';
+        html += `<div class="bracket-series ${s.done?'done':''}">
+          <div class="bracket-team ${w1cls}">
+            <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
+            <span class="bracket-team-score">${s.w1}</span>
+          </div>
+          <div class="bracket-team ${w2cls}">
+            <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
+            <span class="bracket-team-score">${s.w2}</span>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // Liga za obstanek
+  if(obstanekSeries.length) {
+    html += `<div style="font-family:var(--fh);font-size:1.2rem;letter-spacing:.06em;margin:20px 0 12px;color:#3b82f6">🔵 LIGA ZA OBSTANEK</div>`;
+    html += `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">`;
+    obstanekSeries.forEach(s=>{
+      const w1cls = s.winner===s.t1?'winner':s.winner?'loser':'';
+      const w2cls = s.winner===s.t2?'winner':s.winner?'loser':'';
+      const c1 = TEAM_COLORS[s.t1]||'#888';
+      const c2 = TEAM_COLORS[s.t2]||'#888';
+      html += `<div class="bracket-series ${s.done?'done':''}">
+        <div class="bracket-team ${w1cls}">
+          <span class="bracket-team-name" style="color:${c1}" title="${s.t1}">${s.t1}</span>
+          <span class="bracket-team-score">${s.w1}</span>
+        </div>
+        <div class="bracket-team ${w2cls}">
+          <span class="bracket-team-name" style="color:${c2}" title="${s.t2}">${s.t2}</span>
+          <span class="bracket-team-score">${s.w2}</span>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  wrap.innerHTML = html;
+}
+
+function renderStandings(){
+  if(!allMatches.length)return;
+  const sort=document.getElementById('standings-sort')?.value||'pts';
+  const wrap=document.getElementById('standings-wrap');
+  const isLiga3=getLg().id===582;
+
+  if(isLiga3){
+    // Split into Vzhod and Zahod
+    const vzhod = computeStandings(m=>LIGA3_VZHOD.includes(m.firstTeamName)||LIGA3_VZHOD.includes(m.secondTeamName))
+      .filter(t=>LIGA3_VZHOD.includes(t.name));
+    const zahod = computeStandings(m=>LIGA3_ZAHOD.includes(m.firstTeamName)||LIGA3_ZAHOD.includes(m.secondTeamName))
+      .filter(t=>LIGA3_ZAHOD.includes(t.name));
+
+    wrap.innerHTML = `
+      <div class="group-split">
+        <div class="group-card">
+          <div class="group-title" style="color:#a855f7;border-bottom-color:rgba(168,85,247,.3)">🟣 VZHOD</div>
+          <div class="tw">${buildStandingsTable(vzhod,sort,'EKIPA','#a855f7')}</div>
+        </div>
+        <div class="group-card">
+          <div class="group-title" style="color:#a855f7;border-bottom-color:rgba(168,85,247,.3)">🟣 ZAHOD</div>
+          <div class="tw">${buildStandingsTable(zahod,sort,'EKIPA','#a855f7')}</div>
+        </div>
+      </div>`;
+  } else {
+    const data=computeStandings();
+    wrap.innerHTML=`<div class="tw" style="margin-bottom:20px">${buildStandingsTable(data,sort,'EKIPA')}</div>`;
+  }
+
+  // Always render playoff bracket
+  renderPlayoffBracket();
   renderH2H();
 }
 
