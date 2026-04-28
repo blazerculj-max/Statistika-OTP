@@ -317,6 +317,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .group-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .group-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.06em;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 /* NERD STATS */
+.nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
 .nerd-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .nerd-card-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
@@ -3618,47 +3619,71 @@ function renderNerd(){
   else if(nerdView==='shots')wrap.innerHTML=renderShotTypes(nd);
   else if(nerdView==='runs')wrap.innerHTML=renderRuns(nd);
   else if(nerdView==='turnovers')wrap.innerHTML=renderTurnovers(nd);
-  else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds(nd);
+  else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds();
 }
 
 function renderTurnovers({stats}){
   const e=Object.entries(stats);
-  const tovLabels={
-    badpass:'Slaba podaja',ballhandling:'Izguba žoge',travel:'Korakanje',
-    '24sec':'24 sekund','3sec':'3 sekunde',offensive:'Ofenzivna napaka'
-  };
-  const html = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">` +
-  [
-    {k:'badpass',     lbl:'Slaba podaja',   color:'#ef4444', icon:'🎯'},
-    {k:'ballhandling',lbl:'Izguba žoge',    color:'#f97316', icon:'🏀'},
-    {k:'travel',      lbl:'Korakanje',      color:'#a855f7', icon:'🚶'},
-  ].map(t=>
-    mkCard(t.lbl,t.color,t.icon,e.filter(([,s])=>s.tovReasons[t.k]>0),
+  const types=[
+    {k:'badpass',      lbl:'Slaba podaja',   color:'#ef4444', icon:'🎯'},
+    {k:'ballhandling', lbl:'Izguba žoge',     color:'#f97316', icon:'💨'},
+    {k:'travel',       lbl:'Korakanje',       color:'#a855f7', icon:'🚶'},
+    {k:'24sec',        lbl:'24 sekund',       color:'#60a5fa', icon:'⏱️'},
+    {k:'3sec',         lbl:'3 sekunde',       color:'#34d399', icon:'⏱️'},
+    {k:'offensive',    lbl:'Ofenzivna napaka',color:'#fbbf24', icon:'💥'},
+  ];
+  const cards = types.map(t=>
+    mkCard(t.lbl, t.color, t.icon,
+      e.filter(([,s])=>(s.tovReasons[t.k]||0)>0),
       s=>s.tovReasons[t.k]||0,
       v=>v+' <small style="font-size:.65rem;color:var(--mut)">izgub</small>')
-  ).join('') + `</div>` +
-  `<div style="margin-top:16px">` +
-  mkCard('Skupaj izgub žoge','#ef4444','❌',e.filter(([,s])=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0)>0),
+  ).join('');
+  const total = mkCard('Skupaj izgub žoge','#ef4444','❌',
+    e.filter(([,s])=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0)>0),
     s=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0),
-    v=>v) + `</div>`;
-  return html;
+    v=>v);
+  return '<div class="nerd-grid">'+cards+total+'</div>';
 }
 
-function renderRebounds({stats}){
-  const e=Object.entries(stats);
-  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">` +
-  mkCard('Napadalni skoki','#f97316','🏃',e.filter(([,s])=>s.rebounds.offensive>0),
-    s=>s.rebounds.offensive,
-    v=>v+' <small style="font-size:.65rem;color:var(--mut)">napad. sk.</small>') +
-  mkCard('Obrambni skoki','#3b82f6','🛡️',e.filter(([,s])=>s.rebounds.defensive>0),
-    s=>s.rebounds.defensive,
-    v=>v+' <small style="font-size:.65rem;color:var(--mut)">obr. sk.</small>') +
-  `</div><div style="margin-top:16px">` +
-  mkCard('Skupaj skoki (PBP)','#22c55e','💪',e.filter(([,s])=>s.rebounds.offensive+s.rebounds.defensive>0),
-    s=>s.rebounds.offensive+s.rebounds.defensive,
-    v=>v,
-    (v,s)=>`OFF: ${s.rebounds.offensive} · DEF: ${s.rebounds.defensive}`) +
-  `</div>`;
+function renderRebounds(){
+  // Use P array from stats API (not PBP) — more complete data
+  const minT = parseInt(document.getElementById('nerd-min-sel')?.value||5);
+  const qual = P.map((p,i)=>i).filter(i=>P[i]&&P[i][F.T]>=minT);
+
+  function mkRebCard(title, color, icon, getVal, subFn) {
+    const sorted = [...qual].sort((a,b)=>getVal(P[b])-getVal(P[a])).slice(0,10);
+    const maxV = sorted.length ? getVal(P[sorted[0]]) : 1;
+    const rows = sorted.filter(i=>getVal(P[i])>0).map((i,r)=>{
+      const p=P[i];
+      const v=getVal(p);
+      const tc=TEAM_COLORS[p[F.team].split('/')[0].trim()]||'#888';
+      const teamShort=TEAM_SHORT[p[F.team].split('/')[0].trim()]||p[F.team].split('/')[0].trim();
+      const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+      const barPct=maxV>0?Math.round(v/maxV*100):0;
+      const sub=subFn?subFn(p):'';
+      return '<div class="nerd-row">'+
+        '<div class="nerd-rank">'+rk+'</div>'+
+        '<div class="nerd-info">'+
+          '<div class="nerd-name pname-link" onclick="showPlayer('+i+')">'+p[F.name]+'</div>'+
+          '<div class="nerd-team" style="color:'+tc+'">'+teamShort+'</div>'+
+          '<div class="nerd-bar-wrap" style="margin-top:4px"><div class="nerd-bar" style="width:'+barPct+'%;background:'+color+'"></div></div>'+
+        '</div>'+
+        '<div class="nerd-right">'+
+          '<div class="nerd-val" style="color:'+color+'">'+(v/P[i][F.T]).toFixed(1)+' <small style="font-size:.6rem;color:var(--mut)">avg</small></div>'+
+          (sub?'<div class="nerd-sub">'+sub+'</div>':'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+    return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+      (rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
+  }
+
+  return '<div class="nerd-grid">'+
+    mkRebCard('Skupaj skoki','#22c55e','💪',p=>p[F.nap]+p[F.obr],p=>`NAP: ${p[F.nap]} · OBR: ${p[F.obr]}`)+
+    mkRebCard('Napadalni skoki','#f97316','🏃',p=>p[F.nap],p=>`${p[F.nap]} skupaj`)+
+    mkRebCard('Obrambni skoki','#3b82f6','🛡️',p=>p[F.obr],p=>`${p[F.obr]} skupaj`)+
+    mkRebCard('Skoki / tekma (vse)','#a855f7','📊',p=>p[F.nap]+p[F.obr],null)+
+  '</div>';
 }
 
 function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
@@ -3731,7 +3756,11 @@ function renderShotTypes({stats}){
     {k:'stepbackjumpshot',lbl:'Step-back',icon:'↩️',color:'#fbbf24'},
     {k:'hookshot',lbl:'Hook Shot',icon:'🪝',color:'#f87171'},
     {k:'layup',lbl:'Layup',icon:'🎯',color:'#818cf8'},
+    {k:'reverselayup',lbl:'Reverse Layup',icon:'🔄',color:'#6ee7b7'},
+    {k:'dunk',lbl:'Zabijanje 🔥',icon:'🔥',color:'#ef4444'},
+    {k:'alleyoop',lbl:'Alley-oop',icon:'🙌',color:'#fde68a'},
     {k:'fadeaway',lbl:'Fadeaway',icon:'🌅',color:'#c084fc'},
+    {k:'turnaroundjumpshot',lbl:'Turnaround',icon:'↕️',color:'#a78bfa'},
   ];
   const cards=types.map(t=>
     mkCard(t.lbl,t.color,t.icon,e.filter(([,s])=>s.shots[t.k]&&s.shots[t.k].a>=3),
