@@ -679,7 +679,7 @@ const LEAGUES = {
     // Redni del — brez group filtra (paginacija ne dela z group filtrom)
     // Client-side delimo v Vzhod/Zahod po znanih ekipah
     // Playoff 3. SKL še ni v API-ju
-    phaseIds: [5814],
+    phaseIds: [5814, 5868, 5869, 5878, 5884],
     groups: {}, // brez group filtra — client-side split
     teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
@@ -2611,7 +2611,7 @@ function buildStandingsTable(data, sort, title, color){
 // ── PLAYOFF BRACKET ──
 function computePlayoffSeries(){
   // Group playoff matches by phase + pair of teams → series
-  const playoffPhases = ['Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  const playoffPhases = ['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
   const series = {}; // key: "phase|teamA|teamB" → {phase, t1, t2, w1, w2, matches, done}
 
   allMatches.forEach(m=>{
@@ -2946,13 +2946,14 @@ function renderPlayoffBracket(){
 
   const obstanekSeries = byPhase['Liga za obstanek']||[];
   const playoffByPhase = {};
-  ['Četrtfinale','Polfinale','Finale'].forEach(p=>{ if(byPhase[p]) playoffByPhase[p]=byPhase[p]; });
+  ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{ if(byPhase[p]) playoffByPhase[p]=byPhase[p]; });
 
   const lgKey = currentLeague;
 
-  // Use static data only for liga3 (playoff not in API)
-  // Liga2 now has full API data including finale (phase 5885)
-  if(lgKey === 'liga3') {
+  // Liga3 playoff je zdaj v API-ju — ne rabimo več statičnih podatkov
+  // Samo za fallback če API ne vrne playoff tekem
+  const hasPlayoff = series.some(s => ['Osmina finala','Četrtfinale','Polfinale','Finale'].includes(s.phase));
+  if(lgKey === 'liga3' && !hasPlayoff) {
     wrap.innerHTML = renderStaticPlayoff(lgKey);
     return;
   }
