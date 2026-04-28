@@ -1569,8 +1569,9 @@ async function fetchLivePbp(matchInfo) {
   const fibaId = matchInfo.fibaLiveStatsUrl.match(/\/([0-9]+)\/?$/)?.[1];
   if(!fibaId) return [];
   try {
+    // Add timestamp to bust codetabs cache
     const proxy = 'https://api.codetabs.com/v1/proxy?quest=';
-    const url = `https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json`;
+    const url = `https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json?t=${Date.now()}`;
     const res = await fetch(proxy + encodeURIComponent(url));
     const d = await res.json();
     if(!d.pbp) return [];
@@ -1744,21 +1745,30 @@ async function openMatch(matchId){
     if(isLive) {
       if(pbpRefreshTimer) clearInterval(pbpRefreshTimer);
       pbpRefreshTimer = setInterval(async () => {
-        if(liveMatchId !== matchId) { clearInterval(pbpRefreshTimer); return; }
-        const newEvents = await fetchLivePbp(matchInfo);
-        if(newEvents.length > 0) livePbpCache[matchId] = newEvents;
+        // Check if overlay still open for this match
+        const overlayVisible = document.getElementById('match-overlay')?.style.display !== 'none';
+        if(!overlayVisible || liveMatchId !== matchId) {
+          clearInterval(pbpRefreshTimer);
+          pbpRefreshTimer = null;
+          return;
+        }
+        try {
+          const newEvents = await fetchLivePbp(matchInfo);
+          if(newEvents && newEvents.length > 0) livePbpCache[matchId] = newEvents;
+        } catch(e) { /* ignore fetch errors, keep showing cached */ }
+        
         const sec = document.getElementById('pbp-section');
         const currentLs = liveScores[matchId] || ls;
-        if(sec) sec.innerHTML = renderPbpFeed(
-          livePbpCache[matchId]||newEvents, t1, t2, c1, c2, currentLs);
-        // Update score in overlay
-        if(currentLs.score1 !== undefined) {
-          const scoreEl = document.querySelector('.mo-score');
-          if(scoreEl) {
-            scoreEl.innerHTML = `<span style="color:#ef4444">${currentLs.score1} : ${currentLs.score2}</span>
-              <div style="font-size:.75rem;color:#ef4444;text-align:center;margin-top:4px">
-                Q${currentLs.quarter||'?'} · ${currentLs.time||''}</div>`;
-          }
+        if(sec) {
+          sec.innerHTML = renderPbpFeed(
+            livePbpCache[matchId]||[], t1, t2, c1, c2, currentLs);
+        }
+        // Update score display in overlay
+        const moScore = document.getElementById('mo-score');
+        if(moScore && currentLs.score1 !== undefined) {
+          moScore.innerHTML = `<span style="color:#ef4444">${currentLs.score1} : ${currentLs.score2}</span>`;
+          const timeEl = moScore.nextElementSibling;
+          if(timeEl) timeEl.textContent = `Q${currentLs.quarter||'?'} · ${currentLs.time||''}`;
         }
       }, 20000);
     }
