@@ -23,7 +23,7 @@ LEAGUES = {
     'liga2': {
         'id': 581,
         'name': '2. SKL',
-        'phase_ids': [5813, 5873, 5874, 5880],
+        'phase_ids': [5813, 5873, 5874, 5880, 5885]  # 5885 = Finale,
         'groups': {},
         'max_pages': 99,
     },
