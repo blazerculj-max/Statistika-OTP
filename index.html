@@ -663,8 +663,8 @@ const LEAGUES = {
     pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
     cacheStats: 'liga2_stats_v3',
     cachePbp:   'liga2_pbp_v3',
-    // Phase filter je problematičen — fetchamo po straneh, filtriramo po ekipah
-    phaseIds: null,
+    // Phase IDs so točni za 2. SKL — polfinale(5880) ima 2 strani
+    phaseIds: [5813, 5873, 5874, 5880],
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
   'liga3': {
@@ -900,12 +900,21 @@ async function loadAllData() {
     let allItems = [];
 
     if(phaseIds) {
-      // Liga1: use phase filter (works correctly)
+      // Liga1 + Liga2: use phase filter (works correctly)
+      // Phase 5880 (Polfinale 2.SKL) needs page 2 as well
       for(let i=0; i<phaseIds.length; i++) {
         const pid = phaseIds[i];
+        // Fetch page 1
         const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
         const data = await res.json();
-        allItems = allItems.concat(data.data?.items || []);
+        const items1 = data.data?.items || [];
+        allItems = allItems.concat(items1);
+        // If 150 items, fetch page 2 (polfinale has overflow)
+        if(items1.length >= 150) {
+          const res2 = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}&page=2`);
+          const data2 = await res2.json();
+          allItems = allItems.concat(data2.data?.items || []);
+        }
         setProgress(16 + Math.round((i+1)/phaseIds.length*10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
       }
     } else {
@@ -928,11 +937,7 @@ async function loadAllData() {
     }
 
     // Filter by known teams (liga2 + liga3)
-    if(isLiga2) {
-      allItems = allItems.filter(m =>
-        LIGA2_TEAMS.has(m.firstTeamName) && LIGA2_TEAMS.has(m.secondTeamName)
-      );
-    } else if(isLiga3) {
+    if(isLiga3) {
       const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
       allItems = allItems.filter(m =>
         liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
