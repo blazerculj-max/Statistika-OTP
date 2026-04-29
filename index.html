@@ -707,9 +707,10 @@ function getLg() { return LEAGUES[currentLeague]; }
 
 const TEAM_COLORS = {
   'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
-  'Laško':'#ef4444','Rogaška':'#a855f7','Ilirija':'#ec4899',
+  'Laško':'#ef4444','Rogaška':'#a855f7',
+  'Perspektiva Ilirija':'#ec4899','Ilirija':'#ec4899',
   'Šentjur':'#06b6d4','Terme Olimia Podčetrtek':'#f97316',
-  'Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1'
+  'Hopsi Polzela':'#22c55e','Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1'
 };
 const TEAM_SHORT = {
   // 1. SKL
@@ -1151,17 +1152,12 @@ function aggregatePlayers(phaseFilter) {
 }
 
 function normalizeTeamName(n) {
+  // Normalize to canonical full names used in LEAGUES.teams
   const map = {
-    'Perspektiva Ilirija': 'Ilirija',
-    'GGD Šenčur': 'GGD Šenčur',
-    'Krka': 'Krka',
-    'Kansai Helios': 'Kansai Helios',
-    'Terme Olimia Podčetrtek': 'Terme Olimia Podčetrtek',
-    'Laško': 'Laško', 'Calcit Volley Kamnik': 'Laško',
-    'Hopsi Polzela': 'Hopsi', 'Hopsi': 'Hopsi',
-    'Rogaška': 'Rogaška',
-    'Šentjur': 'Šentjur',
-    'ECE Triglav Kranj': 'ECE Triglav Kranj',
+    'Ilirija': 'Perspektiva Ilirija',
+    'Hopsi': 'Hopsi Polzela',
+    'Kansai Helios': 'Kansai Helios Domžale',
+    'Calcit Volley Kamnik': 'Laško',
   };
   return map[n] || n;
 }
@@ -1375,15 +1371,26 @@ function sortVal(p,k){
   if(k==='fg2')return pct(p[F.fg2m],p[F.fg2a])??-1;if(k==='fg3')return pct(p[F.fg3m],p[F.fg3a])??-1;
   if(k==='met')return pct(p[F.fg2m]+p[F.fg3m],p[F.fg2a]+p[F.fg3a])??-1;
   if(k==='pm')return pct(p[F.ftm],p[F.fta])??-1;
-  if(k==='toc')return p[F.toc];if(k==='nap')return p[F.nap];if(k==='obr')return p[F.obr];
-  if(k==='sk')return p[F.nap]+p[F.obr];if(k==='pod')return p[F.pod];
-  if(k==='sto')return p[F.sto];if(k==='izg')return p[F.izg];if(k==='pz')return p[F.pz];
-  if(k==='blk')return p[F.blk];if(k==='pm_p')return p[F.pm];if(k==='efe')return p[F.efe];
   if(k==='ts'){const fga=p[F.fg2a]+p[F.fg3a],d=2*(fga+0.44*p[F.fta]);return(d>0&&fga+p[F.fta]>=20)?p[F.toc]/d*100:-1;}
   if(k==='at')return p[F.izg]>0?p[F.pod]/p[F.izg]:-1;
   if(k==='usg'){if(p[F.MIN]<10)return-1;const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];return((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));}
   if(k==='per'){if(p[F.T]<5)return-1;return perOf(p);}
-  if(k==='pip')return p[F.pip];if(k==='fb')return p[F.fb];
+  if(k==='pm_p')return p[F.pm];
+  // Stats that respect mode (avg vs tot)
+  const t = Math.max(p[F.T],1);
+  const div = mode==='avg' ? t : 1;
+  if(k==='toc')return p[F.toc]/div;
+  if(k==='nap')return p[F.nap]/div;
+  if(k==='obr')return p[F.obr]/div;
+  if(k==='sk')return (p[F.nap]+p[F.obr])/div;
+  if(k==='pod')return p[F.pod]/div;
+  if(k==='sto')return p[F.sto]/div;
+  if(k==='izg')return p[F.izg]/div;
+  if(k==='pz')return p[F.pz]/div;
+  if(k==='blk')return p[F.blk]/div;
+  if(k==='efe')return p[F.efe]/div;
+  if(k==='pip')return p[F.pip]/div;
+  if(k==='fb')return p[F.fb]/div;
   return 0;
 }
 
@@ -1459,10 +1466,15 @@ function renderTeam(){
   let lpPlayer=null,lrPlayer=null,laPlayer=null,lePlayer=null;
   qual.forEach(p=>{
     const t=p[F.T];
-    if(p[F.toc]/t>lPts){lPts=p[F.toc]/t;lpPlayer=p}
-    if((p[F.nap]+p[F.obr])/t>lReb){lReb=(p[F.nap]+p[F.obr])/t;lrPlayer=p}
-    if(p[F.pod]/t>lAst){lAst=p[F.pod]/t;laPlayer=p}
-    if(p[F.efe]/t>lEfe){lEfe=p[F.efe]/t;lePlayer=p}
+    // Upoštevaj mode: avg = per game, tot = skupaj
+    const valPts  = mode==='tot' ? p[F.toc] : p[F.toc]/t;
+    const valReb  = mode==='tot' ? (p[F.nap]+p[F.obr]) : (p[F.nap]+p[F.obr])/t;
+    const valAst  = mode==='tot' ? p[F.pod] : p[F.pod]/t;
+    const valEfe  = mode==='tot' ? p[F.efe] : p[F.efe]/t;
+    if(valPts>lPts){lPts=valPts;lpPlayer=p}
+    if(valReb>lReb){lReb=valReb;lrPlayer=p}
+    if(valAst>lAst){lAst=valAst;laPlayer=p}
+    if(valEfe>lEfe){lEfe=valEfe;lePlayer=p}
   });
 
   if(sortCol>=0){
