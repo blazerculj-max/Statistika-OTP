@@ -3316,7 +3316,7 @@ function computeTeamStats(matchList, phaseFilter) {
   matchList.forEach(m=>{
     if(m.status!=='FINISHED')return;
     const ph=m.competitions?.[0]?.competitionPhaseName||'';
-    if(phaseFilter&&phaseFilter!=='all'&&ph!==phaseFilter)return;
+    if(phaseFilter&&phaseFilter!==''&&phaseFilter!=='all'&&ph!==phaseFilter)return;
     const t1=m.firstTeamName,t2=m.secondTeamName;
     const s1=m.firstTeamScore||0,s2=m.secondTeamScore||0;
     init(t1);init(t2);
@@ -3366,6 +3366,78 @@ function buildStandingsTable(data, sort, title, color){
     </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+function renderH2H(){
+  const t1 = document.getElementById('h2h-team1')?.value;
+  const t2 = document.getElementById('h2h-team2')?.value;
+  const wrap = document.getElementById('h2h-wrap');
+  if(!wrap) return;
+  if(!t1 || !t2) { wrap.innerHTML = ''; return; }
+
+  const matches = allMatches.filter(m =>
+    m.status === 'FINISHED' &&
+    ((m.firstTeamName === t1 && m.secondTeamName === t2) ||
+     (m.firstTeamName === t2 && m.secondTeamName === t1))
+  ).sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+  if(!matches.length) {
+    wrap.innerHTML = `<div class="empty" style="margin-top:12px">Ni medsebojnih tekem med ${t1} in ${t2}</div>`;
+    return;
+  }
+
+  const c1 = TEAM_COLORS[t1]||'#f97316', c2 = TEAM_COLORS[t2]||'#3b82f6';
+  let w1=0, w2=0, pts1=0, pts2=0;
+  matches.forEach(m => {
+    const isT1home = m.firstTeamName === t1;
+    const s1 = isT1home ? m.firstTeamScore : m.secondTeamScore;
+    const s2 = isT1home ? m.secondTeamScore : m.firstTeamScore;
+    pts1 += s1; pts2 += s2;
+    if(s1 > s2) w1++; else w2++;
+  });
+
+  const rows = matches.map(m => {
+    const isT1home = m.firstTeamName === t1;
+    const s1 = isT1home ? m.firstTeamScore : m.secondTeamScore;
+    const s2 = isT1home ? m.secondTeamScore : m.firstTeamScore;
+    const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    const phase = m.competitions?.[0]?.competitionPhaseName || 'Redni del';
+    const t1win = s1 > s2;
+    return `<tr>
+      <td style="color:var(--mut);font-size:.72rem">${date}</td>
+      <td style="color:var(--mut);font-size:.68rem">${phase}</td>
+      <td style="font-weight:${t1win?700:400};color:${t1win?c1:'var(--sub)'}">${t1}</td>
+      <td style="font-family:var(--fh);font-size:1rem;text-align:center">
+        <span style="color:${t1win?c1:'var(--sub)'}">${s1}</span>
+        <span style="color:var(--mut);margin:0 4px">:</span>
+        <span style="color:${!t1win?c2:'var(--sub)'}">${s2}</span>
+      </td>
+      <td style="font-weight:${!t1win?700:400};color:${!t1win?c2:'var(--sub)'}">${t2}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="font-family:var(--fh);font-size:1.2rem;color:${c1}">${t1}</div>
+      <div style="text-align:center">
+        <div style="font-family:var(--fh);font-size:2rem">
+          <span style="color:${w1>w2?c1:'var(--mut)'}">${w1}</span>
+          <span style="color:var(--mut);margin:0 8px">–</span>
+          <span style="color:${w2>w1?c2:'var(--mut)'}">${w2}</span>
+        </div>
+        <div style="font-size:.68rem;color:var(--mut)">${matches.length} tekem · točke: ${pts1}:${pts2}</div>
+      </div>
+      <div style="font-family:var(--fh);font-size:1.2rem;color:${c2}">${t2}</div>
+    </div>
+    <div style="overflow-x:auto"><table class="standings-table">
+      <thead><tr>
+        <th>Datum</th><th>Faza</th>
+        <th style="color:${c1}">${t1}</th>
+        <th>Rezultat</th>
+        <th style="color:${c2}">${t2}</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
 function renderStandings(){
   const wrap=document.getElementById('standings-wrap');
   if(!wrap||!allMatches.length)return;
@@ -3390,7 +3462,22 @@ function renderStandings(){
     html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!VZHOD.has(m.firstTeamName)&&!VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
   } else {
     html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
-    if(lg.id===581){const od=computeTeamStats(allMatches,'Liga za obstanek');if(od.length)html+=buildStandingsTable(od,sort,'⚠️ LIGA ZA OBSTANEK','#f97316');}
+    if(lg.id===581){
+      // Liga za obstanek: carry over H2H from redni del + new obstanek games
+      const obstMatches = allMatches.filter(m=>m.status==='FINISHED'&&
+        m.competitions?.[0]?.competitionPhaseName==='Liga za obstanek');
+      if(obstMatches.length){
+        const obstTeams = new Set(obstMatches.flatMap(m=>[m.firstTeamName,m.secondTeamName]));
+        // Include carried-over H2H from redni del between these teams
+        const rdH2H = allMatches.filter(m=>m.status==='FINISHED'&&
+          m.competitions?.[0]?.competitionPhaseName==='Redni del'&&
+          obstTeams.has(m.firstTeamName)&&obstTeams.has(m.secondTeamName));
+        const allObstMatches = [...rdH2H, ...obstMatches];
+        const od=computeTeamStats(allObstMatches,'');
+        const odFiltered=od.filter(t=>obstTeams.has(t.name));
+        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'⚠️ LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
+      }
+    }
   }
   const series=computePlayoffSeries();
   const byPhase={};
