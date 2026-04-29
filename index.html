@@ -2689,23 +2689,31 @@ function renderPlayerCompare() {
     return (p[key]||0)/p[F.T];
   }
 
-  function statBar(label, a1, a2, max, color) {
-    const pct1 = Math.min(a1/max*100, 100);
-    const pct2 = Math.min(a2/max*100, 100);
+  function statBar(label, a1, a2, max) {
+    const pct1 = Math.min(a1/Math.max(max,0.01)*100, 100);
+    const pct2 = Math.min(a2/Math.max(max,0.01)*100, 100);
     const winner = a1>a2?'left':a2>a1?'right':'tie';
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--mut);margin-bottom:3px">
-        <span style="font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--sub)'}">${a1.toFixed(1)}</span>
-        <span style="font-size:.65rem;color:var(--mut)">${label}</span>
-        <span style="font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--sub)'}">${a2.toFixed(1)}</span>
-      </div>
-      <div style="display:flex;gap:3px;height:6px">
-        <div style="flex:1;display:flex;justify-content:flex-end">
-          <div style="width:${pct1}%;background:#f97316;border-radius:2px 0 0 2px;opacity:${winner==='left'?1:.5}"></div>
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <!-- Player 1 bar (orange, goes LEFT) -->
+        <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:6px">
+          <span style="font-size:.72rem;font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--mut)'}">
+            ${a1.toFixed(1)}
+          </span>
+          <div style="flex:1;display:flex;justify-content:flex-end;height:8px;border-radius:4px 0 0 4px;overflow:hidden;background:rgba(255,255,255,.05)">
+            <div style="width:${pct1}%;background:#f97316;opacity:${winner==='left'?1:.45};border-radius:4px 0 0 4px"></div>
+          </div>
         </div>
-        <div style="width:2px;background:var(--border2)"></div>
-        <div style="flex:1">
-          <div style="width:${pct2}%;background:#3b82f6;border-radius:0 2px 2px 0;opacity:${winner==='right'?1:.5}"></div>
+        <!-- Center label -->
+        <div style="width:80px;text-align:center;font-size:.65rem;color:var(--mut);flex-shrink:0">${label}</div>
+        <!-- Player 2 bar (blue, goes RIGHT) -->
+        <div style="flex:1;display:flex;align-items:center;gap:6px">
+          <div style="flex:1;height:8px;border-radius:0 4px 4px 0;overflow:hidden;background:rgba(255,255,255,.05)">
+            <div style="width:${pct2}%;background:#3b82f6;opacity:${winner==='right'?1:.45};border-radius:0 4px 4px 0"></div>
+          </div>
+          <span style="font-size:.72rem;font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--mut)'}">
+            ${a2.toFixed(1)}
+          </span>
         </div>
       </div>
     </div>`;
@@ -2838,7 +2846,58 @@ function renderTeamForm() {
     quarters[q].push(m.id);
   });
 
+  if(Object.keys(playerGameLog).length) {
+    Object.entries(playerGameLog).forEach(([pid, games])=>{
+      games.forEach(g=>{
+        const m = allMatches.find(x=>x.id===g.matchId);
+        if(!m) return;
+        const q = quarterLabel(m);
+        if(!playerQuarterStats[pid]) playerQuarterStats[pid]={};
+        if(!playerQuarterStats[pid][q]) playerQuarterStats[pid][q]={pts:0,T:0,efe:0};
+        playerQuarterStats[pid][q].pts += g.stats?.[F.sc]||0;
+        playerQuarterStats[pid][q].efe += g.stats?.[F.efe]||0;
+        playerQuarterStats[pid][q].T++;
+      });
+    });
+  }
 
+  const qKeys = Object.keys(quarters);
+  // Find biggest improvements and drops between consecutive quarters
+  const changes = [];
+  Object.entries(playerQuarterStats).forEach(([pid, qs])=>{
+    const qArr = qKeys.filter(q=>qs[q]&&qs[q].T>=2);
+    for(let i=1;i<qArr.length;i++){
+      const prev=qs[qArr[i-1]], curr=qs[qArr[i]];
+      const prevAvg=prev.pts/prev.T, currAvg=curr.pts/curr.T;
+      const delta=currAvg-prevAvg;
+      changes.push({pid:parseInt(pid), from:qArr[i-1], to:qArr[i], delta, prevAvg, currAvg});
+    }
+  });
+  changes.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+  const improvements = changes.filter(c=>c.delta>0).slice(0,5);
+  const drops = changes.filter(c=>c.delta<0).slice(0,5);
+
+  function changeRow(c, isRise) {
+    const pIdx = P.findIndex(p=>p[F.pid]===c.pid);
+    const p = pIdx>=0?P[pIdx]:null;
+    if(!p) return '';
+    const tc=TEAM_COLORS[p[F.team]]||'#888';
+    const arrow=isRise?'↑':'↓';
+    const color=isRise?'#22c55e':'#ef4444';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div style="font-size:1rem;color:${color}">${arrow}</div>
+      <div style="flex:1">
+        <div style="font-size:.8rem;font-weight:600;color:${tc}">${p[F.name]}</div>
+        <div style="font-size:.6rem;color:var(--mut)">${c.from} → ${c.to}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.8rem;color:var(--mut)">${c.prevAvg.toFixed(1)} → <span style="color:${color};font-weight:700">${c.currAvg.toFixed(1)}</span></div>
+        <div style="font-size:.65rem;color:${color}">${isRise?'+':''}${c.delta.toFixed(1)} točk/tekmo</div>
+      </div>
+    </div>`;
+  }
+
+  const hasGameLog = Object.keys(playerGameLog).length > 0;
 
   // Monthly tabs
   const activeMonth = months[months.length-1];
@@ -2881,6 +2940,666 @@ window.renderMonthTab = function(month) {
     b.style.color = b.id===`mtab-${month.replace(/\s/g,'_')}`?'#000':'var(--sub)';
   });
 }
+
+
+
+function renderAttendance(){
+  if(!allMatches.length)return;
+  const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0);
+  const wrap=document.getElementById('obisk-wrap');
+  if(!finished.length){wrap.innerHTML='<div class="empty">Ni podatkov o obisku</div>';return;}
+
+  // Summary stats
+  const totalAtt=finished.reduce((s,m)=>s+m.attendance,0);
+  const avgAtt=Math.round(totalAtt/finished.length);
+  const maxSingle=Math.max(...finished.map(m=>m.attendance));
+
+  // Per team
+  const byTeam={};
+  finished.forEach(m=>{
+    const home=m.firstTeamName;
+    if(!byTeam[home])byTeam[home]={name:home,total:0,count:0,games:[],min:9999,max:0};
+    byTeam[home].total+=m.attendance;byTeam[home].count++;
+    byTeam[home].games.push({round:m.round,att:m.attendance,opp:m.secondTeamName});
+    byTeam[home].min=Math.min(byTeam[home].min,m.attendance);
+    byTeam[home].max=Math.max(byTeam[home].max,m.attendance);
+  });
+  const teams=Object.values(byTeam).map(t=>({...t,avg:Math.round(t.total/t.count)}))
+    .sort((a,b)=>attMode==='avg'?b.avg-a.avg:b.total-a.total);
+
+  const leaderRows=teams.map((t,i)=>{
+    const val=attMode==='avg'?t.avg:t.total;
+    const tc=TEAM_COLORS[t.name]||'#888';
+    const rk=i<3?['🥇','🥈','🥉'][i]:(i+1);
+    const trendBars=t.games.slice(-8).map(g=>{
+      const h=Math.max(4,Math.round(g.att/t.max*30));
+      return `<div style="width:6px;height:${h}px;background:${tc};opacity:.7;border-radius:2px 2px 0 0" title="${g.att}"></div>`;
+    }).join('');
+    return `<div class="att-row">
+      <div class="att-rank">${rk}</div>
+      <div class="att-info">
+        <div class="att-name" style="color:${tc}">${t.name}</div>
+        <div class="att-meta">${t.count} dom. tekem · min ${t.min} · max ${t.max}</div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:32px">${trendBars}</div>
+      <div class="att-val" style="color:${tc}">${val.toLocaleString('sl')}</div>
+    </div>`;
+  }).join('');
+
+  // Top 10 games
+  const topGames=[...finished].sort((a,b)=>b.attendance-a.attendance).slice(0,10);
+  const topRows=topGames.map((m,i)=>{
+    const rk=i<3?['🥇','🥈','🥉'][i]:(i+1)+'.';
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    return `<div class="att-row">
+      <div class="att-rank">${rk}</div>
+      <div class="att-info">
+        <div class="att-name">${m.firstTeamName} vs ${m.secondTeamName}</div>
+        <div class="att-meta">${date} · K${m.round}</div>
+      </div>
+      <div class="att-val" style="color:#fbbf24">${m.attendance.toLocaleString('sl')}</div>
+    </div>`;
+  }).join('');
+
+  // Round trend
+  const byRound={};
+  finished.forEach(m=>{if(!byRound[m.round])byRound[m.round]={sum:0,n:0};byRound[m.round].sum+=m.attendance;byRound[m.round].n++;});
+  const rounds=Object.keys(byRound).map(Number).sort((a,b)=>a-b);
+  const maxAvg=Math.max(...rounds.map(r=>byRound[r].sum/byRound[r].n));
+  const trendBars=rounds.map(r=>{
+    const avg=Math.round(byRound[r].sum/byRound[r].n);
+    const h=Math.max(4,Math.round(avg/maxAvg*80));
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="font-size:.55rem;color:var(--mut)">${avg>1000?(avg/1000).toFixed(1)+'k':avg}</div>
+      <div style="width:100%;background:var(--blue);border-radius:2px 2px 0 0;height:${h}px;min-height:4px"></div>
+      <div style="font-size:.5rem;color:var(--mut)">K${r}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+      <div class="ac" style="padding:12px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.6rem;color:var(--blue)">${avgAtt.toLocaleString('sl')}</div>
+        <div style="font-size:.65rem;color:var(--mut)">POVP./TEKMO</div>
+      </div>
+      <div class="ac" style="padding:12px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.6rem;color:var(--acc)">${totalAtt.toLocaleString('sl')}</div>
+        <div style="font-size:.65rem;color:var(--mut)">SKUPAJ</div>
+      </div>
+      <div class="ac" style="padding:12px;text-align:center">
+        <div style="font-family:var(--fh);font-size:1.6rem;color:var(--green)">${maxSingle.toLocaleString('sl')}</div>
+        <div style="font-size:.65rem;color:var(--mut)">REKORD</div>
+      </div>
+    </div>
+    <div class="ac" style="margin-bottom:16px;padding:12px">
+      <div style="font-family:var(--fh);font-size:.75rem;color:var(--mut);margin-bottom:6px">OBISK PO KROGIH</div>
+      <div style="display:flex;align-items:flex-end;gap:2px;height:100px">${trendBars}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="ac" style="padding:12px">
+        <div style="font-family:var(--fh);font-size:.8rem;color:var(--sub);margin-bottom:8px">🏟️ EKIPE</div>
+        ${leaderRows}
+      </div>
+      <div class="ac" style="padding:12px">
+        <div style="font-family:var(--fh);font-size:.8rem;color:var(--sub);margin-bottom:8px">🔥 TOP TEKME</div>
+        ${topRows}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// MATCHES TAB
+// ═══════════════════════════════════════════════════
+function renderMatches(){
+  const wrap=document.getElementById('matches-wrap');
+  if(!wrap)return;
+  const phase=document.getElementById('phase-filter')?.value||'all';
+  let matches=[...allMatches].sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime));
+  if(phase!=='all') matches=matches.filter(m=>m.competitions?.[0]?.competitionPhaseName===phase);
+  const rows=matches.slice(0,100).map(m=>{
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    const time=new Date(m.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
+    const c1=TEAM_COLORS[m.firstTeamName]||'#888',c2=TEAM_COLORS[m.secondTeamName]||'#888';
+    const ph=m.competitions?.[0]?.competitionPhaseName||'Redni del';
+    const score=m.status==='FINISHED'?`${m.firstTeamScore} : ${m.secondTeamScore}`:m.status==='LIVE'?`<span style="color:#ef4444">${m.firstTeamScore} : ${m.secondTeamScore}</span>`:`${time}`;
+    return `<div class="match-row" onclick="openMatch(${m.id})">
+      <div style="font-size:.65rem;color:var(--mut);min-width:70px">${date}</div>
+      <div style="flex:1;text-align:right;color:${c1};font-size:.8rem;font-weight:600">${m.firstTeamName}</div>
+      <div style="font-family:var(--fh);font-size:.9rem;min-width:80px;text-align:center">${score}</div>
+      <div style="flex:1;color:${c2};font-size:.8rem;font-weight:600">${m.secondTeamName}</div>
+      <div style="font-size:.6rem;color:var(--mut);min-width:60px;text-align:right">${ph}</div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML=`<div class="match-list">${rows}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// LEADERS TAB  
+// ═══════════════════════════════════════════════════
+function renderLeaders(){
+  const wrap=document.getElementById('leaders-wrap');
+  if(!wrap||!P.length)return;
+  const players=getLeaguePlayers().filter(p=>p[F.T]>=lMin);
+  
+  function leaderCard(title,color,icon,sortFn,fmtFn){
+    const sorted=[...players].sort((a,b)=>sortFn(b)-sortFn(a)).slice(0,5);
+    const maxV=sortFn(sorted[0])||1;
+    const rows=sorted.map((p,i)=>{
+      const v=sortFn(p);const tc=TEAM_COLORS[p[F.team]]||'#888';
+      const rk=i<3?['🥇','🥈','🥉'][i]:(i+1)+'.';
+      const pct=Math.round(v/maxV*100);
+      return `<div class="ldr-row" onclick="showPlayer(${P.indexOf(p)})">
+        <div class="ldr-rank">${rk}</div>
+        <div class="ldr-info">
+          <div style="font-size:.8rem;font-weight:600;color:${tc}">${p[F.name]}</div>
+          <div style="font-size:.65rem;color:var(--mut)">${TEAM_SHORT[p[F.team]]||p[F.team]}</div>
+          <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
+            <div style="width:${pct}%;height:100%;background:${color};border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="font-family:var(--fh);font-size:1.1rem;color:${color};flex-shrink:0">${fmtFn(v)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="nerd-card"><div class="nerd-card-title" style="color:${color}">${icon} ${title}</div>${rows}</div>`;
+  }
+
+  const avg=f=>p=>lMode==='avg'?p[f]/Math.max(p[F.T],1):p[f];
+  wrap.innerHTML=`<div class="nerd-grid">
+    ${leaderCard('Točke','#f97316','🏀',avg(F.sc),v=>v.toFixed(1))}
+    ${leaderCard('Skoki','#22c55e','💪',p=>lMode==='avg'?(p[F.nap]+p[F.obr])/Math.max(p[F.T],1):p[F.nap]+p[F.obr],v=>v.toFixed(1))}
+    ${leaderCard('Asistence','#a855f7','🤝',avg(F.pod),v=>v.toFixed(1))}
+    ${leaderCard('Ukr. žoge','#fbbf24','💨',avg(F.sto),v=>v.toFixed(1))}
+    ${leaderCard('Bloki','#60a5fa','🛑',avg(F.blk),v=>v.toFixed(1))}
+    ${leaderCard('EFE','#10b981','⭐',avg(F.efe),v=>v.toFixed(1))}
+    ${leaderCard('2T%','#f59e0b','🎯',p=>p[F.fg2a]>=20?pct(p[F.fg2m],p[F.fg2a]):0,v=>v.toFixed(1)+'%')}
+    ${leaderCard('3T%','#ec4899','🎯',p=>p[F.fg3a]>=15?pct(p[F.fg3m],p[F.fg3a]):0,v=>v.toFixed(1)+'%')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// AGE TAB
+// ═══════════════════════════════════════════════════
+function renderAge(){
+  const wrap=document.getElementById('age-wrap');
+  if(!wrap||!P.length)return;
+  const data={};
+  AGE_GROUPS.forEach(g=>data[g]={players:[],min:0,toc:0,efe:0});
+  P.forEach(p=>{
+    if(p[F.T]<3)return;
+    const g=ageGroup(p[F.born]);
+    if(!data[g])return;
+    data[g].players.push(p);
+    data[g].min+=p[F.MIN];
+    data[g].toc+=p[F.toc];
+    data[g].efe+=p[F.efe];
+  });
+  const rows=AGE_GROUPS.map((g,i)=>{
+    const d=data[g],n=d.players.length;
+    return `<tr>
+      <td><span style="color:${AGE_COLORS[i]};font-weight:600">${g}</span></td>
+      <td style="text-align:center">${n}</td>
+      <td style="text-align:center">${n>0?fmt(d.min/n,0):'—'}</td>
+      <td style="text-align:center">${n>0?fmt(d.efe/n,1):'—'}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<table class="standings-table"><thead><tr><th>Skupina</th><th>Igralci</th><th>Avg MIN</th><th>Avg EFE</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+// ═══════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════
+function doSearch(){
+  const wrap=document.getElementById('search-wrap');
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  if(!wrap)return;
+  if(!q){wrap.innerHTML='<div class="empty">Vnesi ime igralca ali ekipe</div>';return;}
+  const results=P.filter(p=>p[F.name].toLowerCase().includes(q)||p[F.team].toLowerCase().includes(q)).slice(0,20);
+  if(!results.length){wrap.innerHTML='<div class="empty">Ni rezultatov</div>';return;}
+  wrap.innerHTML=results.map(p=>{
+    const idx=P.indexOf(p);
+    const tc=TEAM_COLORS[p[F.team]]||'#888';
+    return `<div class="att-row" onclick="showPlayer(${idx})" style="cursor:pointer">
+      <div style="flex:1">
+        <div style="font-weight:600;color:${tc}">${p[F.name]}</div>
+        <div style="font-size:.7rem;color:var(--mut)">${p[F.team]} · ${p[F.T]} tekem</div>
+      </div>
+      <div style="font-family:var(--fh);color:#f97316">${fmt(p[F.sc]/Math.max(p[F.T],1))} točk</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// NERD STATS
+// ═══════════════════════════════════════════════════
+
+function setNerdView(v){
+  nerdView=v;
+  ['clutch','quarters','shots','runs','turnovers','rebounds'].forEach(x=>{
+    const b=document.getElementById('nerd-'+x+'-btn');
+    if(b)b.classList.toggle('active',x===v);
+  });
+  renderNerd();
+}
+
+function loadPBPData(){
+  const el=document.getElementById('nerd-status');
+  if(el)el.textContent='⏳ Nalagam PBP...';
+  const lg=getLg();
+  const cacheKey=lg.cachePbp||lg.key+'_pbp_v3';
+  let cached=null;
+  try{const r=localStorage.getItem(cacheKey);if(r){const p=JSON.parse(r);if(Date.now()-p.ts<TTL_PBP)cached=p.data;}}catch(e){}
+  if(cached){processPbp(cached);if(el)el.textContent='🐙 PBP iz cache';renderNerd();return;}
+  fetch(lg.pbpUrl+'?t='+Date.now())
+    .then(r=>r.json())
+    .then(d=>{
+      try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
+      processPbp(d);
+      if(el)el.textContent='✅ PBP naložen';
+      renderNerd();
+    }).catch(()=>{if(el)el.textContent='❌ PBP ni dosegljiv';});
+}
+
+const shotEmoji={
+  dunk:'🔥',drivinglayup:'🏃',layup:'🏃',reverselayup:'🏃',tipinlayup:'🤙',
+  jumpshot:'🏀',pullupjumpshot:'🏀',stepbackjumpshot:'↩️',floatingjumpshot:'🌊',
+  hookshot:'🪝',fadeaway:'⬅️',turnaroundjumpshot:'🔄',alleyoop:'🙌'
+};
+
+function computeNerdStats(){
+  const normalizeKey=s=>s.toLowerCase()
+    .replace(/[čć]/g,'c').replace(/š/g,'s').replace(/ž/g,'z').replace(/đ/g,'d')
+    .replace(/[àáâã]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
+    .replace(/[òóôõö]/g,'o').replace(/[ùúûü]/g,'u').replace(/ñ/g,'n');
+
+  const nameMap={};
+  P.forEach((p,idx)=>{
+    const parts=p[F.name].split(/\s+/).filter(Boolean);
+    const suffixes=new Set(['jr','sr','ii','iii','iv']);
+    const keysToAdd=new Set();
+    keysToAdd.add(normalizeKey(parts[parts.length-1]));
+    const noSuffix=parts.filter(w=>!suffixes.has(w.toLowerCase()));
+    if(noSuffix.length)keysToAdd.add(normalizeKey(noSuffix[noSuffix.length-1]));
+    parts.forEach(w=>{if(w.length>2)keysToAdd.add(normalizeKey(w));});
+    keysToAdd.forEach(k=>{if(!nameMap[k])nameMap[k]=[];if(!nameMap[k].find(x=>x.idx===idx))nameMap[k].push({p,idx});});
+  });
+
+  function findPlayer(ev){
+    if(!ev.familyName)return null;
+    const rawName=ev.internationalFamilyName||ev.familyName||'';
+    if(!rawName)return null;
+    const suffixes=new Set(['jr','sr','ii','iii','iv']);
+    const nameParts=rawName.split(/[\s-]+/).filter(Boolean);
+    const keysToTry=[
+      normalizeKey(rawName),
+      ...nameParts.map(w=>normalizeKey(w)),
+      normalizeKey(nameParts.filter(w=>!suffixes.has(w.toLowerCase())).join(' ')),
+    ];
+    let candidates=[];
+    for(const k of keysToTry){candidates=nameMap[k]||[];if(candidates.length)break;}
+    if(!candidates.length)return null;
+    if(candidates.length===1)return candidates[0];
+    const fi=(ev.internationalFirstName||ev.firstName||'')[0]||'';
+    return candidates.find(c=>c.p[F.name][0].toLowerCase()===fi.toLowerCase())||candidates[0];
+  }
+
+  const stats={};
+  const scoringRuns=[];
+
+  function isClutch(ev){
+    if((ev.period||0)<4)return false;
+    if(ev.periodType==='OVERTIME')return Math.abs(ev.lead||0)<=8;
+    const gt=ev.gt||'99:99';
+    const mins=parseInt(gt.split(':')[0])||99;
+    return mins<=3&&Math.abs(ev.lead||0)<=5;
+  }
+
+  function initStats(idx){
+    if(!stats[idx])stats[idx]={
+      clutch:{pts:0,fgm:0,fga:0,W:0,L:0,tov:0,ast:0},
+      quarters:{1:{pts:0},2:{pts:0},3:{pts:0},4:{pts:0}},
+      shots:{drivinglayup:{a:0,m:0},jumpshot:{a:0,m:0},pullupjumpshot:{a:0,m:0},
+             stepbackjumpshot:{a:0,m:0},floatingjumpshot:{a:0,m:0},hookshot:{a:0,m:0},
+             layup:{a:0,m:0},reverselayup:{a:0,m:0},tipinlayup:{a:0,m:0},
+             dunk:{a:0,m:0},alleyoop:{a:0,m:0},fadeaway:{a:0,m:0},
+             turnaroundjumpshot:{a:0,m:0}},
+      tovReasons:{badpass:0,ballhandling:0,travel:0,'24sec':0,'3sec':0,offensive:0},
+      rebounds:{offensive:0,defensive:0},
+    };
+  }
+
+  Object.entries(pbpData).forEach(([matchId,{pbp}])=>{
+    if(!pbp)return;
+    const m=allMatches.find(x=>x.id===parseInt(matchId));
+
+    // Scoring runs
+    let run={tno:null,pts:0,start:null,period:null};
+    pbp.forEach(ev=>{
+      if(ev.actionType==='2pt'||ev.actionType==='3pt'||ev.actionType==='freethrow'){
+        const pts=ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:1;
+        if(ev.success===1){
+          if(run.tno===null||run.tno===ev.tno){
+            run.tno=ev.tno;run.pts+=pts;if(!run.start)run.start=ev.gt;run.period=ev.period;
+          } else {
+            if(run.pts>=6)scoringRuns.push({...run,matchId:parseInt(matchId)});
+            run={tno:ev.tno,pts,start:ev.gt,period:ev.period};
+          }
+        }
+      }
+    });
+    if(run.pts>=6)scoringRuns.push({...run,matchId:parseInt(matchId)});
+
+    pbp.forEach(ev=>{
+      const found=findPlayer(ev);
+      if(!found)return;
+      const {idx}=found;
+      initStats(idx);
+      const s=stats[idx];
+      const made=ev.success===1;
+      const q=ev.period||1;
+
+      if((ev.actionType==='2pt'||ev.actionType==='3pt')&&ev.subType){
+        const st=ev.subType.toLowerCase();
+        if(s.shots[st]){s.shots[st].a++;if(made)s.shots[st].m++;}
+      }
+      if(ev.actionType==='freethrow'&&made){if(s.quarters[q])s.quarters[q].pts+=1;}
+      if((ev.actionType==='2pt'||ev.actionType==='3pt')&&made){
+        const pts=ev.actionType==='3pt'?3:2;
+        if(s.quarters[q])s.quarters[q].pts+=pts;
+      }
+      if(isClutch(ev)){
+        if((ev.actionType==='2pt'||ev.actionType==='3pt'||ev.actionType==='freethrow')&&made){
+          const pts=ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:1;
+          s.clutch.pts+=pts;s.clutch.fgm++;
+        }
+        if(ev.actionType==='2pt'||ev.actionType==='3pt')s.clutch.fga++;
+        if(ev.actionType==='turnover')s.clutch.tov++;
+        if(ev.actionType==='assist')s.clutch.ast++;
+      }
+      if(ev.actionType==='turnover'&&ev.subType){
+        const sub=ev.subType;if(s.tovReasons[sub]!==undefined)s.tovReasons[sub]++;
+      }
+      if(ev.actionType==='rebound'){
+        if(ev.subType==='offensive')s.rebounds.offensive++;
+        else s.rebounds.defensive++;
+      }
+    });
+  });
+
+  scoringRuns.sort((a,b)=>b.pts-a.pts);
+  return {stats,scoringRuns};
+}
+
+function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
+  const sorted=[...entries].sort((a,b)=>valFn(b[1])-valFn(a[1])).slice(0,10);
+  const maxV=sorted.length?valFn(sorted[0][1]):1;
+  const rows=sorted.filter(e=>valFn(e[1])>0).map(([idx,s],r)=>{
+    const p=P[idx];if(!p)return '';
+    const v=valFn(s);const tc=TEAM_COLORS[p[F.team]]||'#888';
+    const teamShort=TEAM_SHORT[p[F.team]]||p[F.team];
+    const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+    const barPct=maxV>0?Math.round(v/maxV*100):0;
+    return '<div class="nerd-row">'+
+      '<div class="nerd-rank">'+rk+'</div>'+
+      '<div class="nerd-info">'+
+        '<div class="nerd-name pname-link" onclick="showPlayer('+idx+')">'+p[F.name]+'</div>'+
+        '<div class="nerd-team" style="color:'+tc+'">'+teamShort+'</div>'+
+        '<div class="nerd-bar-wrap"><div class="nerd-bar" style="width:'+barPct+'%;background:'+color+'"></div></div>'+
+      '</div>'+
+      '<div class="nerd-right">'+
+        '<div class="nerd-val" style="color:'+color+'">'+dispFn(v,s)+'</div>'+
+        (subFn?'<div class="nerd-sub">'+subFn(v,s)+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+    (rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
+}
+
+function renderClutch({stats}){
+  const e=Object.entries(stats);
+  return '<div class="nerd-grid">'+
+    mkCard('Clutch točke','#ef4444','🎯',e,s=>s.clutch.pts,v=>v+' <small>pts</small>')+
+    mkCard('Clutch FG%','#f97316','🏀',e.filter(([,s])=>s.clutch.fga>=3),
+      s=>s.clutch.fga>0?Math.round(s.clutch.fgm/s.clutch.fga*100):0,v=>v+'%')+
+    mkCard('Clutch asistence','#a855f7','🤝',e,s=>s.clutch.ast,v=>v)+
+    mkCard('Clutch izgube','#60a5fa','❌',e,s=>s.clutch.tov,v=>v)+
+  '</div>';
+}
+
+function renderQuarters({stats}){
+  const e=Object.entries(stats);
+  return '<div class="nerd-grid">'+
+    [1,2,3,4].map(q=>
+      mkCard('Q'+q+' točke','#'+['f97316','3b82f6','22c55e','ef4444'][q-1],'⏱',e,
+        s=>s.quarters[q]?.pts||0,v=>v+' <small>pts</small>')
+    ).join('')+
+  '</div>';
+}
+
+function renderShotTypes({stats}){
+  const e=Object.entries(stats);
+  const types=[
+    {k:'dunk',lbl:'Zabijanje 🔥',icon:'🔥',color:'#ef4444'},
+    {k:'alleyoop',lbl:'Alley-oop',icon:'🙌',color:'#fbbf24'},
+    {k:'drivinglayup',lbl:'Driving Layup',icon:'🏃',color:'#f97316'},
+    {k:'stepbackjumpshot',lbl:'Step-back',icon:'↩️',color:'#a855f7'},
+    {k:'floatingjumpshot',lbl:'Floater',icon:'🌊',color:'#3b82f6'},
+    {k:'hookshot',lbl:'Hook Shot',icon:'🪝',color:'#10b981'},
+    {k:'fadeaway',lbl:'Fadeaway',icon:'⬅️',color:'#c084fc'},
+    {k:'jumpshot',lbl:'Jump Shot',icon:'🏀',color:'#60a5fa'},
+    {k:'pullupjumpshot',lbl:'Pull-up',icon:'🏀',color:'#818cf8'},
+    {k:'layup',lbl:'Layup',icon:'🎯',color:'#6ee7b7'},
+    {k:'reverselayup',lbl:'Reverse Layup',icon:'🔄',color:'#86efac'},
+    {k:'turnaroundjumpshot',lbl:'Turnaround',icon:'↕️',color:'#a78bfa'},
+  ];
+  const cards=types.map(t=>
+    mkCard(t.lbl,t.color,t.icon,
+      e.filter(([,s])=>s.shots[t.k]&&s.shots[t.k].m>=1),
+      s=>s.shots[t.k]?.m||0,
+      (v,s)=>v+' <small>'+Math.round((s.shots[t.k]?.m||0)/Math.max(s.shots[t.k]?.a||1,1)*100)+'%</small>')
+  ).join('');
+  return '<div class="nerd-grid">'+cards+'</div>';
+}
+
+function renderTurnovers({stats}){
+  const e=Object.entries(stats);
+  const types=[
+    {k:'badpass',lbl:'Slaba podaja',color:'#ef4444',icon:'🎯'},
+    {k:'ballhandling',lbl:'Izguba žoge',color:'#f97316',icon:'💨'},
+    {k:'travel',lbl:'Korakanje',color:'#a855f7',icon:'🚶'},
+    {k:'24sec',lbl:'24 sekund',color:'#60a5fa',icon:'⏱️'},
+    {k:'3sec',lbl:'3 sekunde',color:'#34d399',icon:'⏱️'},
+    {k:'offensive',lbl:'Ofenzivna napaka',color:'#fbbf24',icon:'💥'},
+  ];
+  const cards=types.map(t=>
+    mkCard(t.lbl,t.color,t.icon,
+      e.filter(([,s])=>(s.tovReasons[t.k]||0)>0),
+      s=>s.tovReasons[t.k]||0,v=>v+' <small>izgub</small>')
+  ).join('');
+  const total=mkCard('Skupaj izgub','#ef4444','❌',
+    e.filter(([,s])=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0)>0),
+    s=>Object.values(s.tovReasons).reduce((a,b)=>a+b,0),v=>v);
+  return '<div class="nerd-grid">'+cards+total+'</div>';
+}
+
+function renderRebounds(){
+  const minT=parseInt(document.getElementById('nerd-min-sel')?.value||5);
+  const qual=P.map((_,i)=>i).filter(i=>P[i]&&P[i][F.T]>=minT);
+  function mkRebCard(title,color,icon,getVal,subFn){
+    const sorted=[...qual].sort((a,b)=>getVal(P[b])-getVal(P[a])).slice(0,10);
+    const maxV=sorted.length?getVal(P[sorted[0]]):1;
+    const rows=sorted.filter(i=>getVal(P[i])>0).map((i,r)=>{
+      const p=P[i];const v=getVal(p);
+      const tc=TEAM_COLORS[p[F.team]]||'#888';
+      const teamShort=TEAM_SHORT[p[F.team]]||p[F.team];
+      const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+      const barPct=maxV>0?Math.round(v/maxV*100):0;
+      const sub=subFn?subFn(p):'';
+      return '<div class="nerd-row">'+
+        '<div class="nerd-rank">'+rk+'</div>'+
+        '<div class="nerd-info">'+
+          '<div class="nerd-name pname-link" onclick="showPlayer('+i+')">'+p[F.name]+'</div>'+
+          '<div class="nerd-team" style="color:'+tc+'">'+teamShort+'</div>'+
+          '<div class="nerd-bar-wrap"><div class="nerd-bar" style="width:'+barPct+'%;background:'+color+'"></div></div>'+
+        '</div>'+
+        '<div class="nerd-right">'+
+          '<div class="nerd-val" style="color:'+color+'">'+(v/p[F.T]).toFixed(1)+' <small>avg</small></div>'+
+          (sub?'<div class="nerd-sub">'+sub+'</div>':'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+    return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+      (rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
+  }
+  return '<div class="nerd-grid">'+
+    mkRebCard('Skupaj skoki','#22c55e','💪',p=>p[F.nap]+p[F.obr],p=>`NAP: ${p[F.nap]} · OBR: ${p[F.obr]}`)+
+    mkRebCard('Napadalni','#f97316','🏃',p=>p[F.nap],p=>`${p[F.nap]} skupaj`)+
+    mkRebCard('Obrambni','#3b82f6','🛡️',p=>p[F.obr],p=>`${p[F.obr]} skupaj`)+
+  '</div>';
+}
+
+function renderRuns({scoringRuns}){
+  if(!scoringRuns.length)return '<div class="empty">Ni podatkov o scoring runih</div>';
+  const items=scoringRuns.slice(0,15).map(r=>{
+    const m=allMatches.find(x=>x.id===r.matchId);
+    if(!m)return '';
+    const teamName=r.tno===1?m.firstTeamName:m.secondTeamName;
+    const color=TEAM_COLORS[normalizeTeamName(teamName)]||'#888';
+    const qName={1:'Q1',2:'Q2',3:'Q3',4:'Q4'}[r.period]||'OT';
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    const opp=r.tno===1?m.secondTeamName:m.firstTeamName;
+    return '<div class="run-item">'+
+      '<div class="run-score" style="color:'+color+'">'+r.pts+'-0</div>'+
+      '<div class="run-meta">'+
+        '<div style="font-weight:600;color:'+color+'">'+teamName+'</div>'+
+        '<div class="run-game">vs '+opp+' · '+qName+' · '+date+'</div>'+
+      '</div>'+
+      '<div style="font-family:var(--fh);font-size:1.3rem;color:var(--mut)">K'+m.round+'</div>'+
+    '</div>';
+  }).join('');
+  return '<div class="nerd-section-title">🔥 NAJVEČJI SCORING RUNS SEZONE</div>'+items;
+}
+
+function renderNerd(){
+  const wrap=document.getElementById('nerd-wrap');
+  const statusEl=document.getElementById('nerd-status');
+  if(!wrap)return;
+  if(!pbpLoaded){wrap.innerHTML='<div class="empty">Nalagam PBP...</div>';return;}
+  if(!Object.keys(pbpData).length){wrap.innerHTML='<div class="empty">PBP ni dosegljiv za to ligo</div>';return;}
+  const minT=parseInt(document.getElementById('nerd-min-sel')?.value||5);
+  const nd=computeNerdStats();
+  const e=Object.entries(nd.stats).filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
+  const filtered={stats:Object.fromEntries(e),scoringRuns:nd.scoringRuns};
+  if(statusEl&&!statusEl.textContent.includes('PBP'))
+    statusEl.textContent=`📊 ${Object.keys(pbpData).length} tekem`;
+  if(nerdView==='clutch')wrap.innerHTML=renderClutch(filtered);
+  else if(nerdView==='quarters')wrap.innerHTML=renderQuarters(filtered);
+  else if(nerdView==='shots')wrap.innerHTML=renderShotTypes(filtered);
+  else if(nerdView==='runs')wrap.innerHTML=renderRuns(filtered);
+  else if(nerdView==='turnovers')wrap.innerHTML=renderTurnovers(filtered);
+  else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds();
+}
+
+// ═══════════════════════════════════════════════════
+// LIVE PBP OVERLAY
+// ═══════════════════════════════════════════════════
+liveMatchId=null; pbpRefreshTimer=null; livePbpCache={};
+
+async function fetchLivePbp(matchInfo){
+  if(!matchInfo?.fibaLiveStatsUrl)return[];
+  const fibaId=matchInfo.fibaLiveStatsUrl.match(/\/([0-9]+)\/?$/)?.[1];
+  if(!fibaId)return[];
+  try{
+    const proxy='https://api.codetabs.com/v1/proxy?quest=';
+    const url=`https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json?t=${Date.now()}`;
+    const r=await fetch(proxy+encodeURIComponent(url));
+    const d=await r.json();
+    if(!d?.pbp?.length)return[];
+    return d.pbp.filter(ev=>['2pt','3pt','freethrow','turnover','foul','rebound','block','steal'].includes(ev.actionType))
+      .map(ev=>({
+        action:ev.actionType,sub:ev.subType,success:ev.success,
+        player:(ev.internationalFirstName||ev.firstName||'')+' '+(ev.internationalFamilyName||ev.familyName||''),
+        tno:ev.tno,gt:ev.gt,period:ev.period,periodType:ev.periodType,lead:ev.lead,
+        s1:ev.s1,s2:ev.s2
+      }));
+  }catch(e){return[];}
+}
+
+async function openMatch(matchId){
+  const m=allMatches.find(x=>x.id===matchId);
+  if(!m)return;
+  const overlay=document.getElementById('match-overlay');
+  if(!overlay)return;
+  overlay.style.display='flex';
+  document.body.style.overflow='hidden';
+  liveMatchId=matchId;
+  pbpQuarterTab=0;
+  if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}
+
+  const isLive=m.status==='LIVE';
+  const ls=liveScores[matchId]||{score1:m.firstTeamScore,score2:m.secondTeamScore};
+  const c1=TEAM_COLORS[m.firstTeamName]||'#f97316';
+  const c2=TEAM_COLORS[m.secondTeamName]||'#3b82f6';
+  const t1=m.firstTeamName,t2=m.secondTeamName;
+
+  const header=document.getElementById('mo-header');
+  if(header){
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    header.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div style="font-size:1.1rem;font-weight:700;color:${c1}">${t1}</div>
+        <div style="text-align:center">
+          <div style="font-family:var(--fh);font-size:2.5rem" id="mo-score">
+            <span style="color:${c1}">${ls.score1||0}</span>
+            <span style="color:var(--mut);margin:0 8px">:</span>
+            <span style="color:${c2}">${ls.score2||0}</span>
+          </div>
+          ${isLive?`<div style="color:#ef4444;font-size:.75rem;font-family:var(--fh)">Q${ls.quarter||'?'} · ${ls.time||''}</div>`:''}
+          <div style="font-size:.7rem;color:var(--mut);margin-top:4px">${date} · ${m.sportHallName||''} · K${m.round}</div>
+        </div>
+        <div style="font-size:1.1rem;font-weight:700;color:${c2}">${t2}</div>
+      </div>`;
+  }
+
+  const pbpSection=document.getElementById('pbp-section');
+  if(pbpSection)pbpSection.innerHTML='<div class="empty" style="padding:20px">Nalagam PBP...</div>';
+
+  let events=livePbpCache[matchId]||[];
+  if(!events.length)events=await fetchLivePbp(m);
+  livePbpCache[matchId]=events;
+  if(pbpSection)pbpSection.innerHTML=renderPbpFeed(events,t1,t2,c1,c2,ls);
+
+  if(isLive){
+    pbpRefreshTimer=setInterval(async()=>{
+      const overlayVisible=document.getElementById('match-overlay')?.style.display!=='none';
+      if(!overlayVisible||liveMatchId!==matchId){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;return;}
+      try{const newEvents=await fetchLivePbp(m);if(newEvents&&newEvents.length>0)livePbpCache[matchId]=newEvents;}catch(e){}
+      const sec=document.getElementById('pbp-section');
+      const currentLs=liveScores[matchId]||ls;
+      if(sec)sec.innerHTML=renderPbpFeed(livePbpCache[matchId]||[],t1,t2,c1,c2,currentLs);
+      const moScore=document.getElementById('mo-score');
+      if(moScore&&currentLs.score1!==undefined)
+        moScore.innerHTML=`<span style="color:${c1}">${currentLs.score1}</span><span style="color:var(--mut);margin:0 8px">:</span><span style="color:${c2}">${currentLs.score2}</span>`;
+    },20000);
+  }
+}
+
+function closeMatchOverlay(){
+  document.getElementById('match-overlay').style.display='none';
+  document.body.style.overflow='';
+  liveMatchId=null;
+  if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  initUI();
+  initWebSocket();
+  console.log('home page mounted');
+});
+
 </script>
 </body>
 </html>
