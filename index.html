@@ -350,6 +350,144 @@ select:focus{outline:none;border-color:var(--acc)}
 .trend-bars{display:flex;gap:3px;align-items:flex-end;height:50px}
 .trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;position:relative;cursor:default}
 .trend-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:3px 7px;font-size:.65rem;white-space:nowrap;color:var(--text);font-family:var(--fm);z-index:10}
+
+
+/* ═══════════════════════════════════════════════════
+   MOBILE OPTIMIZACIJA
+═══════════════════════════════════════════════════ */
+
+/* Bottom navigation za mobile */
+@media(max-width:768px){
+  /* Header - kompaktnejši */
+  .hdr{padding:10px 14px}
+  .hdr-title{font-size:1.4rem}
+  .hdr-season{display:none}
+  
+  /* Nav - horizontalni scroll, večji touch targets */
+  .nav{padding:6px 10px;gap:2px}
+  .nb{padding:8px 12px;font-size:.72rem;min-height:36px}
+  
+  /* Content padding */
+  .content{padding:12px 14px}
+  
+  /* Live cards - full width */
+  .live-grid{grid-template-columns:1fr}
+  
+  /* Match cards - full width */
+  .matches-grid{grid-template-columns:1fr}
+  
+  /* Standings table - horizontal scroll */
+  .standings-table{font-size:.72rem}
+  .standings-table thead th{padding:6px 8px;font-size:.58rem}
+  .standings-table tbody td{padding:8px 6px;font-size:.72rem}
+  /* Hide less important columns on mobile */
+  .standings-table th:nth-child(n+9),
+  .standings-table td:nth-child(n+9){display:none}
+  
+  /* Leaders grid - 1 col */
+  .ldrs-grid{grid-template-columns:1fr}
+  
+  /* Nerd stats - 1 col */
+  .nerd-grid{grid-template-columns:1fr}
+  
+  /* Player table - horizontal scroll */
+  .pt-wrap{-webkit-overflow-scrolling:touch}
+  
+  /* Controls - wrap nicely */
+  .ctrls{gap:6px}
+  .ctrls select{font-size:.75rem;padding:6px 10px}
+  
+  /* Hero */
+  .hero-cards{flex-direction:column;align-items:center;width:100%;padding:0 16px}
+  .hc{width:100%;max-width:360px}
+  
+  /* Player overlay - full screen */
+  #player-overlay{padding:0;align-items:flex-end}
+  .pp-modal{border-radius:20px 20px 0 0;max-height:92vh;width:100%;max-width:100%}
+  .pp-body{grid-template-columns:1fr}
+  .pp-left{border-right:none;border-bottom:1px solid var(--border);padding:16px}
+  .pp-right{padding:16px}
+  .pp-header{padding:20px 16px 14px;gap:12px}
+  .pp-name{font-size:1.3rem}
+  .pp-key-stats{gap:14px}
+  .pp-key-stat-val{font-size:1.2rem}
+  
+  /* Match overlay - full screen */
+  #match-overlay{padding:0;align-items:flex-end}
+  .mo-wrap{border-radius:20px 20px 0 0;max-height:90vh;width:100%;max-width:100%}
+  
+  /* Compare - stack */
+  #compare-wrap .nerd-grid{grid-template-columns:1fr}
+  
+  /* Attendance */
+  .att-row{padding:10px 12px}
+  
+  /* Age charts */
+  .age-charts{grid-template-columns:1fr}
+  
+  /* H2H selects */
+  #h2h-team1, #h2h-team2{width:100%!important}
+  
+  /* Toggles - smaller */
+  .tb{padding:5px 10px;font-size:.72rem}
+  .tgl{flex-wrap:wrap}
+  
+  /* Filter note - hide on very small */
+  .filter-note{font-size:.68rem}
+  
+  /* PBP overlay buttons */
+  #pbp-section button{padding:4px 8px;font-size:.68rem;min-width:30px}
+  
+  /* Toast - full width */
+  #_toast{left:16px!important;right:16px!important;transform:none!important;text-align:center}
+}
+
+/* Extra small phones */
+@media(max-width:380px){
+  .hdr-title{font-size:1.2rem}
+  .nb{padding:7px 9px;font-size:.68rem}
+  .content{padding:10px}
+  .standings-table th:nth-child(n+7),
+  .standings-table td:nth-child(n+7){display:none}
+}
+
+/* Tablet - 2 col layouts */
+@media(min-width:769px) and (max-width:1100px){
+  .ldrs-grid{grid-template-columns:repeat(2,1fr)}
+  .nerd-grid{grid-template-columns:repeat(2,1fr)}
+  .live-grid{grid-template-columns:repeat(2,1fr)}
+  .matches-grid{grid-template-columns:repeat(2,1fr)}
+}
+
+/* Touch improvements */
+@media(hover:none){
+  .nb:hover{background:transparent;color:var(--mut)}
+  .nb.active{background:var(--acc);color:#fff}
+  .match-card:hover{transform:none;border-color:var(--border)}
+  .live-card:hover{transform:none}
+  /* Bigger touch targets */
+  .lcr{padding:10px 16px}
+  .nerd-row{padding:9px 18px}
+}
+
+/* Prevent zoom on input focus iOS */
+select, input, .si{font-size:16px}
+@media(min-width:769px){
+  select, input, .si{font-size:inherit}
+}
+
+/* Safe area for notch phones */
+.nav{padding-left:max(10px, env(safe-area-inset-left));padding-right:max(10px, env(safe-area-inset-right))}
+.content{padding-bottom:max(20px, env(safe-area-inset-bottom))}
+
+@media(max-width:500px){
+  .nb .nb-full{display:none}
+  .nb .nb-short{display:inline}
+}
+@media(min-width:501px){
+  .nb .nb-full{display:inline}
+  .nb .nb-short{display:none}
+}
 </style>
 </head>
 <body>
@@ -2176,6 +2314,17 @@ function showPlayer(idx){
   const color=TEAM_COLORS[p[F.team]]||'#f97316';
   const overlay=document.getElementById('player-overlay');
   overlay.style.display='flex';document.body.style.overflow='hidden';
+  // Swipe down to close on mobile
+  if(window.innerWidth <= 768) {
+    let _sy = 0;
+    const _modal = overlay.querySelector('.pp-modal');
+    if(_modal) {
+      const _ts = e => { _sy = e.touches[0].clientY; };
+      const _te = e => { if(e.changedTouches[0].clientY - _sy > 80) closePlayer(); };
+      _modal.addEventListener('touchstart', _ts, {passive:true});
+      _modal.addEventListener('touchend', _te, {passive:true});
+    }
+  }
   const t=p[F.T];
   const fgm=p[F.fg2m]+p[F.fg3m],fga=p[F.fg2a]+p[F.fg3a];
   const totalSk=p[F.nap]+p[F.obr];
@@ -2210,11 +2359,21 @@ function showPlayer(idx){
   window._ppPlayer=p;window._ppIdx=idx;
   overlay.innerHTML=`
   <div class="pp-modal">
-    <div class="pp-close" onclick="closePlayer()">✕</div>
+    <div style="display:flex;justify-content:center;padding:10px 0 2px;cursor:pointer" onclick="closePlayer()" title="Zapri">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.18)"></div>
+      </div>
+      <div class="pp-close" onclick="closePlayer()">✕</div>
     <div class="pp-header" style="border-bottom:2px solid ${color}20">
       <div class="pp-color-bar" style="background:${color}"></div>
       <div>
-        <div class="pp-name">${p[F.name]}</div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="pp-name">${p[F.name]}</div>
+          <button onclick="sharePlayerUrl(${p[F.pid]}, '${p[F.name]}')"
+            style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:var(--mut);border-radius:100px;padding:3px 10px;font-size:.65rem;cursor:pointer;transition:all .15s;flex-shrink:0"
+            onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--mut)'">
+            🔗 Deli
+          </button>
+        </div>
         <div class="pp-meta"><span style="color:${color};font-weight:600">${p[F.team]}</span> · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
       </div>
       <div class="pp-key-stats">
@@ -2272,6 +2431,8 @@ function showPlayer(idx){
     </div>
   </div>`;
   window._currentPid = p[F.pid];
+  // Update URL hash
+  setHash(currentLeague, 'player', 'player', p[F.pid]);
 }
 
 async function loadPlayerCareer() {
@@ -2461,7 +2622,8 @@ function hideTrendTip(){
   if(tip)tip.style.display='none';
 }
 
-function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';}
+function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';
+  setHash(currentLeague, document.querySelector('.nb.active')?.textContent?.toLowerCase() || 'live');}
 
 function ppSearch(){
   const q=document.getElementById('pp-srch').value.toLowerCase();
@@ -3464,10 +3626,63 @@ async function closeMatchOverlay(){
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// URL ROUTER
+// ═══════════════════════════════════════════════════
+function parseHash() {
+  const parts = window.location.hash.replace('#','').split('/');
+  return {league:parts[0]||null,section:parts[1]||'live',type:parts[2]||null,id:parts[3]||null};
+}
+function setHash(lg, sec, type, id) {
+  let h='#'+(lg||currentLeague||'liga1');
+  if(sec&&sec!=='live')h+='/'+sec;
+  if(type&&id)h+='/'+type+'/'+id;
+  history.replaceState(null,'',h);
+}
+function sharePlayerUrl(pid, name) {
+  const url=location.origin+location.pathname+'#'+(currentLeague||'liga1')+'/player/'+pid;
+  if(navigator.share){navigator.share({title:name+' — Košarka',url});}
+  else{navigator.clipboard.writeText(url).then(()=>showToast('🔗 Link kopiran!'));}
+}
+function showToast(msg) {
+  let t=document.getElementById('_toast');
+  if(!t){t=document.createElement('div');t.id='_toast';
+    t.style.cssText='position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1c1c1e;border:1px solid rgba(255,255,255,.12);color:#fff;padding:10px 22px;border-radius:100px;font-size:.82rem;z-index:9999;transition:opacity .3s;pointer-events:none;white-space:nowrap';
+    document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2500);
+}
+window.addEventListener('popstate',()=>{
+  const r=parseHash();
+  if(r.league&&['liga1','liga2','liga3'].includes(r.league)&&r.league!==currentLeague)selectLeague(r.league);
+});
+
 document.addEventListener('DOMContentLoaded',()=>{
   initUI();
   initWebSocket();
   console.log('home page mounted');
+  
+  // Check if URL has a route on load
+  const route = parseHash();
+  if(route.league && ['liga1','liga2','liga3'].includes(route.league)) {
+    // Auto-load the league from URL
+    setTimeout(() => {
+      selectLeague(route.league);
+      // After data loads, navigate to section/player
+      const waitForData = setInterval(() => {
+        if(allMatches.length > 0) {
+          clearInterval(waitForData);
+          if(route.type === 'player' && route.id) {
+            // Find player by pid and open overlay
+            const pIdx = P.findIndex(p => p[F.pid] === parseInt(route.id));
+            if(pIdx >= 0) showPlayer(pIdx);
+          } else if(route.section && route.section !== 'live') {
+            showTab(route.section);
+          }
+        }
+      }, 300);
+    }, 100);
+  }
 });
 
 
