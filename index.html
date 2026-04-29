@@ -1899,7 +1899,10 @@ const LEADER_CATS=[
 ];
 
 function renderLeaders(){
-  if(!P.length)return;
+  if(!P.length){
+    document.getElementById('ldrs-grid').innerHTML='<div class="empty" style="grid-column:1/-1">⏳ Naloži ligo najprej</div>';
+    return;
+  }
   const html=LEADER_CATS.map(cat=>{
     let entries=getLeaguePlayers().filter(p=>p[F.T]>=lMin);
     let vals;
@@ -3343,7 +3346,7 @@ function buildStandingsTable(data, sort, title, color){
     const tc=TEAM_COLORS[t.name]||'#888';
     const diff=t.ptsFor-t.ptsAga;
     const pA=(t.ptsFor/Math.max(t.T,1)).toFixed(1),pAga=(t.ptsAga/Math.max(t.T,1)).toFixed(1);
-    const form=(t.form||[]).slice(-5).map(w=>`<span class="form-dot ${w?'fw':'fl'}">${w?'Z':'P'}</span>`).join('');
+    const form=(t.form||[]).slice(-5).map(w=>`<span class="form-dot ${w?'w':'l'}">${w?'Z':'P'}</span>`).join('');
     const euPts=t.W*2+t.L,topPts=data[0].W*2+data[0].L;
     const gb=i===0?'—':((topPts-euPts)/2).toFixed(1);
     return `<tr><td>${i+1}.</td><td><span style="color:${tc};font-weight:600">${t.name}</span></td>
