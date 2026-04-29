@@ -439,7 +439,6 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
   <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
   <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
-  <button class="nb" onclick="showTab('forma')">📈 FORMA</button>
   <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
@@ -608,9 +607,6 @@ select:focus{outline:none;border-color:var(--acc)}
       <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Primerjaj dva igralca po povprečju na tekmo</div>
     </div>
     <div id="compare-wrap"></div>
-  </div>
-  <div id="tab-forma" class="tab">
-    <div id="form-wrap"></div>
   </div>
   <div id="tab-starost" class="tab">
     <div class="age-wrap" id="age-wrap"></div>
@@ -1343,7 +1339,6 @@ function showTab(t){
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
-  if(t==='forma')renderTeamForm();
   if(t==='live')renderLiveTab();
   if(t==='obiski'){
     const iframe=document.getElementById('obiski-iframe');
@@ -2097,40 +2092,6 @@ function renderCmpSection(){
 // ═══════════════════════════════════════════════════
 // PLAYER PROFILE
 // ═══════════════════════════════════════════════════
-function ppMonthlyStats(idx, color) {
-  const p = P[idx];
-  if(!p || !Object.keys(gMonthStats).length) return '';
-  // Find player in gMonthStats
-  const lastName = p[F.name].split(' ').pop().toLowerCase();
-  const playerKey = Object.keys(gMonthStats).find(k =>
-    k.toLowerCase().includes(lastName)
-  );
-  if(!playerKey) return '';
-  const md = gMonthStats[playerKey];
-  const allMonths = [...new Set(allMatches.filter(m=>m.status==='FINISHED')
-    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
-    .map(m=>new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'})))];
-  const maxAvg = Math.max(...allMonths.map(mo => md[mo] ? md[mo].pts/md[mo].matchIds.size : 0), 1);
-  const rows = allMonths.filter(mo => md[mo] && md[mo].matchIds.size >= 1).map(mo => {
-    const ms = md[mo];
-    const T = ms.matchIds.size;
-    const avgPts = ms.pts/T;
-    const shortMo = mo.split(' ')[0].slice(0,3).toUpperCase();
-    const barW = Math.round(avgPts/maxAvg*100);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
-      <div style="font-size:.62rem;color:var(--mut);width:32px">${shortMo}</div>
-      <div style="font-size:.62rem;color:var(--mut);width:24px;text-align:right">${T}t</div>
-      <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
-        <div style="width:${barW}%;height:100%;background:${color};border-radius:4px;opacity:.85"></div>
-      </div>
-      <div style="font-family:var(--fh);font-size:.78rem;color:${color};width:32px;text-align:right">${avgPts.toFixed(1)}</div>
-    </div>`;
-  }).join('');
-  if(!rows) return '';
-  return `<div class="pp-section-title" style="margin-top:16px">📅 TOČKE PO MESECIH (iz PBP)</div>
-    <div style="padding:8px 0">${rows}</div>`;
-}
-
 function showPlayer(idx){
   const p=P[idx];if(!p)return;
   const color=TEAM_COLORS[p[F.team]]||'#f97316';
@@ -2805,179 +2766,6 @@ function renderPlayerCompare() {
 // ═══════════════════════════════════════
 // TEAM FORM (rolling average)
 // ═══════════════════════════════════════
-function renderTeamForm() {
-  const wrap = document.getElementById('form-wrap');
-  if(!wrap || !allMatches.length) return;
-
-  // Ensure monthly stats are built
-  if(pbpLoaded && Object.keys(gMonthStats).length === 0) buildMonthlyStats();
-
-  // Group matches by month
-  const finished = allMatches.filter(m=>m.status==='FINISHED')
-    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
-
-  const months = [...new Set(finished.map(m=>
-    new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'})
-  ))];
-
-  // For each month, find top 5 scorers from playerGameLog
-  function monthHtml(month) {
-    const entries = Object.entries(gMonthStats)
-      .map(([key, mdata]) => {
-        const ms = mdata[month];
-        if(!ms || ms.matchIds.size < 2) return null;
-        const T = ms.matchIds.size;
-        const avgPts = ms.pts / T;
-        // Find in P array by last name
-        const nameParts = key.trim().split(' ').filter(Boolean);
-        const lastName = nameParts[nameParts.length - 1];
-        const pIdx = P.findIndex(p => p[F.name].toLowerCase().includes(lastName.toLowerCase()));
-        return {key, pts: ms.pts, T, avgPts, pIdx};
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.avgPts - a.avgPts)
-      .slice(0, 5);
-
-    if(!entries.length) return '<div class="empty" style="padding:12px">Ni podatkov za ta mesec</div>';
-
-    return entries.map((s, i) => {
-      const p = s.pIdx >= 0 ? P[s.pIdx] : null;
-      const name = p ? p[F.name] : s.key;
-      const team = p ? p[F.team] : '';
-      const tc = TEAM_COLORS[team] || '#888';
-      const rk = i < 3 ? ['🥇','🥈','🥉'][i] : (i+1)+'.';
-      const efe = p ? (p[F.efe] / Math.max(p[F.T], 1)).toFixed(1) : '—';
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:.9rem;width:24px;text-align:center">${rk}</div>
-        <div style="flex:1">
-          <div style="font-size:.82rem;font-weight:600;color:${tc}">${name}</div>
-          <div style="font-size:.65rem;color:var(--mut)">${TEAM_SHORT[team]||team} · ${s.T} tekem</div>
-        </div>
-        <div style="text-align:right;min-width:48px">
-          <div style="font-size:1rem;font-weight:700;color:#f97316">${s.avgPts.toFixed(1)}</div>
-          <div style="font-size:.6rem;color:var(--mut)">avg točk</div>
-        </div>
-        <div style="text-align:right;min-width:36px">
-          <div style="font-size:.85rem;font-weight:600;color:#22c55e">${efe}</div>
-          <div style="font-size:.6rem;color:var(--mut)">EFE</div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  // Quarter comparisons (Q1=Oct-Dec, Q2=Jan-Mar, Q3=Apr+)
-  function quarterLabel(m) {
-    const mo = new Date(m.dateTime).getMonth(); // 0=Jan
-    if(mo>=9) return 'Q1 (okt-dec)';
-    if(mo>=0&&mo<=2) return 'Q2 (jan-mar)';
-    return 'Q3 (apr+)';
-  }
-
-  const quarters = {};
-  const playerQuarterStats = {};
-  finished.forEach(m=>{
-    const q = quarterLabel(m);
-    if(!quarters[q]) quarters[q]=[];
-    quarters[q].push(m.id);
-  });
-
-  if(Object.keys(playerGameLog).length) {
-    Object.entries(playerGameLog).forEach(([pid, games])=>{
-      games.forEach(g=>{
-        const m = allMatches.find(x=>x.id===g.matchId);
-        if(!m) return;
-        const q = quarterLabel(m);
-        if(!playerQuarterStats[pid]) playerQuarterStats[pid]={};
-        if(!playerQuarterStats[pid][q]) playerQuarterStats[pid][q]={pts:0,T:0,efe:0};
-        playerQuarterStats[pid][q].pts += g.stats?.[F.sc]||0;
-        playerQuarterStats[pid][q].efe += g.stats?.[F.efe]||0;
-        playerQuarterStats[pid][q].T++;
-      });
-    });
-  }
-
-  const qKeys = Object.keys(quarters);
-  // Find biggest improvements and drops between consecutive quarters
-  const changes = [];
-  Object.entries(playerQuarterStats).forEach(([pid, qs])=>{
-    const qArr = qKeys.filter(q=>qs[q]&&qs[q].T>=2);
-    for(let i=1;i<qArr.length;i++){
-      const prev=qs[qArr[i-1]], curr=qs[qArr[i]];
-      const prevAvg=prev.pts/prev.T, currAvg=curr.pts/curr.T;
-      const delta=currAvg-prevAvg;
-      changes.push({pid:parseInt(pid), from:qArr[i-1], to:qArr[i], delta, prevAvg, currAvg});
-    }
-  });
-  changes.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
-  const improvements = changes.filter(c=>c.delta>0).slice(0,5);
-  const drops = changes.filter(c=>c.delta<0).slice(0,5);
-
-  function changeRow(c, isRise) {
-    const pIdx = P.findIndex(p=>p[F.pid]===c.pid);
-    const p = pIdx>=0?P[pIdx]:null;
-    if(!p) return '';
-    const tc=TEAM_COLORS[p[F.team]]||'#888';
-    const arrow=isRise?'↑':'↓';
-    const color=isRise?'#22c55e':'#ef4444';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="font-size:1rem;color:${color}">${arrow}</div>
-      <div style="flex:1">
-        <div style="font-size:.8rem;font-weight:600;color:${tc}">${p[F.name]}</div>
-        <div style="font-size:.6rem;color:var(--mut)">${c.from} → ${c.to}</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:.8rem;color:var(--mut)">${c.prevAvg.toFixed(1)} → <span style="color:${color};font-weight:700">${c.currAvg.toFixed(1)}</span></div>
-        <div style="font-size:.65rem;color:${color}">${isRise?'+':''}${c.delta.toFixed(1)} točk/tekmo</div>
-      </div>
-    </div>`;
-  }
-
-  const hasGameLog = Object.keys(playerGameLog).length > 0;
-
-  // Monthly tabs
-  const activeMonth = months[months.length-1];
-  const monthTabs = months.map(m=>`<button onclick="renderMonthTab('${m}')"
-    id="mtab-${m.replace(/\s/g,'_')}"
-    style="background:${m===activeMonth?'var(--acc)':'var(--card2)'};color:${m===activeMonth?'#000':'var(--sub)'};
-    border:1px solid ${m===activeMonth?'var(--acc)':'var(--border2)'};border-radius:6px;
-    padding:4px 10px;cursor:pointer;font-size:.7rem;font-family:var(--fh)">${m}</button>`
-  ).join('');
-
-  wrap.innerHTML = `
-    <div style="margin-bottom:20px">
-      <div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--sub);margin-bottom:10px">🏅 TOP 5 STRELCEV PO MESECIH</div>
-      ${hasGameLog ? `
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${monthTabs}</div>
-      <div id="month-top5" class="nerd-card" style="padding:12px">${monthHtml(activeMonth)}</div>
-      ` : '<div class="empty">Naloži PBP za statistiko po mesecih</div>'}
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div class="nerd-card">
-        <div class="nerd-card-title" style="color:#22c55e">📈 NAJVEČJE IZBOLJŠAVE</div>
-        ${hasGameLog && improvements.length ? improvements.map(c=>changeRow(c,true)).join('') :
-          '<div class="empty" style="padding:12px">Ni dovolj podatkov</div>'}
-      </div>
-      <div class="nerd-card">
-        <div class="nerd-card-title" style="color:#ef4444">📉 NAJVEČJI PADCI</div>
-        ${hasGameLog && drops.length ? drops.map(c=>changeRow(c,false)).join('') :
-          '<div class="empty" style="padding:12px">Ni dovolj podatkov</div>'}
-      </div>
-    </div>`;
-
-  window._monthHtml = monthHtml;
-}
-
-window.renderMonthTab = function(month) {
-  document.getElementById('month-top5').innerHTML = window._monthHtml(month);
-  document.querySelectorAll('[id^="mtab-"]').forEach(b=>{
-    b.style.background = b.id===`mtab-${month.replace(/\s/g,'_')}`?'var(--acc)':'var(--card2)';
-    b.style.color = b.id===`mtab-${month.replace(/\s/g,'_')}`?'#000':'var(--sub)';
-  });
-}
-
-
-
 function renderAttendance(){
   if(!allMatches.length)return;
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0);
@@ -3214,32 +3002,6 @@ function setNerdView(v){
     if(b)b.classList.toggle('active',x===v);
   });
   renderNerd();
-}
-
-let gMonthStats = {}; // playerKey → month → {pts, matchIds}
-
-function buildMonthlyStats(){
-  gMonthStats = {};
-  const matchMonthMap = {};
-  allMatches.filter(m=>m.status==='FINISHED').forEach(m=>{
-    matchMonthMap[m.id] = new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'});
-  });
-  Object.entries(pbpData).forEach(([matchId,{pbp}])=>{
-    if(!pbp||!pbp.length) return;
-    const month = matchMonthMap[parseInt(matchId)];
-    if(!month) return;
-    pbp.forEach(ev=>{
-      if(!ev.familyName) return;
-      const key = ((ev.firstName||'') + ' ' + ev.familyName).trim();
-      if(!gMonthStats[key]) gMonthStats[key] = {};
-      if(!gMonthStats[key][month]) gMonthStats[key][month] = {pts:0, matchIds:new Set()};
-      gMonthStats[key][month].matchIds.add(parseInt(matchId));
-      if(ev.success===1){
-        const p = ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:ev.actionType==='freethrow'?1:0;
-        gMonthStats[key][month].pts += p;
-      }
-    });
-  });
 }
 
 function processPbp(d){
@@ -3670,6 +3432,183 @@ document.addEventListener('DOMContentLoaded',()=>{
   initWebSocket();
   console.log('home page mounted');
 });
+
+
+// ═══════════════════════════════
+// STANDINGS FUNCTIONS
+// ═══════════════════════════════
+function applyFibaTiebreakers(data, allMatchesRef) {
+  const groups = {};
+  data.forEach(t => {
+    const key = (t.W*2 + t.L).toString();
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(t);
+  });
+  const result = [];
+  Object.values(groups).forEach(group => {
+    if(group.length === 1) { result.push(...group); return; }
+    const names = new Set(group.map(t => t.name));
+    const h2h = {};
+    group.forEach(t => h2h[t.name] = {W:0,L:0,ptsFor:0,ptsAga:0});
+    (allMatchesRef||[]).forEach(m => {
+      if(m.status !== 'FINISHED') return;
+      const ph = m.competitions?.[0]?.competitionPhaseName || '';
+      if(['Četrtfinale','Polfinale','Finale','Liga za obstanek','Osmina finala'].includes(ph)) return;
+      if(!names.has(m.firstTeamName) || !names.has(m.secondTeamName)) return;
+      const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
+      h2h[m.firstTeamName].ptsFor+=s1; h2h[m.firstTeamName].ptsAga+=s2;
+      h2h[m.secondTeamName].ptsFor+=s2; h2h[m.secondTeamName].ptsAga+=s1;
+      if(s1>s2){h2h[m.firstTeamName].W++;h2h[m.secondTeamName].L++;}
+      else{h2h[m.secondTeamName].W++;h2h[m.firstTeamName].L++;}
+    });
+    group.sort((a,b)=>{
+      const ha=h2h[a.name],hb=h2h[b.name];
+      const d1=(hb.W-hb.L)-(ha.W-ha.L); if(d1!==0)return d1;
+      const d2=(hb.ptsFor-hb.ptsAga)-(ha.ptsFor-ha.ptsAga); if(d2!==0)return d2;
+      const d3=(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga); if(d3!==0)return d3;
+      return b.ptsFor-a.ptsFor;
+    });
+    result.push(...group);
+  });
+  result.sort((a,b)=>(b.W*2+b.L)-(a.W*2+a.L)||b.W-a.W);
+  return result;
+}
+
+function computeTeamStats(matchList, phaseFilter) {
+  const teams={};
+  const init=name=>{if(!teams[name])teams[name]={name,T:0,W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,form:[]};};
+  matchList.forEach(m=>{
+    if(m.status!=='FINISHED')return;
+    const ph=m.competitions?.[0]?.competitionPhaseName||'';
+    if(phaseFilter&&phaseFilter!=='all'&&ph!==phaseFilter)return;
+    const t1=m.firstTeamName,t2=m.secondTeamName;
+    const s1=m.firstTeamScore||0,s2=m.secondTeamScore||0;
+    init(t1);init(t2);
+    teams[t1].T++;teams[t2].T++;
+    teams[t1].ptsFor+=s1;teams[t1].ptsAga+=s2;
+    teams[t2].ptsFor+=s2;teams[t2].ptsAga+=s1;
+    if(s1>s2){
+      teams[t1].W++;teams[t1].homeW++;teams[t1].form.push(true);
+      teams[t2].L++;teams[t2].awayL++;teams[t2].form.push(false);
+    } else {
+      teams[t2].W++;teams[t2].awayW++;teams[t2].form.push(true);
+      teams[t1].L++;teams[t1].homeL++;teams[t1].form.push(false);
+    }
+  });
+  return Object.values(teams);
+}
+
+function buildStandingsTable(data, sort, title, color){
+  if(sort==='pts'){
+    const euPts=t=>t.W*2+t.L;
+    data.sort((a,b)=>euPts(b)-euPts(a)||b.W-a.W);
+    data=applyFibaTiebreakers(data,allMatches);
+  } else if(sort==='ptsdiff'){
+    data.sort((a,b)=>(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga));
+  } else {
+    data.sort((a,b)=>b.ptsFor-a.ptsFor);
+  }
+  const rows=data.map((t,i)=>{
+    const tc=TEAM_COLORS[t.name]||'#888';
+    const diff=t.ptsFor-t.ptsAga;
+    const pA=(t.ptsFor/Math.max(t.T,1)).toFixed(1),pAga=(t.ptsAga/Math.max(t.T,1)).toFixed(1);
+    const form=(t.form||[]).slice(-5).map(w=>`<span class="form-dot ${w?'fw':'fl'}">${w?'Z':'P'}</span>`).join('');
+    const euPts=t.W*2+t.L,topPts=data[0].W*2+data[0].L;
+    const gb=i===0?'—':((topPts-euPts)/2).toFixed(1);
+    return `<tr><td>${i+1}.</td><td><span style="color:${tc};font-weight:600">${t.name}</span></td>
+      <td>${t.T}</td><td style="color:#22c55e;font-weight:600">${t.W}</td><td style="color:#ef4444">${t.L}</td>
+      <td style="font-weight:700">${euPts}</td><td>${gb}</td>
+      <td style="color:${t.W/Math.max(t.T,1)>=.5?'#22c55e':'#ef4444'}">${Math.round(t.W/Math.max(t.T,1)*100)}%</td>
+      <td>${pA}</td><td>${pAga}</td>
+      <td style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:600">${diff>=0?'+':''}${diff}</td>
+      <td>${t.homeW||0}/${t.homeL||0}</td><td>${t.awayW||0}/${t.awayL||0}</td><td>${form}</td></tr>`;
+  }).join('');
+  return `<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:${color};margin:16px 0 8px">${title}</div>
+    <div style="overflow-x:auto"><table class="standings-table"><thead><tr>
+      <th>M</th><th>EKIPA</th><th>T</th><th>Z</th><th>P</th><th>TČ</th><th>GB</th>
+      <th>Z%</th><th>TOČ+</th><th>TOČ-</th><th>+/-</th><th>DOM.</th><th>GOST.</th><th>FORMA</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function renderStandings(){
+  const wrap=document.getElementById('standings-wrap');
+  if(!wrap||!allMatches.length)return;
+  const sort=document.getElementById('standings-sort')?.value||'pts';
+  const lg=getLg();
+  const VZHOD=new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška','Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
+  let html='';
+  if(lg.id===582){
+    const rdM=allMatches.filter(m=>m.competitions?.[0]?.competitionPhaseName==='Redni del');
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>VZHOD.has(m.firstTeamName)||VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!VZHOD.has(m.firstTeamName)&&!VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
+  } else {
+    html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
+    if(lg.id===581){const od=computeTeamStats(allMatches,'Liga za obstanek');if(od.length)html+=buildStandingsTable(od,sort,'⚠️ LIGA ZA OBSTANEK','#f97316');}
+  }
+  const series=computePlayoffSeries();
+  const byPhase={};
+  ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{const s=series.filter(x=>x.phase===p);if(s.length)byPhase[p]=s;});
+  if(Object.keys(byPhase).length){
+    html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">🏆 KONČNICA</div>`;
+    html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24'});
+  }
+  wrap.innerHTML=html;
+}
+
+function computePlayoffSeries(){
+  const playoffPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
+  const series={};
+  allMatches.forEach(m=>{
+    if(m.status!=='FINISHED')return;
+    const phase=m.competitions?.[0]?.competitionPhaseName||'';
+    if(!playoffPhases.includes(phase))return;
+    const a=m.firstTeamName,b=m.secondTeamName;
+    const key=phase+'|'+[a,b].sort().join('|');
+    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],done:false,isAggregate:aggregatePhases.has(phase)};
+    const s=series[key];s.matches.push(m);
+    const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
+    if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
+    if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+  });
+  Object.values(series).forEach(s=>{
+    if(s.isAggregate){s.done=s.matches.length>=2;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;}
+    else{s.done=s.w1>=2||s.w2>=2;s.winner=s.w1>=2?s.t1:s.w2>=2?s.t2:null;}
+  });
+  return Object.values(series);
+}
+
+function seriesCard(s){
+  const c1=TEAM_COLORS[s.t1]||'#888',c2=TEAM_COLORS[s.t2]||'#888';
+  const w1=s.winner===s.t1,w2=s.winner===s.t2;
+  const sc1=s.isAggregate?s.pts1:s.w1,sc2=s.isAggregate?s.pts2:s.w2;
+  return `<div class="bracket-series ${s.done?'done':''}">
+    ${s.isAggregate?'<div style="font-size:.55rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK</div>':''}
+    <div class="bracket-team ${w1?'winner':w2?'loser':''}">
+      <span style="color:${c1};font-size:.75rem;font-weight:600">${s.t1}</span>
+      <span style="font-family:var(--fh);color:${w1?'#22c55e':'var(--sub)'}">${sc1}</span>
+    </div>
+    <div class="bracket-team ${w2?'winner':w1?'loser':''}">
+      <span style="color:${c2};font-size:.75rem;font-weight:600">${s.t2}</span>
+      <span style="font-family:var(--fh);color:${w2?'#22c55e':'var(--sub)'}">${sc2}</span>
+    </div>
+  </div>`;
+}
+
+function renderBracketHTML(byPhase,phaseColors){
+  const phaseOrder=['Osmina finala','Četrtfinale','Polfinale','Finale'];
+  let html='<div style="overflow-x:auto"><div style="display:flex;gap:20px;padding:10px 0;min-width:600px">';
+  phaseOrder.forEach(ph=>{
+    if(!byPhase[ph])return;
+    const color=phaseColors[ph]||'#888';
+    html+=`<div style="flex:1;min-width:160px">
+      <div style="font-family:var(--fh);font-size:.7rem;letter-spacing:.08em;color:${color};margin-bottom:8px;text-align:center">${ph.toUpperCase()}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${byPhase[ph].map(s=>seriesCard(s)).join('')}</div>
+    </div>`;
+  });
+  html+='</div></div>';
+  return html;
+}
 
 </script>
 </body>
