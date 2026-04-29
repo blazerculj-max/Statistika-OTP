@@ -2291,16 +2291,23 @@ async function loadPlayerCareer() {
     // Map startYear to seasonId (startYear 2025 = seasonId 26)
     const yearToSeasonId = y => parseInt(y) - 1999;
 
-    // Get unique seasonIds from league history
-    const seasonIds = [...new Set(leagueComps.map(c => yearToSeasonId(c.competitionStartYear)))]
-      .filter(sid => sid >= 13 && sid <= 26) // od sezone 2012/13 naprej
-      .sort((a,b) => b - a); // desc
-    const results = await Promise.all(seasonIds.map(sid =>
-      fetch(`https://api.kzs.si/api/v1/public/players/${pid}/stats?seasonId=${sid}`)
-        .then(r => r.json())
-        .then(d => ({sid, stats: d.data?.competitionStats||[]}))
-        .catch(() => ({sid, stats:[]}))
-    ));
+    // Get unique seasonIds - current + last 3 seasons only
+    const allSeasonIds = [...new Set(leagueComps.map(c => yearToSeasonId(c.competitionStartYear)))]
+      .filter(sid => sid >= 13 && sid <= 26)
+      .sort((a,b) => b - a);
+    const seasonIds = allSeasonIds; // vse sezone
+    // Fetch current team + stats in parallel
+    const [teamResp, ...results] = await Promise.all([
+      fetch(`https://api.kzs.si/api/v1/public/teamPlayers/byPlayer/${pid}`)
+        .then(r => r.json()).catch(() => null),
+      ...seasonIds.map(sid =>
+        fetch(`https://api.kzs.si/api/v1/public/players/${pid}/stats?seasonId=${sid}`)
+          .then(r => r.json())
+          .then(d => ({sid, stats: d.data?.competitionStats||[]}))
+          .catch(() => ({sid, stats:[]}))
+      )
+    ]);
+    const currentTeam = teamResp?.data?.team?.teamApplication?.name || curTeam;
 
     // Determine competition type from rank/category
     const compType = s => {
@@ -2320,10 +2327,12 @@ async function loadPlayerCareer() {
         if(s.competitionCategory && s.competitionCategory !== 'ABSOLUTE') return;
         const ct = compType(s);
         // Show club only for current season (we know it from P array)
+        const isCurrentSeason = sid === curSeasonId;
         rows.push({
           season: SEASON_NAMES[sid] || `20${sid-1}/${sid}`,
           comp: ct.label,
           color: ct.color,
+          klub: isCurrentSeason ? (currentTeam || '—') : '—',
           T: s.played,
           pts: (s.avgpts||0).toFixed(1),
           reb: ((s.avgrd||0)+(s.avgro||0)).toFixed(1),
@@ -2345,6 +2354,7 @@ async function loadPlayerCareer() {
     const tableRows = rows.map(r => `<tr>
       <td style="color:var(--mut);white-space:nowrap">${r.season}</td>
       <td style="color:${r.color};font-weight:600;font-size:.73rem">${r.comp}</td>
+      <td style="color:var(--sub);font-size:.72rem">${r.klub||'—'}</td>
       <td>${r.T}</td>
       <td style="color:var(--acc);font-weight:700">${r.pts}</td>
       <td>${r.reb}</td>
@@ -2360,7 +2370,7 @@ async function loadPlayerCareer() {
 
       <table class="pp-table">
         <thead><tr>
-          <th>Sezona</th><th>Liga</th><th>T</th>
+          <th>Sezona</th><th>Liga</th><th>Klub</th><th>T</th>
           <th>PTS</th><th>SK</th><th>AS</th><th>BLK</th>
           <th>EFE</th><th>MIN</th><th>2T%</th><th>3T%</th>
         </tr></thead>
