@@ -2689,9 +2689,18 @@ function renderPlayerCompare() {
     return (p[key]||0)/p[F.T];
   }
 
-  function statBar(label, a1, a2, max) {
-    const pct1 = Math.min(a1/Math.max(max,0.01)*100, 100);
-    const pct2 = Math.min(a2/Math.max(max,0.01)*100, 100);
+  // Compute league max per stat (from all qualified players)
+  const leagueMax = {};
+  const qualified = P.filter(p => p[F.T] >= 5);
+  statFields.forEach(f => {
+    const vals = qualified.map(p => avg(p, f.key, f.computed));
+    leagueMax[f.key + (f.computed?'_c':'')] = Math.max(...vals, 0.01);
+  });
+
+  function statBar(label, a1, a2, key, computed) {
+    const maxVal = leagueMax[key + (computed?'_c':'')] || 1;
+    const pct1 = Math.min(a1/maxVal*100, 100);
+    const pct2 = Math.min(a2/maxVal*100, 100);
     const winner = a1>a2?'left':a2>a1?'right':'tie';
     return `<div style="margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px">
@@ -2727,7 +2736,7 @@ function renderPlayerCompare() {
   const statBars = p1||p2 ? statFields.map(f => {
     const a1 = avg(p1, f.key, f.computed);
     const a2 = avg(p2, f.key, f.computed);
-    return statBar(f.label, a1, a2, f.max, f.color);
+    return statBar(f.label, a1, a2, f.key, f.computed);
   }).join('') : '';
 
   wrap.innerHTML = `
@@ -2781,7 +2790,8 @@ function renderTeamForm() {
   // For each month, find top 5 scorers from playerGameLog
   function monthHtml(month) {
     // Use pMonthStats built from pbpData
-    const entries = Object.entries(pMonthStats)
+    const _pm = window._pMonthStats || pMonthStats;
+    const entries = Object.entries(_pm)
       .map(([key, mdata]) => {
         const ms = mdata[month];
         if(!ms || ms.matchIds.size < 2) return null;
@@ -2928,6 +2938,7 @@ function renderTeamForm() {
 }
 
 window.renderMonthTab = function(month) {
+  const pMonthStats = window._pMonthStats || {};
   document.getElementById('month-top5').innerHTML = window._monthHtml(month);
   document.querySelectorAll('[id^="mtab-"]').forEach(b=>{
     b.style.background = b.id===`mtab-${month.replace(/\s/g,'_')}`?'var(--acc)':'var(--card2)';
