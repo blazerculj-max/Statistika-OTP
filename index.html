@@ -2097,6 +2097,40 @@ function renderCmpSection(){
 // ═══════════════════════════════════════════════════
 // PLAYER PROFILE
 // ═══════════════════════════════════════════════════
+function ppMonthlyStats(idx, color) {
+  const p = P[idx];
+  if(!p || !Object.keys(gMonthStats).length) return '';
+  // Find player in gMonthStats
+  const lastName = p[F.name].split(' ').pop().toLowerCase();
+  const playerKey = Object.keys(gMonthStats).find(k =>
+    k.toLowerCase().includes(lastName)
+  );
+  if(!playerKey) return '';
+  const md = gMonthStats[playerKey];
+  const allMonths = [...new Set(allMatches.filter(m=>m.status==='FINISHED')
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
+    .map(m=>new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'})))];
+  const maxAvg = Math.max(...allMonths.map(mo => md[mo] ? md[mo].pts/md[mo].matchIds.size : 0), 1);
+  const rows = allMonths.filter(mo => md[mo] && md[mo].matchIds.size >= 1).map(mo => {
+    const ms = md[mo];
+    const T = ms.matchIds.size;
+    const avgPts = ms.pts/T;
+    const shortMo = mo.split(' ')[0].slice(0,3).toUpperCase();
+    const barW = Math.round(avgPts/maxAvg*100);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0">
+      <div style="font-size:.62rem;color:var(--mut);width:32px">${shortMo}</div>
+      <div style="font-size:.62rem;color:var(--mut);width:24px;text-align:right">${T}t</div>
+      <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div style="width:${barW}%;height:100%;background:${color};border-radius:4px;opacity:.85"></div>
+      </div>
+      <div style="font-family:var(--fh);font-size:.78rem;color:${color};width:32px;text-align:right">${avgPts.toFixed(1)}</div>
+    </div>`;
+  }).join('');
+  if(!rows) return '';
+  return `<div class="pp-section-title" style="margin-top:16px">📅 TOČKE PO MESECIH (iz PBP)</div>
+    <div style="padding:8px 0">${rows}</div>`;
+}
+
 function showPlayer(idx){
   const p=P[idx];if(!p)return;
   const color=TEAM_COLORS[p[F.team]]||'#f97316';
@@ -2622,15 +2656,15 @@ function renderPlayerCompare() {
   if(!wrap) return;
 
   const statFields = [
-    {key:F.sc,   label:'Točke',    color:'#f97316', max:30},
+    {key:F.toc,  label:'Točke',    color:'#f97316', max:30},
     {key:F.nap,  label:'Nap.sk.',  color:'#22c55e', max:8},
     {key:F.obr,  label:'Obr.sk.',  color:'#3b82f6', max:8},
     {key:F.nap,  label:'Sk.skupaj',color:'#22c55e', max:12, computed:true},
     {key:F.pod,  label:'Asistence',color:'#a855f7', max:8},
     {key:F.sto,  label:'Ukr.žoga', color:'#fbbf24', max:3},
     {key:F.blk,  label:'Bloki',    color:'#60a5fa', max:3},
-    {key:F.izs,  label:'Izg.žoge', color:'#ef4444', max:5},
-    {key:F.efe,  label:'EFE',      color:'#f97316', max:25},
+    {key:F.izg,  label:'Izg.žoge', color:'#ef4444', max:5},
+    {key:F.efe,  label:'EFE',      color:'#10b981', max:25},
   ];
 
   const selOpts = P.map((p,i) => `<option value="${i}">${p[F.name]} (${TEAM_SHORT[p[F.team]]||p[F.team]})</option>`).join('');
@@ -2775,9 +2809,8 @@ function renderTeamForm() {
   const wrap = document.getElementById('form-wrap');
   if(!wrap || !allMatches.length) return;
 
-  // Build per-player per-month stats from allMatches + stats
-  // Use P array + playerGameLog if available
-  // Fallback: use P array with team month splits from allMatches
+  // Ensure monthly stats are built
+  if(pbpLoaded && Object.keys(gMonthStats).length === 0) buildMonthlyStats();
 
   // Group matches by month
   const finished = allMatches.filter(m=>m.status==='FINISHED')
@@ -2789,9 +2822,7 @@ function renderTeamForm() {
 
   // For each month, find top 5 scorers from playerGameLog
   function monthHtml(month) {
-    // Use pMonthStats built from pbpData
-    const _pm = window._pMonthStats || pMonthStats;
-    const entries = Object.entries(_pm)
+    const entries = Object.entries(gMonthStats)
       .map(([key, mdata]) => {
         const ms = mdata[month];
         if(!ms || ms.matchIds.size < 2) return null;
@@ -2938,7 +2969,6 @@ function renderTeamForm() {
 }
 
 window.renderMonthTab = function(month) {
-  const pMonthStats = window._pMonthStats || {};
   document.getElementById('month-top5').innerHTML = window._monthHtml(month);
   document.querySelectorAll('[id^="mtab-"]').forEach(b=>{
     b.style.background = b.id===`mtab-${month.replace(/\s/g,'_')}`?'var(--acc)':'var(--card2)';
@@ -3184,6 +3214,42 @@ function setNerdView(v){
     if(b)b.classList.toggle('active',x===v);
   });
   renderNerd();
+}
+
+let gMonthStats = {}; // playerKey → month → {pts, matchIds}
+
+function buildMonthlyStats(){
+  gMonthStats = {};
+  const matchMonthMap = {};
+  allMatches.filter(m=>m.status==='FINISHED').forEach(m=>{
+    matchMonthMap[m.id] = new Date(m.dateTime).toLocaleDateString('sl',{month:'long',year:'numeric'});
+  });
+  Object.entries(pbpData).forEach(([matchId,{pbp}])=>{
+    if(!pbp||!pbp.length) return;
+    const month = matchMonthMap[parseInt(matchId)];
+    if(!month) return;
+    pbp.forEach(ev=>{
+      if(!ev.familyName) return;
+      const key = ((ev.firstName||'') + ' ' + ev.familyName).trim();
+      if(!gMonthStats[key]) gMonthStats[key] = {};
+      if(!gMonthStats[key][month]) gMonthStats[key][month] = {pts:0, matchIds:new Set()};
+      gMonthStats[key][month].matchIds.add(parseInt(matchId));
+      if(ev.success===1){
+        const p = ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:ev.actionType==='freethrow'?1:0;
+        gMonthStats[key][month].pts += p;
+      }
+    });
+  });
+}
+
+function processPbp(d){
+  pbpData = {};
+  if(!d||!d.pbp) return;
+  Object.entries(d.pbp).forEach(([id,evts])=>{
+    pbpData[parseInt(id)] = {pbp: evts, matchId: parseInt(id)};
+  });
+  pbpLoaded = true;
+  buildMonthlyStats();
 }
 
 function loadPBPData(){
