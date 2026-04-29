@@ -275,6 +275,8 @@ select:focus{outline:none;border-color:var(--acc)}
 .hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
 /* STANDINGS */
 .standings-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.standings-table tbody td{padding:4px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.standings-table tbody tr:hover{background:var(--card2)}
 .standings-table thead th{background:var(--card2);color:var(--sub);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
 .standings-table thead th:first-child{text-align:left;padding-left:14px;min-width:200px}
 .standings-table td{padding:8px 10px;text-align:center;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm);white-space:nowrap}
@@ -3355,7 +3357,7 @@ function buildStandingsTable(data, sort, title, color){
       <td style="color:${t.W/Math.max(t.T,1)>=.5?'#22c55e':'#ef4444'}">${Math.round(t.W/Math.max(t.T,1)*100)}%</td>
       <td>${pA}</td><td>${pAga}</td>
       <td style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:600">${diff>=0?'+':''}${diff}</td>
-      <td>${t.homeW||0}/${t.homeL||0}</td><td>${t.awayW||0}/${t.awayL||0}</td><td>${form}</td></tr>`;
+      <td>${t.homeW||0}/${t.homeL||0}</td><td>${t.awayW||0}/${t.awayL||0}</td><td><div style="display:flex;gap:2px;justify-content:center">${form}</div></td></tr>`;
   }).join('');
   return `<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:${color};margin:16px 0 8px">${title}</div>
     <div style="overflow-x:auto"><table class="standings-table"><thead><tr>
@@ -3367,6 +3369,17 @@ function buildStandingsTable(data, sort, title, color){
 function renderStandings(){
   const wrap=document.getElementById('standings-wrap');
   if(!wrap||!allMatches.length)return;
+
+  // Repopulate H2H dropdowns with current league teams only
+  const lgTeams=[...new Set(allMatches.map(m=>[m.firstTeamName,m.secondTeamName]).flat())].sort();
+  ['h2h-team1','h2h-team2'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const prev=el.value;
+    el.innerHTML=`<option value="">${i===0?'Head-to-head: Ekipa 1':'Ekipa 2'}</option>`;
+    lgTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;el.appendChild(o);});
+    if(prev&&lgTeams.includes(prev))el.value=prev;
+  });
   const sort=document.getElementById('standings-sort')?.value||'pts';
   const lg=getLg();
   const VZHOD=new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška','Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
