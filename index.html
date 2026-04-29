@@ -2873,124 +2873,15 @@ function renderAttendance(){
 // ═══════════════════════════════════════════════════
 // MATCHES TAB
 // ═══════════════════════════════════════════════════
-function renderMatches(){
-  const wrap=document.getElementById('matches-wrap');
-  if(!wrap)return;
-  const phase=document.getElementById('phase-filter')?.value||'all';
-  let matches=[...allMatches].sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime));
-  if(phase!=='all') matches=matches.filter(m=>m.competitions?.[0]?.competitionPhaseName===phase);
-  const rows=matches.slice(0,100).map(m=>{
-    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
-    const time=new Date(m.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
-    const c1=TEAM_COLORS[m.firstTeamName]||'#888',c2=TEAM_COLORS[m.secondTeamName]||'#888';
-    const ph=m.competitions?.[0]?.competitionPhaseName||'Redni del';
-    const score=m.status==='FINISHED'?`${m.firstTeamScore} : ${m.secondTeamScore}`:m.status==='LIVE'?`<span style="color:#ef4444">${m.firstTeamScore} : ${m.secondTeamScore}</span>`:`${time}`;
-    return `<div class="match-row" onclick="openMatch(${m.id})">
-      <div style="font-size:.65rem;color:var(--mut);min-width:70px">${date}</div>
-      <div style="flex:1;text-align:right;color:${c1};font-size:.8rem;font-weight:600">${m.firstTeamName}</div>
-      <div style="font-family:var(--fh);font-size:.9rem;min-width:80px;text-align:center">${score}</div>
-      <div style="flex:1;color:${c2};font-size:.8rem;font-weight:600">${m.secondTeamName}</div>
-      <div style="font-size:.6rem;color:var(--mut);min-width:60px;text-align:right">${ph}</div>
-    </div>`;
-  }).join('');
-  wrap.innerHTML=`<div class="match-list">${rows}</div>`;
-}
-
 // ═══════════════════════════════════════════════════
 // LEADERS TAB  
 // ═══════════════════════════════════════════════════
-function renderLeaders(){
-  const wrap=document.getElementById('leaders-wrap');
-  if(!wrap||!P.length)return;
-  const players=getLeaguePlayers().filter(p=>p[F.T]>=lMin);
-  
-  function leaderCard(title,color,icon,sortFn,fmtFn){
-    const sorted=[...players].sort((a,b)=>sortFn(b)-sortFn(a)).slice(0,5);
-    const maxV=sortFn(sorted[0])||1;
-    const rows=sorted.map((p,i)=>{
-      const v=sortFn(p);const tc=TEAM_COLORS[p[F.team]]||'#888';
-      const rk=i<3?['🥇','🥈','🥉'][i]:(i+1)+'.';
-      const pct=Math.round(v/maxV*100);
-      return `<div class="ldr-row" onclick="showPlayer(${P.indexOf(p)})">
-        <div class="ldr-rank">${rk}</div>
-        <div class="ldr-info">
-          <div style="font-size:.8rem;font-weight:600;color:${tc}">${p[F.name]}</div>
-          <div style="font-size:.65rem;color:var(--mut)">${TEAM_SHORT[p[F.team]]||p[F.team]}</div>
-          <div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px">
-            <div style="width:${pct}%;height:100%;background:${color};border-radius:2px"></div>
-          </div>
-        </div>
-        <div style="font-family:var(--fh);font-size:1.1rem;color:${color};flex-shrink:0">${fmtFn(v)}</div>
-      </div>`;
-    }).join('');
-    return `<div class="nerd-card"><div class="nerd-card-title" style="color:${color}">${icon} ${title}</div>${rows}</div>`;
-  }
-
-  const avg=f=>p=>lMode==='avg'?p[f]/Math.max(p[F.T],1):p[f];
-  wrap.innerHTML=`<div class="nerd-grid">
-    ${leaderCard('Točke','#f97316','🏀',avg(F.sc),v=>v.toFixed(1))}
-    ${leaderCard('Skoki','#22c55e','💪',p=>lMode==='avg'?(p[F.nap]+p[F.obr])/Math.max(p[F.T],1):p[F.nap]+p[F.obr],v=>v.toFixed(1))}
-    ${leaderCard('Asistence','#a855f7','🤝',avg(F.pod),v=>v.toFixed(1))}
-    ${leaderCard('Ukr. žoge','#fbbf24','💨',avg(F.sto),v=>v.toFixed(1))}
-    ${leaderCard('Bloki','#60a5fa','🛑',avg(F.blk),v=>v.toFixed(1))}
-    ${leaderCard('EFE','#10b981','⭐',avg(F.efe),v=>v.toFixed(1))}
-    ${leaderCard('2T%','#f59e0b','🎯',p=>p[F.fg2a]>=20?pct(p[F.fg2m],p[F.fg2a]):0,v=>v.toFixed(1)+'%')}
-    ${leaderCard('3T%','#ec4899','🎯',p=>p[F.fg3a]>=15?pct(p[F.fg3m],p[F.fg3a]):0,v=>v.toFixed(1)+'%')}
-  </div>`;
-}
-
 // ═══════════════════════════════════════════════════
 // AGE TAB
 // ═══════════════════════════════════════════════════
-function renderAge(){
-  const wrap=document.getElementById('age-wrap');
-  if(!wrap||!P.length)return;
-  const data={};
-  AGE_GROUPS.forEach(g=>data[g]={players:[],min:0,toc:0,efe:0});
-  P.forEach(p=>{
-    if(p[F.T]<3)return;
-    const g=ageGroup(p[F.born]);
-    if(!data[g])return;
-    data[g].players.push(p);
-    data[g].min+=p[F.MIN];
-    data[g].toc+=p[F.toc];
-    data[g].efe+=p[F.efe];
-  });
-  const rows=AGE_GROUPS.map((g,i)=>{
-    const d=data[g],n=d.players.length;
-    return `<tr>
-      <td><span style="color:${AGE_COLORS[i]};font-weight:600">${g}</span></td>
-      <td style="text-align:center">${n}</td>
-      <td style="text-align:center">${n>0?fmt(d.min/n,0):'—'}</td>
-      <td style="text-align:center">${n>0?fmt(d.efe/n,1):'—'}</td>
-    </tr>`;
-  }).join('');
-  wrap.innerHTML=`<table class="standings-table"><thead><tr><th>Skupina</th><th>Igralci</th><th>Avg MIN</th><th>Avg EFE</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-
 // ═══════════════════════════════════════════════════
 // SEARCH
 // ═══════════════════════════════════════════════════
-function doSearch(){
-  const wrap=document.getElementById('search-wrap');
-  const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
-  if(!wrap)return;
-  if(!q){wrap.innerHTML='<div class="empty">Vnesi ime igralca ali ekipe</div>';return;}
-  const results=P.filter(p=>p[F.name].toLowerCase().includes(q)||p[F.team].toLowerCase().includes(q)).slice(0,20);
-  if(!results.length){wrap.innerHTML='<div class="empty">Ni rezultatov</div>';return;}
-  wrap.innerHTML=results.map(p=>{
-    const idx=P.indexOf(p);
-    const tc=TEAM_COLORS[p[F.team]]||'#888';
-    return `<div class="att-row" onclick="showPlayer(${idx})" style="cursor:pointer">
-      <div style="flex:1">
-        <div style="font-weight:600;color:${tc}">${p[F.name]}</div>
-        <div style="font-size:.7rem;color:var(--mut)">${p[F.team]} · ${p[F.T]} tekem</div>
-      </div>
-      <div style="font-family:var(--fh);color:#f97316">${fmt(p[F.sc]/Math.max(p[F.T],1))} točk</div>
-    </div>`;
-  }).join('');
-}
-
 // ═══════════════════════════════════════════════════
 // NERD STATS
 // ═══════════════════════════════════════════════════
@@ -3011,7 +2902,6 @@ function processPbp(d){
     pbpData[parseInt(id)] = {pbp: evts, matchId: parseInt(id)};
   });
   pbpLoaded = true;
-  buildMonthlyStats();
 }
 
 function loadPBPData(){
@@ -3358,66 +3248,7 @@ async function fetchLivePbp(matchInfo){
   }catch(e){return[];}
 }
 
-async function openMatch(matchId){
-  const m=allMatches.find(x=>x.id===matchId);
-  if(!m)return;
-  const overlay=document.getElementById('match-overlay');
-  if(!overlay)return;
-  overlay.style.display='flex';
-  document.body.style.overflow='hidden';
-  liveMatchId=matchId;
-  pbpQuarterTab=0;
-  if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}
-
-  const isLive=m.status==='LIVE';
-  const ls=liveScores[matchId]||{score1:m.firstTeamScore,score2:m.secondTeamScore};
-  const c1=TEAM_COLORS[m.firstTeamName]||'#f97316';
-  const c2=TEAM_COLORS[m.secondTeamName]||'#3b82f6';
-  const t1=m.firstTeamName,t2=m.secondTeamName;
-
-  const header=document.getElementById('mo-header');
-  if(header){
-    const date=new Date(m.dateTime).toLocaleDateString('sl',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    header.innerHTML=`
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div style="font-size:1.1rem;font-weight:700;color:${c1}">${t1}</div>
-        <div style="text-align:center">
-          <div style="font-family:var(--fh);font-size:2.5rem" id="mo-score">
-            <span style="color:${c1}">${ls.score1||0}</span>
-            <span style="color:var(--mut);margin:0 8px">:</span>
-            <span style="color:${c2}">${ls.score2||0}</span>
-          </div>
-          ${isLive?`<div style="color:#ef4444;font-size:.75rem;font-family:var(--fh)">Q${ls.quarter||'?'} · ${ls.time||''}</div>`:''}
-          <div style="font-size:.7rem;color:var(--mut);margin-top:4px">${date} · ${m.sportHallName||''} · K${m.round}</div>
-        </div>
-        <div style="font-size:1.1rem;font-weight:700;color:${c2}">${t2}</div>
-      </div>`;
-  }
-
-  const pbpSection=document.getElementById('pbp-section');
-  if(pbpSection)pbpSection.innerHTML='<div class="empty" style="padding:20px">Nalagam PBP...</div>';
-
-  let events=livePbpCache[matchId]||[];
-  if(!events.length)events=await fetchLivePbp(m);
-  livePbpCache[matchId]=events;
-  if(pbpSection)pbpSection.innerHTML=renderPbpFeed(events,t1,t2,c1,c2,ls);
-
-  if(isLive){
-    pbpRefreshTimer=setInterval(async()=>{
-      const overlayVisible=document.getElementById('match-overlay')?.style.display!=='none';
-      if(!overlayVisible||liveMatchId!==matchId){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;return;}
-      try{const newEvents=await fetchLivePbp(m);if(newEvents&&newEvents.length>0)livePbpCache[matchId]=newEvents;}catch(e){}
-      const sec=document.getElementById('pbp-section');
-      const currentLs=liveScores[matchId]||ls;
-      if(sec)sec.innerHTML=renderPbpFeed(livePbpCache[matchId]||[],t1,t2,c1,c2,currentLs);
-      const moScore=document.getElementById('mo-score');
-      if(moScore&&currentLs.score1!==undefined)
-        moScore.innerHTML=`<span style="color:${c1}">${currentLs.score1}</span><span style="color:var(--mut);margin:0 8px">:</span><span style="color:${c2}">${currentLs.score2}</span>`;
-    },20000);
-  }
-}
-
-function closeMatchOverlay(){
+async function closeMatchOverlay(){
   document.getElementById('match-overlay').style.display='none';
   document.body.style.overflow='';
   liveMatchId=null;
