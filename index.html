@@ -2270,8 +2270,31 @@ async function loadPlayerCareer() {
 
   wrap.innerHTML = '<div class="empty">⏳ Nalagam...</div>';
 
+  const curPlayer = P.find(p => p[F.pid] === pid);
+  const curTeam = curPlayer ? curPlayer[F.team] : null;
+  const curSeasonId = 26;
+
   try {
-    const seasonIds = [21,22,23,24,25,26];
+    // Get full competition history
+    const compResp = await fetch(`https://api.kzs.si/api/v1/public/players/${pid}/competitions`)
+      .then(r => r.json()).catch(() => null);
+
+    // Filter: samo članske lige (1./2./3. SKL), preskočimo pokale, reprezentanco, mladinske
+    const leagueComps = (compResp?.data?.competitionObjs || [])
+      .filter(c =>
+        c.category === 'ABSOLUTE' &&
+        c.type === 'LEAGUE' &&
+        ['FIRST','SECOND','THIRD'].includes(c.rank)
+      )
+      .sort((a,b) => b.competitionStartYear - a.competitionStartYear);
+
+    // Map startYear to seasonId (startYear 2025 = seasonId 26)
+    const yearToSeasonId = y => parseInt(y) - 1999;
+
+    // Get unique seasonIds from league history
+    const seasonIds = [...new Set(leagueComps.map(c => yearToSeasonId(c.competitionStartYear)))]
+      .filter(sid => sid >= 13 && sid <= 26) // od sezone 2012/13 naprej
+      .sort((a,b) => b - a); // desc
     const results = await Promise.all(seasonIds.map(sid =>
       fetch(`https://api.kzs.si/api/v1/public/players/${pid}/stats?seasonId=${sid}`)
         .then(r => r.json())
@@ -2279,21 +2302,35 @@ async function loadPlayerCareer() {
         .catch(() => ({sid, stats:[]}))
     ));
 
+    // Determine competition type from rank/category
+    const compType = s => {
+      if(s.competitionRank==='FIRST') return {label: s.competitionName||'1. liga', color:'var(--acc)'};
+      if(s.competitionRank==='SECOND') return {label: s.competitionName||'2. liga', color:'#60a5fa'};
+      if(s.competitionRank==='THIRD') return {label: s.competitionName||'3. liga', color:'#a855f7'};
+      if(s.competitionType==='NATIONAL') return {label: s.competitionName||'Reprezentanca', color:'#22c55e'};
+      return {label: s.competitionName||`Liga #${s.competitionId}`, color:'var(--mut)'};
+    };
+
     const rows = [];
     results.forEach(({sid, stats}) => {
       stats.forEach(s => {
         if(s.played < 2) return;
+        // Samo članske lige (1./2./3. SKL) - preskočimo pokale, reprezentanco, mladinske
+        if(!['FIRST','SECOND','THIRD'].includes(s.competitionRank)) return;
+        if(s.competitionCategory && s.competitionCategory !== 'ABSOLUTE') return;
+        const ct = compType(s);
+        // Show club only for current season (we know it from P array)
         rows.push({
           season: SEASON_NAMES[sid] || `20${sid-1}/${sid}`,
-          comp: COMP_NAMES[s.competitionId] || `Liga #${s.competitionId}`,
-          compId: s.competitionId,
+          comp: ct.label,
+          color: ct.color,
           T: s.played,
           pts: (s.avgpts||0).toFixed(1),
           reb: ((s.avgrd||0)+(s.avgro||0)).toFixed(1),
           ast: (s.avgass||0).toFixed(1),
           blk: (s.avgblag||0).toFixed(1),
-          ste: (s.avgst?.toFixed(1))||'—',
           efe: s.played>0 ? ((s.efficiency||0)/s.played).toFixed(1) : '—',
+          mins: (s.avgmins||0).toFixed(0),
           fg2pct: s.a2>0 ? Math.round(s.m2/s.a2*100)+'%' : '—',
           fg3pct: s.a3>0 ? Math.round(s.m3/s.a3*100)+'%' : '—',
         });
@@ -2302,30 +2339,30 @@ async function loadPlayerCareer() {
 
     if(!rows.length) { wrap.innerHTML='<div class="empty">Ni kariernih podatkov</div>'; return; }
 
-    rows.sort((a,b) => b.season.localeCompare(a.season)||a.comp.localeCompare(b.comp));
-
-    const compColor = cid =>
-      [579,524,478,443].includes(cid) ? 'var(--acc)' :
-      [581,522,480,445].includes(cid) ? '#60a5fa' :
-      [582,523,481,446].includes(cid) ? '#a855f7' : 'var(--mut)';
+    // Sort season desc, within season: main league first, then cup/national
+    rows.sort((a,b) => b.season.localeCompare(a.season) || a.color.localeCompare(b.color));
 
     const tableRows = rows.map(r => `<tr>
-      <td style="color:var(--mut)">${r.season}</td>
-      <td style="color:${compColor(r.compId)};font-weight:600">${r.comp}</td>
+      <td style="color:var(--mut);white-space:nowrap">${r.season}</td>
+      <td style="color:${r.color};font-weight:600;font-size:.73rem">${r.comp}</td>
       <td>${r.T}</td>
       <td style="color:var(--acc);font-weight:700">${r.pts}</td>
-      <td>${r.reb}</td><td>${r.ast}</td><td>${r.blk}</td>
+      <td>${r.reb}</td>
+      <td>${r.ast}</td>
+      <td>${r.blk}</td>
       <td style="color:#22c55e">${r.efe}</td>
-      <td style="color:var(--mut)">${r.fg2pct}</td>
-      <td style="color:var(--mut)">${r.fg3pct}</td>
+      <td style="color:var(--mut);font-size:.7rem">${r.mins}'</td>
+      <td style="color:var(--mut);font-size:.7rem">${r.fg2pct}</td>
+      <td style="color:var(--mut);font-size:.7rem">${r.fg3pct}</td>
     </tr>`).join('');
 
     wrap.innerHTML = `<div style="overflow-x:auto;margin-top:8px">
+
       <table class="pp-table">
         <thead><tr>
           <th>Sezona</th><th>Liga</th><th>T</th>
           <th>PTS</th><th>SK</th><th>AS</th><th>BLK</th>
-          <th>EFE</th><th>2T%</th><th>3T%</th>
+          <th>EFE</th><th>MIN</th><th>2T%</th><th>3T%</th>
         </tr></thead>
         <tbody>${tableRows}</tbody>
       </table></div>`;
