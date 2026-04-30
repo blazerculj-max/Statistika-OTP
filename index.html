@@ -1390,11 +1390,19 @@ function aggregatePlayers(phaseFilter) {
         if (!alreadyLogged) {
           playerGameLog[ps.playerId].push({
             round, matchId: matchData.matchId, team: teamName,
-            pts: ps.points,
-            reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
+            pts: ps.points || 0,
+            reb: (ps.offensiveRebounds||0) + (ps.defensiveRebounds||0),
             ast: ps.assists || 0,
+            stl: ps.steals || 0,
+            blk: ps.blocks || 0,
+            pm: ps.plusMinus || 0,
+            fg2m: ps.twoPointsMade||0, fg2a: ps.twoPointsAttempted||0,
+            fg3m: ps.threePointsMade||0, fg3a: ps.threePointsAttempted||0,
+            ftm: ps.freeThrowsMade||0, fta: ps.freeThrowsAttempted||0,
+            tov: ps.turnovers || 0,
             efe: ps.efficiencyCustom || ps.efficiency || 0,
-            min: ps.minutes
+            min: ps.minutes || 0,
+            opp: '' // filled below
           });
         }
       });
@@ -1409,8 +1417,19 @@ function aggregatePlayers(phaseFilter) {
     p.blk, p.pre, p.pm, p.efe, p.pip, p.fb, p.sc
   ]);
 
-  // Sort game logs by round
+  // Add opponent + result to game log
   Object.keys(playerGameLog).forEach(pid => {
+    playerGameLog[pid].forEach(g => {
+      const m = allMatches.find(x => x.id === g.matchId);
+      if(m) {
+        const isHome = m.firstTeamName === g.team || normalizeTeamName(m.firstTeamName) === g.team;
+        g.opp = isHome ? m.secondTeamName : m.firstTeamName;
+        const myScore = isHome ? m.firstTeamScore : m.secondTeamScore;
+        const oppScore = isHome ? m.secondTeamScore : m.firstTeamScore;
+        g.result = myScore > oppScore ? 'Z' : 'P';
+        g.score = myScore + ':' + oppScore;
+      }
+    });
     playerGameLog[pid].sort((a,b) => a.round - b.round);
   });
 
@@ -1766,16 +1785,71 @@ function renderTeam(){
   const tmPts=allTm.reduce((s,p)=>s+p[F.toc],0);
   const tmGames=Math.max(...allTm.map(p=>p[F.T]));
   const tmEfe=allTm.reduce((s,p)=>s+p[F.efe],0);
-  document.getElementById('team-hdr-wrap').innerHTML=`
-  <div class="team-hdr" style="--tc:${color}">
+    // Team W/L record
+  const tmMatches = allMatches.filter(m =>
+    m.status==='FINISHED' &&
+    (m.firstTeamName===team||m.secondTeamName===team||
+     normalizeTeamName(m.firstTeamName)===team||normalizeTeamName(m.secondTeamName)===team)
+  );
+  const tmW = tmMatches.filter(m=>{
+    const isHome=m.firstTeamName===team||normalizeTeamName(m.firstTeamName)===team;
+    return isHome?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;
+  }).length;
+  const tmL = tmMatches.length - tmW;
+  const tmPtsFor = tmMatches.reduce((s,m)=>{
+    const isHome=m.firstTeamName===team||normalizeTeamName(m.firstTeamName)===team;
+    return s+(isHome?m.firstTeamScore:m.secondTeamScore);
+  },0);
+  const tmPtsAga = tmMatches.reduce((s,m)=>{
+    const isHome=m.firstTeamName===team||normalizeTeamName(m.firstTeamName)===team;
+    return s+(isHome?m.secondTeamScore:m.firstTeamScore);
+  },0);
+  const tmT = tmMatches.length || 1;
+  // Last 5 form
+  const last5 = tmMatches.slice(-5).map(m=>{
+    const isHome=m.firstTeamName===team||normalizeTeamName(m.firstTeamName)===team;
+    const won=isHome?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;
+    return `<span class="form-dot ${won?'w':'l'}">${won?'Z':'P'}</span>`;
+  }).join('');
+
+document.getElementById('team-hdr-wrap').innerHTML=`
+  <div class="team-hdr" style="--tc:${color};margin-bottom:16px">
     <div class="tdot"></div>
-    <div><div class="tname">${team}</div><div class="tmeta">${allTm.length} igralcev · ${tmGames} tekem</div></div>
-    <div class="tstats">
-      <div class="ts"><div class="tsv" style="color:${color}">${tmPts}</div><div class="tsl">Skupaj TOČ</div></div>
-      <div class="ts"><div class="tsv" style="color:${color}">${fmt(tmPts/tmGames)}</div><div class="tsl">TOČ/TM</div></div>
-      <div class="ts"><div class="tsv" style="color:${color}">${tmEfe}</div><div class="tsl">Skupaj EFE</div></div>
+    <div style="flex:1">
+      <div class="tname">${team}</div>
+      <div class="tmeta">${allTm.length} igralcev · ${tmGames} tekem</div>
+      <div style="display:flex;gap:4px;margin-top:6px">${last5}</div>
     </div>
-  </div>`;
+    <div class="tstats" style="flex-wrap:wrap;gap:8px">
+      <div class="ts">
+        <div class="tsv" style="color:${color}">${tmW}<span style="color:var(--mut);font-size:.7rem">-</span>${tmL}</div>
+        <div class="tsl">Z - P</div>
+      </div>
+      <div class="ts">
+        <div class="tsv" style="color:${color}">${(tmPtsFor/tmT).toFixed(1)}</div>
+        <div class="tsl">TOČ+/TM</div>
+      </div>
+      <div class="ts">
+        <div class="tsv" style="color:var(--mut)">${(tmPtsAga/tmT).toFixed(1)}</div>
+        <div class="tsl">TOČ-/TM</div>
+      </div>
+      <div class="ts">
+        <div class="tsv" style="color:${(tmPtsFor-tmPtsAga)>=0?'#22c55e':'#ef4444'}">${tmPtsFor-tmPtsAga>=0?'+':''}${tmPtsFor-tmPtsAga}</div>
+        <div class="tsl">+/- SKP</div>
+      </div>
+    </div>
+  </div>
+  ${lpPlayer?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    ${[{p:lpPlayer,lbl:'🏀 Najboljši strelec',val:(lpPlayer[F.toc]/Math.max(lpPlayer[F.T],1)).toFixed(1)+' pts'},
+       {p:lrPlayer,lbl:'💪 Najboljši skakalec',val:lrPlayer?((lrPlayer[F.nap]+lrPlayer[F.obr])/Math.max(lrPlayer[F.T],1)).toFixed(1)+' sk':''},
+       {p:laPlayer,lbl:'🎯 Najboljši podajalec',val:laPlayer?(laPlayer[F.pod]/Math.max(laPlayer[F.T],1)).toFixed(1)+' as':''}
+    ].filter(x=>x.p).map(({p:bp,lbl,val})=>`
+      <div onclick="showPlayer(${P.indexOf(bp)})" style="background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;cursor:pointer;flex:1;min-width:120px;transition:border-color .15s" onmouseover="this.style.borderColor='${color}'" onmouseout="this.style.borderColor='var(--border2)'">
+        <div style="font-size:.6rem;color:var(--mut);margin-bottom:2px">${lbl}</div>
+        <div style="font-weight:600;font-size:.82rem">${bp[F.name].split(' ').pop()}</div>
+        <div style="font-family:var(--fh);font-size:.95rem;color:${color}">${val}</div>
+      </div>`).join('')}
+  </div>`:''}`;
 
   // Heatmap ranges
   const hmInverse=new Set(['izg','pz']);
@@ -2565,6 +2639,43 @@ function showPlayer(idx){
         <div class="pp-section-title">PROFIL (vs liga)</div>${radarSVG}
         <div class="pp-section-title" style="margin-top:14px">TOČKE PO TIPU META</div>${scoringSVG}
         ${trendSVG?`<div class="pp-section-title" style="margin-top:14px">FORMA (zadnjih 10 tekem)</div>${trendSVG}`:''}
+        ${(() => {
+          const log = playerGameLog[p[F.pid]];
+          if(!log||!log.length) return '';
+          const rows = log.slice().reverse().map(g => {
+            const res = g.result==='Z';
+            const oppShort = TEAM_SHORT[g.opp]||g.opp?.substring(0,8)||'—';
+            const minVal = typeof g.min==='number' ? Math.round(g.min) : (parseFloat(g.min)||0).toFixed(0);
+            const fg2 = g.fg2a>0 ? g.fg2m+'/'+g.fg2a : '—';
+            const fg3 = g.fg3a>0 ? g.fg3m+'/'+g.fg3a : '—';
+            return `<tr style="opacity:${g.pts===0&&g.min===0?0.4:1}">
+              <td style="color:var(--mut);font-size:.65rem">K${g.round}</td>
+              <td style="color:${res?'#22c55e':'#ef4444'};font-weight:700;font-size:.7rem">${g.result||'—'}</td>
+              <td style="font-size:.68rem;color:var(--sub)">${oppShort}</td>
+              <td style="font-size:.68rem;color:var(--mut)">${g.score||'—'}</td>
+              <td style="font-weight:700;color:var(--acc)">${g.pts}</td>
+              <td>${g.reb}</td>
+              <td>${g.ast}</td>
+              <td>${g.stl||0}</td>
+              <td>${g.blk||0}</td>
+              <td style="color:${(g.pm||0)>0?'#22c55e':(g.pm||0)<0?'#ef4444':'var(--mut)'};font-size:.68rem">${(g.pm||0)>0?'+':''}${g.pm||0}</td>
+              <td style="color:var(--mut);font-size:.65rem">${minVal}'</td>
+              <td style="color:var(--mut);font-size:.65rem">${fg2}</td>
+              <td style="color:var(--mut);font-size:.65rem">${fg3}</td>
+            </tr>`;
+          }).join('');
+          return `<div class="pp-section-title" style="margin-top:14px">📋 GAME LOG</div>
+            <div style="overflow-x:auto;max-height:300px;overflow-y:auto;border-radius:8px;border:1px solid var(--border)">
+              <table class="pp-table" style="font-size:.72rem">
+                <thead style="position:sticky;top:0;background:#0a0a1a;z-index:1"><tr>
+                  <th>K</th><th>R</th><th>vs</th><th>Rez</th>
+                  <th style="color:var(--acc)">PTS</th><th>SK</th><th>AS</th>
+                  <th>ST</th><th>BL</th><th>+/-</th><th>MIN</th><th>2T</th><th>3T</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>`;
+        })()}
       </div>
       <div class="pp-right">
         <div class="pp-section-title">NAPREDNA STATISTIKA</div>
