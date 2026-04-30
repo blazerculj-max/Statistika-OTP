@@ -488,6 +488,72 @@ select, input, .si{font-size:16px}
   .nb .nb-full{display:inline}
   .nb .nb-short{display:none}
 }
+
+/* ─── Mobile Bottom Nav ─── */
+@media(max-width:768px){
+  #mobile-nav{
+    display:flex !important;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:rgba(10,10,10,.95);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,255,255,.08);
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    z-index:150;
+    justify-content:space-around;
+  }
+  .mbn-btn{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    background:none;
+    border:none;
+    color:rgba(255,255,255,.35);
+    cursor:pointer;
+    padding:6px 10px;
+    border-radius:10px;
+    transition:all .18s ease;
+    flex:1;
+    max-width:72px;
+  }
+  .mbn-btn.active{color:var(--acc)}
+  .mbn-btn:active{transform:scale(.92)}
+  .mbn-icon{font-size:1.3rem;line-height:1}
+  .mbn-lbl{font-size:.58rem;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+  /* Hide top nav on mobile */
+  .nav{display:none !important}
+  /* Add bottom padding so content doesn't hide behind bottom nav */
+  .content{padding-bottom:80px !important}
+  /* Compact header on mobile */
+  .hdr{padding:10px 14px}
+}
+
+/* ─── Compact player table on mobile ─── */
+@media(max-width:768px){
+  /* Hide non-essential columns in player table */
+  .pt-head > span:not([data-mob="1"]),
+  .pt-row > span:not([data-mob="1"]){
+    display:none;
+  }
+  /* Standings - show fewer columns */
+  .standings-table th:nth-child(n+8),
+  .standings-table td:nth-child(n+8){display:none}
+  /* Make name column wider on mobile */
+  .standings-table td:nth-child(2),
+  .standings-table th:nth-child(2){
+    max-width:120px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  /* Bigger tap area for match cards */
+  .match-card{padding:14px}
+  .mc-score{font-size:1.5rem}
+  /* Live score bigger */
+  .lc-score{font-size:2rem}
+}
 </style>
 </head>
 <body>
@@ -1548,6 +1614,10 @@ function showTab(t){
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
+  // Update mobile bottom nav
+  document.querySelectorAll('.mbn-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'mbn-' + t);
+  });
   if(t==='live')renderLiveTab();
   if(t==='obiski'){
     const iframe=document.getElementById('obiski-iframe');
@@ -4040,5 +4110,33 @@ function renderBracketHTML(byPhase,phaseColors){
 }
 
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<div id="mobile-nav" style="display:none">
+  <button class="mbn-btn active" onclick="showTab('live')" id="mbn-live">
+    <span class="mbn-icon">🔴</span>
+    <span class="mbn-lbl">Live</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('lestvica')" id="mbn-lestvica">
+    <span class="mbn-icon">🏆</span>
+    <span class="mbn-lbl">Lestvica</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('tekme')" id="mbn-tekme">
+    <span class="mbn-icon">📅</span>
+    <span class="mbn-lbl">Tekme</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('liga')" id="mbn-liga">
+    <span class="mbn-icon">🏅</span>
+    <span class="mbn-lbl">Liga</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('nerd')" id="mbn-nerd">
+    <span class="mbn-icon">🧠</span>
+    <span class="mbn-lbl">Stats</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('iskanje')" id="mbn-iskanje">
+    <span class="mbn-icon">🔍</span>
+    <span class="mbn-lbl">Išči</span>
+  </button>
+</div>
 </body>
 </html>
