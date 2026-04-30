@@ -96,29 +96,25 @@ select:focus{outline:none;border-color:var(--acc)}
 .stat-tip::after{
   content:attr(data-tip);
   display:none;
-  position:absolute;
-  bottom:calc(100% + 6px);
-  left:50%;
-  transform:translateX(-50%);
+  position:fixed;
   background:#1a1a2e;
   border:1px solid var(--border2);
   border-radius:8px;
-  padding:8px 12px;
-  font-size:.72rem;
+  padding:10px 14px;
+  font-size:.75rem;
   font-family:var(--fs);
   font-weight:400;
   color:var(--text);
-  white-space:nowrap;
-  z-index:100;
-  box-shadow:0 4px 20px rgba(0,0,0,.5);
-  pointer-events:none;
-  max-width:280px;
   white-space:normal;
+  z-index:9999;
+  box-shadow:0 8px 32px rgba(0,0,0,.7);
+  pointer-events:none;
+  max-width:260px;
   width:max-content;
   text-align:left;
-  line-height:1.5;
+  line-height:1.6;
 }
-.stat-tip:hover::after{display:block}
+.stat-tip:hover::after{display:none}
 .section-title{font-family:var(--fh);font-size:1.5rem;letter-spacing:.04em;margin-bottom:14px;color:var(--sub)}
 .empty{text-align:center;padding:40px;color:var(--mut);font-size:.9rem}
 /* PLAYER OVERLAY */
@@ -4070,6 +4066,47 @@ function initRaceChart() {
   drawRaceChart();
   drawRaceStandings();
 }
+
+// ═══════════════════════════════════════════════════
+// JS TOOLTIP (better than CSS for overflow)
+// ═══════════════════════════════════════════════════
+(function(){
+  const tt = document.createElement('div');
+  tt.id = '_tt';
+  tt.style.cssText = `
+    position:fixed;background:#1a1a2e;border:1px solid rgba(255,255,255,.15);
+    border-radius:10px;padding:10px 14px;font-size:.75rem;font-family:var(--fs);
+    color:#fff;white-space:normal;max-width:260px;width:max-content;line-height:1.6;
+    z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.8);pointer-events:none;
+    display:none;text-align:left;
+  `;
+  document.body.appendChild(tt);
+
+  document.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tip]');
+    if(!el) return;
+    tt.textContent = el.getAttribute('data-tip');
+    tt.style.display = 'block';
+  });
+  document.addEventListener('mousemove', e => {
+    if(tt.style.display === 'none') return;
+    const x = e.clientX, y = e.clientY;
+    const tw = tt.offsetWidth, th = tt.offsetHeight;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    // Position above cursor, flip if near top
+    let left = x - tw/2;
+    let top = y - th - 12;
+    if(left < 8) left = 8;
+    if(left + tw > vw - 8) left = vw - tw - 8;
+    if(top < 8) top = y + 20;
+    tt.style.left = left + 'px';
+    tt.style.top = top + 'px';
+  });
+  document.addEventListener('mouseout', e => {
+    if(!e.target.closest('[data-tip]')) return;
+    if(!e.relatedTarget?.closest('[data-tip]')) tt.style.display = 'none';
+  });
+})();
 
 // ═══════════════════════════════════════════════════
 // URL ROUTER
