@@ -3507,11 +3507,10 @@ function renderTurnovers({stats}){
   const e=Object.entries(stats);
   const types=[
     {k:'badpass',lbl:'Slaba podaja',color:'#ef4444',icon:'🎯'},
-    {k:'ballhandling',lbl:'Izguba žoge',color:'#f97316',icon:'💨'},
-    {k:'travel',lbl:'Korakanje',color:'#a855f7',icon:'🚶'},
-    {k:'24sec',lbl:'24 sekund',color:'#60a5fa',icon:'⏱️'},
-    {k:'3sec',lbl:'3 sekunde',color:'#34d399',icon:'⏱️'},
-    {k:'offensive',lbl:'Ofenzivna napaka',color:'#fbbf24',icon:'💥'},
+    {k:'ballhandling',lbl:'Izguba žoge z vodenjem',color:'#f97316',icon:'💨'},
+    {k:'travel',lbl:'Koraki',color:'#a855f7',icon:'🚶'},
+    {k:'3sec',lbl:'3 sekunde v raketi',color:'#34d399',icon:'⏱️'},
+    {k:'offensive',lbl:'Osebna napaka v napadu',color:'#fbbf24',icon:'💥'},
   ];
   const cards=types.map(t=>
     mkCard(t.lbl,t.color,t.icon,
