@@ -618,6 +618,10 @@ select, input, .si{font-size:16px}
 <header class="hdr">
   <div class="hdr-title" id="hdr-title">LIGA <span>OTP BANKA</span></div>
   <div class="hdr-right">
+      <div id="update-indicator" style="font-size:.65rem;font-family:var(--fm);color:var(--mut);display:flex;align-items:center;gap:5px;margin-bottom:4px">
+        <span id="update-dot" style="width:6px;height:6px;border-radius:50%;background:var(--mut);display:inline-block"></span>
+        <span id="update-text">Nalagam...</span>
+      </div>
     <span class="hdr-season">SEZONA 2025/26</span>
     <div style="display:flex;gap:6px;align-items:center">
       <div class="tgl" style="margin-right:4px">
@@ -759,7 +763,7 @@ select, input, .si{font-size:16px}
   <div id="tab-liga" class="tab">
     <div class="ctrls">
       <span class="filter-note">Min tekem:</span>
-      <div class="tgl">
+      <div class="tgl" id="liga-min-wrap" style="transition:opacity .2s">
         <button class="tb active" id="lmin5" onclick="setLMin(5)">5+</button>
         <button class="tb" id="lmin10" onclick="setLMin(10)">10+</button>
         <button class="tb" id="lmin15" onclick="setLMin(15)">15+</button>
@@ -1216,6 +1220,7 @@ async function loadAllData() {
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
           setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
+      updateIndicator(Date.now());
           setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
           initWebSocket();
           return;
@@ -1308,6 +1313,7 @@ async function loadAllData() {
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
     setProgress(100, '✅ Naloženo iz API');
+    updateIndicator(Date.now());
     setTimeout(() => document.getElementById('loading-overlay').style.display='none', 400);
     initWebSocket();
 
@@ -1702,10 +1708,18 @@ let ligaPhase = 'all';
 function setLigaPhase(ph){
   ligaPhase = ph;
   ['all','Redni del','playoff','Liga za obstanek'].forEach(p => {
-    const id = 'lph-' + p.replace(/ /g,'_').replace('č','c').replace('č','c');
     const btn = document.getElementById('lph-' + (p==='all'?'all':p==='Redni del'?'regular':p==='playoff'?'playoff':'obstanek'));
     if(btn) btn.classList.toggle('active', p === ph);
   });
+  // Skrij min tekem filter za končnico/obstanek (malo tekem)
+  const isPlayoff = ph === 'playoff' || ph === 'Liga za obstanek';
+  const minWrap = document.getElementById('liga-min-wrap');
+  if(minWrap) {
+    minWrap.style.opacity = isPlayoff ? '0.35' : '1';
+    minWrap.style.pointerEvents = isPlayoff ? 'none' : '';
+    minWrap.title = isPlayoff ? 'Filter ni relevanten za končnico' : '';
+  }
+  if(isPlayoff) { lMin = 1; } // za končnico ne filtriramo
   // Re-aggregate and refresh leaders
   aggregatePlayers(ph);
   _leaguePlayers = null; _tmAgg = {};
@@ -2356,31 +2370,66 @@ function selectPlayer2LP(lpIdx){
 
 function doSearch(){
   if(!P.length)return;
-  const q=(document.getElementById('srch').value||'').toLowerCase();
-  const tm=document.getElementById('srch-team').value;
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  const tm=document.getElementById('srch-team')?.value||'';
+  const minPts=parseFloat(document.getElementById('srch-pts')?.value)||0;
+  const minReb=parseFloat(document.getElementById('srch-reb')?.value)||0;
+  const minAst=parseFloat(document.getElementById('srch-ast')?.value)||0;
+  const minEfe=parseFloat(document.getElementById('srch-efe')?.value)||0;
+  const minGames=parseInt(document.getElementById('srch-games')?.value)||1;
+
   LP = getLeaguePlayers();
   let res=LP;
-  if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q));
-  if(tm)res=res.filter(p=>p[F.team].includes(tm));
-  const html=res.slice(0,40).map(p=>{
-    const color=TEAM_COLORS[p[F.team].split(' / ')[0]]||'#f97316';
-    const isSel=selectedPlayers.some(s=>s===p);
-    return `<div class="pcard ${isSel?'selected':''}">
-      <div class="pc-name" style="display:flex;align-items:center;justify-content:space-between">
-        <span class="pname-link" onclick="showPlayerLP(${LP.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
-        <span onclick="selectPlayer2LP(${LP.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
-      </div>
-      <div class="pc-meta" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
-      <div class="pc-stats">
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.toc]/p[F.T])}</div><div class="pc-sl">TOČ/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt((p[F.nap]+p[F.obr])/p[F.T])}</div><div class="pc-sl">SK/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.pod]/p[F.T])}</div><div class="pc-sl">POD/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.efe]/p[F.T])}</div><div class="pc-sl">EFE/tm</div></div>
+  if(q) res=res.filter(p=>p[F.name].toLowerCase().includes(q)||
+    p[F.team].toLowerCase().includes(q));
+  if(tm) res=res.filter(p=>p[F.team]===tm);
+  if(minGames>1) res=res.filter(p=>p[F.T]>=minGames);
+  if(minPts>0) res=res.filter(p=>p[F.toc]/Math.max(p[F.T],1)>=minPts);
+  if(minReb>0) res=res.filter(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)>=minReb);
+  if(minAst>0) res=res.filter(p=>p[F.pod]/Math.max(p[F.T],1)>=minAst);
+  if(minEfe>0) res=res.filter(p=>p[F.efe]/Math.max(p[F.T],1)>=minEfe);
+
+  // Sort by pts desc
+  res.sort((a,b)=>b[F.toc]/Math.max(b[F.T],1)-a[F.toc]/Math.max(a[F.T],1));
+
+  // Count
+  const cnt=document.getElementById('srch-count');
+  if(cnt) cnt.textContent=res.length
+    ? `${res.length} igralec${res.length===1?'':'ev'} ustreza filtrom`
+    : '';
+
+  const wrap=document.getElementById('srch-results');
+  if(!wrap)return;
+  if(!res.length){wrap.innerHTML='<div class="empty">Ni rezultatov</div>';return;}
+
+  wrap.innerHTML=res.map(p=>{
+    const t=Math.max(p[F.T],1);
+    const c=TEAM_COLORS[p[F.team]]||'#888';
+    const pi=P.indexOf(p);
+    return `<div class="pcard" onclick="showPlayer(${pi})" style="cursor:pointer;border-left:3px solid ${c}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="pname-link" style="font-size:.95rem;font-weight:600">${p[F.name]}</div>
+          <div style="font-size:.72rem;color:${c};margin-top:2px">${p[F.team]} · ${p[F.T]} tekem</div>
+        </div>
+        <div style="display:flex;gap:14px;text-align:center">
+          <div><div style="font-family:var(--fh);font-size:1.1rem;color:var(--acc)">${(p[F.toc]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">PTS</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.1rem">${((p[F.nap]+p[F.obr])/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">SK</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.1rem">${(p[F.pod]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">AS</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.1rem;color:var(--green)">${(p[F.efe]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">EFE</div></div>
+        </div>
       </div>
     </div>`;
   }).join('');
-  document.getElementById('srch-results').innerHTML=html||'<div class="empty">Ni rezultatov</div>';
-  renderCmpSection();
+}
+
+function clearSearchFilters(){
+  ['srch','srch-pts','srch-reb','srch-ast','srch-efe','srch-games'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.value='';
+  });
+  document.getElementById('srch-team').value='';
+  doSearch();
 }
 
 function selectPlayer2(idx){
@@ -4107,6 +4156,35 @@ function initRaceChart() {
     if(!e.relatedTarget?.closest('[data-tip]')) tt.style.display = 'none';
   });
 })();
+
+// ═══════════════════════════════════════════════════
+// UPDATE INDICATOR
+// ═══════════════════════════════════════════════════
+function updateIndicator(ts) {
+  const dot = document.getElementById('update-dot');
+  const txt = document.getElementById('update-text');
+  if(!dot || !txt) return;
+  if(!ts) { txt.textContent = 'Ni podatkov'; dot.style.background = '#ef4444'; return; }
+  const diff = Date.now() - ts;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  let label, color;
+  if(diff < 3600000) { // < 1h
+    label = m < 2 ? 'Pravkar posodobljeno' : `Posodobljeno pred ${m} min`;
+    color = '#22c55e';
+  } else if(diff < 14400000) { // < 4h
+    label = `Posodobljeno pred ${h}h`;
+    color = '#22c55e';
+  } else if(diff < 28800000) { // < 8h
+    label = `Posodobljeno pred ${h}h`;
+    color = '#f59e0b';
+  } else {
+    label = `Posodobljeno pred ${h}h`;
+    color = '#ef4444';
+  }
+  dot.style.background = color;
+  txt.textContent = label;
+}
 
 // ═══════════════════════════════════════════════════
 // URL ROUTER
