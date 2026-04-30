@@ -3339,14 +3339,18 @@ function computeNerdStats(){
   function isClutch(ev){
     if((ev.period||0)<4)return false;
     if(ev.periodType==='OVERTIME')return Math.abs(ev.lead||0)<=8;
-    const gt=ev.gt||'99:99';
-    const mins=parseInt(gt.split(':')[0])||99;
-    return mins<=3&&Math.abs(ev.lead||0)<=5;
+    // FIBA gt = elapsed time (ne remaining!)
+    // 10-min četrtine: zadnje 3 min = gt >= 7:00
+    const gt=ev.gt||'00:00';
+    const parts=gt.split(':');
+    const elapsed=parseInt(parts[0]||0)*60+(parseFloat(parts[1]||0));
+    const remaining=600-elapsed; // 600s = 10 min
+    return remaining<=180&&Math.abs(ev.lead||0)<=5; // zadnje 3 min, razlika ≤5
   }
 
   function initStats(idx){
     if(!stats[idx])stats[idx]={
-      clutch:{pts:0,fgm:0,fga:0,W:0,L:0,tov:0,ast:0},
+      clutch:{pts:0,fgm:0,fga:0,W:0,L:0,tov:0,ast:0,_fgmRaw:0},
       quarters:{1:{pts:0},2:{pts:0},3:{pts:0},4:{pts:0}},
       shots:{drivinglayup:{a:0,m:0},jumpshot:{a:0,m:0},pullupjumpshot:{a:0,m:0},
              stepbackjumpshot:{a:0,m:0},floatingjumpshot:{a:0,m:0},hookshot:{a:0,m:0},
@@ -3400,7 +3404,8 @@ function computeNerdStats(){
       if(isClutch(ev)){
         if((ev.actionType==='2pt'||ev.actionType==='3pt'||ev.actionType==='freethrow')&&made){
           const pts=ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:1;
-          s.clutch.pts+=pts;s.clutch.fgm++;
+          s.clutch.pts+=pts;
+          if(ev.actionType!=='freethrow') s.clutch._fgmRaw++;
         }
         if(ev.actionType==='2pt'||ev.actionType==='3pt')s.clutch.fga++;
         if(ev.actionType==='turnover')s.clutch.tov++;
@@ -3416,6 +3421,10 @@ function computeNerdStats(){
     });
   });
 
+  // Sanity: cap fgm to fga (prevents >100% FG%)
+  Object.values(stats).forEach(s => {
+    s.clutch.fgm = Math.min(s.clutch._fgmRaw, s.clutch.fga);
+  });
   scoringRuns.sort((a,b)=>b.pts-a.pts);
   return {stats,scoringRuns};
 }
@@ -3450,8 +3459,10 @@ function renderClutch({stats}){
   const e=Object.entries(stats);
   return '<div class="nerd-grid">'+
     mkCard('Clutch točke','#ef4444','🎯',e,s=>s.clutch.pts,v=>v+' <small>pts</small>')+
-    mkCard('Clutch FG%','#f97316','🏀',e.filter(([,s])=>s.clutch.fga>=3),
-      s=>s.clutch.fga>0?Math.round(s.clutch.fgm/s.clutch.fga*100):0,v=>v+'%')+
+    mkCard('Clutch FG%','#f97316','🏀',e.filter(([,s])=>s.clutch.fga>=4),
+      s=>s.clutch.fga>0?Math.round(Math.min(s.clutch.fgm,s.clutch.fga)/s.clutch.fga*100):0,
+      v=>v+'%',
+      (_v,s)=>`${Math.min(s.clutch.fgm,s.clutch.fga)}/${s.clutch.fga} metov`)+
     mkCard('Clutch asistence','#a855f7','🤝',e,s=>s.clutch.ast,v=>v)+
     mkCard('Clutch izgube','#60a5fa','❌',e,s=>s.clutch.tov,v=>v)+
   '</div>';
