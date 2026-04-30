@@ -2996,55 +2996,6 @@ function renderPlayerCompare() {
     {key:F.efe,  label:'EFE',      color:'#10b981', max:25},
   ];
 
-  const selOpts = P.map((p,i) => `<option value="${i}">${p[F.name]} (${TEAM_SHORT[p[F.team]]||p[F.team]})</option>`).join('');
-
-  function radarSvg(p1, p2) {
-    if(!p1 && !p2) return '';
-    const W=280, H=260, cx=W/2, cy=H/2, r=95;
-    const n = statFields.length;
-    const angle = i => (i/n)*Math.PI*2 - Math.PI/2;
-
-    // Grid
-    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:320px">`;
-    [0.25,0.5,0.75,1].forEach(frac => {
-      const pts = statFields.map((_,i)=>{
-        const a=angle(i);
-        return `${cx+Math.cos(a)*r*frac},${cy+Math.sin(a)*r*frac}`;
-      }).join(' ');
-      svg += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
-    });
-    // Axes
-    statFields.forEach((_,i)=>{
-      const a=angle(i);
-      svg += `<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r}" y2="${cy+Math.sin(a)*r}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
-      const lx=cx+Math.cos(a)*(r+14), ly=cy+Math.sin(a)*(r+14);
-      svg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#888" font-size="9">${statFields[i].label}</text>`;
-    });
-
-    // Player polygons
-    [[p1,'#f97316'],[p2,'#3b82f6']].forEach(([p,color])=>{
-      if(!p) return;
-      const pts = statFields.map((sf,i)=>{
-        const val = avg(p, sf.key, sf.computed);
-        const frac = Math.min(val/Math.max(sf.max,0.01), 1);
-        const a = angle(i);
-        return (cx+Math.cos(a)*r*frac).toFixed(1)+','+(cy+Math.sin(a)*r*frac).toFixed(1);
-      }).join(' ');
-      svg += `<polygon points="${pts}" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
-      // Dots on each axis
-      statFields.forEach((sf,i)=>{
-        const val = avg(p, sf.key, sf.computed);
-        const frac = Math.min(val/Math.max(sf.max,0.01), 1);
-        const a = angle(i);
-        const dx = (cx+Math.cos(a)*r*frac).toFixed(1);
-        const dy = (cy+Math.sin(a)*r*frac).toFixed(1);
-        svg += `<circle cx="${dx}" cy="${dy}" r="3" fill="${color}"/>`;
-      });
-    });
-    svg += '</svg>';
-    return svg;
-  }
-
   // Get per-game averages
   function avg(p, key, computed) {
     if(!p || !p[F.T]) return 0;
@@ -3052,13 +3003,125 @@ function renderPlayerCompare() {
     return (p[key]||0)/p[F.T];
   }
 
-  // Compute league max per stat (from all qualified players)
+  // League max per stat
   const leagueMax = {};
   const qualified = P.filter(p => p[F.T] >= 5);
   statFields.forEach(f => {
     const vals = qualified.map(p => avg(p, f.key, f.computed));
     leagueMax[f.key + (f.computed?'_c':'')] = Math.max(...vals, 0.01);
   });
+
+  // Find similar players (Euclidean distance on normalized stats)
+  function findSimilar(pIdx) {
+    if(pIdx < 0) return [];
+    const p = P[pIdx];
+    if(!p) return [];
+    // Normalize each stat to 0-1 range
+    const norm = p2 => statFields.map(f => {
+      const maxV = leagueMax[f.key + (f.computed?'_c':'')] || 1;
+      return avg(p2, f.key, f.computed) / maxV;
+    });
+    const v1 = norm(p);
+    return qualified
+      .map((p2, i) => {
+        const pi = P.indexOf(p2);
+        if(pi === pIdx) return null;
+        const v2 = norm(p2);
+        const dist = Math.sqrt(v1.reduce((s, x, j) => s + (x - v2[j])**2, 0));
+        return {pi, dist};
+      })
+      .filter(Boolean)
+      .sort((a,b) => a.dist - b.dist)
+      .slice(0, 5);
+  }
+
+  // Get all teams
+  const teams = [...new Set(P.map(p => p[F.team]))].sort();
+
+  function teamOpts(sel) {
+    return `<option value="">— Izberi klub —</option>` +
+      teams.map(t => `<option value="${t}" ${sel===t?'selected':''}>${t}</option>`).join('');
+  }
+
+  function playerOpts(team, selIdx) {
+    if(!team) return '<option value="-1">— Najprej izberi klub —</option>';
+    const players = P.map((p,i) => ({p,i}))
+      .filter(({p}) => p[F.team] === team)
+      .sort((a,b) => b.p[F.toc]/Math.max(b.p[F.T],1) - a.p[F.toc]/Math.max(a.p[F.T],1));
+    return `<option value="-1">— Izberi igralca —</option>` +
+      players.map(({p,i}) =>
+        `<option value="${i}" ${i===selIdx?'selected':''}>${p[F.name]} (${(p[F.toc]/Math.max(p[F.T],1)).toFixed(1)} pts)</option>`
+      ).join('');
+  }
+
+  const team1 = window._cmpTeam1 || '';
+  const team2 = window._cmpTeam2 || '';
+  const p1 = compareIdx1 >= 0 ? P[compareIdx1] : null;
+  const p2 = compareIdx2 >= 0 ? P[compareIdx2] : null;
+  const c1 = p1 ? (TEAM_COLORS[p1[F.team]]||'#f97316') : '#f97316';
+  const c2 = p2 ? (TEAM_COLORS[p2[F.team]]||'#3b82f6') : '#3b82f6';
+
+  // Similar players
+  const similar = compareIdx1 >= 0 ? findSimilar(compareIdx1) : [];
+  const similarHtml = similar.length ? `
+    <div style="margin-top:20px">
+      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px">
+        🔍 NAJBOLJ PODOBNI IGRALCI ${p1?'KOT '+p1[F.name]:''}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${similar.map(({pi,dist}) => {
+          const sp = P[pi];
+          const sc = TEAM_COLORS[sp[F.team]]||'#888';
+          const match = Math.max(0, Math.round((1 - dist/3)*100));
+          return `<div onclick="compareIdx2=${pi};window._cmpTeam2='${sp[F.team]}';renderPlayerCompare()"
+            style="background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:10px 14px;cursor:pointer;transition:all .18s;min-width:140px"
+            onmouseover="this.style.borderColor='${sc}'" onmouseout="this.style.borderColor='var(--border2)'">
+            <div style="font-size:.8rem;font-weight:600;color:${sc}">${sp[F.name]}</div>
+            <div style="font-size:.65rem;color:var(--mut)">${TEAM_SHORT[sp[F.team]]||sp[F.team]}</div>
+            <div style="font-size:.7rem;color:var(--green);margin-top:4px;font-family:var(--fh)">${match}% ujemanje</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  // Radar SVG
+  function radarSvg(rp1, rp2) {
+    if(!rp1 && !rp2) return '';
+    const W=280, H=260, cx=W/2, cy=H/2, r=95;
+    const n = statFields.length;
+    const angle = i => (i/n)*Math.PI*2 - Math.PI/2;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:320px">`;
+    [0.25,0.5,0.75,1].forEach(frac => {
+      const pts = statFields.map((_,i)=>{const a=angle(i);return `${cx+Math.cos(a)*r*frac},${cy+Math.sin(a)*r*frac}`;}).join(' ');
+      svg += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"/>`;
+    });
+    statFields.forEach((_,i)=>{
+      const a=angle(i);
+      svg += `<line x1="${cx}" y1="${cy}" x2="${cx+Math.cos(a)*r}" y2="${cy+Math.sin(a)*r}" stroke="rgba(255,255,255,.12)" stroke-width="1"/>`;
+      const lx=cx+Math.cos(a)*(r+14), ly=cy+Math.sin(a)*(r+14);
+      svg += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#888" font-size="9">${statFields[i].label}</text>`;
+    });
+    [[rp1,'#f97316'],[rp2,'#3b82f6']].forEach(([p,color])=>{
+      if(!p) return;
+      const pts = statFields.map((sf,i)=>{
+        const maxV = leagueMax[sf.key+(sf.computed?'_c':'')] || 1;
+        const val = avg(p, sf.key, sf.computed);
+        const frac = Math.min(val/maxV, 1);
+        const a = angle(i);
+        return (cx+Math.cos(a)*r*frac).toFixed(1)+','+(cy+Math.sin(a)*r*frac).toFixed(1);
+      }).join(' ');
+      svg += `<polygon points="${pts}" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>`;
+      statFields.forEach((sf,i)=>{
+        const maxV = leagueMax[sf.key+(sf.computed?'_c':'')] || 1;
+        const val = avg(p, sf.key, sf.computed);
+        const frac = Math.min(val/maxV, 1);
+        const a = angle(i);
+        svg += `<circle cx="${(cx+Math.cos(a)*r*frac).toFixed(1)}" cy="${(cy+Math.sin(a)*r*frac).toFixed(1)}" r="3" fill="${color}"/>`;
+      });
+    });
+    svg += '</svg>';
+    return svg;
+  }
 
   function statBar(label, a1, a2, key, computed) {
     const maxVal = leagueMax[key + (computed?'_c':'')] || 1;
@@ -3067,34 +3130,22 @@ function renderPlayerCompare() {
     const winner = a1>a2?'left':a2>a1?'right':'tie';
     return `<div style="margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px">
-        <!-- Player 1 bar (orange, goes LEFT) -->
         <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:6px">
-          <span style="font-size:.72rem;font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--mut)'}">
-            ${a1.toFixed(1)}
-          </span>
+          <span style="font-size:.72rem;font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--mut)'}">${a1.toFixed(1)}</span>
           <div style="flex:1;display:flex;justify-content:flex-end;height:8px;border-radius:4px 0 0 4px;overflow:hidden;background:rgba(255,255,255,.05)">
             <div style="width:${pct1}%;background:#f97316;opacity:${winner==='left'?1:.45};border-radius:4px 0 0 4px"></div>
           </div>
         </div>
-        <!-- Center label -->
         <div style="width:80px;text-align:center;font-size:.65rem;color:var(--mut);flex-shrink:0">${label}</div>
-        <!-- Player 2 bar (blue, goes RIGHT) -->
         <div style="flex:1;display:flex;align-items:center;gap:6px">
           <div style="flex:1;height:8px;border-radius:0 4px 4px 0;background:rgba(255,255,255,.05);position:relative;overflow:hidden">
             <div style="position:absolute;left:0;top:0;height:100%;width:${pct2}%;background:#3b82f6;opacity:${winner==='right'?1:.45};border-radius:0 4px 4px 0"></div>
           </div>
-          <span style="font-size:.72rem;font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--mut)'}">
-            ${a2.toFixed(1)}
-          </span>
+          <span style="font-size:.72rem;font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--mut)'}">${a2.toFixed(1)}</span>
         </div>
       </div>
     </div>`;
   }
-
-  const p1 = compareIdx1 >= 0 ? P[compareIdx1] : null;
-  const p2 = compareIdx2 >= 0 ? P[compareIdx2] : null;
-  const c1 = p1 ? (TEAM_COLORS[p1[F.team]]||'#f97316') : '#f97316';
-  const c2 = p2 ? (TEAM_COLORS[p2[F.team]]||'#3b82f6') : '#3b82f6';
 
   const statBars = p1||p2 ? statFields.map(f => {
     const a1 = avg(p1, f.key, f.computed);
@@ -3103,32 +3154,50 @@ function renderPlayerCompare() {
   }).join('') : '';
 
   wrap.innerHTML = `
+    <!-- Klub + Igralec dropdowns -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
-      <select onchange="compareIdx1=parseInt(this.value);renderPlayerCompare()"
-        style="background:var(--card2);border:1px solid var(--border2);color:#f97316;border-radius:8px;padding:8px;font-size:.8rem">
-        <option value="-1">— Izberi igralca 1 —</option>${selOpts}
-      </select>
-      <select onchange="compareIdx2=parseInt(this.value);renderPlayerCompare()"
-        style="background:var(--card2);border:1px solid var(--border2);color:#3b82f6;border-radius:8px;padding:8px;font-size:.8rem">
-        <option value="-1">— Izberi igralca 2 —</option>${selOpts}
-      </select>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <select onchange="window._cmpTeam1=this.value;compareIdx1=-1;renderPlayerCompare()"
+          style="background:var(--card2);border:1px solid rgba(249,115,22,.4);color:#f97316;border-radius:8px;padding:8px;font-size:.8rem">
+          ${teamOpts(team1)}
+        </select>
+        <select onchange="compareIdx1=parseInt(this.value);renderPlayerCompare()"
+          style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-size:.8rem"
+          ${!team1?'disabled':''}>
+          ${playerOpts(team1, compareIdx1)}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <select onchange="window._cmpTeam2=this.value;compareIdx2=-1;renderPlayerCompare()"
+          style="background:var(--card2);border:1px solid rgba(59,130,246,.4);color:#3b82f6;border-radius:8px;padding:8px;font-size:.8rem">
+          ${teamOpts(team2)}
+        </select>
+        <select onchange="compareIdx2=parseInt(this.value);renderPlayerCompare()"
+          style="background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-size:.8rem"
+          ${!team2?'disabled':''}>
+          ${playerOpts(team2, compareIdx2)}
+        </select>
+      </div>
     </div>
+
     ${p1||p2 ? `
-    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-bottom:16px">
       <div style="text-align:center">
         ${p1?`<div style="font-size:1.1rem;font-weight:700;color:${c1}">${p1[F.name]}</div>
         <div style="font-size:.75rem;color:${c1};opacity:.7">${TEAM_SHORT[p1[F.team]]||p1[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${p1[F.T]} tekem</div>`:'<div style="color:var(--mut)">—</div>'}
+        <div style="font-size:.65rem;color:var(--mut)">${p1[F.T]} tekem</div>`:''}
       </div>
       <div style="text-align:center">${radarSvg(p1,p2)}</div>
       <div style="text-align:center">
         ${p2?`<div style="font-size:1.1rem;font-weight:700;color:${c2}">${p2[F.name]}</div>
         <div style="font-size:.75rem;color:${c2};opacity:.7">${TEAM_SHORT[p2[F.team]]||p2[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${p2[F.T]} tekem</div>`:'<div style="color:var(--mut)">—</div>'}
+        <div style="font-size:.65rem;color:var(--mut)">${p2[F.T]} tekem</div>`:''}
       </div>
     </div>
-    <div style="margin-top:16px">${statBars}</div>
-    ` : `<div class="empty">Izberi dva igralca za primerjavo</div>`}`;
+    <div>${statBars}</div>
+    ` : `<div class="empty">Izberi klub in igralca za primerjavo</div>`}
+
+    ${similarHtml}`;
 }
 
 // ═══════════════════════════════════════
