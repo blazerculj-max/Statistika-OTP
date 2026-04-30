@@ -651,7 +651,7 @@ select, input, .si{font-size:16px}
   <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
   <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
   <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
-  <button class="nb" onclick="showTab('obiski')">👥 OBISKI TEKEM</button>
+  <button class="nb" onclick="showTab('mvp')">🏆 MVP</button>
 </nav>
 
 <div class="content">
@@ -687,16 +687,7 @@ select, input, .si{font-size:16px}
     </div>
   </div>
 
-  <div id="tab-obiski" class="tab" style="padding:0;height:calc(100vh - 120px)">
-    <iframe
-      id="obiski-iframe"
-      src="about:blank"
-      style="width:100%;height:100%;border:none;border-radius:0 0 10px 10px"
-      allow="clipboard-write"
-    ></iframe>
-  </div>
-
-  <div id="tab-live" class="tab">
+    <div id="tab-live" class="tab">
     <div class="ctrls" style="flex-wrap:wrap;gap:10px">
       <div id="live-last-update" style="font-size:.7rem;color:var(--mut);font-family:var(--fm)">Posodabljam...</div>
       <div style="margin-left:auto;display:flex;gap:6px">
@@ -827,6 +818,9 @@ select, input, .si{font-size:16px}
     </div>
     <!-- Standings for selected round -->
     <div id="race-standings" style="margin-top:8px"></div>
+  </div>
+  <div id="tab-mvp" class="tab">
+    <div id="mvp-wrap"></div>
   </div>
   <div id="tab-compare" class="tab">
     <div class="ctrls">
@@ -1353,18 +1347,22 @@ function aggregatePlayers(phaseFilter) {
         // Liga3 ne beleži minut (minutes=0) — filtriramo samo po played + ali ima vsaj točke
       const hasStats = ps.points > 0 || ps.twoPM > 0 || ps.threePM > 0 || ps.fTM > 0;
       if (!ps.played || (!hasStats && ps.minutes === 0)) return;
-        const key = ps.playerId + '_' + teamName;
+        const key = String(ps.playerId); // merge po PID, ne po ekipi
 
         if (!byPid[key]) {
           byPid[key] = {
             name: ps.matchTeamPlayerFirstname.trim() + ' ' + ps.matchTeamPlayerLastname,
             team: teamName,
+            teams: new Set([teamName]), // track all teams
             born: parseInt(ps.matchTeamPlayerYearOfBirth) || 0,
             pid: ps.playerId,
             T:0, MIN:0, fg2m:0, fg2a:0, fg3m:0, fg3a:0, ftm:0, fta:0,
             toc:0, nap:0, obr:0, pod:0, sto:0, izs:0, izg:0, pz:0,
             blk:0, pre:0, pm:0, efe:0, pip:0, fb:0, sc:0
           };
+        } else {
+          // Track additional teams (prestop med sezono)
+          byPid[key].teams.add(teamName);
         }
         const p = byPid[key];
         p.T++; p.MIN += ps.minutes;
@@ -1407,6 +1405,15 @@ function aggregatePlayers(phaseFilter) {
         }
       });
     });
+  });
+
+  // Set combined team name for transferred players
+  Object.values(byPid).forEach(p => {
+    if(p.teams && p.teams.size > 1) {
+      // Sort by first appearance - use current team last
+      const teamList = [...p.teams];
+      p.team = teamList.join(' / ');
+    }
   });
 
   // Convert to array in same format as old P
@@ -1632,9 +1639,9 @@ const COLS=[
   {k:'obr',lbl:'OBR',fmt:(p,m)=>m==='avg'?fmt(p[F.obr]/p[F.T]):p[F.obr],tip:'Obrambni skoki'},
   {k:'sk',lbl:'SK',fmt:(p,m)=>{const v=p[F.nap]+p[F.obr];return m==='avg'?fmt(v/p[F.T]):v},tip:'SK — Skupni skoki\nNapadalni (NAP) + Obrambni (OBR) skoki.'},
   {k:'pod',lbl:'POD',fmt:(p,m)=>m==='avg'?fmt(p[F.pod]/p[F.T]):p[F.pod],tip:'POD — Podaje (asistence)\nPodaje ki neposredno vodijo do koša.'},
-  {k:'sto',lbl:'STO',fmt:(p,m)=>m==='avg'?fmt(p[F.sto]/p[F.T]):p[F.sto],tip:'STO — Ukradene žoge'},
+  {k:'sto',lbl:'STL',fmt:(p,m)=>m==='avg'?fmt(p[F.sto]/p[F.T]):p[F.sto],tip:'STL — Ukradene žoge (Steals)'},
   {k:'izg',lbl:'IZG',fmt:(p,m)=>m==='avg'?fmt(p[F.izg]/p[F.T]):p[F.izg],tip:'IZG — Izgube žoge\nKoliko krat je nasprotnik prevzel žogo.'},
-  {k:'pz',lbl:'PŽ',fmt:(p,m)=>m==='avg'?fmt(p[F.pz]/p[F.T]):p[F.pz],tip:'Osebne napake'},
+  {k:'pz',lbl:'PF',fmt:(p,m)=>m==='avg'?fmt(p[F.pz]/p[F.T]):p[F.pz],tip:'PF — Osebne napake (Personal Fouls)ake'},
   {k:'blk',lbl:'BLK',fmt:(p,m)=>m==='avg'?fmt(p[F.blk]/p[F.T]):p[F.blk],tip:'BLK — Blokade\nBLK = blokirani meti nasprotnikov (dal)\nPRE = lastni meti ki so bili blokirani (prejel)'},
   {k:'pm_p',lbl:'+/−',fmt:(p,m)=>m==='avg'?fmt(p[F.pm]/p[F.T]):(p[F.pm]>0?'+':'')+p[F.pm],tip:'+/− — Plus/Minus\nRazlika v rezultatu ko je ta igralec na igrišču.\nPozitivno = ekipa vodi ko igra, negativno = zaostaja.'},
   {k:'efe',lbl:'EFE',fmt:(p,m)=>m==='avg'?fmt(p[F.efe]/p[F.T]):p[F.efe],tip:'EFE — Efektivnost (KZS formula)\nTOČ + SK + POD + STO + BLK - zgrešeni meti - IZG - napake\nUradno merilo KZS. Povprečje ≈ 10-15/tekmo.'},
@@ -1696,6 +1703,7 @@ function showTab(t){
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
+  if(t==='mvp')renderMVP();
   if(t==='race')initRaceChart();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
@@ -2319,7 +2327,7 @@ const LEADER_CATS=[
   {lbl:'2T %',icon:'🎯',color:'#f59e0b',k:'fg2pct',pct:true,m:p=>p[F.fg2m],a:p=>p[F.fg2a],minKey:'min2T'},
   {lbl:'3T %',icon:'🌟',color:'#06b6d4',k:'fg3pct',pct:true,m:p=>p[F.fg3m],a:p=>p[F.fg3a],minKey:'min3T'},
   {lbl:'PM %',icon:'🎰',color:'#34d399',k:'fgpct',pct:true,m:p=>p[F.ftm],a:p=>p[F.fta],minKey:'minPM'},
-  {lbl:'STO',icon:'🕵️',color:'#f87171',k:'sto',fi:F.sto,div:true},
+  {lbl:'STL',icon:'🕵️',color:'#f87171',k:'sto',fi:F.sto,div:true},
   {lbl:'True Shooting %',icon:'🎯',color:'#a78bfa',k:'ts',ts:true},
   {lbl:'Assist / Turnover',icon:'⚖️',color:'#fb923c',k:'at',at:true},
   {lbl:'Usage Rate',icon:'🔄',color:'#38bdf8',k:'usg',usg:true},
@@ -2590,7 +2598,7 @@ function showPlayer(idx){
     {lbl:'TOČ',val:t>0?p[F.toc]/t:0,max:leagueMax(x=>x[F.toc]/x[F.T])},
     {lbl:'SK',val:t>0?totalSk/t:0,max:leagueMax(x=>(x[F.nap]+x[F.obr])/x[F.T])},
     {lbl:'POD',val:t>0?p[F.pod]/t:0,max:leagueMax(x=>x[F.pod]/x[F.T])},
-    {lbl:'STO',val:t>0?p[F.sto]/t:0,max:leagueMax(x=>x[F.sto]/x[F.T])},
+    {lbl:'STL',val:t>0?p[F.sto]/t:0,max:leagueMax(x=>x[F.sto]/x[F.T])},
     {lbl:'BLK',val:t>0?p[F.blk]/t:0,max:leagueMax(x=>x[F.blk]/x[F.T])},
     {lbl:'EFE',val:t>0?p[F.efe]/t:0,max:leagueMax(x=>x[F.efe]/x[F.T])},
   ];
@@ -2740,23 +2748,23 @@ async function loadPlayerCareer() {
     const compResp = await fetch(`https://api.kzs.si/api/v1/public/players/${pid}/competitions`)
       .then(r => r.json()).catch(() => null);
 
-    // Filter: samo članske lige (1./2./3. SKL), preskočimo pokale, reprezentanco, mladinske
+    // Filter: samo članske lige (1./2./3. SKL)
+    // Ne preverjamo c.type ker stare sezone ga nimajo
     const leagueComps = (compResp?.data?.competitionObjs || [])
       .filter(c =>
         c.category === 'ABSOLUTE' &&
-        c.type === 'LEAGUE' &&
-        ['FIRST','SECOND','THIRD'].includes(c.rank)
+        ['FIRST','SECOND','THIRD'].includes(c.rank) &&
+        (!c.type || c.type === 'LEAGUE') // type ni vedno prisoten
       )
       .sort((a,b) => b.competitionStartYear - a.competitionStartYear);
 
     // Map startYear to seasonId (startYear 2025 = seasonId 26)
     const yearToSeasonId = y => parseInt(y) - 1999;
 
-    // Get unique seasonIds - current + last 3 seasons only
-    const allSeasonIds = [...new Set(leagueComps.map(c => yearToSeasonId(c.competitionStartYear)))]
-      .filter(sid => sid >= 13 && sid <= 26)
+    // Vse članske sezone od začetka kariere
+    const seasonIds = [...new Set(leagueComps.map(c => yearToSeasonId(c.competitionStartYear)))]
+      .filter(sid => sid >= 1 && sid <= 30) // vse sezone KZS sistema
       .sort((a,b) => b - a);
-    const seasonIds = allSeasonIds; // vse sezone
     // Fetch current team + stats in parallel
     const [teamResp, ...results] = await Promise.all([
       fetch(`https://api.kzs.si/api/v1/public/teamPlayers/byPlayer/${pid}`)
@@ -4295,6 +4303,233 @@ function updateIndicator(ts) {
   }
   dot.style.background = color;
   txt.textContent = label;
+}
+
+// ═══════════════════════════════════════════════════
+// MVP TRACKER
+// ═══════════════════════════════════════════════════
+function calcMvpScore(p, matches) {
+  // MVP Score = pts*1.0 + reb*0.7 + ast*0.8 + stl*1.5 + blk*1.5 - tov*0.8 + efe*0.3
+  const t = Math.max(p[F.T], 1);
+  return (
+    (p[F.toc]/t) * 1.0 +
+    ((p[F.nap]+p[F.obr])/t) * 0.7 +
+    (p[F.pod]/t) * 0.8 +
+    (p[F.sto]/t) * 1.5 +
+    (p[F.blk]/t) * 1.5 -
+    (p[F.izg]/t) * 0.8 +
+    (p[F.efe]/t) * 0.3
+  );
+}
+
+function mvpCard(player, score, label, color, rank, showStats=true) {
+  if(!player) return '';
+  const pi = P.indexOf(player);
+  const t = Math.max(player[F.T], 1);
+  const tc = TEAM_COLORS[player[F.team]] || '#888';
+  const medals = ['🥇','🥈','🥉'];
+  const medal = medals[rank] || `${rank+1}.`;
+  return `<div onclick="showPlayer(${pi})"
+    style="background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:16px 18px;cursor:pointer;transition:all .18s ease;
+    border-left:3px solid ${tc}"
+    onmouseover="this.style.borderColor='${tc}';this.style.transform='translateY(-2px)'"
+    onmouseout="this.style.borderColor='var(--border)';this.style.borderLeftColor='${tc}';this.style.transform='none'">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+      <div>
+        <div style="font-size:.65rem;color:var(--mut);letter-spacing:.08em;margin-bottom:4px">${label}</div>
+        <div style="font-size:1.3rem;margin-bottom:2px">${medal}</div>
+        <div style="font-weight:700;font-size:.95rem">${player[F.name]}</div>
+        <div style="font-size:.72rem;color:${tc};margin-top:2px">${player[F.team]}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:var(--fh);font-size:2rem;font-weight:800;color:${color};line-height:1">${score.toFixed(1)}</div>
+        <div style="font-size:.6rem;color:var(--mut);letter-spacing:.06em">MVP SCORE</div>
+      </div>
+    </div>
+    ${showStats ? `<div style="display:flex;gap:12px;flex-wrap:wrap">
+      ${[
+        {v:(player[F.toc]/t).toFixed(1),l:'PTS',c:'var(--acc)'},
+        {v:((player[F.nap]+player[F.obr])/t).toFixed(1),l:'SK',c:'#60a5fa'},
+        {v:(player[F.pod]/t).toFixed(1),l:'AS',c:'#a855f7'},
+        {v:(player[F.efe]/t).toFixed(1),l:'EFE',c:'#22c55e'},
+        {v:player[F.T],l:'TM',c:'var(--mut)'}
+      ].map(x=>`<div style="text-align:center">
+        <div style="font-family:var(--fh);font-size:.95rem;color:${x.c}">${x.v}</div>
+        <div style="font-size:.58rem;color:var(--mut)">${x.l}</div>
+      </div>`).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
+function getMvpByRound(round) {
+  // Get players who played in this round
+  const roundMatchIds = new Set(
+    allMatches.filter(m => m.round === round && m.status === 'FINISHED').map(m => m.id)
+  );
+  if(!roundMatchIds.size) return null;
+
+  // Get per-round stats from playerGameLog
+  const scores = [];
+  P.forEach((p, pi) => {
+    const log = playerGameLog[p[F.pid]];
+    if(!log) return;
+    const game = log.find(g => roundMatchIds.has(g.matchId));
+    if(!game) return;
+    // Score for this game
+    const s = game.pts*1.0 + game.reb*0.7 + game.ast*0.8 +
+               (game.stl||0)*1.5 + (game.blk||0)*1.5 -
+               (game.tov||0)*0.8 + game.efe*0.3;
+    scores.push({p, pi, s, game});
+  });
+  scores.sort((a,b) => b.s - a.s);
+  return scores.slice(0, 3);
+}
+
+function renderMVP() {
+  const wrap = document.getElementById('mvp-wrap');
+  if(!wrap || !P.length) return;
+
+  const qual = P.filter(p => p[F.T] >= 5);
+  if(!qual.length) { wrap.innerHTML = '<div class="empty">Ni dovolj podatkov</div>'; return; }
+
+  // Overall MVP ranking (top 10)
+  // Dynamic min games: <K10 = 0, K10-K20 = min 10, K20+ = min 20
+  const maxRd = Math.max(...allMatches.filter(m=>m.status==='FINISHED'&&
+    m.competitions?.[0]?.competitionPhaseName==='Redni del').map(m=>m.round||0), 0);
+  const minGamesForMvp = maxRd < 10 ? 1 : maxRd < 20 ? 10 : 20;
+
+  const rdPlayers = P.filter(p => {
+    const log = playerGameLog[p[F.pid]];
+    if(!log) return false;
+    const rdGames = log.filter(g => {
+      const m = allMatches.find(x => x.id === g.matchId);
+      return m?.competitions?.[0]?.competitionPhaseName === 'Redni del';
+    });
+    return rdGames.length >= minGamesForMvp;
+  });
+
+  const ranked = rdPlayers
+    .map(p => ({p, score: calcMvpScore(p)}))
+    .sort((a,b) => b.score - a.score);
+
+  // MVP Sezone - top 3
+  const mvpSezonaHtml = ranked.slice(0,3).map(({p,score},i) =>
+    mvpCard(p, score, `🏆 MVP SEZONE — #${i+1}`, '#fbbf24', i)
+  ).join('');
+
+  // Playoff MVP
+  const playoffPlayers = P.filter(p => {
+    const log = playerGameLog[p[F.pid]];
+    if(!log) return false;
+    const pfGames = log.filter(g => {
+      const m = allMatches.find(x => x.id === g.matchId);
+      const ph = m?.competitions?.[0]?.competitionPhaseName || '';
+      return ['Četrtfinale','Polfinale','Finale','Osmina finala'].includes(ph);
+    });
+    return pfGames.length >= 2;
+  });
+
+  const playoffRanked = playoffPlayers.map(p => {
+    const log = playerGameLog[p[F.pid]] || [];
+    const pfGames = log.filter(g => {
+      const m = allMatches.find(x => x.id === g.matchId);
+      const ph = m?.competitions?.[0]?.competitionPhaseName || '';
+      return ['Četrtfinale','Polfinale','Finale','Osmina finala'].includes(ph);
+    });
+    if(!pfGames.length) return null;
+    const avgPts = pfGames.reduce((s,g)=>s+g.pts,0)/pfGames.length;
+    const avgReb = pfGames.reduce((s,g)=>s+g.reb,0)/pfGames.length;
+    const avgAst = pfGames.reduce((s,g)=>s+g.ast,0)/pfGames.length;
+    const avgEfe = pfGames.reduce((s,g)=>s+g.efe,0)/pfGames.length;
+    const score = avgPts*1.0 + avgReb*0.7 + avgAst*0.8 + avgEfe*0.3;
+    return {p, score, games: pfGames.length};
+  }).filter(Boolean).sort((a,b)=>b.score-a.score);
+
+  const playoffMvpHtml = playoffRanked.slice(0,3).map(({p,score},i) =>
+    mvpCard(p, score, `🏅 MVP KONČNICE — #${i+1}`, '#a855f7', i)
+  ).join('');
+
+  // MVP po krogih (zadnjih 5 krogov)
+  const maxRound = Math.max(...allMatches.filter(m=>m.status==='FINISHED').map(m=>m.round||0));
+  const roundMvps = [];
+  for(let r = maxRound; r >= Math.max(1, maxRound-4); r--) {
+    const top = getMvpByRound(r);
+    if(top && top.length) roundMvps.push({round:r, top});
+  }
+
+  const roundMvpHtml = roundMvps.map(({round, top}) => {
+    const best = top[0];
+    const tc = TEAM_COLORS[best.p[F.team]] || '#888';
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer"
+      onclick="showPlayer(${best.pi})">
+      <div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em;margin-bottom:8px">🏀 MVP KROGA ${round}</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="flex:1">
+          <div style="font-weight:700;color:${tc}">${best.p[F.name]}</div>
+          <div style="font-size:.7rem;color:var(--mut)">${TEAM_SHORT[best.p[F.team]]||best.p[F.team]}</div>
+        </div>
+        <div style="display:flex;gap:10px;font-family:var(--fh)">
+          <div style="text-align:center"><div style="color:var(--acc);font-size:1.1rem">${best.game.pts}</div><div style="font-size:.58rem;color:var(--mut)">PTS</div></div>
+          <div style="text-align:center"><div style="font-size:1.1rem">${best.game.reb}</div><div style="font-size:.58rem;color:var(--mut)">SK</div></div>
+          <div style="text-align:center"><div style="font-size:1.1rem">${best.game.ast}</div><div style="font-size:.58rem;color:var(--mut)">AS</div></div>
+          <div style="text-align:center"><div style="color:#22c55e;font-size:1.1rem">${best.game.efe.toFixed(0)}</div><div style="font-size:.58rem;color:var(--mut)">EFE</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Top 10 MVP leaderboard
+  const leaderboardHtml = `
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
+      <table class="standings-table">
+        <thead><tr>
+          <th>M</th><th>IGRALEC</th><th>EKIPA</th><th>T</th>
+          <th style="color:var(--acc)">PTS</th><th>SK</th><th>AS</th>
+          <th style="color:#22c55e">EFE</th>
+          <th style="color:#fbbf24">MVP ★</th>
+        </tr></thead>
+        <tbody>${ranked.slice(0,10).map(({p,score},i)=>{
+          const t=Math.max(p[F.T],1);
+          const tc=TEAM_COLORS[p[F.team]]||'#888';
+          const medals=['🥇','🥈','🥉'];
+          return `<tr onclick="showPlayer(${P.indexOf(p)})" style="cursor:pointer">
+            <td>${medals[i]||i+1+'.'}</td>
+            <td style="font-weight:600">${p[F.name]}</td>
+            <td style="color:${tc};font-size:.72rem">${TEAM_SHORT[p[F.team]]||p[F.team]}</td>
+            <td>${p[F.T]}</td>
+            <td style="color:var(--acc);font-weight:700">${(p[F.toc]/t).toFixed(1)}</td>
+            <td>${((p[F.nap]+p[F.obr])/t).toFixed(1)}</td>
+            <td>${(p[F.pod]/t).toFixed(1)}</td>
+            <td style="color:#22c55e">${(p[F.efe]/t).toFixed(1)}</td>
+            <td style="color:#fbbf24;font-family:var(--fh);font-weight:700">${score.toFixed(1)}</td>
+          </tr>`;
+        }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  wrap.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">
+      ${mvpSezonaHtml}
+    </div>
+    ${playoffMvpHtml ? `
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:16px 0 10px">🏅 MVP KONČNICE</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">
+      ${playoffMvpHtml}
+    </div>` : ''}
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:16px 0 10px">🏀 MVP PO KROGIH (zadnjih 5)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:24px">
+      ${roundMvpHtml || '<div class="empty">Ni podatkov po krogih</div>'}
+    </div>
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:16px 0 10px">📊 MVP LESTVICA — TOP 10</div>
+    ${leaderboardHtml}
+    <div style="font-size:.65rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">
+      MVP Score = PTS×1.0 + SK×0.7 + AS×0.8 + STL×1.5 + BLK×1.5 − TOV×0.8 + EFE×0.3
+    </div>
+    <div style="font-size:.65rem;color:var(--mut);margin-top:4px;font-family:var(--fm)">
+      Min. tekem za MVP sezone: ${minGamesForMvp} (K${maxRd} · do K10=0, K10-K20=10, K20+=20)
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════
