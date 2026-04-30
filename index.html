@@ -644,6 +644,7 @@ select, input, .si{font-size:16px}
   <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
   <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
   <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
+  <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
   <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
   <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
   <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
@@ -808,6 +809,25 @@ select, input, .si{font-size:16px}
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
+  <div id="tab-race" class="tab">
+    <div class="ctrls">
+      <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Gibanje ekip na lestvici po krogih — redni del</div>
+    </div>
+    <!-- Round slider -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span style="font-size:.72rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">K1</span>
+      <input type="range" id="race-slider" min="1" max="30" value="1" step="1"
+        oninput="raceRound=parseInt(this.value);drawRaceChart();drawRaceStandings()"
+        style="flex:1;accent-color:var(--acc);cursor:pointer">
+      <span id="race-round-lbl" style="font-family:var(--fh);font-size:.85rem;color:var(--acc);min-width:36px;text-align:right">K1</span>
+    </div>
+    <!-- Canvas -->
+    <div id="race-wrap" style="position:relative;margin-bottom:20px">
+      <canvas id="race-canvas" style="width:100%;border-radius:12px;background:var(--card);border:1px solid var(--border)"></canvas>
+    </div>
+    <!-- Standings for selected round -->
+    <div id="race-standings" style="margin-top:8px"></div>
+  </div>
   <div id="tab-compare" class="tab">
     <div class="ctrls">
       <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Primerjaj dva igralca po povprečju na tekmo</div>
@@ -1614,6 +1634,7 @@ function showTab(t){
   if(t==='lestvica')renderStandings();
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
+  if(t==='race')initRaceChart();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
@@ -3776,6 +3797,258 @@ async function closeMatchOverlay(){
 // INIT
 // ═══════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════
+// RACE CHART
+// ═══════════════════════════════════════════════════
+let raceRound = 0;
+let raceMaxRound = 0;
+let raceTimer = null;
+let raceData = {}; // team → [{round, pts, pos}]
+
+function buildRaceData() {
+  const rdMatches = allMatches
+    .filter(m => m.status === 'FINISHED' &&
+      m.competitions?.[0]?.competitionPhaseName === 'Redni del')
+    .sort((a,b) => a.round - b.round);
+
+  raceMaxRound = Math.max(...rdMatches.map(m => m.round), 0);
+
+  // Build cumulative standings per round
+  const teams = {};
+  const init = name => { if(!teams[name]) teams[name] = {W:0,L:0,ptsFor:0,ptsAga:0}; };
+
+  raceData = {};
+
+  for(let r = 1; r <= raceMaxRound; r++) {
+    const roundMatches = rdMatches.filter(m => m.round <= r);
+    const standings = {};
+    roundMatches.forEach(m => {
+      const t1=m.firstTeamName, t2=m.secondTeamName;
+      if(!standings[t1]) standings[t1]={W:0,L:0,pts:0};
+      if(!standings[t2]) standings[t2]={W:0,L:0,pts:0};
+      const s1=m.firstTeamScore||0, s2=m.secondTeamScore||0;
+      if(s1>s2) { standings[t1].W++; standings[t2].L++; }
+      else       { standings[t2].W++; standings[t1].L++; }
+      standings[t1].pts = standings[t1].W*2 + standings[t1].L;
+      standings[t2].pts = standings[t2].W*2 + standings[t2].L;
+    });
+
+    // Sort by pts to get position
+    const sorted = Object.entries(standings)
+      .sort((a,b) => b[1].pts - a[1].pts);
+
+    sorted.forEach(([name, st], pos) => {
+      if(!raceData[name]) raceData[name] = [];
+      raceData[name].push({round:r, pos:pos+1, pts:st.pts});
+    });
+  }
+}
+
+function drawRaceChart() {
+  const canvas = document.getElementById('race-canvas');
+  if(!canvas) return;
+
+  const teams = Object.keys(raceData);
+  const nTeams = teams.length;
+  if(!nTeams) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  const H = Math.max(400, nTeams * 36 + 80);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD_L = 160, PAD_R = 80, PAD_T = 40, PAD_B = 30;
+  const chartW = W - PAD_L - PAD_R;
+  const chartH = H - PAD_T - PAD_B;
+  const maxRound = raceRound || raceMaxRound;
+  const currentRound = Math.min(raceRound || raceMaxRound, raceMaxRound);
+
+  // Background
+  ctx.fillStyle = '#0e0e1c';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  for(let r = 1; r <= raceMaxRound; r++) {
+    const x = PAD_L + (r-1)/(raceMaxRound-1||1) * chartW;
+    ctx.strokeStyle = r === currentRound ? 'rgba(255,255,255,.15)' : 'rgba(255,255,255,.04)';
+    ctx.lineWidth = r === currentRound ? 1.5 : 1;
+    ctx.beginPath(); ctx.moveTo(x, PAD_T); ctx.lineTo(x, H-PAD_B); ctx.stroke();
+    if(r % 5 === 0 || r === 1 || r === raceMaxRound) {
+      ctx.fillStyle = 'rgba(255,255,255,.3)';
+      ctx.font = `${10 * dpr / dpr}px DM Sans, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText('K' + r, x, H - PAD_B + 16);
+    }
+  }
+
+  // Position lines for each team
+  teams.forEach(team => {
+    const data = raceData[team] || [];
+    const color = TEAM_COLORS[team] || '#888';
+    const visData = data.filter(d => d.round <= currentRound);
+    if(visData.length < 1) return;
+
+    const yPos = pos => PAD_T + (pos-1)/(nTeams-1||1) * chartH;
+    const xRound = r => PAD_L + (r-1)/(raceMaxRound-1||1) * chartW;
+
+    // Draw full line (all rounds)
+    const allData = data;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.6;
+    ctx.beginPath();
+    allData.forEach((d, i) => {
+      const x = xRound(d.round);
+      const y = yPos(d.pos);
+      if(i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Draw dot at current position
+    if(visData.length > 0) {
+      const last = visData[visData.length-1];
+      const x = xRound(last.round);
+      const y = yPos(last.pos);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2);
+      ctx.fill();
+
+      // Team label on right
+      ctx.fillStyle = color;
+      ctx.font = `600 ${11}px DM Sans, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.fillText(TEAM_SHORT[team] || team.substring(0,8), x + 8, y + 4);
+    }
+
+    // Team name on left (current pos)
+    const firstData = data.find(d => d.round <= currentRound);
+    if(firstData) {
+      const firstPos = visData[0];
+      ctx.globalAlpha = 0.7;
+      ctx.fillStyle = color;
+      ctx.font = `500 ${10.5}px DM Sans, sans-serif`;
+      ctx.textAlign = 'right';
+      // Left label at first round
+    }
+
+    ctx.globalAlpha = 1;
+  });
+
+  // Left axis - positions
+  for(let pos = 1; pos <= nTeams; pos++) {
+    const y = PAD_T + (pos-1)/(nTeams-1||1) * chartH;
+    ctx.fillStyle = pos <= 3 ? 'rgba(255,200,0,.6)' : 'rgba(255,255,255,.25)';
+    ctx.font = `600 ${11}px DM Sans, sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.fillText(pos + '.', PAD_L - 8, y + 4);
+
+    // Team at this position at currentRound
+    const teamAtPos = teams.find(t => {
+      const d = (raceData[t]||[]).find(x => x.round === currentRound);
+      return d && d.pos === pos;
+    });
+    if(teamAtPos) {
+      const color = TEAM_COLORS[teamAtPos] || '#888';
+      ctx.fillStyle = color;
+      ctx.font = `600 ${11}px DM Sans, sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.fillText(TEAM_SHORT[teamAtPos] || teamAtPos.substring(0,10), PAD_L - 18, y + 4);
+    }
+  }
+
+  // Round indicator
+  ctx.fillStyle = 'rgba(255,255,255,.5)';
+  ctx.font = `700 ${13}px Bricolage Grotesque, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText('KROG ' + currentRound, W/2, 20);
+
+  // Update slider + label
+  const slider = document.getElementById('race-slider');
+  const lbl = document.getElementById('race-round-lbl');
+  if(slider) { slider.max = raceMaxRound; slider.value = currentRound; }
+  if(lbl) lbl.textContent = 'K' + currentRound;
+}
+
+function drawRaceStandings() {
+  const wrap = document.getElementById('race-standings');
+  if(!wrap || !Object.keys(raceData).length) return;
+  const currentRound = Math.min(raceRound || raceMaxRound, raceMaxRound);
+
+  // Get standings at this round
+  const standings = [];
+  Object.entries(raceData).forEach(([team, data]) => {
+    const d = data.find(x => x.round === currentRound);
+    if(d) standings.push({team, pos:d.pos, pts:d.pts});
+  });
+  standings.sort((a,b) => a.pos - b.pos);
+
+  const rows = standings.map((s, i) => {
+    const color = TEAM_COLORS[s.team] || '#888';
+    const short = TEAM_SHORT[s.team] || s.team;
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    // Find W-L from pts: pts = 2W + L, T = W + L
+    // We know pts and can reconstruct from rdMatches
+    const rdMatches = allMatches.filter(m =>
+      m.status==='FINISHED' &&
+      m.round <= currentRound &&
+      m.competitions?.[0]?.competitionPhaseName==='Redni del' &&
+      (m.firstTeamName===s.team || m.secondTeamName===s.team)
+    );
+    const W = rdMatches.filter(m =>
+      (m.firstTeamName===s.team && m.firstTeamScore > m.secondTeamScore) ||
+      (m.secondTeamName===s.team && m.secondTeamScore > m.firstTeamScore)
+    ).length;
+    const T = rdMatches.length;
+    const L = T - W;
+
+    return `<tr>
+      <td style="font-weight:700">${medal||s.pos+'.'}</td>
+      <td style="color:${color};font-weight:600">${s.team}</td>
+      <td style="color:var(--mut);font-size:.7rem">${short}</td>
+      <td>${T}</td>
+      <td style="color:#22c55e;font-weight:600">${W}</td>
+      <td style="color:#ef4444">${L}</td>
+      <td style="font-weight:700;color:var(--acc)">${s.pts}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">
+      LESTVICA — KROG ${currentRound}
+    </div>
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+      <table class="standings-table">
+        <thead><tr>
+          <th>M</th><th>EKIPA</th><th></th>
+          <th>T</th><th style="color:#22c55e">Z</th>
+          <th style="color:#ef4444">P</th><th style="color:var(--acc)">TČ</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function initRaceChart() {
+  if(Object.keys(raceData).length === 0) buildRaceData();
+  raceRound = raceMaxRound;
+  drawRaceChart();
+  drawRaceStandings();
+  // Update slider max
+  const slider = document.getElementById('race-slider');
+  if(slider) { slider.max = raceMaxRound; slider.value = raceMaxRound; }
+  const lbl = document.getElementById('race-round-lbl');
+  if(lbl) lbl.textContent = 'K' + raceMaxRound;
+}
+
+// ═══════════════════════════════════════════════════
 // URL ROUTER
 // ═══════════════════════════════════════════════════
 function parseHash() {
@@ -4136,6 +4409,10 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="mbn-btn" onclick="showTab('iskanje')" id="mbn-iskanje">
     <span class="mbn-icon">🔍</span>
     <span class="mbn-lbl">Išči</span>
+  </button>
+  <button class="mbn-btn" onclick="showTab('race')" id="mbn-race">
+    <span class="mbn-icon">📈</span>
+    <span class="mbn-lbl">Sezona</span>
   </button>
 </div>
 </body>
