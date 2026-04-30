@@ -3901,7 +3901,7 @@ function drawRaceChart() {
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
 
-  const PAD_L = 160, PAD_R = 80, PAD_T = 40, PAD_B = 30;
+  const PAD_L = 28, PAD_R = 48, PAD_T = 40, PAD_B = 30;
   const chartW = W - PAD_L - PAD_R;
   const chartH = H - PAD_T - PAD_B;
   const maxRound = raceRound || raceMaxRound;
@@ -3967,17 +3967,7 @@ function drawRaceChart() {
       ctx.fillText(TEAM_SHORT[team] || team.substring(0,6), x + 8, y + 4);
     }
 
-    // Label at START of line (left side)
-    if(teamAllData.length > 0) {
-      const first = teamAllData[0];
-      const x = xRound(first.round);
-      const y = yPos(first.pos);
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = color;
-      ctx.font = `600 10px DM Sans, sans-serif`;
-      ctx.textAlign = 'right';
-      ctx.fillText(TEAM_SHORT[team] || team.substring(0,6), x - 6, y + 4);
-    }
+
 
     // Highlighted dot at SELECTED round position
     const selData = (raceData[team]||[]).find(d => d.round === currentRound);
@@ -3996,28 +3986,6 @@ function drawRaceChart() {
     }
     ctx.globalAlpha = 1;
   });
-
-  // Left axis - positions
-  for(let pos = 1; pos <= nTeams; pos++) {
-    const y = PAD_T + (pos-1)/(nTeams-1||1) * chartH;
-    ctx.fillStyle = pos <= 3 ? 'rgba(255,200,0,.6)' : 'rgba(255,255,255,.25)';
-    ctx.font = `600 ${11}px DM Sans, sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.fillText(pos + '.', PAD_L - 8, y + 4);
-
-    // Team at this position at currentRound
-    const teamAtPos = teams.find(t => {
-      const d = (raceData[t]||[]).find(x => x.round === currentRound);
-      return d && d.pos === pos;
-    });
-    if(teamAtPos) {
-      const color = TEAM_COLORS[teamAtPos] || '#888';
-      ctx.fillStyle = color;
-      ctx.font = `600 ${11}px DM Sans, sans-serif`;
-      ctx.textAlign = 'right';
-      ctx.fillText(TEAM_SHORT[teamAtPos] || teamAtPos.substring(0,10), PAD_L - 18, y + 4);
-    }
-  }
 
   // Round indicator
   ctx.fillStyle = 'rgba(255,255,255,.5)';
@@ -4092,15 +4060,15 @@ function drawRaceStandings() {
 }
 
 function initRaceChart() {
-  if(Object.keys(raceData).length === 0) buildRaceData();
+  buildRaceData(); // always rebuild for current league
   raceRound = raceMaxRound;
-  drawRaceChart();
-  drawRaceStandings();
-  // Update slider max
+  // Update slider
   const slider = document.getElementById('race-slider');
   if(slider) { slider.max = raceMaxRound; slider.value = raceMaxRound; }
   const lbl = document.getElementById('race-round-lbl');
   if(lbl) lbl.textContent = 'K' + raceMaxRound;
+  drawRaceChart();
+  drawRaceStandings();
 }
 
 // ═══════════════════════════════════════════════════
