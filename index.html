@@ -930,11 +930,52 @@ let currentLeague = 'liga1';
 function getLg() { return LEAGUES[currentLeague]; }
 
 const TEAM_COLORS = {
-  'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
-  'Laško':'#ef4444','Rogaška':'#a855f7',
+  // 1. SKL
+  'Krka':'#10b981',
   'Perspektiva Ilirija':'#ec4899','Ilirija':'#ec4899',
-  'Šentjur':'#06b6d4','Terme Olimia Podčetrtek':'#f97316',
-  'Hopsi Polzela':'#22c55e','Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1'
+  'GGD Šenčur':'#3b82f6',
+  'Kansai Helios Domžale':'#f59e0b','Kansai Helios':'#f59e0b',
+  'ECE Triglav Kranj':'#6366f1',
+  'Šentjur':'#06b6d4',
+  'Hopsi Polzela':'#22c55e','Hopsi':'#22c55e',
+  'Laško':'#ef4444',
+  'Rogaška':'#a855f7',
+  'Terme Olimia Podčetrtek':'#f97316',
+  // 2. SKL
+  'Plama Pur Ilirska Bistrica':'#f97316',
+  'Gorica':'#22c55e',
+  'Portorož':'#3b82f6',
+  'Voga Grosuplje':'#a855f7',
+  'Ipros Vrhnika':'#f59e0b',
+  'LTH Castings':'#06b6d4',
+  'Celje':'#ec4899',
+  'Slovan':'#ef4444',
+  'Postojna':'#10b981',
+  'Hidria':'#8b5cf6',
+  'Ljubljana':'#fbbf24',
+  'Ježica':'#64748b',
+  // 3. SKL Vzhod
+  'Konjice':'#f97316',
+  'Branik Maribor':'#3b82f6',
+  'Bistrica Kety Emmi':'#22c55e',
+  'Innoduler Dravograd Koroška':'#a855f7',
+  'Vojnik G7':'#f59e0b',
+  'Elektra Šoštanj':'#06b6d4',
+  'Hrastnik':'#ef4444',
+  'Vrani Vransko':'#10b981',
+  'Kovinarstvo Bučar Miklavž':'#ec4899',
+  'Nazarje':'#8b5cf6',
+  // 3. SKL Zahod
+  'Leone Ajdovščina':'#f97316',
+  'Armicafe Troti':'#3b82f6',
+  'Cedevita Olimpija mladi':'#ef4444',
+  'Koper':'#22c55e',
+  'Mesarija Prunk Sežana':'#a855f7',
+  'Kolpa':'#f59e0b',
+  'Litija':'#06b6d4',
+  'Janče ECP Tactical':'#10b981',
+  'Gorenja vas':'#fbbf24',
+  'Tera Tolmin':'#64748b',
 };
 const TEAM_SHORT = {
   // 1. SKL
@@ -3888,8 +3929,7 @@ function drawRaceChart() {
   teams.forEach(team => {
     const data = raceData[team] || [];
     const color = TEAM_COLORS[team] || '#888';
-    const visData = data.filter(d => d.round <= currentRound);
-    if(visData.length < 1) return;
+    if(data.length < 1) return;
 
     const yPos = pos => PAD_T + (pos-1)/(nTeams-1||1) * chartH;
     const xRound = r => PAD_L + (r-1)/(raceMaxRound-1||1) * chartW;
@@ -3910,9 +3950,10 @@ function drawRaceChart() {
     });
     ctx.stroke();
 
-    // Draw dot at current position
-    if(visData.length > 0) {
-      const last = visData[visData.length-1];
+    // Dot + label at END of line (right side)
+    const teamAllData = raceData[team] || [];
+    if(teamAllData.length > 0) {
+      const last = teamAllData[teamAllData.length-1];
       const x = xRound(last.round);
       const y = yPos(last.pos);
       ctx.globalAlpha = 1;
@@ -3920,25 +3961,39 @@ function drawRaceChart() {
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI*2);
       ctx.fill();
-
-      // Team label on right
       ctx.fillStyle = color;
-      ctx.font = `600 ${11}px DM Sans, sans-serif`;
+      ctx.font = `600 11px DM Sans, sans-serif`;
       ctx.textAlign = 'left';
-      ctx.fillText(TEAM_SHORT[team] || team.substring(0,8), x + 8, y + 4);
+      ctx.fillText(TEAM_SHORT[team] || team.substring(0,6), x + 8, y + 4);
     }
 
-    // Team name on left (current pos)
-    const firstData = data.find(d => d.round <= currentRound);
-    if(firstData) {
-      const firstPos = visData[0];
-      ctx.globalAlpha = 0.7;
+    // Label at START of line (left side)
+    if(teamAllData.length > 0) {
+      const first = teamAllData[0];
+      const x = xRound(first.round);
+      const y = yPos(first.pos);
+      ctx.globalAlpha = 0.9;
       ctx.fillStyle = color;
-      ctx.font = `500 ${10.5}px DM Sans, sans-serif`;
+      ctx.font = `600 10px DM Sans, sans-serif`;
       ctx.textAlign = 'right';
-      // Left label at first round
+      ctx.fillText(TEAM_SHORT[team] || team.substring(0,6), x - 6, y + 4);
     }
 
+    // Highlighted dot at SELECTED round position
+    const selData = (raceData[team]||[]).find(d => d.round === currentRound);
+    if(selData) {
+      const x = xRound(selData.round);
+      const y = yPos(selData.pos);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, 6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2);
+      ctx.fill();
+    }
     ctx.globalAlpha = 1;
   });
 
