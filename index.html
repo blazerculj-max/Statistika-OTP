@@ -550,6 +550,12 @@ select, input, .si{font-size:16px}
   /* Live score bigger */
   .lc-score{font-size:2rem}
 }
+
+.mo-tabs{display:flex;gap:4px;padding:8px 16px;border-bottom:1px solid var(--border)}
+.mo-tab{padding:6px 14px;border-radius:100px;border:none;background:transparent;color:var(--mut);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .15s}
+.mo-tab:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.mo-tab.active{background:var(--acc);color:#fff}
+.mo-tab-panel{display:block}
 </style>
 </head>
 <body>
@@ -1347,22 +1353,18 @@ function aggregatePlayers(phaseFilter) {
         // Liga3 ne beleži minut (minutes=0) — filtriramo samo po played + ali ima vsaj točke
       const hasStats = ps.points > 0 || ps.twoPM > 0 || ps.threePM > 0 || ps.fTM > 0;
       if (!ps.played || (!hasStats && ps.minutes === 0)) return;
-        const key = String(ps.playerId); // merge po PID, ne po ekipi
+        const key = ps.playerId + '_' + teamName; // per-team entry (za Ekipe zavihek)
 
         if (!byPid[key]) {
           byPid[key] = {
             name: ps.matchTeamPlayerFirstname.trim() + ' ' + ps.matchTeamPlayerLastname,
             team: teamName,
-            teams: new Set([teamName]), // track all teams
             born: parseInt(ps.matchTeamPlayerYearOfBirth) || 0,
             pid: ps.playerId,
             T:0, MIN:0, fg2m:0, fg2a:0, fg3m:0, fg3a:0, ftm:0, fta:0,
             toc:0, nap:0, obr:0, pod:0, sto:0, izs:0, izg:0, pz:0,
             blk:0, pre:0, pm:0, efe:0, pip:0, fb:0, sc:0
           };
-        } else {
-          // Track additional teams (prestop med sezono)
-          byPid[key].teams.add(teamName);
         }
         const p = byPid[key];
         p.T++; p.MIN += ps.minutes;
@@ -1405,15 +1407,6 @@ function aggregatePlayers(phaseFilter) {
         }
       });
     });
-  });
-
-  // Set combined team name for transferred players
-  Object.values(byPid).forEach(p => {
-    if(p.teams && p.teams.size > 1) {
-      // Sort by first appearance - use current team last
-      const teamList = [...p.teams];
-      p.team = teamList.join(' / ');
-    }
   });
 
   // Convert to array in same format as old P
@@ -1601,13 +1594,22 @@ function getTmAgg(team){
 
 function getLeaguePlayers(){
   if(_leaguePlayers)return _leaguePlayers;
-  const groups={};
-  P.forEach(p=>{const key=p[F.name]+'_'+p[F.born];if(!groups[key])groups[key]=[];groups[key].push(p);});
-  _leaguePlayers=Object.values(groups).map(grp=>{
+  // Merge by PID — za prestope med sezono (Liga/MVP/Iskanje)
+  const byPid={};
+  P.forEach(p=>{
+    const pid=p[F.pid];
+    if(!byPid[pid])byPid[pid]=[];
+    byPid[pid].push(p);
+  });
+  _leaguePlayers=Object.values(byPid).map(grp=>{
     if(grp.length===1)return grp[0];
     const merged=[...grp[0]];
     merged[F.team]=grp.map(p=>p[F.team]).join(' / ');
-    [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>{merged[fi]=grp.reduce((s,p)=>s+p[fi],0);});
+    [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,
+     F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,
+     F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(f=>{
+      merged[f]=grp.reduce((s,p)=>s+(p[f]||0),0);
+    });
     return merged;
   });
   return _leaguePlayers;
@@ -1627,7 +1629,10 @@ function usgOf(p){if(p[F.MIN]<10)return null;const tm=getTmAgg(p[F.team]),tmMP=t
 // COLUMNS
 // ═══════════════════════════════════════════════════
 const COLS=[
-  {k:'name',lbl:'IGRALEC',fmt:(p,m)=>p[F.name],tip:''},
+  {k:'name',lbl:'IGRALEC',fmt:(p,m)=>{
+    const hasDual=P.some(p2=>p2[F.pid]===p[F.pid]&&p2[F.team]!==p[F.team]);
+    return p[F.name]+(hasDual?'<span style="font-size:.62rem;color:var(--mut)"> *</span>':'');
+  },tip:'* prestop med sezono'},
   {k:'T',lbl:'T',fmt:(p,m)=>p[F.T],tip:'Tekme'},
   {k:'MIN',lbl:'MIN',fmt:(p,m)=>m==='avg'?fmt(p[F.MIN]/p[F.T]):fmt(p[F.MIN],0),tip:'Minute'},
   {k:'fg2',lbl:'2T%',fmt:(p,m)=>{const v=pct(p[F.fg2m],p[F.fg2a]);const sub=m==='avg'?`${fmt(p[F.fg2m]/p[F.T],1)}/${fmt(p[F.fg2a]/p[F.T],1)}`:`${p[F.fg2m]}/${p[F.fg2a]}`;return `<div class="td-pct"><span class="${pctCls(v)}">${fmt(v)}%</span><span class="td-pct-sub">${p[F.fg2a]>0?sub:'—'}</span></div>`},tip:'2T% — Odstotek zadetih metov za 2 točki\nZadeti 2T / Vsi 2T meti × 100\n55%+ odlično, 40-55% povprečje'},
@@ -2196,12 +2201,15 @@ async function openMatch(matchId){
     </div>
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
-      ${boxScore
-        ? `<div class="mo-section">${boxScore}</div>`
-        : hasFiba
-          ? `<div class="mo-section" id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>`
-          : `<div class="empty">Statistika ni na voljo</div>`
-      }
+      <div class="mo-tabs">
+        ${boxScore||matchData?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
+        ${hasFiba?`<button class="mo-tab ${!boxScore&&!matchData?'active':''}" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
+      </div>
+      ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel"><div class="mo-section">${boxScore||''}</div></div>`:''}
+      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:${!boxScore&&!matchData?'block':'none'}">
+        <div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>
+      </div>`:''}
+      ${!boxScore&&!matchData&&!hasFiba?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
 
@@ -4399,7 +4407,9 @@ function renderMVP() {
     m.competitions?.[0]?.competitionPhaseName==='Redni del').map(m=>m.round||0), 0);
   const minGamesForMvp = maxRd < 10 ? 1 : maxRd < 20 ? 10 : 20;
 
-  const rdPlayers = P.filter(p => {
+  // Use getLeaguePlayers() - merged by PID (handles prestopi)
+  const LP = getLeaguePlayers();
+  const rdPlayers = LP.filter(p => {
     const log = playerGameLog[p[F.pid]];
     if(!log) return false;
     const rdGames = log.filter(g => {
@@ -4419,7 +4429,7 @@ function renderMVP() {
   ).join('');
 
   // Playoff MVP
-  const playoffPlayers = P.filter(p => {
+  const playoffPlayers = getLeaguePlayers().filter(p => {
     const log = playerGameLog[p[F.pid]];
     if(!log) return false;
     const pfGames = log.filter(g => {
@@ -4530,6 +4540,14 @@ function renderMVP() {
     <div style="font-size:.65rem;color:var(--mut);margin-top:4px;font-family:var(--fm)">
       Min. tekem za MVP sezone: ${minGamesForMvp} (K${maxRd} · do K10=0, K10-K20=10, K20+=20)
     </div>`;
+}
+
+function switchMatchTab(btn, panelId) {
+  document.querySelectorAll('.mo-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mo-tab-panel').forEach(p => p.style.display = 'none');
+  btn.classList.add('active');
+  const panel = document.getElementById(panelId);
+  if(panel) panel.style.display = 'block';
 }
 
 // ═══════════════════════════════════════════════════
@@ -4816,16 +4834,18 @@ function computePlayoffSeries(){
   const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
   allMatches.forEach(m=>{
-    if(m.status!=='FINISHED')return;
+    // Include both FINISHED and SCHEDULED playoff matches
     const phase=m.competitions?.[0]?.competitionPhaseName||'';
     if(!playoffPhases.includes(phase))return;
     const a=m.firstTeamName,b=m.secondTeamName;
     const key=phase+'|'+[a,b].sort().join('|');
     if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],done:false,isAggregate:aggregatePhases.has(phase)};
     const s=series[key];s.matches.push(m);
-    const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
-    if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
-    if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    if(m.status==='FINISHED'){
+      const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
+      if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
+      if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    }
   });
   Object.values(series).forEach(s=>{
     if(s.isAggregate){s.done=s.matches.length>=2;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;}
