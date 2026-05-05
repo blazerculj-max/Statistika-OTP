@@ -2203,10 +2203,10 @@ async function openMatch(matchId){
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
       <div class="mo-tabs">
         ${boxScore||matchData?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
-        ${hasFiba?`<button class="mo-tab ${!boxScore&&!matchData?'active':''}" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
+        ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
       </div>
       ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel"><div class="mo-section">${boxScore||''}</div></div>`:''}
-      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:${!boxScore&&!matchData?'block':'none'}">
+      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:none">
         <div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>
       </div>`:''}
       ${!boxScore&&!matchData&&!hasFiba?`<div class="empty">Statistika ni na voljo</div>`:''}
