@@ -541,6 +541,10 @@ select:focus{outline:none;border-color:var(--acc)}
     <div id="standings-wrap"></div>
     <div id="playoff-wrap" style="margin-top:24px"></div>
     <div id="h2h-wrap" style="margin-top:16px"></div>
+    <div style="margin-top:28px">
+      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">⚡ ELO RATING — MOČ EKIP</div>
+      <div id="elo-wrap"></div>
+    </div>
   </div>
 
   <div id="tab-tekme" class="tab">
@@ -1425,7 +1429,7 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
-  if(t==='lestvica')renderStandings();
+  if(t==='lestvica'){renderStandings();renderEloTable();}
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
   if(t==='live')renderLiveTab();
@@ -1865,12 +1869,15 @@ async function openMatch(matchId){
     </div>
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
-      ${boxScore
-        ? `<div class="mo-section">${boxScore}</div>`
-        : hasFiba
-          ? `<div class="mo-section" id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>`
-          : `<div class="empty">Statistika ni na voljo</div>`
-      }
+      <div class="mo-tabs">
+        ${matchInfo.status!=='FINISHED'&&!isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-preview')">🔮 PREVIEW</button>`:''}
+        ${boxScore||matchData?`<button class="mo-tab ${matchInfo.status!=='FINISHED'&&!isLive?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
+        ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
+      </div>
+      ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
+      ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${matchInfo.status!=='FINISHED'&&!isLive?'none':'block'}"><div class="mo-section">${boxScore||''}</div></div>`:''}
+      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:none"><div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div></div>`:''}
+      ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
 
@@ -3495,6 +3502,144 @@ async function closeMatchOverlay(){
 // ═══════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// ELO + PREVIEW
+// ═══════════════════════════════════════════════════
+let _eloRatings=null;
+function computeElo(){
+  if(_eloRatings)return _eloRatings;
+  const K=32,ratings={},history={};
+  const PRESET={'Cedevita Olimpija':1934};
+  const finished=allMatches.filter(m=>m.status==='FINISHED'&&
+    m.competitions?.[0]?.competitionPhaseName==='Redni del')
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+  finished.forEach(m=>{
+    const t1=m.firstTeamName,t2=m.secondTeamName;
+    if(!ratings[t1]){ratings[t1]=PRESET[t1]||1500;history[t1]=[];}
+    if(!ratings[t2]){ratings[t2]=PRESET[t2]||1500;history[t2]=[];}
+    const e1=1/(1+10**((ratings[t2]-ratings[t1])/400));
+    const s1=m.firstTeamScore>m.secondTeamScore?1:0;
+    ratings[t1]=Math.round(ratings[t1]+K*(s1-e1));
+    ratings[t2]=Math.round(ratings[t2]+K*((1-s1)-(1-e1)));
+    history[t1].push({round:m.round||0,elo:ratings[t1]});
+    history[t2].push({round:m.round||0,elo:ratings[t2]});
+  });
+  Object.entries(PRESET).forEach(([t,r])=>{if(!ratings[t])ratings[t]=r;});
+  _eloRatings={ratings,history};
+  return _eloRatings;
+}
+function eloWinProb(r1,r2){return 1/(1+10**((r2-r1)/400));}
+function liveWinProb(r1,r2,s1,s2,elapsed){
+  const eloP=eloWinProb(r1,r2),remaining=Math.max(0,2400-elapsed),tF=remaining/2400;
+  const scoreP=1/(1+Math.exp(-(s1-s2)*0.15*(1-tF*0.5)));
+  return Math.min(0.98,Math.max(0.02,eloP*tF+scoreP*(1-tF)));
+}
+function resetElo(){_eloRatings=null;}
+function switchMatchTab(btn,panelId){
+  document.querySelectorAll('.mo-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mo-tab-panel').forEach(p=>p.style.display='none');
+  btn.classList.add('active');
+  const panel=document.getElementById(panelId);
+  if(panel)panel.style.display='block';
+}
+function renderEloTable(){
+  const wrap=document.getElementById('elo-wrap');
+  if(!wrap||!allMatches.length)return;
+  const {ratings}=computeElo();
+  const sorted=Object.entries(ratings).sort((a,b)=>b[1]-a[1]);
+  const maxE=sorted[0]?.[1]||1700,minE=sorted[sorted.length-1]?.[1]||1300;
+  const medals=['🥇','🥈','🥉'];
+  wrap.innerHTML=sorted.map(([team,elo],i)=>{
+    const tc=TEAM_COLORS[team]||'#888';
+    const pct=Math.round((elo-minE)/(Math.max(maxE-minE,1))*100);
+    const wp=Math.round(eloWinProb(elo,1500)*100);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      +'<span style="font-family:var(--fh);width:28px;text-align:center">'+(medals[i]||i+1+'.')+'</span>'
+      +'<span style="color:'+tc+';font-weight:600;font-size:.85rem;flex:1">'+team+'</span>'
+      +'<div style="width:120px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">'
+        +'<div style="width:'+pct+'%;height:100%;background:'+tc+';border-radius:3px"></div></div>'
+      +'<span style="font-family:var(--fh);font-size:.95rem;color:'+tc+';min-width:44px;text-align:right;font-weight:700">'+elo+'</span>'
+      +'<span style="font-size:.65rem;color:var(--mut);min-width:70px;text-align:right">vs avg: '+wp+'%</span>'
+      +'</div>';
+  }).join('');
+}
+function renderMatchPreview(matchInfo,c1,c2){
+  const t1=matchInfo.firstTeamName,t2=matchInfo.secondTeamName;
+  const n1=normalizeTeamName(t1),n2=normalizeTeamName(t2);
+  const {ratings}=computeElo();
+  const r1=ratings[n1]||ratings[t1]||1500,r2=ratings[n2]||ratings[t2]||1500;
+  const p1=Math.round(eloWinProb(r1,r2)*100),p2=100-p1;
+  const h2hMs=allMatches.filter(m=>m.status==='FINISHED'&&(
+    (normalizeTeamName(m.firstTeamName)===n1&&normalizeTeamName(m.secondTeamName)===n2)||
+    (normalizeTeamName(m.firstTeamName)===n2&&normalizeTeamName(m.secondTeamName)===n1)
+  )).sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).slice(0,5);
+  let h2hW1=0,h2hW2=0;
+  h2hMs.forEach(m=>{
+    const isHome=normalizeTeamName(m.firstTeamName)===n1;
+    if(isHome?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore)h2hW1++;else h2hW2++;
+  });
+  const h2hRows=h2hMs.map(m=>{
+    const isHome=normalizeTeamName(m.firstTeamName)===n1;
+    const ms=isHome?m.firstTeamScore:m.secondTeamScore,os=isHome?m.secondTeamScore:m.firstTeamScore;
+    const won=ms>os;
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.75rem">
+      <span style="color:var(--mut);min-width:70px">${date}</span>
+      <span style="color:${won?c1:c2};font-weight:700">${won?'Z':'P'}</span>
+      <span style="font-family:var(--fh)"><span style="color:${won?c1:'var(--mut)'}">${ms}</span><span style="color:var(--mut)"> : </span><span style="color:${!won?c2:'var(--mut)'}">${os}</span></span>
+      <span style="color:var(--mut);font-size:.65rem;margin-left:auto">${m.competitions?.[0]?.competitionPhaseName||''}</span>
+    </div>`;
+  }).join('');
+  const teamForm=tn=>{
+    const norm=normalizeTeamName(tn);
+    return allMatches.filter(m=>m.status==='FINISHED'&&(normalizeTeamName(m.firstTeamName)===norm||normalizeTeamName(m.secondTeamName)===norm))
+      .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).slice(0,5).map(m=>{
+        const isHome=normalizeTeamName(m.firstTeamName)===norm;
+        const won=isHome?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;
+        const ms=isHome?m.firstTeamScore:m.secondTeamScore,os=isHome?m.secondTeamScore:m.firstTeamScore;
+        return `<span class="form-dot ${won?'w':'l'}" title="${won?'Z':'P'} ${ms}:${os}">${won?'Z':'P'}</span>`;
+      }).reverse().join('');
+  };
+  const tStats=tn=>{
+    const norm=normalizeTeamName(tn);
+    const ms=allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Redni del'&&(normalizeTeamName(m.firstTeamName)===norm||normalizeTeamName(m.secondTeamName)===norm));
+    if(!ms.length)return null;
+    const pf=ms.reduce((s,m)=>{const h=normalizeTeamName(m.firstTeamName)===norm;return s+(h?m.firstTeamScore:m.secondTeamScore);},0);
+    const pa=ms.reduce((s,m)=>{const h=normalizeTeamName(m.firstTeamName)===norm;return s+(h?m.secondTeamScore:m.firstTeamScore);},0);
+    return{avg:(pf/ms.length).toFixed(1),def:(pa/ms.length).toFixed(1)};
+  };
+  const st1=tStats(t1),st2=tStats(t2);
+  return `<div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+    <div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em;margin-bottom:8px;font-family:var(--fm)">ELO VERJETNOST ZMAGE</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-family:var(--fh);font-size:1.3rem;color:${c1};font-weight:700;min-width:44px">${p1}%</span>
+      <div style="flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden"><div style="height:100%;width:${p1}%;background:${c1};border-radius:4px 0 0 4px"></div></div>
+      <span style="font-family:var(--fh);font-size:1.3rem;color:${c2};font-weight:700;min-width:44px;text-align:right">${p2}%</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:.62rem;color:var(--mut)">ELO: ${r1}</span>
+      <span style="font-size:.62rem;color:var(--mut)">ELO: ${r2}</span>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border)">
+    ${[{t:t1,c:c1,st:st1},{t:t2,c:c2,st:st2}].map(({t,c,st})=>`
+      <div style="background:var(--bg);padding:14px 16px">
+        <div style="font-size:.7rem;font-weight:600;color:${c};margin-bottom:8px">${TEAM_SHORT[normalizeTeamName(t)]||t}</div>
+        ${st?`<div style="display:flex;gap:16px;margin-bottom:8px">
+          <div><div style="font-family:var(--fh);font-size:1rem;color:var(--acc)">${st.avg}</div><div style="font-size:.58rem;color:var(--mut)">TOČ+/TM</div></div>
+          <div><div style="font-family:var(--fh);font-size:1rem;color:var(--mut)">${st.def}</div><div style="font-size:.58rem;color:var(--mut)">TOČ-/TM</div></div>
+        </div>`:''}
+        <div style="display:flex;gap:3px">${teamForm(t)}</div>
+      </div>`).join('')}
+  </div>
+  ${h2hMs.length?`<div style="padding:14px 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:.62rem;color:var(--mut);font-family:var(--fm)">MEDSEBOJNI (zadnjih ${h2hMs.length})</div>
+      <div style="font-family:var(--fh)"><span style="color:${c1}">${h2hW1}</span><span style="color:var(--mut)"> – </span><span style="color:${c2}">${h2hW2}</span></div>
+    </div>${h2hRows}</div>`:'<div class="empty" style="padding:20px">Ni medsebojnih tekem</div>'}`;
+}
+
+
 document.addEventListener('DOMContentLoaded',()=>{
   initUI();
   initWebSocket();
