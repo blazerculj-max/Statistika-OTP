@@ -743,6 +743,10 @@ select, input, .si{font-size:16px}
     <div id="standings-wrap"></div>
     <div id="playoff-wrap" style="margin-top:24px"></div>
     <div id="h2h-wrap" style="margin-top:16px"></div>
+    <div style="margin-top:28px">
+      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">⚡ ELO RATING — MOČ EKIP</div>
+      <div id="elo-wrap"></div>
+    </div>
   </div>
 
   <div id="tab-tekme" class="tab">
@@ -889,7 +893,7 @@ const LEAGUES = {
     cacheStats: 'liga1_stats_v3',
     cachePbp:   'liga1_pbp_v3',
     phaseIds: null,
-    teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj'],
+    teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj','Cedevita Olimpija'],
   },
   'liga2': {
     id: 581,
@@ -1498,11 +1502,16 @@ function subscribeToLiveMatches() {
 // INIT UI
 // ═══════════════════════════════════════════════════
 function initUI() {
-  // Use league team list if available, otherwise derive from data
+  // Always use LEAGUES.teams - prevents playoff teams from appearing
   const lgTeams = getLg().teams;
   const teams = lgTeams && lgTeams.length
-    ? lgTeams.filter(t => P.some(p => p[F.team] === t || p[F.team].includes(t))).sort()
-    : [...new Set(P.map(p => p[F.team]))].sort();
+    ? lgTeams.filter(t => P.some(p => p[F.team] === t || p[F.team].includes(t)))
+    : [...new Set(P.map(p => p[F.team]).filter(t => {
+        // Only show teams from redni del matches
+        return allMatches.some(m => m.status==='FINISHED' &&
+          m.competitions?.[0]?.competitionPhaseName==='Redni del' &&
+          (m.firstTeamName===t||m.secondTeamName===t));
+      }))].sort();
 
   // Team select
   const ts = document.getElementById('team-sel');
@@ -1523,7 +1532,7 @@ function initUI() {
 
   // Group matches by phase for proper labeling
   const phaseMap = {};
-  allMatches.forEach(m => {
+  allMatches.filter(m => m.status === 'FINISHED').forEach(m => {
     const comp = m.competitions?.[0];
     const phaseId = comp?.competitionPhaseId;
     const phaseName = comp?.competitionPhaseName || 'Redni del';
@@ -1705,7 +1714,7 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
-  if(t==='lestvica')renderStandings();
+  if(t==='lestvica'){renderStandings();renderEloTable();}
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
   if(t==='mvp')renderMVP();
@@ -1998,8 +2007,38 @@ function renderMatches(){
         </div>
         <div class="mc-meta">
           <span>${date} · ${m.sportHallName}</span>
-          ${statusEl}
+          <span>${statusEl}</span>
         </div>
+        ${(() => {
+          if(m.status === 'FINISHED') return '';
+          const {ratings} = computeElo();
+          const r1 = ratings[normalizeTeamName(n1)] || ratings[n1] || 1500;
+          const r2 = ratings[normalizeTeamName(n2)] || ratings[n2] || 1500;
+          let prob1, label;
+          if(m.status === 'LIVE') {
+            const ls = liveScores[m.id] || {};
+            const s1 = ls.score1 || m.firstTeamScore || 0;
+            const s2 = ls.score2 || m.secondTeamScore || 0;
+            const q = ls.quarter || 1;
+            const elapsed = Math.max(0,(q-1)*600);
+            prob1 = liveWinProb(r1, r2, s1, s2, elapsed);
+            label = 'Live WP';
+          } else {
+            prob1 = eloWinProb(r1, r2);
+            label = 'ELO';
+          }
+          const prob2 = 1 - prob1;
+          const p1 = Math.round(prob1*100), p2 = Math.round(prob2*100);
+          const favColor = p1 > p2 ? c1 : c2;
+          const bar = '<div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.08);overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;height:100%;width:'+p1+'%;background:'+c1+';border-radius:2px"></div></div>';
+          return '<div style="margin-top:6px;display:flex;align-items:center;gap:6px">'
+            +'<span style="font-size:.6rem;color:var(--mut);font-family:var(--fm)">'+label+'</span>'
+            +bar
+            +'<span style="font-size:.68rem;color:'+c1+';font-family:var(--fh);font-weight:700">'+p1+'%</span>'
+            +'<span style="font-size:.6rem;color:var(--mut)">·</span>'
+            +'<span style="font-size:.68rem;color:'+c2+';font-family:var(--fh);font-weight:700">'+p2+'%</span>'
+            +'</div>';
+        })()}
       </div>`;
     }).join('');
 
@@ -4690,6 +4729,72 @@ function renderFibaBoxscore(d, c1, c2) {
 }
 
 // ═══════════════════════════════════════════════════
+// ELO RATING SISTEM
+// ═══════════════════════════════════════════════════
+let _eloRatings = null;
+
+function computeElo() {
+  if(_eloRatings) return _eloRatings;
+  const K = 32;
+  const ratings = {};
+  const history = {}; // team → [{round, elo}]
+
+  const finished = allMatches
+    .filter(m => m.status === 'FINISHED' &&
+      m.competitions?.[0]?.competitionPhaseName === 'Redni del')
+    .sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+  // Cedevita Olimpija - Eurocup ekipa, vstopi v končnico
+  const PRESET_ELO = {'Cedevita Olimpija': 1934};
+
+  finished.forEach(m => {
+    const t1 = m.firstTeamName, t2 = m.secondTeamName;
+    if(!ratings[t1]) { ratings[t1] = PRESET_ELO[t1]||1500; history[t1] = [{round:0,elo:ratings[t1]}]; }
+    if(!ratings[t2]) { ratings[t2] = PRESET_ELO[t2]||1500; history[t2] = [{round:0,elo:ratings[t2]}]; }
+
+    const e1 = 1/(1+10**((ratings[t2]-ratings[t1])/400));
+    const e2 = 1 - e1;
+    const s1 = m.firstTeamScore > m.secondTeamScore ? 1 : 0;
+
+    ratings[t1] = Math.round(ratings[t1] + K*(s1-e1));
+    ratings[t2] = Math.round(ratings[t2] + K*((1-s1)-e2));
+
+    const r = m.round || 0;
+    history[t1].push({round:r, elo:ratings[t1]});
+    history[t2].push({round:r, elo:ratings[t2]});
+  });
+
+  _eloRatings = {ratings, history};
+  return _eloRatings;
+}
+
+function eloWinProb(elo1, elo2) {
+  return 1/(1+10**((elo2-elo1)/400));
+}
+
+function liveWinProb(elo1, elo2, score1, score2, elapsedSeconds, periodType) {
+  // Base ELO probability
+  const eloProb = eloWinProb(elo1, elo2);
+
+  // Total game = 4 * 600s = 2400s
+  const totalTime = 2400;
+  const elapsed = Math.min(elapsedSeconds, totalTime);
+  const remaining = totalTime - elapsed;
+  const timeFactor = remaining / totalTime; // 1.0 at start, 0.0 at end
+
+  // Score impact: each point difference shifts probability
+  const diff = score1 - score2;
+  // Sigmoid of score diff, weighted by time remaining
+  const scoreProb = 1/(1+Math.exp(-diff * 0.15 * (1-timeFactor*0.5)));
+
+  // Blend: at start ELO dominates, at end score dominates
+  const prob = eloProb * timeFactor + scoreProb * (1-timeFactor);
+  return Math.min(0.98, Math.max(0.02, prob));
+}
+
+function resetElo() { _eloRatings = null; }
+
+// ═══════════════════════════════════════════════════
 // URL ROUTER
 // ═══════════════════════════════════════════════════
 function parseHash() {
@@ -4813,6 +4918,31 @@ function computeTeamStats(matchList, phaseFilter) {
   return Object.values(teams);
 }
 
+function renderEloTable(){
+  const eloWrap = document.getElementById('elo-wrap');
+  if(!eloWrap || !allMatches.length) return;
+  const {ratings} = computeElo();
+  // Add preset teams that haven't played yet
+  const PRESET_ELO_DISPLAY = {'Cedevita Olimpija': 1934};
+  Object.entries(PRESET_ELO_DISPLAY).forEach(([t,r]) => { if(!ratings[t]) ratings[t] = r; });
+  const sorted = Object.entries(ratings).sort((a,b)=>b[1]-a[1]);
+  const maxElo = sorted[0]?.[1]||1700, minElo = sorted[sorted.length-1]?.[1]||1300;
+  const medals = ['🥇','🥈','🥉'];
+  eloWrap.innerHTML = sorted.map(([team,elo],i)=>{
+    const tc = TEAM_COLORS[team]||'#888';
+    const pct = Math.round((elo-minElo)/(Math.max(maxElo-minElo,1))*100);
+    const wp = Math.round(eloWinProb(elo,1500)*100);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
+      +'<span style="font-family:var(--fh);font-size:.9rem;width:28px;text-align:center">'+(medals[i]||i+1+'.')+'</span>'
+      +'<span style="color:'+tc+';font-weight:600;font-size:.85rem;flex:1">'+team+'</span>'
+      +'<div style="width:120px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">'
+        +'<div style="width:'+pct+'%;height:100%;background:'+tc+';border-radius:3px"></div></div>'
+      +'<span style="font-family:var(--fh);font-size:.95rem;color:'+tc+';min-width:44px;text-align:right;font-weight:700">'+elo+'</span>'
+      +'<span style="font-size:.65rem;color:var(--mut);min-width:70px;text-align:right">vs avg: '+wp+'%</span>'
+      +'</div>';
+  }).join('');
+}
+
 function buildStandingsTable(data, sort, title, color){
   if(sort==='pts'){
     const euPts=t=>t.W*2+t.L;
@@ -4921,8 +5051,14 @@ function renderStandings(){
   const wrap=document.getElementById('standings-wrap');
   if(!wrap||!allMatches.length)return;
 
-  // Repopulate H2H dropdowns with current league teams only
-  const lgTeams=[...new Set(allMatches.map(m=>[m.firstTeamName,m.secondTeamName]).flat())].sort();
+  // Repopulate H2H dropdowns - only FINISHED match teams OR LEAGUES.teams
+  const lg0 = getLg();
+  const lgTeams0 = lg0.teams && lg0.teams.length
+    ? lg0.teams
+    : [...new Set(allMatches
+        .filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Redni del')
+        .map(m=>[m.firstTeamName,m.secondTeamName]).flat())].sort();
+  const lgTeams = [...new Set(lgTeams0)].sort();
   ['h2h-team1','h2h-team2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     if(!el)return;
