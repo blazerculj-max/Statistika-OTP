@@ -1583,33 +1583,47 @@ function renderMatches(){
     return isRd&&(!teamFilter||m.firstTeamName===teamFilter||m.secondTeamName===teamFilter);
   });
 
-  const rounds=[...new Set(rdMatches.map(m=>m.round).filter(Boolean))].sort((a,b)=>a-b);
-  const totalRounds=rounds.length;
+  // Group by phase+round (important for 3.SKL where Vzhod+Zahod have same round numbers)
+  const roundGroups={};
+  rdMatches.forEach(m=>{
+    const ph=m.competitions?.[0]?.competitionPhaseName||'Redni del';
+    const r=m.round||0;
+    const key=ph+'__'+r; // unique key per phase+round
+    if(!roundGroups[key])roundGroups[key]={phase:ph,round:r,matches:[],date:m.dateTime};
+    roundGroups[key].matches.push(m);
+    if(new Date(m.dateTime)<new Date(roundGroups[key].date))roundGroups[key].date=m.dateTime;
+  });
+
+  const sortedGroups=Object.values(roundGroups).sort((a,b)=>{
+    if(a.round!==b.round)return a.round-b.round;
+    return a.phase.localeCompare(b.phase);
+  });
+
+  const totalRounds=sortedGroups.length;
   const roundsPerPage=5;
   const totalPages=Math.ceil(totalRounds/roundsPerPage)||1;
   if(matchPage<0||matchPage>=totalPages)matchPage=totalPages-1;
 
-  // Page buttons (like nerd stats tabs)
+  // Page buttons
   const btnWrap=document.getElementById('mt-page-btns');
   if(btnWrap){
     btnWrap.innerHTML=Array.from({length:totalPages},(_,i)=>{
-      const startR=rounds[i*roundsPerPage];
-      const endR=rounds[Math.min((i+1)*roundsPerPage-1,totalRounds-1)];
-      const lbl=startR===endR?`K${startR}`:`K${startR}-K${endR}`;
-      return `<button class="tb ${i===matchPage?'active':''}" onclick="matchPage=${i};renderMatches()">${lbl}</button>`;
+      const startG=sortedGroups[i*roundsPerPage];
+      const endG=sortedGroups[Math.min((i+1)*roundsPerPage-1,totalRounds-1)];
+      const startLbl=startG?`K${startG.round}`:'';
+      const endLbl=endG&&endG!==startG?`-K${endG.round}`:'';
+      return `<button class="tb ${i===matchPage?'active':''}" onclick="matchPage=${i};renderMatches()">` +
+        startLbl+endLbl+'</button>';
     }).join('');
   }
 
-  const pageRounds=rounds.slice(matchPage*roundsPerPage,(matchPage+1)*roundsPerPage);
-  const pageMatches=rdMatches.filter(m=>pageRounds.includes(m.round));
-  const byRound={};
-  pageMatches.forEach(m=>{const r=m.round||0;if(!byRound[r])byRound[r]=[];byRound[r].push(m);});
+  const pageGroups=sortedGroups.slice(matchPage*roundsPerPage,(matchPage+1)*roundsPerPage);
 
-  // Krogli od 1 navzgor (ascending)
-  const html=Object.entries(byRound).sort((a,b)=>a[0]-b[0]).map(([round,matches])=>{
-    const cards=matches.sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
+  const html=pageGroups.map(grp=>{
+    const cards=grp.matches.sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
       .map(m=>buildLiveCard(m,currentLeague)).join('');
-    return `<div class="round-group"><div class="round-title">KROG ${round}</div><div class="matches-grid">${cards}</div></div>`;
+    const title=getLg().id===582?`KROG ${grp.round} — ${grp.phase}`:`KROG ${grp.round}`;
+    return `<div class="round-group"><div class="round-title">${title}</div><div class="matches-grid">${cards}</div></div>`;
   }).join('');
 
   const wrap=document.getElementById('matches-wrap');
