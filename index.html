@@ -544,14 +544,24 @@ select:focus{outline:none;border-color:var(--acc)}
   </div>
 
   <div id="tab-tekme" class="tab">
-    <div class="ctrls">
-      <select id="round-filter" onchange="renderMatches()">
-        <option value="0">Vsi krogi</option>
-      </select>
-      <select id="team-filter-m" onchange="renderMatches()">
+    <div class="ctrls" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div class="tgl">
+        <button class="tb active" id="mt-rd" onclick="setMatchTab('rd')">📅 Redni del</button>
+        <button class="tb" id="mt-pf" onclick="setMatchTab('playoff')">🏆 Končnica</button>
+      </div>
+      <select id="team-filter-m" onchange="renderMatches()" style="margin-left:auto">
         <option value="">Vse ekipe</option>
       </select>
     </div>
+    <div id="mt-rd-wrap">
+      <div id="mt-page-btns" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="matches-wrap"></div>
+    </div>
+    <div id="mt-playoff-wrap" style="display:none">
+      <div id="mt-playoff-phases" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="matches-playoff-wrap"></div>
+    </div>
+  </div>
     <div id="matches-wrap"></div>
   </div>
 
@@ -1575,19 +1585,24 @@ function renderMatches(){
   const totalPages=Math.ceil(totalRounds/roundsPerPage)||1;
   if(matchPage<0||matchPage>=totalPages)matchPage=totalPages-1;
 
-  const pageRounds=rounds.slice(matchPage*roundsPerPage,(matchPage+1)*roundsPerPage);
-  const lbl=document.getElementById('mt-page-lbl');
-  const prevBtn=document.getElementById('mt-prev');
-  const nextBtn=document.getElementById('mt-next');
-  if(lbl)lbl.textContent=`Krogli ${pageRounds[0]||''}-${pageRounds[pageRounds.length-1]||''} / ${totalRounds}`;
-  if(prevBtn)prevBtn.disabled=matchPage<=0;
-  if(nextBtn)nextBtn.disabled=matchPage>=totalPages-1;
+  // Page buttons (like nerd stats tabs)
+  const btnWrap=document.getElementById('mt-page-btns');
+  if(btnWrap){
+    btnWrap.innerHTML=Array.from({length:totalPages},(_,i)=>{
+      const startR=rounds[i*roundsPerPage];
+      const endR=rounds[Math.min((i+1)*roundsPerPage-1,totalRounds-1)];
+      const lbl=startR===endR?`K${startR}`:`K${startR}-K${endR}`;
+      return `<button class="tb ${i===matchPage?'active':''}" onclick="matchPage=${i};renderMatches()">${lbl}</button>`;
+    }).join('');
+  }
 
+  const pageRounds=rounds.slice(matchPage*roundsPerPage,(matchPage+1)*roundsPerPage);
   const pageMatches=rdMatches.filter(m=>pageRounds.includes(m.round));
   const byRound={};
   pageMatches.forEach(m=>{const r=m.round||0;if(!byRound[r])byRound[r]=[];byRound[r].push(m);});
 
-  const html=Object.entries(byRound).sort((a,b)=>b[0]-a[0]).map(([round,matches])=>{
+  // Krogli od 1 navzgor (ascending)
+  const html=Object.entries(byRound).sort((a,b)=>a[0]-b[0]).map(([round,matches])=>{
     const cards=matches.sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
       .map(m=>buildLiveCard(m,currentLeague)).join('');
     return `<div class="round-group"><div class="round-title">KROG ${round}</div><div class="matches-grid">${cards}</div></div>`;
@@ -1595,6 +1610,37 @@ function renderMatches(){
 
   const wrap=document.getElementById('matches-wrap');
   if(wrap)wrap.innerHTML=html||'<div class="empty">Ni tekem</div>';
+}
+
+function renderPlayoffMatches(teamFilter){
+  const pfPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  const pfMs=allMatches.filter(m=>{
+    const ph=m.competitions?.[0]?.competitionPhaseName||'';
+    return pfPhases.includes(ph)&&(!teamFilter||m.firstTeamName===teamFilter||m.secondTeamName===teamFilter);
+  });
+  const avail=[...new Set(pfMs.map(m=>m.competitions?.[0]?.competitionPhaseName))].filter(Boolean);
+  const ordered=pfPhases.filter(p=>avail.includes(p));
+  if(!playoffPhaseFilter||!ordered.includes(playoffPhaseFilter))playoffPhaseFilter=ordered[0]||null;
+
+  const phColors={'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24','Liga za obstanek':'#ef4444'};
+  const phWrap=document.getElementById('mt-playoff-phases');
+  if(phWrap)phWrap.innerHTML=ordered.map(p=>`<button class="tb ${p===playoffPhaseFilter?'active':''}"
+    style="${p===playoffPhaseFilter?'background:'+phColors[p]+';border-color:'+phColors[p]+';color:#fff':''}"
+    onclick="playoffPhaseFilter='${p}';renderMatches()">${p}</button>`).join('');
+
+  const phMs=pfMs.filter(m=>m.competitions?.[0]?.competitionPhaseName===playoffPhaseFilter)
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+  const pw=document.getElementById('matches-playoff-wrap');
+  if(pw)pw.innerHTML=phMs.length?`<div class="matches-grid">${phMs.map(m=>buildLiveCard(m,currentLeague)).join('')}</div>`:'<div class="empty">Ni tekem</div>';
+}
+
+function setMatchTab(tab){
+  matchTab=tab;
+  document.getElementById('mt-rd-wrap').style.display=tab==='rd'?'block':'none';
+  document.getElementById('mt-playoff-wrap').style.display=tab==='playoff'?'block':'none';
+  document.getElementById('mt-rd').classList.toggle('active',tab==='rd');
+  document.getElementById('mt-pf').classList.toggle('active',tab==='playoff');
+  renderMatches();
 }
 
 function renderPlayoffMatches(teamFilter){
