@@ -2241,14 +2241,16 @@ async function openMatch(matchId){
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
       <div class="mo-tabs">
-        ${boxScore||matchData?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
+        ${!isLive&&matchInfo.status!=='FINISHED'?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-preview')">🔮 PREVIEW</button>`:''}
+        ${boxScore||matchData?`<button class="mo-tab ${!isLive&&matchInfo.status!=='FINISHED'?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
         ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
       </div>
-      ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel"><div class="mo-section">${boxScore||''}</div></div>`:''}
+      ${!isLive&&matchInfo.status!=='FINISHED'?`<div id="mo-tab-preview" class="mo-tab-panel">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
+      ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${!isLive&&matchInfo.status!=='FINISHED'?'none':'block'}"><div class="mo-section">${boxScore||''}</div></div>`:''}
       ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:none">
         <div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div>
       </div>`:''}
-      ${!boxScore&&!matchData&&!hasFiba?`<div class="empty">Statistika ni na voljo</div>`:''}
+      ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
 
@@ -2695,7 +2697,11 @@ function showPlayer(idx){
             🔗 Deli
           </button>
         </div>
-        <div class="pp-meta"><span style="color:${color};font-weight:600">${p[F.team]}</span> · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
+        <div class="pp-meta">
+          <span style="color:${color};font-weight:600">${p[F.team]}</span> · 
+          ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem
+          ${(()=>{const ph=playersHeight[p[F.pid]];return ph?.height?` · <span style="color:var(--mut)">${ph.height} cm</span>`+(ph.pos?` · <span style="color:var(--mut)">${ph.pos}</span>`:''):''})()}
+        </div>
       </div>
       <div class="pp-key-stats">
         <div class="pp-stat"><div class="pp-sv" style="color:${color}">${fmt(p[F.toc]/t)}</div><div class="pp-sl">TOČ/tm</div></div>
@@ -4793,6 +4799,144 @@ function liveWinProb(elo1, elo2, score1, score2, elapsedSeconds, periodType) {
 }
 
 function resetElo() { _eloRatings = null; }
+
+// ═══════════════════════════════════════════════════
+// TEKMA PREVIEW
+// ═══════════════════════════════════════════════════
+function renderMatchPreview(matchInfo, c1, c2) {
+  const t1 = matchInfo.firstTeamName, t2 = matchInfo.secondTeamName;
+  const n1 = normalizeTeamName(t1), n2 = normalizeTeamName(t2);
+
+  // ELO probability
+  const {ratings} = computeElo();
+  const r1 = ratings[n1] || ratings[t1] || 1500;
+  const r2 = ratings[n2] || ratings[t2] || 1500;
+  const prob1 = eloWinProb(r1, r2);
+  const prob2 = 1 - prob1;
+  const p1 = Math.round(prob1*100), p2 = Math.round(prob2*100);
+
+  // H2H history
+  const h2hMatches = allMatches
+    .filter(m => m.status==='FINISHED' && (
+      (normalizeTeamName(m.firstTeamName)===n1 && normalizeTeamName(m.secondTeamName)===n2) ||
+      (normalizeTeamName(m.firstTeamName)===n2 && normalizeTeamName(m.secondTeamName)===n1)
+    ))
+    .sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime))
+    .slice(0, 5);
+
+  let h2hW1=0, h2hW2=0;
+  h2hMatches.forEach(m => {
+    const isT1home = normalizeTeamName(m.firstTeamName)===n1;
+    const s1 = isT1home ? m.firstTeamScore : m.secondTeamScore;
+    const s2 = isT1home ? m.secondTeamScore : m.firstTeamScore;
+    if(s1>s2) h2hW1++; else h2hW2++;
+  });
+
+  const h2hRows = h2hMatches.map(m => {
+    const isT1home = normalizeTeamName(m.firstTeamName)===n1;
+    const myScore = isT1home ? m.firstTeamScore : m.secondTeamScore;
+    const oppScore = isT1home ? m.secondTeamScore : m.firstTeamScore;
+    const t1won = myScore > oppScore;
+    const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    const phase = m.competitions?.[0]?.competitionPhaseName||'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.75rem">
+      <span style="color:var(--mut);min-width:70px">${date}</span>
+      <span style="color:${t1won?c1:c2};font-weight:700;min-width:20px">${t1won?'Z':'P'}</span>
+      <span style="font-family:var(--fh);font-size:.9rem">
+        <span style="color:${t1won?c1:'var(--mut)'}">${myScore}</span>
+        <span style="color:var(--mut)"> : </span>
+        <span style="color:${!t1won?c2:'var(--mut)'}">${oppScore}</span>
+      </span>
+      <span style="color:var(--mut);font-size:.65rem;margin-left:auto">${phase}</span>
+    </div>`;
+  }).join('');
+
+  // Last 5 form for each team
+  const teamForm = (teamName) => {
+    const norm = normalizeTeamName(teamName);
+    return allMatches
+      .filter(m => m.status==='FINISHED' && (
+        normalizeTeamName(m.firstTeamName)===norm ||
+        normalizeTeamName(m.secondTeamName)===norm
+      ))
+      .sort((a,b) => new Date(b.dateTime)-new Date(a.dateTime))
+      .slice(0,5)
+      .map(m => {
+        const isHome = normalizeTeamName(m.firstTeamName)===norm;
+        const won = isHome ? m.firstTeamScore>m.secondTeamScore : m.secondTeamScore>m.firstTeamScore;
+        const opp = isHome ? m.secondTeamName : m.firstTeamName;
+        const myS = isHome ? m.firstTeamScore : m.secondTeamScore;
+        const oppS = isHome ? m.secondTeamScore : m.firstTeamScore;
+        return `<span class="form-dot ${won?'w':'l'}" title="${won?'Z':'P'} ${myS}:${oppS} vs ${opp}">${won?'Z':'P'}</span>`;
+      }).reverse().join('');
+  };
+
+  // Team avg stats
+  const teamStats = (teamName) => {
+    const norm = normalizeTeamName(teamName);
+    const tms = allMatches.filter(m=>m.status==='FINISHED'&&
+      m.competitions?.[0]?.competitionPhaseName==='Redni del'&&
+      (normalizeTeamName(m.firstTeamName)===norm||normalizeTeamName(m.secondTeamName)===norm));
+    if(!tms.length) return null;
+    const ptsFor = tms.reduce((s,m)=>{
+      const isHome=normalizeTeamName(m.firstTeamName)===norm;
+      return s+(isHome?m.firstTeamScore:m.secondTeamScore);
+    },0);
+    const ptsAga = tms.reduce((s,m)=>{
+      const isHome=normalizeTeamName(m.firstTeamName)===norm;
+      return s+(isHome?m.secondTeamScore:m.firstTeamScore);
+    },0);
+    return {avg: (ptsFor/tms.length).toFixed(1), def: (ptsAga/tms.length).toFixed(1), T: tms.length};
+  };
+
+  const st1 = teamStats(t1), st2 = teamStats(t2);
+
+  return `
+    <!-- ELO Win Probability -->
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
+      <div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em;margin-bottom:8px;font-family:var(--fm)">ELO VERJETNOST ZMAGE</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-family:var(--fh);font-size:1.3rem;color:${c1};font-weight:700;min-width:44px">${p1}%</span>
+        <div style="flex:1;height:8px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden;position:relative">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${p1}%;background:${c1};border-radius:4px 0 0 4px"></div>
+          <div style="position:absolute;right:0;top:0;height:100%;width:${p2}%;background:${c2};border-radius:0 4px 4px 0"></div>
+        </div>
+        <span style="font-family:var(--fh);font-size:1.3rem;color:${c2};font-weight:700;min-width:44px;text-align:right">${p2}%</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:.62rem;color:var(--mut)">ELO: ${r1}</span>
+        <span style="font-size:.62rem;color:var(--mut)">ELO: ${r2}</span>
+      </div>
+    </div>
+
+    <!-- Team stats + form -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border)">
+      ${[{t:t1,c:c1,st:st1},{t:t2,c:c2,st:st2}].map(({t,c,st})=>`
+        <div style="background:var(--bg);padding:14px 16px">
+          <div style="font-size:.7rem;font-weight:600;color:${c};margin-bottom:8px">${TEAM_SHORT[normalizeTeamName(t)]||t}</div>
+          ${st?`
+          <div style="display:flex;gap:16px;margin-bottom:8px">
+            <div><div style="font-family:var(--fh);font-size:1rem;color:var(--acc)">${st.avg}</div><div style="font-size:.58rem;color:var(--mut)">TOČ+/TM</div></div>
+            <div><div style="font-family:var(--fh);font-size:1rem;color:var(--mut)">${st.def}</div><div style="font-size:.58rem;color:var(--mut)">TOČ-/TM</div></div>
+          </div>`:''}
+          <div style="display:flex;gap:3px">${teamForm(t)}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- H2H -->
+    ${h2hMatches.length ? `
+    <div style="padding:14px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em;font-family:var(--fm)">MEDSEBOJNI DVOBOJI (zadnjih ${h2hMatches.length})</div>
+        <div style="font-family:var(--fh);font-size:.9rem">
+          <span style="color:${c1}">${h2hW1}</span>
+          <span style="color:var(--mut)"> – </span>
+          <span style="color:${c2}">${h2hW2}</span>
+        </div>
+      </div>
+      ${h2hRows}
+    </div>` : `<div class="empty" style="padding:20px">Ni medsebojnih tekem</div>`}`;
+}
 
 // ═══════════════════════════════════════════════════
 // URL ROUTER
