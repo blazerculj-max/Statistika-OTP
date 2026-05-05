@@ -2213,13 +2213,28 @@ async function openMatch(matchId){
     </div>
   </div>`;
 
-  // Fetch PBP if no box score
-  if(!boxScore && hasFiba) {
-    const events = await fetchLivePbp(matchInfo);
-    livePbpCache[matchId] = events;
-    const pbpSection = document.getElementById('pbp-section');
-    if(pbpSection) {
-      pbpSection.innerHTML = renderPbpFeed(events, t1, t2, c1, c2, ls);
+  // Fetch FIBA data for both live boxscore and PBP
+  if(hasFiba) {
+    const fibaData = await fetchFibaData(matchInfo);
+    if(fibaData) {
+      // Update live boxscore tab
+      const boxPanel = document.getElementById('mo-tab-box');
+      if(boxPanel) {
+        const liveBox = renderFibaBoxscore(fibaData, c1, c2);
+        if(liveBox) boxPanel.innerHTML = `<div class="mo-section">${liveBox}</div>`;
+      }
+      // Extract PBP events
+      const events = (fibaData.pbp||[]).filter(e=>e.actionType&&e.familyName);
+      livePbpCache[matchId] = events;
+      const pbpSection = document.getElementById('pbp-section');
+      if(pbpSection) {
+        pbpSection.innerHTML = renderPbpFeed(events, t1, t2, c1, c2, ls);
+      }
+    } else if(!boxScore) {
+      const events = await fetchLivePbp(matchInfo);
+      livePbpCache[matchId] = events;
+      const pbpSection = document.getElementById('pbp-section');
+      if(pbpSection) pbpSection.innerHTML = renderPbpFeed(events, t1, t2, c1, c2, ls);
     }
 
     // Auto-refresh PBP every 20s for live matches
@@ -4548,6 +4563,130 @@ function switchMatchTab(btn, panelId) {
   btn.classList.add('active');
   const panel = document.getElementById(panelId);
   if(panel) panel.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+// FIBA LIVE BOXSCORE
+// ═══════════════════════════════════════════════════
+async function fetchFibaData(matchInfo) {
+  if(!matchInfo?.fibaLiveStatsUrl) return null;
+  const fibaId = matchInfo.fibaLiveStatsUrl.match(/\/([0-9]+)\/?$/)?.[1];
+  if(!fibaId) return null;
+  try {
+    const proxy = 'https://api.codetabs.com/v1/proxy?quest=';
+    const url = `https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json?t=${Date.now()}`;
+    const res = await fetch(proxy + encodeURIComponent(url));
+    if(!res.ok) return null;
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+function renderFibaBoxscore(d, c1, c2) {
+  if(!d?.tm) return '';
+  const teams = Object.values(d.tm);
+  if(teams.length < 2) return '';
+
+  // Quarter scores header
+  const qScores = (t) => {
+    const qs = [t.p1_score, t.p2_score, t.p3_score, t.p4_score].filter(q => q !== undefined && q !== '');
+    let html = qs.map((q,i) => `<td style="color:var(--mut);font-family:var(--fh)">${q}</td>`).join('');
+    if(t.ot_score) html += `<td style="color:#fbbf24;font-family:var(--fh)">${t.ot_score}</td>`;
+    return html;
+  };
+
+  const qCount = Math.max(
+    [teams[0].p1_score,teams[0].p2_score,teams[0].p3_score,teams[0].p4_score].filter(x=>x!==undefined&&x!=='').length,
+    [teams[1].p1_score,teams[1].p2_score,teams[1].p3_score,teams[1].p4_score].filter(x=>x!==undefined&&x!=='').length
+  );
+  const qHeaders = Array.from({length:qCount},(_,i)=>`<th>Q${i+1}</th>`).join('');
+  const otHeader = teams[0].ot_score ? '<th style="color:#fbbf24">OT</th>' : '';
+
+  // Team summary row
+  const teamSummaryHtml = `
+    <div style="overflow-x:auto;margin-bottom:12px">
+      <table class="standings-table" style="font-size:.8rem">
+        <thead><tr>
+          <th style="text-align:left">EKIPA</th>
+          ${qHeaders}${otHeader}
+          <th style="color:var(--acc)">SKP</th>
+          <th>2T%</th><th>3T%</th><th>PM%</th>
+          <th>SK</th><th>AS</th><th>STL</th><th>TOV</th>
+        </tr></thead>
+        <tbody>${teams.map((t,i)=>{
+          const c = i===0?c1:c2;
+          const fg2pct = t.tot_sTwoPointersAttempted>0 ? Math.round(t.tot_sTwoPointersMade/t.tot_sTwoPointersAttempted*100) : 0;
+          const fg3pct = t.tot_sThreePointersAttempted>0 ? Math.round(t.tot_sThreePointersMade/t.tot_sThreePointersAttempted*100) : 0;
+          const ftpct = t.tot_sFreeThrowsAttempted>0 ? Math.round(t.tot_sFreeThrowsMade/t.tot_sFreeThrowsAttempted*100) : 0;
+          return `<tr>
+            <td style="color:${c};font-weight:700;text-align:left">${t.shortName||t.name}</td>
+            ${qScores(t)}
+            <td style="color:${c};font-family:var(--fh);font-size:1rem;font-weight:800">${t.score||0}</td>
+            <td>${fg2pct}%</td><td>${fg3pct}%</td><td>${ftpct}%</td>
+            <td>${t.tot_sReboundsTotal||0}</td>
+            <td>${t.tot_sAssists||0}</td>
+            <td>${t.tot_sSteals||0}</td>
+            <td>${t.tot_sTurnovers||0}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // Player stats per team
+  const teamPlayersHtml = teams.map((t, ti) => {
+    const c = ti===0?c1:c2;
+    const players = Object.values(t.pl||{})
+      .filter(p => p.active || parseFloat(p.sMinutes||0) > 0)
+      .sort((a,b) => (b.sPoints||0)-(a.sPoints||0));
+
+    if(!players.length) return '';
+
+    const rows = players.map(p => {
+      const mins = p.sMinutes ? p.sMinutes.split(':')[0] + "'" : '—';
+      const pm = p.sPlusMinusPoints||0;
+      const fg2 = `${p.sTwoPointersMade||0}/${p.sTwoPointersAttempted||0}`;
+      const fg3 = `${p.sThreePointersMade||0}/${p.sThreePointersAttempted||0}`;
+      const ft = `${p.sFreeThrowsMade||0}/${p.sFreeThrowsAttempted||0}`;
+      return `<tr style="opacity:${parseFloat(p.sMinutes||0)>0?1:0.4}">
+        <td style="font-size:.65rem;color:var(--mut);text-align:center">${p.shirtNumber||''}</td>
+        <td style="text-align:left;font-weight:${p.starter?600:400}">
+          ${p.starter?'<span style="color:'+c+';font-size:.6rem">● </span>':''}${p.firstName?.[0]||''}. ${p.familyName||p.name||''}
+        </td>
+        <td style="color:var(--mut)">${mins}</td>
+        <td style="color:${c};font-weight:700;font-family:var(--fh)">${p.sPoints||0}</td>
+        <td>${p.sReboundsTotal||0}</td>
+        <td>${p.sAssists||0}</td>
+        <td>${p.sSteals||0}</td>
+        <td>${p.sBlocks||0}</td>
+        <td style="color:${pm>0?'#22c55e':pm<0?'#ef4444':'var(--mut)'}">${pm>0?'+':''}${pm}</td>
+        <td style="color:var(--mut);font-size:.68rem">${fg2}</td>
+        <td style="color:var(--mut);font-size:.68rem">${fg3}</td>
+        <td style="color:var(--mut);font-size:.68rem">${ft}</td>
+        <td style="color:${(p.sFoulsPersonal||0)>=5?'#ef4444':'var(--mut)'}">${p.sFoulsPersonal||0}</td>
+      </tr>`;
+    }).join('');
+
+    return `<div style="margin-bottom:16px">
+      <div style="font-family:var(--fh);font-size:.72rem;letter-spacing:.08em;color:${c};margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid ${c}30">
+        ${t.name}
+      </div>
+      <div style="overflow-x:auto">
+        <table class="pp-table" style="font-size:.72rem;min-width:560px">
+          <thead><tr>
+            <th style="text-align:center">#</th>
+            <th style="text-align:left">IGRALEC</th>
+            <th>MIN</th>
+            <th style="color:${c}">PTS</th>
+            <th>SK</th><th>AS</th><th>STL</th><th>BLK</th>
+            <th>+/-</th>
+            <th>2T</th><th>3T</th><th>PM</th><th>PF</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  return teamSummaryHtml + teamPlayersHtml;
 }
 
 // ═══════════════════════════════════════════════════
