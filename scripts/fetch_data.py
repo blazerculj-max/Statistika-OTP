@@ -34,7 +34,7 @@ LEAGUES = {
         # 5814=Redni del, 5868=Osmina finala, 5869=Liga za obstanek
         # 5878=Četrtfinale, 5884=Polfinale
         'phase_ids': [5814, 5868, 5869, 5878, 5884],
-        'max_pages': 2,
+        'max_pages': 3,
         'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
                         'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
                         'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
