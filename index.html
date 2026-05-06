@@ -3262,9 +3262,13 @@ function computeNerdStats(){
   function isClutch(ev){
     if((ev.period||0)<4)return false;
     if(ev.periodType==='OVERTIME')return Math.abs(ev.lead||0)<=8;
-    const gt=ev.gt||'99:99';
-    const mins=parseInt(gt.split(':')[0])||99;
-    return mins<=3&&Math.abs(ev.lead||0)<=5;
+    // FIBA gt = elapsed time (ne remaining!)
+    // 10-min četrtine: zadnje 3 min = elapsed >= 7:00 (420s)
+    const gt=ev.gt||'00:00';
+    const parts=gt.split(':');
+    const elapsed=parseInt(parts[0]||0)*60+(parseFloat(parts[1]||0));
+    const remaining=600-elapsed;
+    return remaining<=180&&Math.abs(ev.lead||0)<=5;
   }
 
   function initStats(idx){
