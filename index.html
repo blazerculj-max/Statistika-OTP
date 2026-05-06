@@ -350,6 +350,35 @@ select:focus{outline:none;border-color:var(--acc)}
 .trend-bars{display:flex;gap:3px;align-items:flex-end;height:50px}
 .trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;position:relative;cursor:default}
 .trend-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--border2);border-radius:4px;padding:3px 7px;font-size:.65rem;white-space:nowrap;color:var(--text);font-family:var(--fm);z-index:10}
+
+/* ─── Mobile Bottom Nav ─── */
+@media(max-width:768px){
+  #mobile-nav{
+    display:flex !important;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:rgba(10,10,10,.95);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-top:1px solid rgba(255,255,255,.08);
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+    z-index:150;
+    justify-content:space-around;
+  }
+  .mbn-btn{
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;color:rgba(255,255,255,.35);
+    cursor:pointer;padding:6px 8px;border-radius:10px;
+    transition:all .18s ease;flex:1;max-width:64px;
+  }
+  .mbn-btn.active{color:var(--acc)}
+  .mbn-btn:active{transform:scale(.92)}
+  .mbn-icon{font-size:1.2rem;line-height:1}
+  .mbn-lbl{font-size:.55rem;font-weight:500;letter-spacing:.02em;white-space:nowrap}
+  .nav{display:none !important}
+  .content{padding-bottom:84px !important}
+  .hdr{padding:10px 14px}
+}
 </style>
 </head>
 <body>
@@ -1432,6 +1461,10 @@ function showTab(t){
   if(t==='lestvica'){renderStandings();renderEloTable();}
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
+  // Update mobile bottom nav
+  document.querySelectorAll('.mbn-btn').forEach(b => {
+    b.classList.toggle('active', b.id === 'mbn-' + t);
+  });
   if(t==='live')renderLiveTab();
   if(t==='obiski'){
     const iframe=document.getElementById('obiski-iframe');
@@ -3936,5 +3969,29 @@ function renderBracketHTML(byPhase,phaseColors){
 }
 
 </script>
+
+<div id="mobile-nav" style="display:none">
+  <button class="mbn-btn active" id="mbn-live" onclick="showTab('live')">
+    <span class="mbn-icon">🔴</span><span class="mbn-lbl">Live</span>
+  </button>
+  <button class="mbn-btn" id="mbn-lestvica" onclick="showTab('lestvica')">
+    <span class="mbn-icon">🏆</span><span class="mbn-lbl">Lestvica</span>
+  </button>
+  <button class="mbn-btn" id="mbn-tekme" onclick="showTab('tekme')">
+    <span class="mbn-icon">📅</span><span class="mbn-lbl">Tekme</span>
+  </button>
+  <button class="mbn-btn" id="mbn-liga" onclick="showTab('liga')">
+    <span class="mbn-icon">🏅</span><span class="mbn-lbl">Liga</span>
+  </button>
+  <button class="mbn-btn" id="mbn-mvp" onclick="showTab('mvp')">
+    <span class="mbn-icon">⭐</span><span class="mbn-lbl">MVP</span>
+  </button>
+  <button class="mbn-btn" id="mbn-iskanje" onclick="showTab('iskanje')">
+    <span class="mbn-icon">🔍</span><span class="mbn-lbl">Išči</span>
+  </button>
+  <button class="mbn-btn" id="mbn-race" onclick="showTab('race')">
+    <span class="mbn-icon">📈</span><span class="mbn-lbl">Sezona</span>
+  </button>
+</div>
 </body>
 </html>
