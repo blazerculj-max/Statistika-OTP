@@ -3327,7 +3327,9 @@ function computeNerdStats(){
       if(isClutch(ev)){
         if((ev.actionType==='2pt'||ev.actionType==='3pt'||ev.actionType==='freethrow')&&made){
           const pts=ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:1;
-          s.clutch.pts+=pts;s.clutch.fgm++;
+          s.clutch.pts+=pts;
+          // FGM samo za 2pt in 3pt (ne freethrow!)
+          if(ev.actionType==='2pt'||ev.actionType==='3pt')s.clutch.fgm++;
         }
         if(ev.actionType==='2pt'||ev.actionType==='3pt')s.clutch.fga++;
         if(ev.actionType==='turnover')s.clutch.tov++;
