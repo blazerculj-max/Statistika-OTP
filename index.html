@@ -3556,7 +3556,8 @@ let _eloRatings=null;
 function computeElo(){
   if(_eloRatings)return _eloRatings;
   const K=32,ratings={},history={};
-  const PRESET={'Cedevita Olimpija':1934};
+  // Cedevita Olimpija preset samo za 1. SKL
+  const PRESET = getLg().id === 579 ? {'Cedevita Olimpija':1934} : {};
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&
     m.competitions?.[0]?.competitionPhaseName==='Redni del')
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
