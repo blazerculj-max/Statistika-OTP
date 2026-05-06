@@ -10,15 +10,13 @@ API_BASE  = "https://api.kzs.si/api/v1/public"
 FIBA_BASE = "https://fibalivestats.dcd.shared.geniussports.com/data"
 SEASON_ID = 26
 
-# Liga1: phase ID za moško 1. SKL — izključuje žensko ligo
-# Preveriti: fetch brez filtra vrača tudi ženske tekme!
 LEAGUES = {
     'liga1': {
         'id': 579,
         'name': 'Liga OTP banka',
-        'phase_ids': None,   # single page fetch, samo 1 stran (135 tekem)
+        'phase_ids': None,
         'groups': {},
-        'max_pages': 1,      # ← samo prva stran, ne paginira
+        'max_pages': 1,
     },
     'liga2': {
         'id': 581,
@@ -30,11 +28,9 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        # Redni del + celoten playoff (phase IDs potrjeni 28.4.2026)
-        # 5814=Redni del, 5868=Osmina finala, 5869=Liga za obstanek
-        # 5878=Četrtfinale, 5884=Polfinale
         'phase_ids': [5814, 5868, 5869, 5878, 5884],
         'max_pages': 3,
+        'phase_limits': {5814: 200},
         'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
                         'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
                         'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
@@ -44,7 +40,7 @@ LEAGUES = {
 }
 
 FORCE_FULL  = '--full'  in sys.argv
-FETCH_PBP   = '--pbp'   in sys.argv  # PBP samo če eksplicitno zahtevano
+FETCH_PBP   = '--pbp'   in sys.argv
 STATS_ONLY  = '--stats' in sys.argv
 
 def fetch_json(url, retries=3):
@@ -58,18 +54,18 @@ def fetch_json(url, retries=3):
             time.sleep(i + 1)
     return None
 
-def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99, known_teams=None):
+def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99, known_teams=None, limit=150):
     all_items = []
     page = 1
     while page <= max_pages:
         url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
         if phase_id: url += f"&competitionPhaseId={phase_id}"
         if group_id: url += f"&competitionPhaseGroupId={group_id}"
+        if limit != 150: url += f"&limit={limit}"
         if page > 1:  url += f"&page={page}"
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items: break
-        # If known_teams provided, stop if no known teams on this page
         if known_teams:
             page_known = [m for m in items
                          if m['firstTeamName'] in known_teams and m['secondTeamName'] in known_teams]
@@ -79,34 +75,32 @@ def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99, known_teams
             all_items.extend(items)
         else:
             all_items.extend(items)
-        if len(items) < 150: break
+        if len(items) < limit: break
         page += 1
         time.sleep(0.1)
     return all_items
 
 def fetch_all_matches(key, lg):
     max_p = lg.get('max_pages', 99)
-    # Known teams for liga2/liga3 to stop pagination early
     known = lg.get('known_teams')
+    phase_limits = lg.get('phase_limits', {})
     if lg['phase_ids']:
         all_items = []
         for pid in lg['phase_ids']:
+            lim = phase_limits.get(pid, 150)
             gids = lg['groups'].get(pid)
             if gids:
                 for gid in gids:
-                    all_items.extend(fetch_phase(lg['id'], pid, gid, max_p))
+                    all_items.extend(fetch_phase(lg['id'], pid, gid, max_p, limit=lim))
             else:
-                all_items.extend(fetch_phase(lg['id'], pid, max_pages=max_p))
+                all_items.extend(fetch_phase(lg['id'], pid, max_pages=max_p, limit=lim))
         seen = set()
         matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
     else:
-        # No phase filter — paginate but stop when no known teams
         all_items = fetch_phase(lg['id'], max_pages=max_p, known_teams=known)
         seen = set()
         matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
 
-    # Filtriraj samo tekme ki spadajo k tej ligi
-    # Za liga3: dodatno filtriraj po znanih ekipah (phase filter je pokvarjen)
     LIGA2_TEAMS = {
         'Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica',
         'LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'
@@ -212,14 +206,12 @@ def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
     existing = load_existing_stats(key)
 
-    # Matches — vedno fresh (hitro, samo seznam)
     matches = fetch_all_matches(key, lg)
     finished = [m for m in matches if m['status'] == 'FINISHED']
     live     = [m for m in matches if m['status'] == 'LIVE']
     print(f"  {len(matches)} tekem | {len(finished)} končanih | {len(live)} v živo")
     print(f"  Ekipe: {len(set(m['firstTeamName'] for m in matches))}")
 
-    # Stats
     existing_stats = existing.get('matchStats', {}) if existing else {}
     stats = fetch_stats_incremental(matches, existing_stats)
 
@@ -231,9 +223,7 @@ def process_league(key, lg):
                   f, ensure_ascii=False, separators=(',',':'))
     print(f"  ✅ {stats_file} ({os.path.getsize(stats_file)//1024} KB)")
 
-    # PBP — samo če zahtevano z --pbp flagom
     if FETCH_PBP:
-        # Liga3 PBP: FIBA blokira GitHub Actions — preskočimo
         if key == 'liga3':
             print(f"  PBP: liga3 preskočena (FIBA blokira GitHub Actions IP)")
             pbp_file = f"data/{key}_pbp.json"
@@ -251,7 +241,6 @@ def process_league(key, lg):
     else:
         print(f"  PBP: preskočen (dodaj --pbp za fetch)")
 
-    # Attendance
     return [
         {'matchId': m['id'], 'round': m['round'], 'date': m.get('dateTime',''),
          'home': m['firstTeamName'], 'away': m['secondTeamName'],
