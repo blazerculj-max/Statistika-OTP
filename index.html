@@ -3927,7 +3927,15 @@ function renderStandings(){
   if(!wrap||!allMatches.length)return;
 
   // Repopulate H2H dropdowns with current league teams only
-  const lgTeams=[...new Set(allMatches.map(m=>[m.firstTeamName,m.secondTeamName]).flat())].sort();
+  // H2H: samo ekipe iz LEAGUES.teams ali rednega dela (ne playoff pari)
+  const lg0=getLg();
+  const lgTeams=(lg0.teams&&lg0.teams.length
+    ? lg0.teams
+    : [...new Set(allMatches
+        .filter(m=>m.status==='FINISHED'&&
+          !['Četrtfinale','Polfinale','Finale','Osmina finala'].includes(m.competitions?.[0]?.competitionPhaseName||''))
+        .map(m=>[m.firstTeamName,m.secondTeamName]).flat())]
+  ).sort();
   ['h2h-team1','h2h-team2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     if(!el)return;
