@@ -1263,8 +1263,9 @@ function subscribeToLiveMatches() {
 function initUI() {
   // Use league team list if available, otherwise derive from data
   const lgTeams = getLg().teams;
+  // Vključi VSE ekipe iz LEAGUES.teams (tudi Cedevita ki nima rednega dela)
   const teams = lgTeams && lgTeams.length
-    ? lgTeams.filter(t => P.some(p => p[F.team] === t || p[F.team].includes(t))).sort()
+    ? [...lgTeams].sort()
     : [...new Set(P.map(p => p[F.team]))].sort();
 
   // Team select
