@@ -1490,11 +1490,18 @@ let ligaPhase = 'all';
 function setLigaPhase(ph){
   ligaPhase = ph;
   ['all','Redni del','playoff','Liga za obstanek'].forEach(p => {
-    const id = 'lph-' + p.replace(/ /g,'_').replace('č','c').replace('č','c');
     const btn = document.getElementById('lph-' + (p==='all'?'all':p==='Redni del'?'regular':p==='playoff'?'playoff':'obstanek'));
     if(btn) btn.classList.toggle('active', p === ph);
   });
-  // Re-aggregate and refresh leaders
+  // Skrij/onemogči min tekem filter za končnico
+  const isPlayoff = ph === 'playoff' || ph === 'Liga za obstanek';
+  const minWrap = document.getElementById('liga-min-wrap');
+  if(minWrap){
+    minWrap.style.opacity = isPlayoff ? '0.35' : '1';
+    minWrap.style.pointerEvents = isPlayoff ? 'none' : '';
+    minWrap.title = isPlayoff ? 'Filter ni relevanten za končnico' : '';
+  }
+  if(isPlayoff) { lMin = 1; } // za končnico brez filtra
   aggregatePlayers(ph);
   _leaguePlayers = null; _tmAgg = {};
   renderLeaders();
@@ -2174,26 +2181,43 @@ function selectPlayer2LP(lpIdx){
 
 function doSearch(){
   if(!P.length)return;
-  const q=(document.getElementById('srch').value||'').toLowerCase();
-  const tm=document.getElementById('srch-team').value;
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  const tm=document.getElementById('srch-team')?.value||'';
+  const minPts=parseFloat(document.getElementById('srch-pts')?.value)||0;
+  const minReb=parseFloat(document.getElementById('srch-reb')?.value)||0;
+  const minAst=parseFloat(document.getElementById('srch-ast')?.value)||0;
+  const minEfe=parseFloat(document.getElementById('srch-efe')?.value)||0;
+  const minGames=parseInt(document.getElementById('srch-games')?.value)||1;
   LP = getLeaguePlayers();
   let res=LP;
-  if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q));
+  if(q)res=res.filter(p=>p[F.name].toLowerCase().includes(q)||p[F.team].toLowerCase().includes(q));
   if(tm)res=res.filter(p=>p[F.team].includes(tm));
+  if(minGames>1)res=res.filter(p=>p[F.T]>=minGames);
+  if(minPts>0)res=res.filter(p=>p[F.toc]/Math.max(p[F.T],1)>=minPts);
+  if(minReb>0)res=res.filter(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)>=minReb);
+  if(minAst>0)res=res.filter(p=>p[F.pod]/Math.max(p[F.T],1)>=minAst);
+  if(minEfe>0)res=res.filter(p=>p[F.efe]/Math.max(p[F.T],1)>=minEfe);
+  res.sort((a,b)=>b[F.toc]/Math.max(b[F.T],1)-a[F.toc]/Math.max(a[F.T],1));
+
+  const cnt=document.getElementById('srch-count');
+  if(cnt)cnt.textContent=res.length?`${res.length} rezultatov`:'';
+
   const html=res.slice(0,40).map(p=>{
+    const lpIdx=LP.indexOf(p);
     const color=TEAM_COLORS[p[F.team].split(' / ')[0]]||'#f97316';
-    const isSel=selectedPlayers.some(s=>s===p);
-    return `<div class="pcard ${isSel?'selected':''}">
-      <div class="pc-name" style="display:flex;align-items:center;justify-content:space-between">
-        <span class="pname-link" onclick="showPlayerLP(${LP.indexOf(p)})" title="Odpri profil">${p[F.name]} <span style="color:var(--mut);font-weight:400;font-size:.72rem">${p[F.born]}</span></span>
-        <span onclick="selectPlayer2LP(${LP.indexOf(p)})" style="font-size:.65rem;color:var(--mut);cursor:pointer;padding:2px 6px;border:1px solid var(--border2);border-radius:4px">primerjaj</span>
-      </div>
-      <div class="pc-meta" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
-      <div class="pc-stats">
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.toc]/p[F.T])}</div><div class="pc-sl">TOČ/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt((p[F.nap]+p[F.obr])/p[F.T])}</div><div class="pc-sl">SK/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.pod]/p[F.T])}</div><div class="pc-sl">POD/tm</div></div>
-        <div class="pc-stat"><div class="pc-sv" style="color:${color}">${fmt(p[F.efe]/p[F.T])}</div><div class="pc-sl">EFE/tm</div></div>
+    const t=Math.max(p[F.T],1);
+    return `<div class="pcard" onclick="showPlayerLP(${lpIdx})" style="cursor:pointer;border-left:3px solid ${color}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:.92rem">${p[F.name]}</div>
+          <div style="font-size:.72rem;color:${color};margin-top:2px">${p[F.team]} · ${p[F.T]} tekem</div>
+        </div>
+        <div style="display:flex;gap:12px;text-align:center">
+          <div><div style="font-family:var(--fh);font-size:1.05rem;color:var(--acc)">${(p[F.toc]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">PTS</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.05rem">${((p[F.nap]+p[F.obr])/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">SK</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.05rem">${(p[F.pod]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">AS</div></div>
+          <div><div style="font-family:var(--fh);font-size:1.05rem;color:var(--green)">${(p[F.efe]/t).toFixed(1)}</div><div style="font-size:.6rem;color:var(--mut)">EFE</div></div>
+        </div>
       </div>
     </div>`;
   }).join('');
