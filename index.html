@@ -541,6 +541,11 @@ select:focus{outline:none;border-color:var(--acc)}
         <button class="tb active" id="att-avg-btn" onclick="setAttMode('avg')">POVPREČJE</button>
         <button class="tb" id="att-tot-btn" onclick="setAttMode('total')">SKUPAJ</button>
       </div>
+      <div class="tgl">
+        <button class="tb active" id="att-ph-all" onclick="setAttPhase('all')">Vse</button>
+        <button class="tb" id="att-ph-rd" onclick="setAttPhase('rd')">Redni del</button>
+        <button class="tb" id="att-ph-pf" onclick="setAttPhase('playoff')">Končnica</button>
+      </div>
       <select id="att-team-filter" onchange="renderAttendance()" style="margin-left:auto">
         <option value="">Vse ekipe</option>
       </select>
@@ -656,10 +661,16 @@ select:focus{outline:none;border-color:var(--acc)}
     <div id="compare-wrap"></div>
   </div>
   <div id="tab-starost" class="tab">
-    <div class="ctrls" style="margin-bottom:12px">
-      <select id="age-team-filter" onchange="renderAge()">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+      <select id="age-team-filter" onchange="renderAge()" style="min-width:200px">
         <option value="">Vse ekipe</option>
       </select>
+      <div class="tgl">
+        <button class="tb active" id="age-ph-all" onclick="setAgePhase('all')">Vse</button>
+        <button class="tb" id="age-ph-rd" onclick="setAgePhase('rd')">Redni del</button>
+        <button class="tb" id="age-ph-pf" onclick="setAgePhase('playoff')">Končnica</button>
+      </div>
+      <div id="age-header-stats" style="display:flex;gap:16px;margin-left:auto"></div>
     </div>
     <div class="age-wrap" id="age-wrap"></div>
   </div>
@@ -2138,91 +2149,133 @@ function renderLeaders(){
 // ═══════════════════════════════════════════════════
 function renderAge(){
   const ageSel = document.getElementById('age-team-filter');
-  if(ageSel && ageSel.options.length <= 1){
-    const teams = [...new Set(P.map(p=>p[F.team]))].sort();
-    teams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;ageSel.appendChild(o);});
+  // Populate with current league teams
+  if(ageSel){
+    const currentTeams = [...new Set(P.map(p=>p[F.team]))].sort();
+    const existing = [...ageSel.options].map(o=>o.value).filter(Boolean);
+    if(JSON.stringify(existing.sort()) !== JSON.stringify([...currentTeams].sort())){
+      ageSel.innerHTML = '<option value="">Vse ekipe</option>';
+      currentTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;ageSel.appendChild(o);});
+    }
   }
   const teamFilter = ageSel?.value || '';
   const wrap = document.getElementById('age-wrap');
   if(!wrap) return;
 
   const currentYear = new Date().getFullYear();
+  const AGE_COLORS_MAP = {'U18':'#818cf8','19–21':'#60a5fa','22–25':'#34d399','26–30':'#facc15','31–35':'#f97316','35+':'#f87171'};
 
-  function barChart(title, vals, color){
-    const maxV = Math.max(...vals.map(v=>v.v), 1);
-    const bars = AGE_GROUPS.map((g,i)=>{
-      const pct = Math.round(vals[i].v/maxV*100);
-      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-        <div style="width:70px;font-size:.68rem;color:var(--mut);text-align:right">${g}</div>
-        <div style="flex:1;height:18px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden">
-          <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;display:flex;align-items:center;padding-left:6px">
-            <span style="font-size:.65rem;color:#fff;white-space:nowrap">${vals[i].label}</span>
-          </div>
-        </div>
-      </div>`;
+  // Filter players by phase
+  function filterByPhase(players){
+    if(agePhase==='all') return players;
+    return players.filter(p=>{
+      const log = playerGameLog[p[F.pid]];
+      if(!log) return false;
+      const phGames = log.filter(g=>{
+        const m = allMatches.find(x=>x.id===g.matchId);
+        const ph = m?.competitions?.[0]?.competitionPhaseName||'';
+        if(agePhase==='rd') return ph==='Redni del'||ph==='';
+        return ['Četrtfinale','Polfinale','Finale','Osmina finala','Liga za obstanek'].includes(ph);
+      });
+      return phGames.length > 0;
+    });
+  }
+
+  function vertBarChart(title, data){
+    const maxV = Math.max(...data.map(d=>d.value), 1);
+    const n=data.length, VW=600, VH=160, pad=40;
+    const slotW=(VW-pad*2)/n;
+    const barW=slotW*0.5;
+    const bars = data.map((d,i)=>{
+      const bh = Math.round((d.value/maxV)*100);
+      const x = pad + i*slotW + slotW/2 - barW/2;
+      const color = AGE_COLORS_MAP[d.group]||'var(--acc)';
+      return '<rect x="'+x+'" y="'+(VH-30-bh)+'" width="'+barW+'" height="'+bh+'" fill="'+color+'" rx="4"/>'
+        +'<text x="'+(x+barW/2)+'" y="'+(VH-32-bh)+'" text-anchor="middle" fill="#ddd" font-size="13" font-weight="600">'+d.label+'</text>'
+        +'<text x="'+(x+barW/2)+'" y="'+(VH-10)+'" text-anchor="middle" fill="'+color+'" font-size="12" font-weight="600">'+d.group+'</text>';
     }).join('');
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px">
-      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);letter-spacing:.06em;margin-bottom:10px">${title}</div>
-      ${bars}
+    return '<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 16px 12px;margin-bottom:14px">'
+      +'<div style="font-family:var(--fh);font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--sub);margin-bottom:14px">'+title+'</div>'
+      +'<svg viewBox="0 0 '+VW+' '+VH+'" style="width:100%;display:block">'+bars+'</svg>'
+      +'</div>';
+  }
+
+  function summaryTable(data){
+    const rows = AGE_GROUPS.map(g=>{
+      const d = data[g];
+      const color = AGE_COLORS_MAP[g]||'#888';
+      return `<tr>
+        <td style="color:${color};font-weight:700">${g}</td>
+        <td>${d.players.length}</td>
+        <td>${Math.round(d.min).toLocaleString()}</td>
+        <td>${Math.round(d.toc).toLocaleString()}</td>
+        <td style="color:var(--green)">${d.players.length?(d.efe/d.players.length).toFixed(1):'—'}</td>
+      </tr>`;
+    }).join('');
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;overflow-x:auto">
+      <div style="font-family:var(--fh);font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--sub);margin-bottom:10px">PREGLED PO SKUPINAH</div>
+      <table class="standings-table" style="font-size:.75rem">
+        <thead><tr>
+          <th style="text-align:left">SKUPINA</th><th>IGRALCEV</th>
+          <th>SKUPAJ MIN</th><th>SKUPAJ TOČ</th><th style="color:var(--green)">AVG EFE</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
   }
 
-  // === LIGA DATA (always shown) ===
-  const ligaData = {};
-  AGE_GROUPS.forEach(g=>{ligaData[g]={players:[],min:0,toc:0,efe:0}});
-  getLeaguePlayers().forEach(p=>{
-    const g = ageGroup(p[F.born]);
-    if(ligaData[g] && !ligaData[g].players.find(x=>x[F.name]===p[F.name]&&x[F.born]===p[F.born])){
-      ligaData[g].players.push(p);
-      ligaData[g].min += p[F.MIN];
-      ligaData[g].toc += p[F.toc];
-    }
-  });
-  const allP = getLeaguePlayers().filter(p=>p[F.born]>1950);
-  const ligaAvgAge = allP.length
-    ? (allP.reduce((s,p)=>s+(currentYear-p[F.born]),0)/allP.length).toFixed(1) : '—';
-
-  const ligaPlayerVals = AGE_GROUPS.map(g=>({v:ligaData[g].players.length, label:ligaData[g].players.length+' ig.'}));
-  const ligaMinVals = AGE_GROUPS.map(g=>{const n=ligaData[g].players.length||1;return{v:ligaData[g].min/n,label:(ligaData[g].min/n).toFixed(0)+"' avg"};});
-  const ligaTocVals = AGE_GROUPS.map(g=>{const n=ligaData[g].players.length||1;return{v:ligaData[g].toc/n,label:(ligaData[g].toc/n).toFixed(0)+' pts avg'};});
-
-  const ligaHtml = `
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${ligaAvgAge}</div><div class="tsl">Povp. starost lige</div></div>
-      <div class="ts"><div class="tsv">${allP.length}</div><div class="tsl">Igralcev skupaj</div></div>
-    </div>
-    ${barChart('ŠTEVILO IGRALCEV PO STAROSTNIH SKUPINAH', ligaPlayerVals, 'var(--acc)')}
-    ${barChart('MINUTE PO STAROSTNIH SKUPINAH (avg na ig.)', ligaMinVals, '#60a5fa')}
-    ${barChart('TOČKE PO STAROSTNIH SKUPINAH (avg na ig.)', ligaTocVals, '#22c55e')}`;
-
-  // === TEAM PANEL (only if filter selected, shown ABOVE liga) ===
-  let teamHtml = '';
-  if(teamFilter){
-    const tc = TEAM_COLORS[teamFilter]||'var(--acc)';
-    const teamPlayers = P.filter(p=>p[F.team]===teamFilter&&p[F.born]>1950)
-      .sort((a,b)=>a[F.born]-b[F.born]);
-    const teamAvgAge = teamPlayers.length
-      ? (teamPlayers.reduce((s,p)=>s+(currentYear-p[F.born]),0)/teamPlayers.length).toFixed(1) : '—';
-
-    // Team data per age group
-    const teamData = {};
-    AGE_GROUPS.forEach(g=>{teamData[g]={players:[],min:0,toc:0}});
-    teamPlayers.forEach(p=>{
-      const g = ageGroup(p[F.born]);
-      if(teamData[g]){
-        teamData[g].players.push(p);
-        teamData[g].min += p[F.MIN];
-        teamData[g].toc += p[F.toc];
+  function buildAgeData(players){
+    const d={};
+    AGE_GROUPS.forEach(g=>{d[g]={players:[],min:0,toc:0,efe:0}});
+    players.forEach(p=>{
+      const g=ageGroup(p[F.born]);
+      if(d[g]&&!d[g].players.find(x=>x[F.name]===p[F.name]&&x[F.born]===p[F.born])){
+        d[g].players.push(p);d[g].min+=p[F.MIN];d[g].toc+=p[F.toc];d[g].efe+=p[F.efe];
       }
     });
+    return d;
+  }
 
-    const tmPlayerVals = AGE_GROUPS.map(g=>({v:teamData[g].players.length, label:teamData[g].players.length+' ig.'}));
-    const tmMinVals = AGE_GROUPS.map(g=>{const n=teamData[g].players.length||1;return{v:teamData[g].min/n,label:teamData[g].players.length?(teamData[g].min/n).toFixed(0)+"'":"0'"};});
-    const tmTocVals = AGE_GROUPS.map(g=>{const n=teamData[g].players.length||1;return{v:teamData[g].toc/n,label:teamData[g].players.length?(teamData[g].toc/n).toFixed(0)+' pts':"0"};});
+  function renderAgeGrid(players, updateHeader){
+    const d = buildAgeData(players);
+    const withAge = players.filter(p=>p[F.born]>1950);
+    const avgAge = withAge.length
+      ? (withAge.reduce((s,p)=>s+(currentYear-p[F.born]),0)/withAge.length).toFixed(1) : '—';
 
-    // Player list
-    const playerRows = teamPlayers.map(p=>{
-      const pi = P.indexOf(p);
+    if(updateHeader){
+      const hdr = document.getElementById('age-header-stats');
+      if(hdr) hdr.innerHTML = `
+        <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAge}</div><div class="tsl">Povp. starost</div></div>
+        <div class="ts"><div class="tsv">${withAge.length}</div><div class="tsl">Igralcev skupaj</div></div>`;
+    }
+
+    const minData = AGE_GROUPS.map(g=>({group:g,value:d[g].min,label:Math.round(d[g].min).toLocaleString()}));
+    const tocData = AGE_GROUPS.map(g=>({group:g,value:d[g].toc,label:Math.round(d[g].toc).toLocaleString()}));
+    const plData  = AGE_GROUPS.map(g=>({group:g,value:d[g].players.length,label:String(d[g].players.length)}));
+
+    return vertBarChart('SKUPNE MINUTE PO STAROSTNI SKUPINI',minData)
+      + vertBarChart('SKUPAJ TOČKE PO SKUPINI',tocData)
+      + vertBarChart('ŠTEVILO IGRALCEV',plData)
+      + '<div style="margin-bottom:14px">'+summaryTable(d)+'</div>';
+  }
+
+  // === TEAM FILTER SELECTED ===
+  if(teamFilter){
+    const tc = TEAM_COLORS[teamFilter]||'var(--acc)';
+    let teamPlayers = P.filter(p=>p[F.team]===teamFilter);
+    // Phase filter
+    const teamWithAge = teamPlayers.filter(p=>p[F.born]>1950).sort((a,b)=>a[F.born]-b[F.born]);
+    const teamAvgAge = teamWithAge.length
+      ? (teamWithAge.reduce((s,p)=>s+(currentYear-p[F.born]),0)/teamWithAge.length).toFixed(1) : '—';
+
+    // Update header
+    const hdr = document.getElementById('age-header-stats');
+    if(hdr) hdr.innerHTML = `
+      <div class="ts"><div class="tsv" style="color:${tc}">${teamAvgAge}</div><div class="tsl">Povp. starost</div></div>
+      <div class="ts"><div class="tsv">${teamWithAge.length}</div><div class="tsl">Igralcev</div></div>`;
+
+    const playerRows = teamWithAge.map(p=>{
+      const pi=P.indexOf(p);
       return `<tr onclick="showPlayer(${pi})" style="cursor:pointer">
         <td style="font-weight:600">${p[F.name]}</td>
         <td style="color:var(--mut)">${p[F.born]}</td>
@@ -2232,29 +2285,24 @@ function renderAge(){
       </tr>`;
     }).join('');
 
-    teamHtml = `
-      <div style="background:var(--card2);border:2px solid ${tc}30;border-radius:14px;padding:16px;margin-bottom:20px">
-        <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:${tc};margin-bottom:12px">
-          📊 STAROSTNI PROFIL — ${teamFilter}
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-          <div class="ts"><div class="tsv" style="color:${tc}">${teamAvgAge}</div><div class="tsl">Povp. starost</div></div>
-          <div class="ts"><div class="tsv">${teamPlayers.length>0?currentYear-teamPlayers[0][F.born]:'—'}</div><div class="tsl">Najstarejši</div></div>
-          <div class="ts"><div class="tsv">${teamPlayers.length>0?currentYear-teamPlayers[teamPlayers.length-1][F.born]:'—'}</div><div class="tsl">Najmlajši</div></div>
-        </div>
-        ${barChart('IGRALCI PO SKUPINAH', tmPlayerVals, tc)}
-        ${barChart('MINUTE PO SKUPINAH (avg)', tmMinVals, '#60a5fa')}
-        ${barChart('TOČKE PO SKUPINAH (avg)', tmTocVals, '#22c55e')}
-        <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);margin-top:12px">
-          <table class="standings-table" style="font-size:.78rem">
-            <thead><tr><th style="text-align:left">IGRALEC</th><th>LETO</th><th style="color:${tc}">STAROST</th><th>PTS/TM</th><th>MIN/TM</th></tr></thead>
-            <tbody>${playerRows}</tbody>
-          </table>
-        </div>
+    wrap.innerHTML = `
+      ${renderAgeGrid(teamPlayers, false)}
+      <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px">
+        <div style="font-family:var(--fh);font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--sub);padding:12px 14px 8px">IGRALCI</div>
+        <table class="standings-table" style="font-size:.78rem">
+          <thead><tr>
+            <th style="text-align:left">IGRALEC</th><th>LETO</th>
+            <th style="color:${tc}">STAROST</th><th>PTS/TM</th><th>MIN/TM</th>
+          </tr></thead>
+          <tbody>${playerRows}</tbody>
+        </table>
       </div>`;
+    return;
   }
 
-  wrap.innerHTML = teamHtml + ligaHtml;
+  // === ALL TEAMS (liga view) ===
+  const ligaPlayers = getLeaguePlayers();
+  wrap.innerHTML = renderAgeGrid(ligaPlayers, true);
 }
 
 // ═══════════════════════════════════════════════════
@@ -3255,7 +3303,15 @@ function renderAttendance(){
   const wrap = document.getElementById('obisk-wrap');
   if(!wrap) return;
 
-  const finished = allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0);
+  // Phase filter
+  const pfPhases=['Četrtfinale','Polfinale','Finale','Osmina finala','Liga za obstanek'];
+  const finished = allMatches.filter(m=>{
+    if(m.status!=='FINISHED'||!m.attendance) return false;
+    const ph=m.competitions?.[0]?.competitionPhaseName||'';
+    if(attPhase==='rd') return !pfPhases.includes(ph);
+    if(attPhase==='playoff') return pfPhases.includes(ph);
+    return true;
+  });
   if(!finished.length){wrap.innerHTML='<div class="empty">Ni podatkov o obisku</div>';return;}
 
   // === LIGA DATA (always shown) ===
@@ -3935,6 +3991,27 @@ function renderMatchPreview(matchInfo,c1,c2){
     </div>${h2hRows}</div>`:'<div class="empty" style="padding:20px">Ni medsebojnih tekem</div>'}`;
 }
 
+
+let agePhase = 'all';
+let attPhase = 'all';
+
+function setAgePhase(ph){
+  agePhase = ph;
+  ['all','rd','playoff'].forEach(p=>{
+    const btn = document.getElementById('age-ph-'+p);
+    if(btn) btn.classList.toggle('active', p===ph);
+  });
+  renderAge();
+}
+
+function setAttPhase(ph){
+  attPhase = ph;
+  ['all','rd','playoff'].forEach(p=>{
+    const btn = document.getElementById('att-ph-'+p);
+    if(btn) btn.classList.toggle('active', p===ph);
+  });
+  renderAttendance();
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
   initUI();
