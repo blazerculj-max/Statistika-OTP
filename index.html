@@ -476,6 +476,7 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
   <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
   <button class="nb" onclick="showTab('mvp')">🏆 MVP</button>
+  <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
 </nav>
 
 <div class="content">
@@ -655,6 +656,22 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
+  <div id="tab-race" class="tab">
+    <div class="ctrls">
+      <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Gibanje ekip na lestvici po krogih — redni del</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <span style="font-size:.72rem;color:var(--mut);font-family:var(--fm)">K1</span>
+      <input type="range" id="race-slider" min="1" max="30" value="1" step="1"
+        oninput="raceRound=parseInt(this.value);drawRaceChart();drawRaceStandings()"
+        style="flex:1;accent-color:var(--acc);cursor:pointer">
+      <span id="race-round-lbl" style="font-family:var(--fh);font-size:.85rem;color:var(--acc);min-width:36px;text-align:right">K1</span>
+    </div>
+    <div id="race-wrap" style="position:relative;margin-bottom:20px">
+      <canvas id="race-canvas" style="width:100%;border-radius:12px;background:var(--card);border:1px solid var(--border)"></canvas>
+    </div>
+    <div id="race-standings" style="margin-top:8px"></div>
+  </div>
   <div id="tab-mvp" class="tab">
     <div id="mvp-wrap"></div>
   </div>
@@ -1485,6 +1502,7 @@ function showTab(t){
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
   if(t==='mvp')renderMVP();
+  if(t==='race')initRaceChart();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
@@ -4144,6 +4162,178 @@ function renderMVP(){
     +'<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:16px 0 10px">📊 MVP LESTVICA — TOP 10</div>'
     +leaderboard
     +'<div style="font-size:.65rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">MVP Score = PTS×1.0 + SK×0.7 + AS×0.8 + STL×1.5 + BLK×1.5 − TOV×0.8 + EFE×0.3 | Min. tekem: '+minGames+' (K'+maxRd+')</div>';
+}
+
+// ═══════════════════════════════════════════════════
+// RACE CHART
+// ═══════════════════════════════════════════════════
+let raceRound = 0;
+let raceMaxRound = 0;
+let raceData = {};
+
+function buildRaceData() {
+  const rdMatches = allMatches
+    .filter(m => m.status === 'FINISHED' &&
+      m.competitions?.[0]?.competitionPhaseName === 'Redni del')
+    .sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+  raceMaxRound = Math.max(...rdMatches.map(m => m.round), 0);
+  raceData = {};
+
+  for(let r = 1; r <= raceMaxRound; r++) {
+    const roundMatches = rdMatches.filter(m => m.round <= r);
+    const standings = {};
+    roundMatches.forEach(m => {
+      const t1=m.firstTeamName, t2=m.secondTeamName;
+      if(!standings[t1])standings[t1]={W:0,L:0};
+      if(!standings[t2])standings[t2]={W:0,L:0};
+      if(m.firstTeamScore>m.secondTeamScore){standings[t1].W++;standings[t2].L++;}
+      else{standings[t2].W++;standings[t1].L++;}
+    });
+    const sorted = Object.entries(standings).sort((a,b)=>
+      (b[1].W*2+b[1].L)-(a[1].W*2+a[1].L));
+    sorted.forEach(([name,st],pos)=>{
+      if(!raceData[name])raceData[name]=[];
+      raceData[name].push({round:r,pos:pos+1,pts:st.W*2+st.L});
+    });
+  }
+}
+
+function drawRaceChart() {
+  const canvas = document.getElementById('race-canvas');
+  if(!canvas) return;
+  const teams = Object.keys(raceData);
+  const nTeams = teams.length;
+  if(!nTeams) return;
+
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.parentElement.clientWidth;
+  const H = Math.max(380, nTeams * 32 + 80);
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const PAD_L=28, PAD_R=52, PAD_T=36, PAD_B=28;
+  const chartW=W-PAD_L-PAD_R, chartH=H-PAD_T-PAD_B;
+  const currentRound=Math.min(raceRound||raceMaxRound, raceMaxRound);
+
+  ctx.fillStyle='#0e0e1c';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  for(let r=1;r<=raceMaxRound;r++){
+    const x=PAD_L+(r-1)/(raceMaxRound-1||1)*chartW;
+    ctx.strokeStyle=r===currentRound?'rgba(255,255,255,.15)':'rgba(255,255,255,.04)';
+    ctx.lineWidth=r===currentRound?1.5:1;
+    ctx.beginPath();ctx.moveTo(x,PAD_T);ctx.lineTo(x,H-PAD_B);ctx.stroke();
+    if(r%5===0||r===1||r===raceMaxRound){
+      ctx.fillStyle='rgba(255,255,255,.3)';
+      ctx.font='10px DM Sans,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText('K'+r,x,H-PAD_B+16);
+    }
+  }
+
+  const yPos=pos=>PAD_T+(pos-1)/(nTeams-1||1)*chartH;
+  const xRound=r=>PAD_L+(r-1)/(raceMaxRound-1||1)*chartW;
+
+  teams.forEach(team=>{
+    const data=raceData[team]||[];
+    if(!data.length)return;
+    const color=TEAM_COLORS[team]||'#888';
+
+    // Full line
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.globalAlpha=0.6;
+    ctx.lineJoin='round';ctx.lineCap='round';
+    ctx.beginPath();
+    data.forEach((d,i)=>{
+      const x=xRound(d.round),y=yPos(d.pos);
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+
+    // End dot + label
+    const last=data[data.length-1];
+    ctx.globalAlpha=1;
+    ctx.fillStyle=color;
+    ctx.beginPath();ctx.arc(xRound(last.round),yPos(last.pos),4,0,Math.PI*2);ctx.fill();
+    ctx.font='600 11px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillText(TEAM_SHORT[team]||team.substring(0,6),xRound(last.round)+8,yPos(last.pos)+4);
+
+    // Selected round dot
+    const sel=data.find(d=>d.round===currentRound);
+    if(sel){
+      ctx.fillStyle='#fff';
+      ctx.beginPath();ctx.arc(xRound(sel.round),yPos(sel.pos),6,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.arc(xRound(sel.round),yPos(sel.pos),4,0,Math.PI*2);ctx.fill();
+    }
+    ctx.globalAlpha=1;
+  });
+
+  // Position numbers
+  for(let pos=1;pos<=nTeams;pos++){
+    const y=PAD_T+(pos-1)/(nTeams-1||1)*chartH;
+    ctx.fillStyle=pos<=3?'rgba(255,200,0,.5)':'rgba(255,255,255,.2)';
+    ctx.font='600 11px DM Sans,sans-serif';ctx.textAlign='right';
+    ctx.fillText(pos+'.',PAD_L-6,y+4);
+  }
+
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.font='700 13px Bricolage Grotesque,sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('KROG '+currentRound,W/2,20);
+
+  // Update slider
+  const slider=document.getElementById('race-slider');
+  const lbl=document.getElementById('race-round-lbl');
+  if(slider){slider.max=raceMaxRound;slider.value=currentRound;}
+  if(lbl)lbl.textContent='K'+currentRound;
+}
+
+function drawRaceStandings(){
+  const wrap=document.getElementById('race-standings');
+  if(!wrap||!Object.keys(raceData).length)return;
+  const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
+  const standings=[];
+  Object.entries(raceData).forEach(([team,data])=>{
+    const d=data.find(x=>x.round===currentRound);
+    if(d)standings.push({team,pos:d.pos,pts:d.pts});
+  });
+  standings.sort((a,b)=>a.pos-b.pos);
+  const medals=['🥇','🥈','🥉'];
+  const rows=standings.map((s,i)=>{
+    const tc=TEAM_COLORS[s.team]||'#888';
+    const rdMs=allMatches.filter(m=>m.status==='FINISHED'&&m.round<=currentRound&&
+      m.competitions?.[0]?.competitionPhaseName==='Redni del'&&
+      (m.firstTeamName===s.team||m.secondTeamName===s.team));
+    const W=rdMs.filter(m=>(m.firstTeamName===s.team&&m.firstTeamScore>m.secondTeamScore)||(m.secondTeamName===s.team&&m.secondTeamScore>m.firstTeamScore)).length;
+    return `<tr><td>${medals[i]||s.pos+'.'}</td>
+      <td style="color:${tc};font-weight:600">${s.team}</td>
+      <td>${rdMs.length}</td>
+      <td style="color:#22c55e;font-weight:600">${W}</td>
+      <td style="color:#ef4444">${rdMs.length-W}</td>
+      <td style="font-weight:700;color:var(--acc)">${s.pts}</td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">LESTVICA — KROG ${currentRound}</div>
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+      <table class="standings-table"><thead><tr>
+        <th>M</th><th>EKIPA</th><th>T</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th><th style="color:var(--acc)">TČ</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+}
+
+function initRaceChart(){
+  buildRaceData();
+  raceRound=raceMaxRound;
+  const slider=document.getElementById('race-slider');
+  if(slider){slider.max=raceMaxRound;slider.value=raceMaxRound;}
+  const lbl=document.getElementById('race-round-lbl');
+  if(lbl)lbl.textContent='K'+raceMaxRound;
+  drawRaceChart();
+  drawRaceStandings();
 }
 
 let agePhase = 'all';
