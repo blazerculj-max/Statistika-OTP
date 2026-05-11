@@ -379,6 +379,70 @@ select:focus{outline:none;border-color:var(--acc)}
   .content{padding-bottom:84px !important}
   .hdr{padding:10px 14px}
 }
+
+/* ─── Mobile Header & Liga Selector ─── */
+@media(max-width:768px){
+  /* Header kompakten */
+  .hdr{
+    padding:8px 12px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .hdr-title{font-size:1.2rem}
+  .hdr-season{display:none}
+  .hdr-badge{font-size:.72rem;padding:2px 8px}
+
+  /* Liga gumbi večji, bolj tapabilni */
+  .hdr-right{align-items:flex-start;gap:4px;width:100%}
+  .hdr-right > div{width:100%;justify-content:space-between}
+  .hdr-right .tgl{flex:1}
+  .hdr-right .tgl button{
+    flex:1;
+    padding:10px 8px;
+    font-size:.85rem;
+    font-weight:700;
+    min-height:40px;
+  }
+
+  /* Cache gumb skrij na mobile */
+  button[onclick="cacheClear()"]{display:none}
+
+  /* Live badge manjši */
+  #live-badge{font-size:.72rem;padding:2px 8px}
+
+  /* Update indicator skrij */
+  #update-indicator{display:none}
+
+  /* Tabs scrollable */
+  .content{padding-bottom:84px !important}
+
+  /* Match cards na mobile */
+  .mc-score{font-size:1.4rem}
+  .mc-team{font-size:.78rem}
+
+  /* Overlay full screen na mobile */
+  .mo-modal{
+    width:100% !important;
+    max-width:100% !important;
+    height:100vh !important;
+    border-radius:0 !important;
+    margin:0 !important;
+  }
+
+  /* Player overlay full screen */
+  .pp-modal{
+    width:100% !important;
+    max-width:100% !important;
+    height:100vh !important;
+    border-radius:0 !important;
+  }
+
+  /* Starost/obisk grafi */
+  .age-wrap svg{height:120px}
+
+  /* Primerjava radar manjši */
+  .pp-grid{grid-template-columns:1fr !important}
+}
 </style>
 </head>
 <body>
