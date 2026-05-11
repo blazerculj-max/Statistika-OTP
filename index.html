@@ -4643,10 +4643,17 @@ function renderRefTeamCross(refName, refTeamStats, teamStats){
   const teams = Object.entries(refTeamStats)
     .filter(([k])=>k.startsWith(refName+'__'))
     .map(([k,v])=>({...v,teamName:k.split('__')[1]}))
-    .filter(s=>s.games>=2)
+    .filter(s=>s.games>=1)
     .sort((a,b)=>b.games-a.games);
 
-  if(!teams.length){wrap.innerHTML='<div class="empty">Premalo podatkov za tega sodnika</div>';return;}
+  if(!teams.length){wrap.innerHTML='<div class="empty">Ni podatkov za tega sodnika</div>';return;}
+
+  // Get all matches for this ref
+  const refMatches = allMatches.filter(m=>
+    m.status==='FINISHED' &&
+    [m.referee1,m.referee2,m.referee3].filter(Boolean)
+      .some(r=>r.person.firstName+' '+r.person.lastName===refName)
+  );
 
   const rows=teams.map(s=>{
     const tc=TEAM_COLORS[s.teamName]||'#888';
@@ -4654,42 +4661,105 @@ function renderRefTeamCross(refName, refTeamStats, teamStats){
     const avgPFR=(s.pfr/s.games).toFixed(1);
     const winPct=Math.round(s.wins/s.games*100);
     const winColor=winPct>60?'#22c55e':winPct<40?'#ef4444':'var(--text)';
-    // Compare to team avg
     const tAvg=teamStats[s.teamName];
     const tAvgPFC=tAvg?(tAvg.pfc/tAvg.games):0;
     const diffPFC=(parseFloat(avgPFC)-tAvgPFC).toFixed(1);
     const diffColor=parseFloat(diffPFC)>1?'#ef4444':parseFloat(diffPFC)<-1?'#22c55e':'var(--mut)';
-    return `<tr>
-      <td style="color:${tc};font-weight:600">${s.teamName}</td>
+    const safeTeam=encodeURIComponent(s.teamName);
+
+    // Individual games for this ref + team
+    const teamGames=refMatches.filter(m=>
+      m.firstTeamName===s.teamName||m.secondTeamName===s.teamName
+    ).sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+
+    const gameRows=teamGames.map(m=>{
+      const isHome=m.firstTeamName===s.teamName;
+      const myScore=isHome?m.firstTeamScore:m.secondTeamScore;
+      const oppScore=isHome?m.secondTeamScore:m.firstTeamScore;
+      const opp=isHome?m.secondTeamName:m.firstTeamName;
+      const won=myScore>oppScore;
+      const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+      const oppTc=TEAM_COLORS[opp]||'#888';
+      // PF from stats
+      const ms=matchStatsCache[m.id];
+      let teamPFC=0;
+      if(ms){
+        const td=isHome?ms.firstTeam:ms.secondTeam;
+        teamPFC=(td?.playerStats||[]).reduce((sum,p)=>sum+(p.foulCommited||0),0);
+      }
+      return `<tr style="background:rgba(255,255,255,.02)">
+        <td style="color:var(--mut);font-size:.68rem;padding-left:24px">${date}</td>
+        <td style="color:var(--mut);font-size:.68rem">K${m.round}</td>
+        <td>
+          <span style="color:${isHome?tc:'var(--mut)'}">${isHome?s.teamName:opp}</span>
+          <span style="color:var(--mut);margin:0 4px">vs</span>
+          <span style="color:${!isHome?tc:oppTc}">${isHome?opp:s.teamName}</span>
+        </td>
+        <td style="font-family:var(--fh);font-weight:700">
+          <span style="color:${won?'#22c55e':'#ef4444'}">${myScore}</span>
+          <span style="color:var(--mut)">:</span>
+          <span style="color:${!won?'#22c55e':'#ef4444'}">${oppScore}</span>
+        </td>
+        <td style="font-size:.68rem;color:${won?'#22c55e':'#ef4444'};font-weight:600">${won?'Z':'P'}</td>
+        <td style="font-size:.68rem;color:var(--mut)">${teamPFC>0?teamPFC+' PF':'—'}</td>
+      </tr>`;
+    }).join('');
+
+    return `<tr onclick="toggleRefTeamGames('${safeTeam}')" style="cursor:pointer">
+      <td style="color:${tc};font-weight:600">
+        <span id="arrow-${safeTeam}" style="display:inline-block;transition:transform .2s;margin-right:6px">▶</span>
+        ${s.teamName}
+      </td>
       <td>${s.games}</td>
-      <td style="color:#f97316;font-weight:600">${avgPFC}</td>
-      <td style="color:${diffColor};font-size:.75rem">${parseFloat(diffPFC)>0?'+':''}${diffPFC} vs avg</td>
+      <td style="color:#f97316;font-weight:700">${avgPFC}</td>
+      <td style="color:${diffColor};font-size:.75rem">${parseFloat(diffPFC)>0?'+':''}${diffPFC}</td>
       <td style="color:#60a5fa">${avgPFR}</td>
       <td style="color:${winColor};font-weight:700">${winPct}%</td>
+    </tr>
+    <tr id="games-${safeTeam}" style="display:none">
+      <td colspan="6" style="padding:0">
+        <table style="width:100%;font-size:.72rem">
+          <thead style="background:rgba(255,255,255,.03)"><tr>
+            <th style="text-align:left;padding-left:24px">Datum</th>
+            <th>Krog</th><th style="text-align:left">Tekma</th>
+            <th>Rezultat</th><th>Z/P</th><th>PF</th>
+          </tr></thead>
+          <tbody>${gameRows}</tbody>
+        </table>
+      </td>
     </tr>`;
   }).join('');
 
   wrap.innerHTML=`
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
-      <div style="font-size:.72rem;color:var(--mut);margin-bottom:8px">
-        <b>${refName}</b> — ${refSt?.games||0} tekem | povp. ${refAvgPF.toFixed(1)} PF/tm | dom. zmage ${refHomePct}%
+      <div style="font-size:.75rem;color:var(--mut);margin-bottom:10px">
+        <b>${refName}</b> · ${refSt?.games||0} tekem · ${refAvgPF.toFixed(1)} PF/tm · dom. ${refHomePct}%
       </div>
       <div style="overflow-x:auto">
         <table class="standings-table" style="font-size:.78rem">
           <thead><tr>
-            <th style="text-align:left">EKIPA</th><th>TM</th>
+            <th style="text-align:left">EKIPA (klikni za tekme)</th><th>TM</th>
             <th style="color:#f97316">ST.PF/TM</th>
-            <th title="Primerjava z ekipinim povprečjem">vs POVP.</th>
+            <th title="vs sezonsko povprečje ekipe">vs AVG</th>
             <th style="color:#60a5fa">PR.PF/TM</th>
-            <th title="% zmag ekipe ko sodi ta sodnik">ZMAGE%</th>
+            <th>ZMAGE%</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
       </div>
       <div style="font-size:.62rem;color:var(--mut);margin-top:8px">
-        vs POVP. = razlika storjenih PF pri tem sodniku vs ekipino sezonsko povprečje (rdeče = več napak, zeleno = manj)
+        Klikni na ekipo za prikaz posameznih tekem
       </div>
     </div>`;
+}
+
+function toggleRefTeamGames(safeTeam){
+  const row=document.getElementById('games-'+safeTeam);
+  const arrow=document.getElementById('arrow-'+safeTeam);
+  if(!row)return;
+  const isOpen=row.style.display!=='none';
+  row.style.display=isOpen?'none':'table-row';
+  if(arrow)arrow.style.transform=isOpen?'rotate(0deg)':'rotate(90deg)';
 }
 
 function showRefDetail(name, refStats){
