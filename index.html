@@ -3331,24 +3331,27 @@ function renderPlayerCompare() {
     return svg+'</svg>';
   }
 
-  function statBar(label,a1,a2,key,computed){
+  function statBar(label,a1,a2,key,computed,col1,col2){
     const mx=leagueMax[key+(computed?'_c':'')]||1;
     const p1pct=Math.min(a1/mx*100,100),p2pct=Math.min(a2/mx*100,100);
     const winner=a1>a2?'left':a2>a1?'right':'tie';
-    return `<div style="margin-bottom:8px">
+    const clr1=col1||c1||'#f97316';
+    const clr2=col2||c2||'#3b82f6';
+    return `<div style="margin-bottom:10px">
+      <div style="text-align:center;font-size:.65rem;color:var(--mut);margin-bottom:4px">${label}</div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="flex:1;display:flex;justify-content:flex-end;align-items:center;gap:6px">
-          <span style="font-size:.72rem;font-weight:${winner==='left'?700:400};color:${winner==='left'?'#f97316':'var(--mut)'}">${a1.toFixed(1)}</span>
-          <div style="flex:1;display:flex;justify-content:flex-end;height:8px;border-radius:4px 0 0 4px;overflow:hidden;background:rgba(255,255,255,.05)">
-            <div style="width:${p1pct}%;background:#f97316;opacity:${winner==='left'?1:.45};border-radius:4px 0 0 4px"></div>
+          <span style="font-size:.78rem;font-weight:${winner==='left'?700:500};color:${winner==='left'?clr1:'var(--sub)'}">${a1.toFixed(1)}</span>
+          <div style="flex:1;height:10px;border-radius:4px 0 0 4px;overflow:hidden;background:rgba(255,255,255,.06);position:relative">
+            <div style="position:absolute;right:0;top:0;height:100%;width:${p1pct}%;background:${clr1};opacity:${winner==='left'?1:.5};border-radius:4px 0 0 4px"></div>
           </div>
         </div>
-        <div style="width:70px;text-align:center;font-size:.65rem;color:var(--mut);flex-shrink:0">${label}</div>
+        <div style="width:4px;height:20px;background:var(--border);flex-shrink:0;border-radius:2px"></div>
         <div style="flex:1;display:flex;align-items:center;gap:6px">
-          <div style="flex:1;height:8px;border-radius:0 4px 4px 0;background:rgba(255,255,255,.05);overflow:hidden">
-            <div style="width:${p2pct}%;background:#3b82f6;opacity:${winner==='right'?1:.45};border-radius:0 4px 4px 0"></div>
+          <div style="flex:1;height:10px;border-radius:0 4px 4px 0;overflow:hidden;background:rgba(255,255,255,.06);position:relative">
+            <div style="position:absolute;left:0;top:0;height:100%;width:${p2pct}%;background:${clr2};opacity:${winner==='right'?1:.5};border-radius:0 4px 4px 0"></div>
           </div>
-          <span style="font-size:.72rem;font-weight:${winner==='right'?700:400};color:${winner==='right'?'#3b82f6':'var(--mut)'}">${a2.toFixed(1)}</span>
+          <span style="font-size:.78rem;font-weight:${winner==='right'?700:500};color:${winner==='right'?clr2:'var(--sub)'}">${a2.toFixed(1)}</span>
         </div>
       </div>
     </div>`;
@@ -3356,7 +3359,7 @@ function renderPlayerCompare() {
 
   const statBars = p1||p2?statFields.map(f=>{
     const a1=avg(p1,f.key,f.computed),a2=avg(p2,f.key,f.computed);
-    return statBar(f.label,a1,a2,f.key,f.computed);
+    return statBar(f.label,a1,a2,f.key,f.computed,c1,c2);
   }).join(''):'';
 
   wrap.innerHTML=`
@@ -3388,17 +3391,17 @@ function renderPlayerCompare() {
     <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-bottom:16px">
       <div style="text-align:center">
         ${p1?`<div style="font-size:1.1rem;font-weight:700;color:${c1}">${p1[F.name]}</div>
-        <div style="font-size:.75rem;color:${c1};opacity:.7">${TEAM_SHORT[p1[F.team]]||p1[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${p1[F.T]} tekem</div>`:''}
+        <div style="font-size:.75rem;padding:2px 8px;background:${c1}22;color:${c1};border-radius:20px;display:inline-block;margin-top:3px">${TEAM_SHORT[p1[F.team]]||p1[F.team]}</div>
+        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${p1[F.T]} tekem · ${(p1[F.toc]/Math.max(p1[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
       </div>
       <div style="text-align:center">${radarSvg(p1,p2)}</div>
       <div style="text-align:center">
         ${p2?`<div style="font-size:1.1rem;font-weight:700;color:${c2}">${p2[F.name]}</div>
-        <div style="font-size:.75rem;color:${c2};opacity:.7">${TEAM_SHORT[p2[F.team]]||p2[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${p2[F.T]} tekem</div>`:''}
+        <div style="font-size:.75rem;padding:2px 8px;background:${c2}22;color:${c2};border-radius:20px;display:inline-block;margin-top:3px">${TEAM_SHORT[p2[F.team]]||p2[F.team]}</div>
+        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${p2[F.T]} tekem · ${(p2[F.toc]/Math.max(p2[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
       </div>
     </div>
-    <div>${statBars}</div>`
+    <div style="background:var(--card2);border-radius:12px;padding:14px 16px;border:1px solid var(--border)">${statBars}</div>`
     :'<div class="empty">Izberi klub in igralca za primerjavo</div>'}
     ${similarHtml}`;
 }
