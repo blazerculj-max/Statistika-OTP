@@ -4453,10 +4453,9 @@ function renderSodniki(){
     return;
   }
 
-  // Build ref stats + team stats
   const refStats = {};
-  const teamStats = {}; // team → {pf_committed, pf_received, games}
-  const refTeamStats = {}; // refName_teamName → {games, pf_committed, pf_received, wins}
+  const teamStats = {};
+  const refTeamStats = {};
 
   allMatches.filter(m=>m.status==='FINISHED'&&m.referee1).forEach(m=>{
     const refs=[m.referee1,m.referee2,m.referee3].filter(Boolean);
@@ -4464,31 +4463,30 @@ function renderSodniki(){
     const homeWon=m.firstTeamScore>m.secondTeamScore;
     const diff=Math.abs(m.firstTeamScore-m.secondTeamScore);
 
-    // Per-team fouls
     const teamFouls={};
+    let totalPF=0,totalFTA=0,totalFTM=0;
     if(stats){
       [stats.firstTeam,stats.secondTeam].forEach((team,ti)=>{
         const tname=team?.teamName||'';
         if(!tname)return;
         const pfc=(team.playerStats||[]).reduce((s,p)=>s+(p.foulCommited||0),0);
         const pfr=(team.playerStats||[]).reduce((s,p)=>s+(p.foulReceived||0),0);
-        teamFouls[tname]={pfc,pfr,won:ti===0?homeWon:!homeWon};
-        // Overall team stats
-        if(!teamStats[tname])teamStats[tname]={pfc:0,pfr:0,games:0};
-        teamStats[tname].pfc+=pfc;
-        teamStats[tname].pfr+=pfr;
+        const fta=(team.playerStats||[]).reduce((s,p)=>s+(p.fTA||0),0);
+        const ftm=(team.playerStats||[]).reduce((s,p)=>s+(p.fTM||0),0);
+        teamFouls[tname]={pfc,pfr,fta,ftm,won:ti===0?homeWon:!homeWon};
+        if(!teamStats[tname])teamStats[tname]={pfc:0,pfr:0,fta:0,ftm:0,games:0};
+        teamStats[tname].pfc+=pfc;teamStats[tname].pfr+=pfr;
+        teamStats[tname].fta+=fta;teamStats[tname].ftm+=ftm;
         teamStats[tname].games++;
+        totalPF+=pfc;totalFTA+=fta;totalFTM+=ftm;
       });
     }
 
-    let totalPF=0;
-    if(stats)totalPF=[...(stats.firstTeam?.playerStats||[]),...(stats.secondTeam?.playerStats||[])].reduce((s,p)=>s+(p.foulCommited||0),0);
-
     refs.forEach((ref,ri)=>{
       const name=ref.person.firstName+' '+ref.person.lastName;
-      if(!refStats[name])refStats[name]={name,id:ref.id,games:0,pf:0,homeWins:0,coRefs:{},closeGames:0};
+      if(!refStats[name])refStats[name]={name,id:ref.id,games:0,pf:0,fta:0,ftm:0,homeWins:0,coRefs:{},closeGames:0};
       const s=refStats[name];
-      s.games++;s.pf+=totalPF;
+      s.games++;s.pf+=totalPF;s.fta+=totalFTA;s.ftm+=totalFTM;
       if(homeWon)s.homeWins++;
       if(diff<=5)s.closeGames++;
       refs.forEach((r2,ri2)=>{
@@ -4496,178 +4494,250 @@ function renderSodniki(){
         const n2=r2.person.firstName+' '+r2.person.lastName;
         s.coRefs[n2]=(s.coRefs[n2]||0)+1;
       });
-
-      // Ref × Team cross stats
       Object.entries(teamFouls).forEach(([tname,tf])=>{
         const key=name+'__'+tname;
-        if(!refTeamStats[key])refTeamStats[key]={ref:name,team:tname,games:0,pfc:0,pfr:0,wins:0};
+        if(!refTeamStats[key])refTeamStats[key]={ref:name,team:tname,games:0,pfc:0,pfr:0,fta:0,ftm:0,wins:0};
         const rt=refTeamStats[key];
-        rt.games++;rt.pfc+=tf.pfc;rt.pfr+=tf.pfr;
+        rt.games++;rt.pfc+=tf.pfc;rt.pfr+=tf.pfr;rt.fta+=tf.fta;rt.ftm+=tf.ftm;
         if(tf.won)rt.wins++;
       });
     });
   });
 
-  const sorted=Object.values(refStats).sort((a,b)=>b.games-a.games);
-  const maxPF=Math.max(...sorted.map(s=>s.pf/s.games));
+  window.refTeamStatsGlobal=refTeamStats;
+  window.teamStatsGlobal=teamStats;
+  window.refStatsGlobal=refStats;
 
-  // Featured cards
+  // Current sort state
+  if(!window.refSort)window.refSort={col:'games',asc:false};
+
+  function sortRefs(col){
+    if(window.refSort.col===col)window.refSort.asc=!window.refSort.asc;
+    else{window.refSort.col=col;window.refSort.asc=false;}
+    renderSodniki();
+  }
+  window.sortRefs=sortRefs;
+
+  const sortFns={
+    games:(s)=>s.games,
+    pf:(s)=>s.pf/s.games,
+    fta:(s)=>s.fta/s.games,
+    ftpf:(s)=>s.pf>0?s.fta/s.pf:0,
+    home:(s)=>s.homeWins/s.games,
+    close:(s)=>s.closeGames
+  };
+  const sorted=Object.values(refStats).sort((a,b)=>{
+    const fn=sortFns[window.refSort.col]||sortFns.games;
+    return window.refSort.asc?fn(a)-fn(b):fn(b)-fn(a);
+  });
+
+  function thSort(col,label,color){
+    const active=window.refSort.col===col;
+    const arrow=active?(window.refSort.asc?'↑':'↓'):'↕';
+    const style=active?`color:${color||'var(--acc)'};cursor:pointer`:`color:${color||'var(--sub)'};cursor:pointer;opacity:.7`;
+    return `<th onclick="sortRefs('${col}')" style="${style};white-space:nowrap;text-align:center;user-select:none">
+      ${label} <span style="font-size:.65rem">${arrow}</span></th>`;
+  }
+
+  const maxPF=Math.max(...sorted.map(s=>s.pf/s.games),1);
   const mostPF=Object.values(refStats).sort((a,b)=>b.pf/b.games-a.pf/a.games)[0];
   const mostHome=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>b.homeWins/b.games-a.homeWins/a.games)[0];
   const mostAway=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>a.homeWins/a.games-b.homeWins/b.games)[0];
+  const mostFTA=Object.values(refStats).sort((a,b)=>b.fta/b.games-a.fta/a.games)[0];
+  const mostRatio=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>b.fta/b.pf-a.fta/a.pf)[0];
 
-  const summaryHtml=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
-        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🟡 NAJVEČ PF/TEKMO</div>
-        <div style="font-weight:700">${mostPF?.name||'—'}</div>
-        <div style="font-family:var(--fh);font-size:1.4rem;color:#f97316">${mostPF?(mostPF.pf/mostPF.games).toFixed(1):'—'}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${mostPF?.games||0} tekem</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
-        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🏠 FAVORIZIRA DOMAČINA</div>
-        <div style="font-weight:700">${mostHome?.name||'—'}</div>
-        <div style="font-family:var(--fh);font-size:1.4rem;color:#22c55e">${mostHome?Math.round(mostHome.homeWins/mostHome.games*100)+'%':'—'}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${mostHome?.games||0} tekem</div>
-      </div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
-        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">✈️ FAVORIZIRA GOSTA</div>
-        <div style="font-weight:700">${mostAway?.name||'—'}</div>
-        <div style="font-family:var(--fh);font-size:1.4rem;color:#60a5fa">${mostAway?Math.round(mostAway.homeWins/mostAway.games*100)+'%':'—'}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${mostAway?.games||0} tekem</div>
-      </div>
-    </div>`;
+  const summaryHtml=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px">
+    ${[
+      {icon:'🟡',label:'NAJVEČ PF/TEKMO',val:mostPF?(mostPF.pf/mostPF.games).toFixed(1):'—',name:mostPF?.name,color:'#f97316',games:mostPF?.games},
+      {icon:'🏠',label:'FAVORIZIRA DOM.',val:mostHome?Math.round(mostHome.homeWins/mostHome.games*100)+'%':'—',name:mostHome?.name,color:'#22c55e',games:mostHome?.games},
+      {icon:'✈️',label:'FAVORIZIRA GOSTA',val:mostAway?Math.round(mostAway.homeWins/mostAway.games*100)+'%':'—',name:mostAway?.name,color:'#60a5fa',games:mostAway?.games},
+      {icon:'🎯',label:'NAJVEČ FTA/TEKMO',val:mostFTA?(mostFTA.fta/mostFTA.games).toFixed(1):'—',name:mostFTA?.name,color:'#a855f7',games:mostFTA?.games},
+      {icon:'⚖️',label:'NAJVIŠJI FT/PF',val:mostRatio?(mostRatio.fta/mostRatio.pf).toFixed(2):'—',name:mostRatio?.name,color:'#22c55e',games:mostRatio?.games},
+    ].map(x=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <div style="font-size:.6rem;color:var(--mut);margin-bottom:4px">${x.icon} ${x.label}</div>
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:2px">${x.name||'—'}</div>
+      <div style="font-family:var(--fh);font-size:1.4rem;color:${x.color};line-height:1">${x.val}</div>
+      <div style="font-size:.62rem;color:var(--mut);margin-top:2px">${x.games||0} tekem</div>
+    </div>`).join('')}
+  </div>`;
 
-  // Team fouls table
+  const tableRows=sorted.map((s,i)=>{
+    const avgPF=(s.pf/s.games).toFixed(1);
+    const avgFTA=(s.fta/s.games).toFixed(1);
+    const ftPerPF=s.pf>0?(s.fta/s.pf).toFixed(2):'—';
+    const homePct=Math.round(s.homeWins/s.games*100);
+    const pfPct=Math.round(s.pf/s.games/maxPF*100);
+    const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
+    const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
+    const ftColor=parseFloat(ftPerPF)>1.2?'#22c55e':parseFloat(ftPerPF)<0.8?'#ef4444':'var(--text)';
+    const safeName=encodeURIComponent(s.name);
+    return `<tr style="cursor:pointer" onclick="showRefCross('${safeName}')">
+      <td style="text-align:center;color:var(--mut)">${i+1}.</td>
+      <td style="font-weight:600">${s.name}</td>
+      <td style="text-align:center">${s.games}</td>
+      <td style="text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px">
+          <div style="width:36px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+            <div style="width:${pfPct}%;height:100%;background:#f97316;border-radius:2px"></div>
+          </div>
+          <span style="color:#f97316;font-weight:600">${avgPF}</span>
+        </div>
+      </td>
+      <td style="text-align:center;color:#a855f7;font-weight:600">${avgFTA}</td>
+      <td style="text-align:center;color:${ftColor};font-weight:700">${ftPerPF}</td>
+      <td style="text-align:center;color:${homeColor};font-weight:600">${homePct}%</td>
+      <td style="text-align:center;color:var(--mut);font-size:.7rem">${topCoRef?topCoRef[0].split(' ').pop()+'('+topCoRef[1]+')':'—'}</td>
+      <td style="text-align:center">${s.closeGames}</td>
+    </tr>`;
+  }).join('');
+
   const teamFoulRows=Object.entries(teamStats)
-    .map(([t,s])=>({t,s,avgPFC:(s.pfc/s.games).toFixed(1),avgPFR:(s.pfr/s.games).toFixed(1)}))
-    .sort((a,b)=>parseFloat(b.avgPFC)-parseFloat(a.avgPFC));
+    .map(([t,s])=>({t,s}))
+    .sort((a,b)=>b.s.pfc/b.s.games-a.s.pfc/a.s.games);
 
-  const teamFoulHtml=`
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">
-      🏀 OSEBNE NAPAKE PO EKIPAH
-    </div>
+  if(!window.teamSort)window.teamSort={col:'pfc',asc:false};
+  window.sortTeam=(col)=>{
+    if(window.teamSort.col===col)window.teamSort.asc=!window.teamSort.asc;
+    else{window.teamSort.col=col;window.teamSort.asc=false;}
+    renderSodniki();
+  };
+
+  const teamSortFns={pfc:({s})=>s.pfc/s.games,pfr:({s})=>s.pfr/s.games,diff:({s})=>(s.pfr-s.pfc)/s.games};
+  const sortedTeams=[...teamFoulRows].sort((a,b)=>{
+    const fn=teamSortFns[window.teamSort.col]||teamSortFns.pfc;
+    return window.teamSort.asc?fn(a)-fn(b):fn(b)-fn(a);
+  });
+
+  function thTeam(col,label,color){
+    const active=window.teamSort.col===col;
+    const arrow=active?(window.teamSort.asc?'↑':'↓'):'↕';
+    return `<th onclick="sortTeam('${col}')" style="color:${active?color:'var(--sub)'};cursor:pointer;text-align:center;user-select:none;white-space:nowrap">
+      ${label} <span style="font-size:.65rem">${arrow}</span></th>`;
+  }
+
+  const teamFoulHtml=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">🏀 OSEBNE NAPAKE PO EKIPAH</div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
       <table class="standings-table">
         <thead><tr>
-          <th>M</th><th style="text-align:left">EKIPA</th><th>TEKEM</th>
-          <th style="color:#f97316" title="Storjene napake/tekmo">ST. PF/TM ↓</th>
-          <th style="color:#60a5fa" title="Prejete napake/tekmo">PR. PF/TM</th>
-          <th title="Razlika: prejete - storjene">RAZLIKA</th>
+          <th style="text-align:center">M</th>
+          <th style="text-align:left">EKIPA</th>
+          <th style="text-align:center">TEKEM</th>
+          ${thTeam('pfc','ST.PF/TM ↓','#f97316')}
+          ${thTeam('pfr','PR.PF/TM','#60a5fa')}
+          ${thTeam('diff','RAZLIKA','#22c55e')}
         </tr></thead>
-        <tbody>${teamFoulRows.map(({t,s,avgPFC,avgPFR},i)=>{
+        <tbody>${sortedTeams.map(({t,s},i)=>{
           const tc=TEAM_COLORS[t]||'#888';
-          const diff=(parseFloat(avgPFR)-parseFloat(avgPFC)).toFixed(1);
+          const avgPFC=(s.pfc/s.games).toFixed(1);
+          const avgPFR=(s.pfr/s.games).toFixed(1);
+          const diff=((s.pfr-s.pfc)/s.games).toFixed(1);
           const diffColor=parseFloat(diff)>0?'#22c55e':parseFloat(diff)<0?'#ef4444':'var(--mut)';
           return `<tr>
-            <td style="color:var(--mut)">${i+1}.</td>
+            <td style="text-align:center;color:var(--mut)">${i+1}.</td>
             <td style="color:${tc};font-weight:600">${t}</td>
-            <td style="color:var(--mut)">${s.games}</td>
-            <td style="color:#f97316;font-weight:700">${avgPFC}</td>
-            <td style="color:#60a5fa;font-weight:700">${avgPFR}</td>
-            <td style="color:${diffColor};font-weight:600">${parseFloat(diff)>0?'+':''}${diff}</td>
+            <td style="text-align:center;color:var(--mut)">${s.games}</td>
+            <td style="text-align:center;color:#f97316;font-weight:700">${avgPFC}</td>
+            <td style="text-align:center;color:#60a5fa;font-weight:700">${avgPFR}</td>
+            <td style="text-align:center;color:${diffColor};font-weight:600">${parseFloat(diff)>0?'+':''}${diff}</td>
           </tr>`;
         }).join('')}</tbody>
       </table>
     </div>`;
 
-  // Ref × Team cross table (select ref to see)
-  const refSelect=`
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">
-      🔀 SODNIK × EKIPA CROSS ANALIZA
-    </div>
+  wrap.innerHTML=summaryHtml
+    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — klikni za cross analizo · klikni naslov stolpca za sortiranje</div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
+      <table class="standings-table">
+        <thead><tr>
+          <th style="text-align:center">M</th>
+          <th style="text-align:left">SODNIK</th>
+          ${thSort('games','TEKME','var(--acc)')}
+          ${thSort('pf','PF/TM','#f97316')}
+          ${thSort('fta','FTA/TM','#a855f7')}
+          ${thSort('ftpf','FT/PF','#22c55e')}
+          ${thSort('home','DOM%','#60a5fa')}
+          <th style="text-align:center;color:var(--sub)">SO-SODNIK</th>
+          ${thSort('close','TESNE','var(--sub)')}
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>`
+    +teamFoulHtml
+    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">🔀 SODNIK × EKIPA CROSS ANALIZA</div>
     <div class="ctrls" style="margin-bottom:12px">
       <select id="ref-select" onchange="renderRefTeamCross(this.value,window.refTeamStatsGlobal,window.teamStatsGlobal)">
         <option value="">— Izberi sodnika —</option>
         ${sorted.map(s=>`<option value="${s.name}">${s.name} (${s.games} tekem)</option>`).join('')}
       </select>
     </div>
-    <div id="ref-team-cross"></div>`;
-
-  // Store globally for cross analysis
-  window.refTeamStatsGlobal = refTeamStats;
-  window.teamStatsGlobal = teamStats;
-  window.refStatsGlobal = refStats;
-
-  // Main ref table
-  const tableRows=sorted.map((s,i)=>{
-    const avgPF=(s.pf/s.games).toFixed(1);
-    const homePct=Math.round(s.homeWins/s.games*100);
-    const pfPct=Math.round(s.pf/s.games/maxPF*100);
-    const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
-    const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
-    const safeName = encodeURIComponent(s.name);
-    return `<tr style="cursor:pointer" onclick="showRefCross('${safeName}')">
-      <td style="color:var(--mut)">${i+1}.</td>
-      <td style="font-weight:600">${s.name}</td>
-      <td>${s.games}</td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:50px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
-            <div style="width:${pfPct}%;height:100%;background:#f97316;border-radius:2px"></div>
-          </div>
-          <span style="color:#f97316;font-weight:600">${avgPF}</span>
-        </div>
-      </td>
-      <td style="color:${homeColor};font-weight:600">${homePct}%</td>
-      <td style="color:var(--mut);font-size:.72rem">${topCoRef?topCoRef[0].split(' ').pop()+'('+topCoRef[1]+')':'—'}</td>
-      <td>${s.closeGames}</td>
-    </tr>`;
-  }).join('');
-
-  wrap.innerHTML=summaryHtml
-    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — STATISTIKA (klikni za cross analizo)</div>
-    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
-      <table class="standings-table">
-        <thead><tr>
-          <th>M</th><th style="text-align:left">SODNIK</th><th>TEKME</th>
-          <th style="color:#f97316">PF/TM</th><th>DOM%</th>
-          <th>SO-SODNIK</th><th title="Razlika ≤5">TESNE</th>
-        </tr></thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>`
-    +teamFoulHtml
-    +refSelect
-    +`<div style="font-size:.62rem;color:var(--mut);margin-top:12px">ST.PF = storjene osebne napake | PR.PF = prejete osebne napake | DOM% = % zmag domačina pri tem sodniku</div>`;
+    <div id="ref-team-cross"></div>
+    <div style="font-size:.62rem;color:var(--mut);margin-top:12px">ST.PF=storjene | PR.PF=prejete | FTA=prosti meti | DOM%=% zmag domačina</div>`;
 }
 
 function renderRefTeamCross(refName, refTeamStats, teamStats){
   const wrap = document.getElementById('ref-team-cross');
   if(!wrap||!refName) return;
 
-  const refSt = window.refStatsGlobal?.[refName];
-  const refAvgPF = refSt ? (refSt.pf/refSt.games) : 0;
-  const refHomePct = refSt ? Math.round(refSt.homeWins/refSt.games*100) : 0;
+  if(!window.crossSort)window.crossSort={col:'games',asc:false};
+  window.sortCross=(col)=>{
+    if(window.crossSort.col===col)window.crossSort.asc=!window.crossSort.asc;
+    else{window.crossSort.col=col;window.crossSort.asc=false;}
+    renderRefTeamCross(refName,window.refTeamStatsGlobal,window.teamStatsGlobal);
+  };
 
-  const teams = Object.entries(refTeamStats)
+  const refSt=window.refStatsGlobal?.[refName];
+  const refAvgPF=refSt?(refSt.pf/refSt.games):0;
+  const refHomePct=refSt?Math.round(refSt.homeWins/refSt.games*100):0;
+
+  let teams=Object.entries(refTeamStats)
     .filter(([k])=>k.startsWith(refName+'__'))
     .map(([k,v])=>({...v,teamName:k.split('__')[1]}))
-    .filter(s=>s.games>=1)
-    .sort((a,b)=>b.games-a.games);
+    .filter(s=>s.games>=1);
+
+  const crossSortFns={
+    games:(s)=>s.games,
+    pfc:(s)=>s.pfc/s.games,
+    fta:(s)=>s.fta/s.games,
+    ftpf:(s)=>s.pfc>0?s.fta/s.pfc:0,
+    wins:(s)=>s.wins/s.games,
+  };
+  teams=teams.sort((a,b)=>{
+    const fn=crossSortFns[window.crossSort.col]||crossSortFns.games;
+    return window.crossSort.asc?fn(a)-fn(b):fn(b)-fn(a);
+  });
 
   if(!teams.length){wrap.innerHTML='<div class="empty">Ni podatkov za tega sodnika</div>';return;}
 
-  // Get all matches for this ref
-  const refMatches = allMatches.filter(m=>
-    m.status==='FINISHED' &&
+  const refMatches=allMatches.filter(m=>
+    m.status==='FINISHED'&&
     [m.referee1,m.referee2,m.referee3].filter(Boolean)
       .some(r=>r.person.firstName+' '+r.person.lastName===refName)
   );
+
+  function thCross(col,label,color){
+    const active=window.crossSort.col===col;
+    const arrow=active?(window.crossSort.asc?'↑':'↓'):'↕';
+    return `<th onclick="sortCross('${col}')" style="color:${active?color:'var(--sub)'};cursor:pointer;text-align:center;user-select:none;white-space:nowrap">
+      ${label} <span style="font-size:.65rem">${arrow}</span></th>`;
+  }
 
   const rows=teams.map(s=>{
     const tc=TEAM_COLORS[s.teamName]||'#888';
     const avgPFC=(s.pfc/s.games).toFixed(1);
     const avgPFR=(s.pfr/s.games).toFixed(1);
+    const avgFTA=(s.fta/s.games).toFixed(1);
+    const ftPerPF=s.pfc>0?(s.fta/s.pfc).toFixed(2):'—';
     const winPct=Math.round(s.wins/s.games*100);
     const winColor=winPct>60?'#22c55e':winPct<40?'#ef4444':'var(--text)';
     const tAvg=teamStats[s.teamName];
     const tAvgPFC=tAvg?(tAvg.pfc/tAvg.games):0;
+    const tAvgFTA=tAvg?(tAvg.fta/tAvg.games):0;
     const diffPFC=(parseFloat(avgPFC)-tAvgPFC).toFixed(1);
+    const diffFTA=(parseFloat(avgFTA)-tAvgFTA).toFixed(1);
     const diffColor=parseFloat(diffPFC)>1?'#ef4444':parseFloat(diffPFC)<-1?'#22c55e':'var(--mut)';
+    const ftaColor=parseFloat(diffFTA)>1?'#22c55e':parseFloat(diffFTA)<-1?'#ef4444':'var(--mut)';
     const safeTeam=encodeURIComponent(s.teamName);
 
-    // Individual games for this ref + team
     const teamGames=refMatches.filter(m=>
       m.firstTeamName===s.teamName||m.secondTeamName===s.teamName
     ).sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
@@ -4679,50 +4749,41 @@ function renderRefTeamCross(refName, refTeamStats, teamStats){
       const opp=isHome?m.secondTeamName:m.firstTeamName;
       const won=myScore>oppScore;
       const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
-      const oppTc=TEAM_COLORS[opp]||'#888';
-      // PF from stats
-      const ms=matchStatsCache[m.id];
+      const ms2=matchStatsCache[m.id];
       let teamPFC=0;
-      if(ms){
-        const td=isHome?ms.firstTeam:ms.secondTeam;
-        teamPFC=(td?.playerStats||[]).reduce((sum,p)=>sum+(p.foulCommited||0),0);
-      }
+      if(ms2){const td=isHome?ms2.firstTeam:ms2.secondTeam;teamPFC=(td?.playerStats||[]).reduce((sum,p)=>sum+(p.foulCommited||0),0);}
       return `<tr style="background:rgba(255,255,255,.02)">
-        <td style="color:var(--mut);font-size:.68rem;padding-left:24px">${date}</td>
-        <td style="color:var(--mut);font-size:.68rem">K${m.round}</td>
-        <td>
-          <span style="color:${isHome?tc:'var(--mut)'}">${isHome?s.teamName:opp}</span>
-          <span style="color:var(--mut);margin:0 4px">vs</span>
-          <span style="color:${!isHome?tc:oppTc}">${isHome?opp:s.teamName}</span>
-        </td>
-        <td style="font-family:var(--fh);font-weight:700">
-          <span style="color:${won?'#22c55e':'#ef4444'}">${myScore}</span>
-          <span style="color:var(--mut)">:</span>
-          <span style="color:${!won?'#22c55e':'#ef4444'}">${oppScore}</span>
-        </td>
-        <td style="font-size:.68rem;color:${won?'#22c55e':'#ef4444'};font-weight:600">${won?'Z':'P'}</td>
-        <td style="font-size:.68rem;color:var(--mut)">${teamPFC>0?teamPFC+' PF':'—'}</td>
+        <td style="color:var(--mut);font-size:.68rem;padding-left:24px;text-align:left">${date}</td>
+        <td style="text-align:center;color:var(--mut)">K${m.round}</td>
+        <td style="text-align:left">${m.firstTeamName} vs ${m.secondTeamName}</td>
+        <td style="text-align:center;font-family:var(--fh);font-weight:700">${m.firstTeamScore}:${m.secondTeamScore}</td>
+        <td style="text-align:center;color:${won?'#22c55e':'#ef4444'};font-weight:600">${won?'Z':'P'}</td>
+        <td style="text-align:center;color:var(--mut);font-size:.68rem">${teamPFC||'—'}</td>
       </tr>`;
     }).join('');
 
     return `<tr onclick="toggleRefTeamGames('${safeTeam}')" style="cursor:pointer">
-      <td style="color:${tc};font-weight:600">
-        <span id="arrow-${safeTeam}" style="display:inline-block;transition:transform .2s;margin-right:6px">▶</span>
-        ${s.teamName}
+      <td style="color:${tc};font-weight:600;text-align:left">
+        <span id="arrow-${safeTeam}" style="display:inline-block;transition:transform .2s;margin-right:6px">▶</span>${s.teamName}
       </td>
-      <td>${s.games}</td>
-      <td style="color:#f97316;font-weight:700">${avgPFC}</td>
-      <td style="color:${diffColor};font-size:.75rem">${parseFloat(diffPFC)>0?'+':''}${diffPFC}</td>
-      <td style="color:#60a5fa">${avgPFR}</td>
-      <td style="color:${winColor};font-weight:700">${winPct}%</td>
+      <td style="text-align:center">${s.games}</td>
+      <td style="text-align:center;color:#f97316;font-weight:700">${avgPFC}</td>
+      <td style="text-align:center;color:${diffColor};font-size:.75rem">${parseFloat(diffPFC)>0?'+':''}${diffPFC}</td>
+      <td style="text-align:center;color:#a855f7;font-weight:700">${avgFTA}</td>
+      <td style="text-align:center;color:${ftaColor};font-size:.75rem">${parseFloat(diffFTA)>0?'+':''}${diffFTA}</td>
+      <td style="text-align:center;color:#60a5fa">${ftPerPF}</td>
+      <td style="text-align:center;color:${winColor};font-weight:700">${winPct}%</td>
     </tr>
     <tr id="games-${safeTeam}" style="display:none">
-      <td colspan="6" style="padding:0">
+      <td colspan="8" style="padding:0">
         <table style="width:100%;font-size:.72rem">
           <thead style="background:rgba(255,255,255,.03)"><tr>
             <th style="text-align:left;padding-left:24px">Datum</th>
-            <th>Krog</th><th style="text-align:left">Tekma</th>
-            <th>Rezultat</th><th>Z/P</th><th>PF</th>
+            <th style="text-align:center">K</th>
+            <th style="text-align:left">Tekma</th>
+            <th style="text-align:center">Rezultat</th>
+            <th style="text-align:center">Z/P</th>
+            <th style="text-align:center">PF</th>
           </tr></thead>
           <tbody>${gameRows}</tbody>
         </table>
@@ -4730,27 +4791,27 @@ function renderRefTeamCross(refName, refTeamStats, teamStats){
     </tr>`;
   }).join('');
 
-  wrap.innerHTML=`
-    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
-      <div style="font-size:.75rem;color:var(--mut);margin-bottom:10px">
-        <b>${refName}</b> · ${refSt?.games||0} tekem · ${refAvgPF.toFixed(1)} PF/tm · dom. ${refHomePct}%
-      </div>
-      <div style="overflow-x:auto">
-        <table class="standings-table" style="font-size:.78rem">
-          <thead><tr>
-            <th style="text-align:left">EKIPA (klikni za tekme)</th><th>TM</th>
-            <th style="color:#f97316">ST.PF/TM</th>
-            <th title="vs sezonsko povprečje ekipe">vs AVG</th>
-            <th style="color:#60a5fa">PR.PF/TM</th>
-            <th>ZMAGE%</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <div style="font-size:.62rem;color:var(--mut);margin-top:8px">
-        Klikni na ekipo za prikaz posameznih tekem
-      </div>
-    </div>`;
+  wrap.innerHTML=`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+    <div style="font-size:.75rem;color:var(--mut);margin-bottom:10px">
+      <b>${refName}</b> · ${refSt?.games||0} tekem · ${refAvgPF.toFixed(1)} PF/tm · dom. ${refHomePct}%
+      <span style="font-size:.62rem;margin-left:8px">· klikni stolpec za sortiranje · klikni ekipo za tekme</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="standings-table" style="font-size:.78rem">
+        <thead><tr>
+          <th style="text-align:left">EKIPA</th>
+          ${thCross('games','TM','var(--acc)')}
+          ${thCross('pfc','ST.PF/TM','#f97316')}
+          <th style="text-align:center;color:var(--sub)">vs AVG</th>
+          ${thCross('fta','FTA/TM','#a855f7')}
+          <th style="text-align:center;color:var(--sub)">vs AVG</th>
+          ${thCross('ftpf','FT/PF','#60a5fa')}
+          ${thCross('wins','ZMAGE%','#22c55e')}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>`;
 }
 
 function toggleRefTeamGames(safeTeam){
