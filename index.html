@@ -251,7 +251,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .hero-title span{color:var(--acc)}
 .hero-sub{font-size:.9rem;color:var(--mut);margin-bottom:48px;font-family:var(--fm)}
 .hero-leagues{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
-@media(max-width:500px){.hero-leagues{grid-template-columns:1fr}}
+@media(max-width:768px){.hero-leagues{grid-template-columns:1fr;gap:10px}}
 .hero-card{border-radius:14px;border:2px solid var(--border2);background:var(--card);padding:24px 20px;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
 .hero-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s}
 .hero-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
@@ -443,6 +443,18 @@ select:focus{outline:none;border-color:var(--acc)}
   /* Primerjava radar manjši */
   .pp-grid{grid-template-columns:1fr !important}
 }
+
+@media(max-width:768px){
+  #mobile-nav{
+    overflow-x:auto;
+    justify-content:flex-start;
+    gap:0;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  #mobile-nav::-webkit-scrollbar{display:none}
+  .mbn-btn{min-width:56px;flex-shrink:0}
+}
 </style>
 </head>
 <body>
@@ -512,11 +524,11 @@ select:focus{outline:none;border-color:var(--acc)}
   <div class="hdr-title" id="hdr-title">LIGA <span>OTP BANKA</span></div>
   <div class="hdr-right">
     <span class="hdr-season">SEZONA 2025/26</span>
-    <div style="display:flex;gap:6px;align-items:center">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <div class="tgl" style="margin-right:4px">
-        <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
-        <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
-        <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')">3. SKL</button>
+        <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')" style="min-height:36px;min-width:60px">1. SKL</button>
+        <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')" style="min-height:36px;min-width:60px">2. SKL</button>
+        <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')" style="min-height:36px;min-width:60px">3. SKL</button>
       </div>
       <span class="hdr-badge" id="league-badge">Liga OTP banka</span>
       <button onclick="cacheClear()" title="Počisti predpomnilnik" style="background:transparent;border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fm)">♻️ cache</button>
@@ -4728,6 +4740,9 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="mbn-btn active" id="mbn-live" onclick="showTab('live')">
     <span class="mbn-icon">🔴</span><span class="mbn-lbl">Live</span>
   </button>
+  <button class="mbn-btn" id="mbn-ekipe" onclick="showTab('ekipe')">
+    <span class="mbn-icon">🏀</span><span class="mbn-lbl">Ekipe</span>
+  </button>
   <button class="mbn-btn" id="mbn-lestvica" onclick="showTab('lestvica')">
     <span class="mbn-icon">🏆</span><span class="mbn-lbl">Lestvica</span>
   </button>
@@ -4742,6 +4757,18 @@ function renderBracketHTML(byPhase,phaseColors){
   </button>
   <button class="mbn-btn" id="mbn-iskanje" onclick="showTab('iskanje')">
     <span class="mbn-icon">🔍</span><span class="mbn-lbl">Išči</span>
+  </button>
+  <button class="mbn-btn" id="mbn-nerd" onclick="showTab('nerd')">
+    <span class="mbn-icon">🧠</span><span class="mbn-lbl">Stats</span>
+  </button>
+  <button class="mbn-btn" id="mbn-starost" onclick="showTab('starost')">
+    <span class="mbn-icon">📊</span><span class="mbn-lbl">Starost</span>
+  </button>
+  <button class="mbn-btn" id="mbn-obisk" onclick="showTab('obisk')">
+    <span class="mbn-icon">👥</span><span class="mbn-lbl">Obisk</span>
+  </button>
+  <button class="mbn-btn" id="mbn-compare" onclick="showTab('compare')">
+    <span class="mbn-icon">⚡</span><span class="mbn-lbl">Primerjava</span>
   </button>
   <button class="mbn-btn" id="mbn-race" onclick="showTab('race')">
     <span class="mbn-icon">📈</span><span class="mbn-lbl">Sezona</span>
