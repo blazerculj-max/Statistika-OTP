@@ -1962,6 +1962,18 @@ async function openMatch(matchId){
         <div class="mo-team away" style="color:${c2}">${t2}</div>
       </div>
       <div class="mo-meta">${date} · ${matchInfo.sportHallName||''} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
+      ${(()=>{
+        const yt=matchInfo.streams?.find(s=>s.type==='YOUTUBE'&&s.url);
+        if(!yt)return '';
+        const isLive3=matchInfo.status==='LIVE';
+        return `<div style="margin-top:8px">
+          <a href="https://www.youtube.com/watch?v=${yt.url}" target="_blank"
+            style="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;padding:6px 14px;border-radius:8px;font-size:.75rem;font-weight:600;text-decoration:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M23 7s-.3-2-1.2-2.7c-1.1-1.2-2.4-1.2-3-1.3C16.4 3 12 3 12 3s-4.4 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2 .3 4.1.3 4.1s.3 2 1.2 2.7c1.1 1.2 2.6 1.1 3.3 1.2C7.2 21.3 12 21.3 12 21.3s4.4 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.7 1.2-2.7 1.2-2.7s.3-2.1.3-4.1v-2C23.3 9.1 23 7 23 7z"/><polygon points="10 15 15 12 10 9 10 15" fill="white"/></svg>
+            ${isLive3?'🔴 LIVE prenos na YouTube':'▶ Oglej si posnetek'}
+          </a>
+        </div>`;
+      })()}
     </div>
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
