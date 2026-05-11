@@ -4565,7 +4565,7 @@ function renderSodniki(){
       🔀 SODNIK × EKIPA CROSS ANALIZA
     </div>
     <div class="ctrls" style="margin-bottom:12px">
-      <select id="ref-select" onchange="renderRefTeamCross(this.value,refTeamStatsGlobal,teamStatsGlobal)">
+      <select id="ref-select" onchange="renderRefTeamCross(this.value,window.refTeamStatsGlobal,window.teamStatsGlobal)">
         <option value="">— Izberi sodnika —</option>
         ${sorted.map(s=>`<option value="${s.name}">${s.name} (${s.games} tekem)</option>`).join('')}
       </select>
@@ -4584,7 +4584,7 @@ function renderSodniki(){
     const pfPct=Math.round(s.pf/s.games/maxPF*100);
     const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
     const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
-    return `<tr style="cursor:pointer" onclick="document.getElementById('ref-select').value='${s.name}';renderRefTeamCross('${s.name}',window.refTeamStatsGlobal,window.teamStatsGlobal)">
+    return `<tr style="cursor:pointer" onclick="document.getElementById('ref-select').value='${s.name}';renderRefTeamCross('${s.name}',window.refTeamStatsGlobal,window.teamStatsGlobal)" style="cursor:pointer">
       <td style="color:var(--mut)">${i+1}.</td>
       <td style="font-weight:600">${s.name}</td>
       <td>${s.games}</td>
