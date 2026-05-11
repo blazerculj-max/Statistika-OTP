@@ -4437,48 +4437,69 @@ function renderSodniki(){
   if(!wrap) return;
 
   if(!Object.keys(matchStatsCache).length){
-    wrap.innerHTML='<div class="empty">Naloži statistiko (Stats zavihek) za podatke o sodnikih</div>';
+    wrap.innerHTML='<div class="empty">Naloži statistiko za podatke o sodnikih</div>';
     return;
   }
 
-  // Build ref stats
+  // Build ref stats + team stats
   const refStats = {};
+  const teamStats = {}; // team → {pf_committed, pf_received, games}
+  const refTeamStats = {}; // refName_teamName → {games, pf_committed, pf_received, wins}
+
   allMatches.filter(m=>m.status==='FINISHED'&&m.referee1).forEach(m=>{
     const refs=[m.referee1,m.referee2,m.referee3].filter(Boolean);
     const stats=matchStatsCache[m.id];
-    let pf=0;
-    if(stats){
-      pf=[...(stats.firstTeam?.playerStats||[]),...(stats.secondTeam?.playerStats||[])]
-        .reduce((s,p)=>s+(p.foulCommited||0),0);
-    }
     const homeWon=m.firstTeamScore>m.secondTeamScore;
     const diff=Math.abs(m.firstTeamScore-m.secondTeamScore);
 
+    // Per-team fouls
+    const teamFouls={};
+    if(stats){
+      [stats.firstTeam,stats.secondTeam].forEach((team,ti)=>{
+        const tname=team?.teamName||'';
+        if(!tname)return;
+        const pfc=(team.playerStats||[]).reduce((s,p)=>s+(p.foulCommited||0),0);
+        const pfr=(team.playerStats||[]).reduce((s,p)=>s+(p.foulReceived||0),0);
+        teamFouls[tname]={pfc,pfr,won:ti===0?homeWon:!homeWon};
+        // Overall team stats
+        if(!teamStats[tname])teamStats[tname]={pfc:0,pfr:0,games:0};
+        teamStats[tname].pfc+=pfc;
+        teamStats[tname].pfr+=pfr;
+        teamStats[tname].games++;
+      });
+    }
+
+    let totalPF=0;
+    if(stats)totalPF=[...(stats.firstTeam?.playerStats||[]),...(stats.secondTeam?.playerStats||[])].reduce((s,p)=>s+(p.foulCommited||0),0);
+
     refs.forEach((ref,ri)=>{
       const name=ref.person.firstName+' '+ref.person.lastName;
-      if(!refStats[name])refStats[name]={
-        name,id:ref.id,games:0,pf:0,homeWins:0,
-        coRefs:{},totalDiff:0,closeGames:0
-      };
+      if(!refStats[name])refStats[name]={name,id:ref.id,games:0,pf:0,homeWins:0,coRefs:{},closeGames:0};
       const s=refStats[name];
-      s.games++;s.pf+=pf;
+      s.games++;s.pf+=totalPF;
       if(homeWon)s.homeWins++;
       if(diff<=5)s.closeGames++;
-      s.totalDiff+=diff;
-      // Co-referees
       refs.forEach((r2,ri2)=>{
         if(ri2===ri)return;
         const n2=r2.person.firstName+' '+r2.person.lastName;
         s.coRefs[n2]=(s.coRefs[n2]||0)+1;
+      });
+
+      // Ref × Team cross stats
+      Object.entries(teamFouls).forEach(([tname,tf])=>{
+        const key=name+'__'+tname;
+        if(!refTeamStats[key])refTeamStats[key]={ref:name,team:tname,games:0,pfc:0,pfr:0,wins:0};
+        const rt=refTeamStats[key];
+        rt.games++;rt.pfc+=tf.pfc;rt.pfr+=tf.pfr;
+        if(tf.won)rt.wins++;
       });
     });
   });
 
   const sorted=Object.values(refStats).sort((a,b)=>b.games-a.games);
   const maxPF=Math.max(...sorted.map(s=>s.pf/s.games));
-  const maxGames=sorted[0]?.games||1;
 
-  // Summary cards - top stats
+  // Featured cards
   const mostPF=Object.values(refStats).sort((a,b)=>b.pf/b.games-a.pf/a.games)[0];
   const mostHome=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>b.homeWins/b.games-a.homeWins/a.games)[0];
   const mostAway=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>a.homeWins/a.games-b.homeWins/b.games)[0];
@@ -4487,38 +4508,89 @@ function renderSodniki(){
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px">
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🟡 NAJVEČ PF/TEKMO</div>
-        <div style="font-weight:700;font-size:.95rem">${mostPF?.name||'—'}</div>
+        <div style="font-weight:700">${mostPF?.name||'—'}</div>
         <div style="font-family:var(--fh);font-size:1.4rem;color:#f97316">${mostPF?(mostPF.pf/mostPF.games).toFixed(1):'—'}</div>
         <div style="font-size:.65rem;color:var(--mut)">${mostPF?.games||0} tekem</div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🏠 FAVORIZIRA DOMAČINA</div>
-        <div style="font-weight:700;font-size:.95rem">${mostHome?.name||'—'}</div>
+        <div style="font-weight:700">${mostHome?.name||'—'}</div>
         <div style="font-family:var(--fh);font-size:1.4rem;color:#22c55e">${mostHome?Math.round(mostHome.homeWins/mostHome.games*100)+'%':'—'}</div>
         <div style="font-size:.65rem;color:var(--mut)">${mostHome?.games||0} tekem</div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">✈️ FAVORIZIRA GOSTA</div>
-        <div style="font-weight:700;font-size:.95rem">${mostAway?.name||'—'}</div>
+        <div style="font-weight:700">${mostAway?.name||'—'}</div>
         <div style="font-family:var(--fh);font-size:1.4rem;color:#60a5fa">${mostAway?Math.round(mostAway.homeWins/mostAway.games*100)+'%':'—'}</div>
         <div style="font-size:.65rem;color:var(--mut)">${mostAway?.games||0} tekem</div>
       </div>
     </div>`;
 
-  // Main table
+  // Team fouls table
+  const teamFoulRows=Object.entries(teamStats)
+    .map(([t,s])=>({t,s,avgPFC:(s.pfc/s.games).toFixed(1),avgPFR:(s.pfr/s.games).toFixed(1)}))
+    .sort((a,b)=>parseFloat(b.avgPFC)-parseFloat(a.avgPFC));
+
+  const teamFoulHtml=`
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">
+      🏀 OSEBNE NAPAKE PO EKIPAH
+    </div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
+      <table class="standings-table">
+        <thead><tr>
+          <th>M</th><th style="text-align:left">EKIPA</th><th>TEKEM</th>
+          <th style="color:#f97316" title="Storjene napake/tekmo">ST. PF/TM ↓</th>
+          <th style="color:#60a5fa" title="Prejete napake/tekmo">PR. PF/TM</th>
+          <th title="Razlika: prejete - storjene">RAZLIKA</th>
+        </tr></thead>
+        <tbody>${teamFoulRows.map(({t,s,avgPFC,avgPFR},i)=>{
+          const tc=TEAM_COLORS[t]||'#888';
+          const diff=(parseFloat(avgPFR)-parseFloat(avgPFC)).toFixed(1);
+          const diffColor=parseFloat(diff)>0?'#22c55e':parseFloat(diff)<0?'#ef4444':'var(--mut)';
+          return `<tr>
+            <td style="color:var(--mut)">${i+1}.</td>
+            <td style="color:${tc};font-weight:600">${t}</td>
+            <td style="color:var(--mut)">${s.games}</td>
+            <td style="color:#f97316;font-weight:700">${avgPFC}</td>
+            <td style="color:#60a5fa;font-weight:700">${avgPFR}</td>
+            <td style="color:${diffColor};font-weight:600">${parseFloat(diff)>0?'+':''}${diff}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+
+  // Ref × Team cross table (select ref to see)
+  const refSelect=`
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">
+      🔀 SODNIK × EKIPA CROSS ANALIZA
+    </div>
+    <div class="ctrls" style="margin-bottom:12px">
+      <select id="ref-select" onchange="renderRefTeamCross(this.value,refTeamStatsGlobal,teamStatsGlobal)">
+        <option value="">— Izberi sodnika —</option>
+        ${sorted.map(s=>`<option value="${s.name}">${s.name} (${s.games} tekem)</option>`).join('')}
+      </select>
+    </div>
+    <div id="ref-team-cross"></div>`;
+
+  // Store globally for cross analysis
+  window.refTeamStatsGlobal = refTeamStats;
+  window.teamStatsGlobal = teamStats;
+  window.refStatsGlobal = refStats;
+
+  // Main ref table
   const tableRows=sorted.map((s,i)=>{
     const avgPF=(s.pf/s.games).toFixed(1);
     const homePct=Math.round(s.homeWins/s.games*100);
     const pfPct=Math.round(s.pf/s.games/maxPF*100);
     const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
     const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
-    return `<tr onclick="showRefDetail('${s.name}',refStats)" style="cursor:pointer">
+    return `<tr style="cursor:pointer" onclick="document.getElementById('ref-select').value='${s.name}';renderRefTeamCross('${s.name}',window.refTeamStatsGlobal,window.teamStatsGlobal)">
       <td style="color:var(--mut)">${i+1}.</td>
       <td style="font-weight:600">${s.name}</td>
       <td>${s.games}</td>
       <td>
         <div style="display:flex;align-items:center;gap:6px">
-          <div style="width:60px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+          <div style="width:50px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
             <div style="width:${pfPct}%;height:100%;background:#f97316;border-radius:2px"></div>
           </div>
           <span style="color:#f97316;font-weight:600">${avgPF}</span>
@@ -4526,26 +4598,84 @@ function renderSodniki(){
       </td>
       <td style="color:${homeColor};font-weight:600">${homePct}%</td>
       <td style="color:var(--mut);font-size:.72rem">${topCoRef?topCoRef[0].split(' ').pop()+'('+topCoRef[1]+')':'—'}</td>
-      <td style="color:var(--mut)">${s.closeGames}</td>
+      <td>${s.closeGames}</td>
     </tr>`;
   }).join('');
 
-  wrap.innerHTML=summaryHtml+`
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — STATISTIKA</div>
-    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
+  wrap.innerHTML=summaryHtml
+    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — STATISTIKA (klikni za cross analizo)</div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
       <table class="standings-table">
         <thead><tr>
           <th>M</th><th style="text-align:left">SODNIK</th><th>TEKME</th>
-          <th style="color:#f97316">PF/TM</th>
-          <th>DOM%</th>
-          <th>NAJPOGOSTEJŠI SO-SODNIK</th>
-          <th title="Tekme z razliko ≤5">TESNE</th>
+          <th style="color:#f97316">PF/TM</th><th>DOM%</th>
+          <th>SO-SODNIK</th><th title="Razlika ≤5">TESNE</th>
         </tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
-    </div>
-    <div style="font-size:.62rem;color:var(--mut);margin-top:8px">
-      DOM% = delež tekem ko je zmagal domačin | PF = osebne napake obeh ekip skupaj | Min. 10 tekem za featured cards
+    </div>`
+    +teamFoulHtml
+    +refSelect
+    +`<div style="font-size:.62rem;color:var(--mut);margin-top:12px">ST.PF = storjene osebne napake | PR.PF = prejete osebne napake | DOM% = % zmag domačina pri tem sodniku</div>`;
+}
+
+function renderRefTeamCross(refName, refTeamStats, teamStats){
+  const wrap = document.getElementById('ref-team-cross');
+  if(!wrap||!refName) return;
+
+  const refSt = window.refStatsGlobal?.[refName];
+  const refAvgPF = refSt ? (refSt.pf/refSt.games) : 0;
+  const refHomePct = refSt ? Math.round(refSt.homeWins/refSt.games*100) : 0;
+
+  const teams = Object.entries(refTeamStats)
+    .filter(([k])=>k.startsWith(refName+'__'))
+    .map(([k,v])=>({...v,teamName:k.split('__')[1]}))
+    .filter(s=>s.games>=2)
+    .sort((a,b)=>b.games-a.games);
+
+  if(!teams.length){wrap.innerHTML='<div class="empty">Premalo podatkov za tega sodnika</div>';return;}
+
+  const rows=teams.map(s=>{
+    const tc=TEAM_COLORS[s.teamName]||'#888';
+    const avgPFC=(s.pfc/s.games).toFixed(1);
+    const avgPFR=(s.pfr/s.games).toFixed(1);
+    const winPct=Math.round(s.wins/s.games*100);
+    const winColor=winPct>60?'#22c55e':winPct<40?'#ef4444':'var(--text)';
+    // Compare to team avg
+    const tAvg=teamStats[s.teamName];
+    const tAvgPFC=tAvg?(tAvg.pfc/tAvg.games):0;
+    const diffPFC=(parseFloat(avgPFC)-tAvgPFC).toFixed(1);
+    const diffColor=parseFloat(diffPFC)>1?'#ef4444':parseFloat(diffPFC)<-1?'#22c55e':'var(--mut)';
+    return `<tr>
+      <td style="color:${tc};font-weight:600">${s.teamName}</td>
+      <td>${s.games}</td>
+      <td style="color:#f97316;font-weight:600">${avgPFC}</td>
+      <td style="color:${diffColor};font-size:.75rem">${parseFloat(diffPFC)>0?'+':''}${diffPFC} vs avg</td>
+      <td style="color:#60a5fa">${avgPFR}</td>
+      <td style="color:${winColor};font-weight:700">${winPct}%</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+      <div style="font-size:.72rem;color:var(--mut);margin-bottom:8px">
+        <b>${refName}</b> — ${refSt?.games||0} tekem | povp. ${refAvgPF.toFixed(1)} PF/tm | dom. zmage ${refHomePct}%
+      </div>
+      <div style="overflow-x:auto">
+        <table class="standings-table" style="font-size:.78rem">
+          <thead><tr>
+            <th style="text-align:left">EKIPA</th><th>TM</th>
+            <th style="color:#f97316">ST.PF/TM</th>
+            <th title="Primerjava z ekipinim povprečjem">vs POVP.</th>
+            <th style="color:#60a5fa">PR.PF/TM</th>
+            <th title="% zmag ekipe ko sodi ta sodnik">ZMAGE%</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div style="font-size:.62rem;color:var(--mut);margin-top:8px">
+        vs POVP. = razlika storjenih PF pri tem sodniku vs ekipino sezonsko povprečje (rdeče = več napak, zeleno = manj)
+      </div>
     </div>`;
 }
 
