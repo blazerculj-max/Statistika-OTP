@@ -553,6 +553,7 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
   <button class="nb" onclick="showTab('mvp')">🏆 MVP</button>
   <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
+  <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
 </nav>
 
 <div class="content">
@@ -800,6 +801,9 @@ select:focus{outline:none;border-color:var(--acc)}
     </div>
     <div class="srch-results" id="srch-results"></div>
     <div style="margin-top:24px" id="cmp-section"></div>
+  </div>
+  <div id="tab-sodniki" class="tab">
+    <div id="sodniki-wrap"></div>
   </div>
 </div>
 
@@ -1579,6 +1583,7 @@ function showTab(t){
   if(t==='compare')renderPlayerCompare();
   if(t==='mvp')renderMVP();
   if(t==='race')initRaceChart();
+  if(t==='sodniki')renderSodniki();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
@@ -4424,6 +4429,130 @@ function initRaceChart(){
   drawRaceStandings();
 }
 
+// ═══════════════════════════════════════════════════
+// SODNIKI
+// ═══════════════════════════════════════════════════
+function renderSodniki(){
+  const wrap = document.getElementById('sodniki-wrap');
+  if(!wrap) return;
+
+  if(!Object.keys(matchStatsCache).length){
+    wrap.innerHTML='<div class="empty">Naloži statistiko (Stats zavihek) za podatke o sodnikih</div>';
+    return;
+  }
+
+  // Build ref stats
+  const refStats = {};
+  allMatches.filter(m=>m.status==='FINISHED'&&m.referee1).forEach(m=>{
+    const refs=[m.referee1,m.referee2,m.referee3].filter(Boolean);
+    const stats=matchStatsCache[m.id];
+    let pf=0;
+    if(stats){
+      pf=[...(stats.firstTeam?.playerStats||[]),...(stats.secondTeam?.playerStats||[])]
+        .reduce((s,p)=>s+(p.foulCommited||0),0);
+    }
+    const homeWon=m.firstTeamScore>m.secondTeamScore;
+    const diff=Math.abs(m.firstTeamScore-m.secondTeamScore);
+
+    refs.forEach((ref,ri)=>{
+      const name=ref.person.firstName+' '+ref.person.lastName;
+      if(!refStats[name])refStats[name]={
+        name,id:ref.id,games:0,pf:0,homeWins:0,
+        coRefs:{},totalDiff:0,closeGames:0
+      };
+      const s=refStats[name];
+      s.games++;s.pf+=pf;
+      if(homeWon)s.homeWins++;
+      if(diff<=5)s.closeGames++;
+      s.totalDiff+=diff;
+      // Co-referees
+      refs.forEach((r2,ri2)=>{
+        if(ri2===ri)return;
+        const n2=r2.person.firstName+' '+r2.person.lastName;
+        s.coRefs[n2]=(s.coRefs[n2]||0)+1;
+      });
+    });
+  });
+
+  const sorted=Object.values(refStats).sort((a,b)=>b.games-a.games);
+  const maxPF=Math.max(...sorted.map(s=>s.pf/s.games));
+  const maxGames=sorted[0]?.games||1;
+
+  // Summary cards - top stats
+  const mostPF=Object.values(refStats).sort((a,b)=>b.pf/b.games-a.pf/a.games)[0];
+  const mostHome=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>b.homeWins/b.games-a.homeWins/a.games)[0];
+  const mostAway=Object.values(refStats).filter(s=>s.games>=10).sort((a,b)=>a.homeWins/a.games-b.homeWins/b.games)[0];
+
+  const summaryHtml=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🟡 NAJVEČ PF/TEKMO</div>
+        <div style="font-weight:700;font-size:.95rem">${mostPF?.name||'—'}</div>
+        <div style="font-family:var(--fh);font-size:1.4rem;color:#f97316">${mostPF?(mostPF.pf/mostPF.games).toFixed(1):'—'}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${mostPF?.games||0} tekem</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">🏠 FAVORIZIRA DOMAČINA</div>
+        <div style="font-weight:700;font-size:.95rem">${mostHome?.name||'—'}</div>
+        <div style="font-family:var(--fh);font-size:1.4rem;color:#22c55e">${mostHome?Math.round(mostHome.homeWins/mostHome.games*100)+'%':'—'}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${mostHome?.games||0} tekem</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <div style="font-size:.62rem;color:var(--mut);margin-bottom:6px">✈️ FAVORIZIRA GOSTA</div>
+        <div style="font-weight:700;font-size:.95rem">${mostAway?.name||'—'}</div>
+        <div style="font-family:var(--fh);font-size:1.4rem;color:#60a5fa">${mostAway?Math.round(mostAway.homeWins/mostAway.games*100)+'%':'—'}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${mostAway?.games||0} tekem</div>
+      </div>
+    </div>`;
+
+  // Main table
+  const tableRows=sorted.map((s,i)=>{
+    const avgPF=(s.pf/s.games).toFixed(1);
+    const homePct=Math.round(s.homeWins/s.games*100);
+    const pfPct=Math.round(s.pf/s.games/maxPF*100);
+    const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
+    const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
+    return `<tr onclick="showRefDetail('${s.name}',refStats)" style="cursor:pointer">
+      <td style="color:var(--mut)">${i+1}.</td>
+      <td style="font-weight:600">${s.name}</td>
+      <td>${s.games}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="width:60px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden">
+            <div style="width:${pfPct}%;height:100%;background:#f97316;border-radius:2px"></div>
+          </div>
+          <span style="color:#f97316;font-weight:600">${avgPF}</span>
+        </div>
+      </td>
+      <td style="color:${homeColor};font-weight:600">${homePct}%</td>
+      <td style="color:var(--mut);font-size:.72rem">${topCoRef?topCoRef[0].split(' ').pop()+'('+topCoRef[1]+')':'—'}</td>
+      <td style="color:var(--mut)">${s.closeGames}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=summaryHtml+`
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — STATISTIKA</div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
+      <table class="standings-table">
+        <thead><tr>
+          <th>M</th><th style="text-align:left">SODNIK</th><th>TEKME</th>
+          <th style="color:#f97316">PF/TM</th>
+          <th>DOM%</th>
+          <th>NAJPOGOSTEJŠI SO-SODNIK</th>
+          <th title="Tekme z razliko ≤5">TESNE</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <div style="font-size:.62rem;color:var(--mut);margin-top:8px">
+      DOM% = delež tekem ko je zmagal domačin | PF = osebne napake obeh ekip skupaj | Min. 10 tekem za featured cards
+    </div>`;
+}
+
+function showRefDetail(name, refStats){
+  // Could expand to show per-team stats for this ref
+}
+
 let agePhase = 'all';
 let attPhase = 'all';
 
@@ -4769,6 +4898,9 @@ function renderBracketHTML(byPhase,phaseColors){
   </button>
   <button class="mbn-btn" id="mbn-compare" onclick="showTab('compare')">
     <span class="mbn-icon">⚡</span><span class="mbn-lbl">Primerjava</span>
+  </button>
+  <button class="mbn-btn" id="mbn-sodniki" onclick="showTab('sodniki')">
+    <span class="mbn-icon">🏛️</span><span class="mbn-lbl">Sodniki</span>
   </button>
   <button class="mbn-btn" id="mbn-race" onclick="showTab('race')">
     <span class="mbn-icon">📈</span><span class="mbn-lbl">Sezona</span>
