@@ -2137,75 +2137,73 @@ function renderLeaders(){
 // AGE ANALYSIS
 // ═══════════════════════════════════════════════════
 function renderAge(){
-  const teamFilter = document.getElementById('age-team-filter')?.value || '';
-
-  // Populate team dropdown
   const ageSel = document.getElementById('age-team-filter');
+  // Populate team dropdown once
   if(ageSel && ageSel.options.length <= 1){
     const teams = [...new Set(P.map(p=>p[F.team]))].sort();
     teams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;ageSel.appendChild(o);});
   }
+  const teamFilter = ageSel?.value || '';
+  const wrap = document.getElementById('age-wrap');
+  if(!wrap) return;
 
-  // Get filtered players
-  let players = getLeaguePlayers();
-  if(teamFilter) players = P.filter(p=>p[F.team]===teamFilter);
-
-  // Average age for selected/all
   const currentYear = new Date().getFullYear();
-  const withAge = players.filter(p=>p[F.born]>1950);
-  const avgAge = withAge.length
-    ? (withAge.reduce((s,p)=>s+(currentYear-p[F.born]),0)/withAge.length).toFixed(1)
-    : '—';
 
-  // If team selected - show team age summary + players list
-  let teamSummaryHtml = '';
+  // === TEAM DETAIL VIEW ===
   if(teamFilter){
     const teamPlayers = P.filter(p=>p[F.team]===teamFilter&&p[F.born]>1950)
-      .sort((a,b)=>a[F.born]-b[F.born]); // oldest first
-    const oldest = teamPlayers[0];
-    const youngest = teamPlayers[teamPlayers.length-1];
-    const teamRows = teamPlayers.map(p=>{
+      .sort((a,b)=>a[F.born]-b[F.born]);
+    const tc = TEAM_COLORS[teamFilter]||'var(--acc)';
+    const avgAge = teamPlayers.length
+      ? (teamPlayers.reduce((s,p)=>s+(currentYear-p[F.born]),0)/teamPlayers.length).toFixed(1) : '—';
+
+    const rows = teamPlayers.map(p=>{
       const age = currentYear-p[F.born];
-      const tc = TEAM_COLORS[p[F.team]]||'#888';
       const pi = P.indexOf(p);
       return `<tr onclick="showPlayer(${pi})" style="cursor:pointer">
         <td style="font-weight:600">${p[F.name]}</td>
-        <td>${p[F.born]}</td>
-        <td style="color:var(--acc);font-weight:600">${age} let</td>
+        <td style="color:var(--mut)">${p[F.born]}</td>
+        <td style="color:${tc};font-weight:600">${age} let</td>
         <td>${(p[F.toc]/Math.max(p[F.T],1)).toFixed(1)}</td>
-        <td>${(p[F.MIN]/Math.max(p[F.T],1)).toFixed(0)}'</td>
+        <td style="color:var(--mut)">${(p[F.MIN]/Math.max(p[F.T],1)).toFixed(0)}'</td>
       </tr>`;
     }).join('');
 
-    teamSummaryHtml = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
-        <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px">
-          STAROSTNI PROFIL — ${teamFilter}
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px">
-          <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAge}</div><div class="tsl">Povp. starost</div></div>
-          ${oldest?`<div class="ts"><div class="tsv">${currentYear-oldest[F.born]}</div><div class="tsl">Najstarejši</div></div>`:''}
-          ${youngest?`<div class="ts"><div class="tsv">${currentYear-youngest[F.born]}</div><div class="tsl">Najmlajši</div></div>`:''}
-          <div class="ts"><div class="tsv">${teamPlayers.length}</div><div class="tsl">Igralcev</div></div>
-        </div>
-        <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border)">
-          <table class="standings-table" style="font-size:.78rem">
-            <thead><tr><th style="text-align:left">IGRALEC</th><th>LET. ROJ.</th><th>STAROST</th><th>PTS/TM</th><th>MIN/TM</th></tr></thead>
-            <tbody>${teamRows}</tbody>
-          </table>
-        </div>
+    wrap.innerHTML = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="ts"><div class="tsv" style="color:${tc}">${avgAge}</div><div class="tsl">Povp. starost</div></div>
+        <div class="ts"><div class="tsv">${teamPlayers.length>0?currentYear-teamPlayers[0][F.born]:'—'}</div><div class="tsl">Najstarejši</div></div>
+        <div class="ts"><div class="tsv">${teamPlayers.length>0?currentYear-teamPlayers[teamPlayers.length-1][F.born]:'—'}</div><div class="tsl">Najmlajši</div></div>
+        <div class="ts"><div class="tsv">${teamPlayers.length}</div><div class="tsl">Igralcev</div></div>
+      </div>
+      <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+        <table class="standings-table">
+          <thead><tr>
+            <th style="text-align:left">IGRALEC</th>
+            <th>LET. ROJ.</th>
+            <th style="color:${tc}">STAROST</th>
+            <th>PTS/TM</th><th>MIN/TM</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
+    return;
   }
 
-  // Age groups
+  // === DEFAULT VIEW (original) ===
   const data={};
   AGE_GROUPS.forEach(g=>{data[g]={players:[],min:0,toc:0,efe:0}});
-  players.forEach(p=>{
+  getLeaguePlayers().forEach(p=>{
     const g=ageGroup(p[F.born]);
     if(data[g]&&!data[g].players.find(x=>x[F.name]===p[F.name]&&x[F.born]===p[F.born])){
       data[g].players.push(p);data[g].min+=p[F.MIN];data[g].toc+=p[F.toc];data[g].efe+=p[F.efe];
     }
   });
+
+  // Overall avg age
+  const allP = getLeaguePlayers().filter(p=>p[F.born]>1950);
+  const avgAge = allP.length
+    ? (allP.reduce((s,p)=>s+(currentYear-p[F.born]),0)/allP.length).toFixed(1) : '—';
 
   function barChart(title,vals,color){
     const maxV=Math.max(...vals.map(v=>v.v),1);
@@ -2227,16 +2225,14 @@ function renderAge(){
   }
 
   const playerVals=AGE_GROUPS.map(g=>({v:data[g].players.length,label:data[g].players.length+' ig.'}));
-  const minVals=AGE_GROUPS.map(g=>{const n=data[g].players.length||1;return{v:data[g].min/n,label:(data[g].min/n).toFixed(0)+"'avg"};});
-  const tocVals=AGE_GROUPS.map(g=>{const n=data[g].players.length||1;return{v:data[g].toc/n,label:(data[g].toc/n).toFixed(0)+'pts avg'};});
+  const minVals=AGE_GROUPS.map(g=>{const n=data[g].players.length||1;return{v:data[g].min/n,label:(data[g].min/n).toFixed(0)+"' avg"};});
+  const tocVals=AGE_GROUPS.map(g=>{const n=data[g].players.length||1;return{v:data[g].toc/n,label:(data[g].toc/n).toFixed(0)+' pts avg'};});
 
-  const wrap=document.getElementById('age-wrap');
-  if(wrap) wrap.innerHTML=`
+  wrap.innerHTML=`
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAge}</div><div class="tsl">Povp. starost${teamFilter?' ekipe':''}</div></div>
-      <div class="ts"><div class="tsv">${withAge.length}</div><div class="tsl">Igralcev</div></div>
+      <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAge}</div><div class="tsl">Povp. starost lige</div></div>
+      <div class="ts"><div class="tsv">${allP.length}</div><div class="tsl">Igralcev skupaj</div></div>
     </div>
-    ${teamSummaryHtml}
     ${barChart('ŠTEVILO IGRALCEV PO STAROSTNIH SKUPINAH',playerVals,'var(--acc)')}
     ${barChart('SKUPNE MINUTE PO STAROSTNIH SKUPINAH (avg/ig.)',minVals,'#60a5fa')}
     ${barChart('SKUPNE TOČKE PO STAROSTNIH SKUPINAH (avg/ig.)',tocVals,'#22c55e')}`;
@@ -3238,117 +3234,158 @@ function renderAttendance(){
     homeTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;attTeamSel.appendChild(o);});
   }
   const teamFilter = attTeamSel?.value || '';
+  const wrap = document.getElementById('obisk-wrap');
+  if(!wrap) return;
 
-  let finished = allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0);
-  if(teamFilter) finished = finished.filter(m=>m.firstTeamName===teamFilter||m.secondTeamName===teamFilter);
-
-  const wrap=document.getElementById('obisk-wrap');
-  if(!wrap)return;
+  const finished = allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0);
   if(!finished.length){wrap.innerHTML='<div class="empty">Ni podatkov o obisku</div>';return;}
 
-  const totalAtt=finished.reduce((s,m)=>s+m.attendance,0);
-  const avgAtt=Math.round(totalAtt/finished.length);
-  const maxSingle=Math.max(...finished.map(m=>m.attendance));
+  // === TEAM DETAIL VIEW ===
+  if(teamFilter){
+    const homeMs = finished.filter(m=>m.firstTeamName===teamFilter)
+      .sort((a,b)=>a.round-b.round);
+    if(!homeMs.length){wrap.innerHTML='<div class="empty">Ni domačih tekem s podatki za to ekipo</div>';return;}
 
-  // Per team home games + trend
-  const byTeam={};
-  finished.forEach(m=>{
-    const home=m.firstTeamName;
-    if(!byTeam[home])byTeam[home]={total:0,count:0,matches:[],max:0};
-    byTeam[home].total+=m.attendance;
-    byTeam[home].count++;
-    byTeam[home].matches.push({round:m.round,att:m.attendance,opp:m.secondTeamName,date:m.dateTime});
-    if(m.attendance>byTeam[home].max)byTeam[home].max=m.attendance;
-  });
+    const tc = TEAM_COLORS[teamFilter]||'var(--acc)';
+    const avgAtt = Math.round(homeMs.reduce((s,m)=>s+m.attendance,0)/homeMs.length);
+    const maxAtt = Math.max(...homeMs.map(m=>m.attendance));
+    const minAtt = Math.min(...homeMs.map(m=>m.attendance));
 
-  // Summary cards
-  const summaryHtml=`
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAtt.toLocaleString()}</div><div class="tsl">Povprečje/tekmo</div></div>
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${totalAtt.toLocaleString()}</div><div class="tsl">Skupaj gledalcev</div></div>
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${maxSingle.toLocaleString()}</div><div class="tsl">Rekord tekme</div></div>
-      <div class="ts"><div class="tsv" style="color:var(--acc)">${finished.length}</div><div class="tsl">Tekem s podatki</div></div>
-    </div>`;
-
-  // If team selected - show their home games with trend
-  let teamDetailHtml = '';
-  if(teamFilter && byTeam[teamFilter]){
-    const td = byTeam[teamFilter];
-    const sortedMs = td.matches.sort((a,b)=>a.round-b.round);
-    const maxAtt = Math.max(...sortedMs.map(m=>m.att));
-
-    // Trend chart (SVG bars)
-    const W=500,H=80,barW=Math.min(30,(W-20)/sortedMs.length-2);
-    const bars = sortedMs.map((m,i)=>{
-      const x=20+i*(W-20)/sortedMs.length;
-      const bh=Math.round((m.att/maxAtt)*H*0.85);
-      const tc=TEAM_COLORS[teamFilter]||'var(--acc)';
-      return `<rect x="${x}" y="${H-bh}" width="${barW}" height="${bh}" fill="${tc}" opacity="0.8" rx="2"/>
-        <text x="${x+barW/2}" y="${H+14}" text-anchor="middle" fill="#888" font-size="9">K${m.round}</text>
-        <text x="${x+barW/2}" y="${H-bh-5}" text-anchor="middle" fill="#ccc" font-size="8">${m.att}</text>`;
+    // SVG bar chart po krogih
+    const W=560, H=100, pad=40;
+    const barW = Math.max(16, Math.floor((W-pad*2)/homeMs.length - 3));
+    const bars = homeMs.map((m,i)=>{
+      const bh = Math.round((m.attendance/maxAtt)*(H-20));
+      const x = pad + i*(W-pad*2)/homeMs.length;
+      const y = H - bh;
+      return `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="${tc}" opacity="0.75" rx="2"/>
+        <text x="${x+barW/2}" y="${H+12}" text-anchor="middle" fill="#666" font-size="8.5">K${m.round}</text>
+        <text x="${x+barW/2}" y="${y-4}" text-anchor="middle" fill="#aaa" font-size="8">${m.attendance}</text>`;
     }).join('');
-
-    const trendSvg=`<svg viewBox="0 0 ${W} ${H+20}" style="width:100%;max-width:600px;margin:12px 0">
+    // Avg line
+    const avgY = H - Math.round((avgAtt/maxAtt)*(H-20));
+    const trendSvg = `<svg viewBox="0 0 ${W} ${H+20}" style="width:100%;max-width:640px;margin:12px 0 16px">
       ${bars}
+      <line x1="${pad}" y1="${avgY}" x2="${W-pad}" y2="${avgY}" stroke="rgba(255,255,255,.25)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="${W-pad+4}" y="${avgY+4}" fill="rgba(255,255,255,.4)" font-size="8">avg</text>
     </svg>`;
 
-    const rows=sortedMs.map(m=>{
-      const date=new Date(m.date).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    const rows = homeMs.map(m=>{
+      const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+      const diff = m.attendance - avgAtt;
       return `<tr>
         <td style="color:var(--mut)">K${m.round}</td>
         <td style="color:var(--mut);font-size:.7rem">${date}</td>
-        <td>vs ${TEAM_SHORT[m.opp]||m.opp}</td>
-        <td style="font-weight:600;color:var(--acc)">${m.att.toLocaleString()}</td>
-        <td style="font-size:.7rem;color:var(--mut)">${m.att>=avgAtt?'↑':'↓'} ${Math.abs(m.att-avgAtt).toLocaleString()} vs avg</td>
+        <td>vs <span style="font-weight:500">${TEAM_SHORT[m.secondTeamName]||m.secondTeamName}</span></td>
+        <td style="font-weight:700;color:${tc};font-family:var(--fh)">${m.attendance.toLocaleString()}</td>
+        <td style="font-size:.7rem;color:${diff>=0?'#22c55e':'#ef4444'}">${diff>=0?'+':''}${diff.toLocaleString()}</td>
       </tr>`;
     }).join('');
 
-    teamDetailHtml=`
-      <div style="margin-bottom:20px">
-        <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">
-          DOMAČI OGLED — ${teamFilter}
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-          <div class="ts"><div class="tsv" style="color:${TEAM_COLORS[teamFilter]||'var(--acc)'}">${Math.round(td.total/td.count).toLocaleString()}</div><div class="tsl">Povprečje</div></div>
-          <div class="ts"><div class="tsv" style="color:${TEAM_COLORS[teamFilter]||'var(--acc)'}">${td.max.toLocaleString()}</div><div class="tsl">Rekord</div></div>
-          <div class="ts"><div class="tsv" style="color:${TEAM_COLORS[teamFilter]||'var(--acc)'}">${td.count}</div><div class="tsl">Domačih tekem</div></div>
-        </div>
-        ${trendSvg}
-        <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
-          <table class="standings-table">
-            <thead><tr><th>K</th><th>Datum</th><th>Tekma</th><th style="color:var(--acc)">Gledalci</th><th></th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
+    wrap.innerHTML = `
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+        <div class="ts"><div class="tsv" style="color:${tc}">${avgAtt.toLocaleString()}</div><div class="tsl">Povprečje</div></div>
+        <div class="ts"><div class="tsv" style="color:${tc}">${maxAtt.toLocaleString()}</div><div class="tsl">Rekord</div></div>
+        <div class="ts"><div class="tsv" style="color:${tc}">${minAtt.toLocaleString()}</div><div class="tsl">Min</div></div>
+        <div class="ts"><div class="tsv">${homeMs.length}</div><div class="tsl">Domačih tekem</div></div>
+      </div>
+      ${trendSvg}
+      <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+        <table class="standings-table">
+          <thead><tr>
+            <th>K</th><th>Datum</th><th>Tekma</th>
+            <th style="color:${tc}">Gledalci</th><th>vs avg</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
+    return;
   }
 
-  // Top teams by avg attendance
-  const topTeams=Object.entries(byTeam)
-    .map(([t,d])=>({t,avg:Math.round(d.total/d.count),total:d.total,count:d.count,max:d.max}))
-    .sort((a,b)=>b.avg-a.avg);
+  // === DEFAULT VIEW (original) ===
+  const totalAtt = finished.reduce((s,m)=>s+m.attendance,0);
+  const avgAtt = Math.round(totalAtt/finished.length);
+  const maxSingle = finished.reduce((max,m)=>m.attendance>max.attendance?m:max, finished[0]);
 
-  const maxAvg=topTeams[0]?.avg||1;
-  const teamsHtml=topTeams.map((td,i)=>{
-    const tc=TEAM_COLORS[td.t]||'#888';
-    const pct=Math.round(td.avg/maxAvg*100);
+  // Top 10 tekem
+  const topGames = [...finished].sort((a,b)=>b.attendance-a.attendance).slice(0,10);
+  const topHtml = topGames.map((m,i)=>{
+    const tc = TEAM_COLORS[normalizeTeamName(m.firstTeamName)]||'#888';
+    const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    const pct = Math.round(m.attendance/topGames[0].attendance*100);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span style="color:var(--mut);width:20px;font-size:.8rem">${i+1}.</span>
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:.82rem;color:${tc}">${m.firstTeamName} vs ${m.secondTeamName}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${date} · K${m.round}</div>
+      </div>
+      <div style="width:100px;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${tc};border-radius:3px"></div>
+      </div>
+      <span style="font-family:var(--fh);color:${tc};font-weight:700;min-width:44px;text-align:right">${m.attendance.toLocaleString()}</span>
+    </div>`;
+  }).join('');
+
+  // Trend po krogih (avg)
+  const byRound = {};
+  finished.forEach(m=>{
+    if(!byRound[m.round])byRound[m.round]={total:0,count:0};
+    byRound[m.round].total+=m.attendance;
+    byRound[m.round].count++;
+  });
+  const rounds = Object.entries(byRound).sort((a,b)=>a[0]-b[0]);
+  const maxRoundAvg = Math.max(...rounds.map(([,d])=>d.total/d.count));
+  const trendBars = rounds.map(([r,d])=>{
+    const avg = Math.round(d.total/d.count);
+    const pct = Math.round(avg/maxRoundAvg*100);
+    return `<div class="att-trend-bar" style="height:${pct}%;background:var(--acc)" title="K${r}: ${avg} povp."></div>`;
+  }).join('');
+
+  // Per team avg
+  const byTeam = {};
+  finished.forEach(m=>{
+    if(!byTeam[m.firstTeamName])byTeam[m.firstTeamName]={total:0,count:0};
+    byTeam[m.firstTeamName].total+=m.attendance;
+    byTeam[m.firstTeamName].count++;
+  });
+  const teamRows = Object.entries(byTeam)
+    .map(([t,d])=>({t,avg:Math.round(d.total/d.count),count:d.count}))
+    .sort((a,b)=>b.avg-a.avg);
+  const maxTeamAvg = teamRows[0]?.avg||1;
+
+  const teamHtml = teamRows.map((td,i)=>{
+    const tc = TEAM_COLORS[td.t]||'#888';
+    const pct = Math.round(td.avg/maxTeamAvg*100);
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer"
       onclick="document.getElementById('att-team-filter').value='${td.t}';renderAttendance()">
-      <span style="width:20px;color:var(--mut);font-size:.8rem">${i+1}.</span>
+      <span style="color:var(--mut);width:20px;font-size:.8rem">${i+1}.</span>
       <span style="flex:1;font-weight:600;color:${tc};font-size:.85rem">${td.t}</span>
       <div style="width:120px;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
         <div style="width:${pct}%;height:100%;background:${tc};border-radius:3px"></div>
       </div>
-      <span style="font-family:var(--fh);color:${tc};min-width:44px;text-align:right">${td.avg.toLocaleString()}</span>
+      <span style="font-family:var(--fh);color:${tc};font-weight:700;min-width:44px;text-align:right">${td.avg.toLocaleString()}</span>
       <span style="font-size:.65rem;color:var(--mut);min-width:60px;text-align:right">${td.count} tekem</span>
     </div>`;
   }).join('');
 
-  wrap.innerHTML=summaryHtml+teamDetailHtml+`
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">
-      POVPREČNI OBISK PO EKIPAH (klikni za podrobnosti)
+  wrap.innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px">
+      <div class="ts"><div class="tsv" style="color:var(--acc)">${avgAtt.toLocaleString()}</div><div class="tsl">Povprečje/tekmo</div></div>
+      <div class="ts"><div class="tsv" style="color:var(--acc)">${totalAtt.toLocaleString()}</div><div class="tsl">Skupaj gledalcev</div></div>
+      <div class="ts"><div class="tsv" style="color:var(--acc)">${maxSingle.attendance.toLocaleString()}</div><div class="tsl">Rekord tekme</div></div>
     </div>
-    ${teamsHtml}`;
+    <div style="margin-bottom:20px">
+      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);letter-spacing:.06em;margin-bottom:8px">TREND PO KROGIH</div>
+      <div class="att-trend">${trendBars}</div>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);letter-spacing:.06em;margin-bottom:10px">TOP 10 TEKEM PO OBISKU</div>
+      ${topHtml}
+    </div>
+    <div>
+      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);letter-spacing:.06em;margin-bottom:10px">POVPREČNI OBISK PO EKIPAH (klikni za podrobnosti)</div>
+      ${teamHtml}
+    </div>`;
 }
 
 // ═══════════════════════════════════════════════════
