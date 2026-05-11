@@ -4432,6 +4432,15 @@ function initRaceChart(){
 // ═══════════════════════════════════════════════════
 // SODNIKI
 // ═══════════════════════════════════════════════════
+function showRefCross(encodedName){
+  const name = decodeURIComponent(encodedName);
+  const sel = document.getElementById('ref-select');
+  if(sel) sel.value = name;
+  renderRefTeamCross(name, window.refTeamStatsGlobal, window.teamStatsGlobal);
+  // Scroll to cross section
+  document.getElementById('ref-team-cross')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
 function renderSodniki(){
   const wrap = document.getElementById('sodniki-wrap');
   if(!wrap) return;
@@ -4584,7 +4593,8 @@ function renderSodniki(){
     const pfPct=Math.round(s.pf/s.games/maxPF*100);
     const topCoRef=Object.entries(s.coRefs).sort((a,b)=>b[1]-a[1])[0];
     const homeColor=homePct>60?'#22c55e':homePct<40?'#60a5fa':'var(--text)';
-    return `<tr style="cursor:pointer" onclick="document.getElementById('ref-select').value='${s.name}';renderRefTeamCross('${s.name}',window.refTeamStatsGlobal,window.teamStatsGlobal)" style="cursor:pointer">
+    const safeName = encodeURIComponent(s.name);
+    return `<tr style="cursor:pointer" onclick="showRefCross('${safeName}')">
       <td style="color:var(--mut)">${i+1}.</td>
       <td style="font-weight:600">${s.name}</td>
       <td>${s.games}</td>
