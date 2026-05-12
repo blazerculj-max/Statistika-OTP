@@ -14,7 +14,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fs);min-height:100
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
 .hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
-.nav{display:flex;gap:3px;padding:10px 28px;background:var(--card);border-bottom:1px solid var(--border);overflow-x:auto}
+.nav{display:flex;flex-direction:column;gap:0;background:var(--card);border-bottom:1px solid var(--border)}
+.nav-row{display:flex;gap:3px;padding:6px 28px;overflow-x:auto;justify-content:center}
+.nav-row:first-child{border-bottom:1px solid rgba(255,255,255,.05)}
 .nb{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--mut);font-family:var(--fs);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
 .nb:hover{color:var(--text);background:var(--border)}.nb.active{background:var(--acc);color:#fff}
 .content{padding:20px 28px;max-width:1900px;margin:0 auto}
@@ -538,23 +540,27 @@ select:focus{outline:none;border-color:var(--acc)}
 </header>
 
 <nav class="nav">
-  <button class="nb" id="live-nav-btn" onclick="showTab('live')" style="position:relative">
-    🔴 LIVE
-    <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
-  </button>
-  <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
-  <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
-  <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
-  <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
-  <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
-  <button class="nb" onclick="showTab('liga')">🏆 LIGA</button>
-  <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
-  <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
-  <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
-  <button class="nb" onclick="showTab('mvp')">🏆 MVP</button>
-  <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
-  <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
-  <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
+  <div class="nav-row">
+    <button class="nb" id="live-nav-btn" onclick="showTab('live')" style="position:relative">
+      🔴 LIVE
+      <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
+    </button>
+    <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
+    <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
+    <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
+    <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
+    <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
+    <button class="nb" onclick="showTab('mvp')">⭐ MVP</button>
+    <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
+  </div>
+  <div class="nav-row">
+    <button class="nb" onclick="showTab('liga')">🏅 LIGA</button>
+    <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
+    <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
+    <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
+    <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
+    <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
+  </div>
 </nav>
 
 <div class="content">
