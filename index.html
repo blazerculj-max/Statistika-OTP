@@ -273,8 +273,6 @@ select:focus{outline:none;border-color:var(--acc)}
 .hc-btn.liga3{background:#a855f7;color:white}
 .hero-card.liga3::before{background:linear-gradient(135deg,rgba(168,85,247,.12),transparent)}
 .hero-card:hover.liga3{border-color:rgba(168,85,247,.5)}
-.hero-card.cross::before{background:linear-gradient(135deg,rgba(251,191,36,.12),transparent)}
-.hero-card:hover.cross{border-color:rgba(251,191,36,.5)}
 .hc-btn:hover{opacity:.9;transform:translateX(2px)}
 .hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
 /* STANDINGS */
@@ -496,17 +494,6 @@ select:focus{outline:none;border-color:var(--acc)}
         </div>
         <button class="hc-btn liga2">Odpri statistiko →</button>
       </div>
-      <div class="hero-card cross" onclick="selectCrossLeague()" style="border-color:rgba(251,191,36,.3)">
-        <div class="hc-badge" style="color:#fbbf24">🔀 Primerjava</div>
-        <div class="hc-name">Vse lige</div>
-        <div class="hc-meta">1. SKL · 2. SKL · 3. SKL · Cross analiza</div>
-        <div class="hc-teams">
-          <div class="hc-team-pill">👥 Obisk</div>
-          <div class="hc-team-pill">🏛️ Sodniki</div>
-          <div class="hc-team-pill">📊 Statistika</div>
-        </div>
-        <button class="hc-btn" style="background:#fbbf24;color:#000">Primerjaj lige →</button>
-      </div>
       <div class="hero-card liga3" onclick="selectLeague('liga3')" style="border-color:rgba(168,85,247,.3)">
         <div class="hc-badge" style="color:#a855f7">🏀 Tretja liga</div>
         <div class="hc-name">3. SKL</div>
@@ -567,8 +554,7 @@ select:focus{outline:none;border-color:var(--acc)}
     <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
   </div>
   <div class="nav-row">
-    <button class="nb" onclick="showTab('crossliga')">🔀 PRIMERJAVA LIG</button>
-    <button class="nb" onclick="showTab('liga')">🏅 LIGA</button>
+<button class="nb" onclick="showTab('liga')">🏅 LIGA</button>
     <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
     <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
     <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
@@ -823,17 +809,7 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="srch-results" id="srch-results"></div>
     <div style="margin-top:24px" id="cmp-section"></div>
   </div>
-  <div id="tab-crossliga" class="tab">
-    <div style="display:flex;gap:4px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:16px">
-      <button class="tb active" id="cx-btn-obisk" onclick="setCrossTab('obisk')">👥 Obisk</button>
-      <button class="tb" id="cx-btn-sodniki" onclick="setCrossTab('sodniki')">🏛️ Sodniki</button>
-      <button class="tb" id="cx-btn-starost" onclick="setCrossTab('starost')">📊 Starost</button>
-      <button class="tb" id="cx-btn-stats" onclick="setCrossTab('stats')">📈 Statistika</button>
-      <button class="tb" id="cx-btn-top" onclick="setCrossTab('top')">⭐ Najboljši</button>
-    </div>
-    <div id="crossliga-wrap"></div>
-  </div>
-  <div id="tab-teamstats" class="tab">
+<div id="tab-teamstats" class="tab">
     <div id="teamstats-wrap"></div>
   </div>
   <div id="tab-sodniki" class="tab">
@@ -1652,7 +1628,6 @@ function showTab(t){
   if(t==='race')initRaceChart();
   if(t==='sodniki')renderSodniki();
   if(t==='teamstats')renderTeamStats();
-  if(t==='crossliga')renderCrossLeague();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
