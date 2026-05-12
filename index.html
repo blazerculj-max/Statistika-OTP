@@ -1071,10 +1071,9 @@ async function selectCrossLeague(){
       colors:['#f97316','#60a5fa','#a855f7']};
     setTimeout(()=>{
       if(lo)lo.style.display='none';
-      document.getElementById('home-page').style.display='none';
-      document.querySelector('.hdr').style.display='flex';
-      document.querySelector('.nav').style.display='flex';
-      document.querySelector('.content').style.display='block';
+      const heroEl=document.getElementById('hero-overlay');
+      if(heroEl)heroEl.style.display='none';
+      // hdr/nav/content shown via showTab
       document.getElementById('hdr-title').innerHTML='PRIMERJAVA <span>LIG</span>';
       showTab('crossliga');
     },300);
