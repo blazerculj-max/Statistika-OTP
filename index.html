@@ -1969,9 +1969,14 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   // Events for selected period — oldest at top (chronological)
   // For live tab: show all events newest-first
   const isLiveFeed = pbpQuarterTab === 'live';
+  // Sort by elapsed time descending (newest first) for all views
+  const sortByTime = evs => [...evs].sort((a,b)=>{
+    const toSec = gt => { const p=gt.split(':'); return parseInt(p[0])*60+parseFloat(p[1]||0); };
+    return toSec(b.gt||'0:0') - toSec(a.gt||'0:0');
+  });
   const periodEvents = isLiveFeed
-    ? [...events].reverse()
-    : (byPeriod[pbpQuarterTab]||[]).slice().reverse();
+    ? sortByTime(events)
+    : sortByTime(byPeriod[pbpQuarterTab]||[]);
 
   const rows = periodEvents.map(ev => {
     const isHome = ev.tno === 1;
@@ -2002,7 +2007,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
       <div style="display:flex;gap:5px;flex-wrap:wrap">${liveTab}${tabs}</div>
       <span style="font-size:.6rem;color:var(--mut)">↻ 20s</span>
     </div>
-    <div style="max-height:440px;overflow-y:auto">
+    <div id="pbp-list-wrap" style="max-height:440px;overflow-y:auto">
       ${rows||'<div class="empty" style="padding:20px">Ni eventov</div>'}
     </div>`;
 }
