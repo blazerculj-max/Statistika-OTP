@@ -273,6 +273,8 @@ select:focus{outline:none;border-color:var(--acc)}
 .hc-btn.liga3{background:#a855f7;color:white}
 .hero-card.liga3::before{background:linear-gradient(135deg,rgba(168,85,247,.12),transparent)}
 .hero-card:hover.liga3{border-color:rgba(168,85,247,.5)}
+.hero-card.cross::before{background:linear-gradient(135deg,rgba(251,191,36,.12),transparent)}
+.hero-card:hover.cross{border-color:rgba(251,191,36,.5)}
 .hc-btn:hover{opacity:.9;transform:translateX(2px)}
 .hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
 /* STANDINGS */
@@ -494,6 +496,17 @@ select:focus{outline:none;border-color:var(--acc)}
         </div>
         <button class="hc-btn liga2">Odpri statistiko →</button>
       </div>
+      <div class="hero-card cross" onclick="selectCrossLeague()" style="border-color:rgba(251,191,36,.3)">
+        <div class="hc-badge" style="color:#fbbf24">🔀 Primerjava</div>
+        <div class="hc-name">Vse lige</div>
+        <div class="hc-meta">1. SKL · 2. SKL · 3. SKL · Cross analiza</div>
+        <div class="hc-teams">
+          <div class="hc-team-pill">👥 Obisk</div>
+          <div class="hc-team-pill">🏛️ Sodniki</div>
+          <div class="hc-team-pill">📊 Statistika</div>
+        </div>
+        <button class="hc-btn" style="background:#fbbf24;color:#000">Primerjaj lige →</button>
+      </div>
       <div class="hero-card liga3" onclick="selectLeague('liga3')" style="border-color:rgba(168,85,247,.3)">
         <div class="hc-badge" style="color:#a855f7">🏀 Tretja liga</div>
         <div class="hc-name">3. SKL</div>
@@ -554,6 +567,7 @@ select:focus{outline:none;border-color:var(--acc)}
     <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
   </div>
   <div class="nav-row">
+    <button class="nb" onclick="showTab('crossliga')">🔀 PRIMERJAVA LIG</button>
     <button class="nb" onclick="showTab('liga')">🏅 LIGA</button>
     <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
     <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
@@ -809,6 +823,9 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="srch-results" id="srch-results"></div>
     <div style="margin-top:24px" id="cmp-section"></div>
   </div>
+  <div id="tab-crossliga" class="tab">
+    <div id="crossliga-wrap"></div>
+  </div>
   <div id="tab-teamstats" class="tab">
     <div id="teamstats-wrap"></div>
   </div>
@@ -1031,6 +1048,40 @@ function cacheClear() {
     localStorage.removeItem(lg.cachePbp);
   });
   alert('Cache počiščen za vse lige. Podatki se bodo naložili na novo.');
+}
+
+async function selectCrossLeague(){
+  const lo=document.getElementById('loading-overlay');
+  const lt=document.getElementById('load-title');
+  const ls_el=document.getElementById('load-sub');
+  const lb=document.getElementById('load-bar');
+  if(lo)lo.style.display='flex';
+  if(lt)lt.innerHTML='<span style="color:#fbbf24">PRIMERJAVA LIG</span>';
+  if(ls_el)ls_el.textContent='Nalagam vse tri lige...';
+  if(lb)lb.style.width='10%';
+  try{
+    const [d1,d2,d3]=await Promise.all([
+      fetch('data/liga1_stats.json').then(r=>r.json()),
+      fetch('data/liga2_stats.json').then(r=>r.json()),
+      fetch('data/liga3_stats.json').then(r=>r.json()),
+    ]);
+    if(lb)lb.style.width='90%';
+    window.crossLeagueData={liga1:d1,liga2:d2,liga3:d3,
+      names:['Liga OTP banka','2. SKL','3. SKL'],
+      colors:['#f97316','#60a5fa','#a855f7']};
+    setTimeout(()=>{
+      if(lo)lo.style.display='none';
+      document.getElementById('home-page').style.display='none';
+      document.querySelector('.hdr').style.display='flex';
+      document.querySelector('.nav').style.display='flex';
+      document.querySelector('.content').style.display='block';
+      document.getElementById('hdr-title').innerHTML='PRIMERJAVA <span>LIG</span>';
+      showTab('crossliga');
+    },300);
+  }catch(e){
+    if(lo)lo.style.display='none';
+    alert('Napaka: '+e.message);
+  }
 }
 
 function selectLeague(lg) {
@@ -1595,6 +1646,7 @@ function showTab(t){
   if(t==='race')initRaceChart();
   if(t==='sodniki')renderSodniki();
   if(t==='teamstats')renderTeamStats();
+  if(t==='crossliga')renderCrossLeague();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
@@ -4467,6 +4519,179 @@ function initRaceChart(){
   if(lbl)lbl.textContent='K'+raceMaxRound;
   drawRaceChart();
   drawRaceStandings();
+}
+
+// ═══════════════════════════════════════════════════
+// CROSS LIGA PRIMERJAVA
+// ═══════════════════════════════════════════════════
+function renderCrossLeague(){
+  const wrap = document.getElementById('crossliga-wrap');
+  if(!wrap) return;
+  const cd = window.crossLeagueData;
+  if(!cd){wrap.innerHTML='<div class="empty">Podatki niso naloženi. Pojdi na Home in izberi "Primerjava lig".</div>';return;}
+
+  const {liga1:d1,liga2:d2,liga3:d3,names,colors} = cd;
+
+  // ── ATTENDANCE ──
+  const attByLeague = [d1,d2,d3].map((d,li)=>{
+    const matches = (d.allMatches||[]).filter(m=>m.status==='FINISHED'&&m.attendance>0);
+    const total = matches.reduce((s,m)=>s+m.attendance,0);
+    const avg = matches.length ? Math.round(total/matches.length) : 0;
+    const max = matches.length ? Math.max(...matches.map(m=>m.attendance)) : 0;
+    // By round
+    const byRound = {};
+    matches.forEach(m=>{
+      if(!byRound[m.round])byRound[m.round]={total:0,count:0};
+      byRound[m.round].total+=m.attendance;
+      byRound[m.round].count++;
+    });
+    return {name:names[li],color:colors[li],avg,total,max,count:matches.length,byRound,matches};
+  });
+
+  // Top 10 cross-liga tekme
+  const allAttMatches = [d1,d2,d3].flatMap((d,li)=>
+    (d.allMatches||[]).filter(m=>m.status==='FINISHED'&&m.attendance>0)
+      .map(m=>({...m,ligaName:names[li],ligaColor:colors[li]}))
+  ).sort((a,b)=>b.attendance-a.attendance).slice(0,10);
+
+  // ── SODNIKI CROSS ──
+  const refByLeague = {};
+  [d1,d2,d3].forEach((d,li)=>{
+    (d.allMatches||[]).filter(m=>m.status==='FINISHED'&&m.referee1).forEach(m=>{
+      [m.referee1,m.referee2,m.referee3].filter(Boolean).forEach(ref=>{
+        const name=ref.person.firstName+' '+ref.person.lastName;
+        if(!refByLeague[name])refByLeague[name]={name,leagues:{}};
+        if(!refByLeague[name].leagues[li])refByLeague[name].leagues[li]={games:0,homeWins:0,pf:0,fta:0};
+        const r=refByLeague[name].leagues[li];
+        r.games++;
+        if(m.firstTeamScore>m.secondTeamScore)r.homeWins++;
+      });
+    });
+  });
+
+  // Add PF/FTA from matchStatsCache (only available for current league)
+  // For cross comparison we use what's loaded
+  const multiLeagueRefs = Object.values(refByLeague)
+    .filter(r=>Object.keys(r.leagues).length>=2)
+    .sort((a,b)=>{
+      const ta=Object.values(a.leagues).reduce((s,l)=>s+l.games,0);
+      const tb=Object.values(b.leagues).reduce((s,l)=>s+l.games,0);
+      return tb-ta;
+    });
+
+  // ── STATS CROSS ──
+  const statsByLeague = [d1,d2,d3].map((d,li)=>{
+    const matches = (d.allMatches||[]).filter(m=>m.status==='FINISHED');
+    if(!matches.length)return {name:names[li],color:colors[li],avgPts:0,avgPtsAga:0};
+    const totalHome=matches.reduce((s,m)=>s+m.firstTeamScore,0);
+    const totalAway=matches.reduce((s,m)=>s+m.secondTeamScore,0);
+    const homeWins=matches.filter(m=>m.firstTeamScore>m.secondTeamScore).length;
+    return {
+      name:names[li],color:colors[li],
+      avgPts:(totalHome+totalAway)/2/matches.length,
+      homeWinPct:Math.round(homeWins/matches.length*100),
+      totalMatches:matches.length,
+    };
+  });
+
+  // ── SVG ATTENDANCE BAR ──
+  const maxAvg=Math.max(...attByLeague.map(l=>l.avg),1);
+  const attBars=attByLeague.map((l,i)=>{
+    const pct=Math.round(l.avg/maxAvg*100);
+    const x=60+i*160;
+    return `<rect x="${x}" y="${160-Math.round(pct*1.2)}" width="100" height="${Math.round(pct*1.2)}" fill="${l.color}" rx="6" opacity="0.85"/>
+      <text x="${x+50}" y="${160-Math.round(pct*1.2)-8}" text-anchor="middle" fill="#ccc" font-size="13" font-weight="700">${l.avg.toLocaleString()}</text>
+      <text x="${x+50}" y="178" text-anchor="middle" fill="${l.color}" font-size="11" font-weight="600">${l.name}</text>`;
+  }).join('');
+
+  const attSvg=`<svg viewBox="0 0 540 195" style="width:100%;max-width:540px">
+    <text x="270" y="18" text-anchor="middle" fill="rgba(255,255,255,.4)" font-size="10">POVPREČNI OBISK NA TEKMO</text>
+    ${attBars}
+  </svg>`;
+
+  // Top 10 tekme
+  const top10Html=allAttMatches.map((m,i)=>{
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span style="color:var(--mut);width:22px;font-size:.8rem">${i+1}.</span>
+      <div style="flex:1">
+        <div style="font-size:.82rem;font-weight:600">${m.firstTeamName} vs ${m.secondTeamName}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${date} · <span style="color:${m.ligaColor}">${m.ligaName}</span></div>
+      </div>
+      <span style="font-family:var(--fh);font-weight:700;color:${m.ligaColor}">${m.attendance.toLocaleString()}</span>
+    </div>`;
+  }).join('');
+
+  // Multi-league refs table
+  const refRows=multiLeagueRefs.slice(0,20).map(r=>{
+    const totalGames=Object.values(r.leagues).reduce((s,l)=>s+l.games,0);
+    const ligaCells=[0,1,2].map(li=>{
+      const l=r.leagues[li];
+      if(!l)return '<td style="text-align:center;color:var(--mut);opacity:.3">—</td><td style="text-align:center;color:var(--mut);opacity:.3">—</td>';
+      return `<td style="text-align:center;color:${colors[li]};font-weight:600">${l.games}</td>
+        <td style="text-align:center;color:${Math.round(l.homeWins/l.games*100)>60?'#22c55e':Math.round(l.homeWins/l.games*100)<40?'#60a5fa':'var(--text)'};font-weight:600">${Math.round(l.homeWins/l.games*100)}%</td>`;
+    }).join('');
+    return `<tr>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="text-align:center;color:var(--mut)">${totalGames}</td>
+      ${ligaCells}
+    </tr>`;
+  }).join('');
+
+  // Stats comparison
+  const statsHtml=statsByLeague.map(s=>`
+    <div style="background:var(--card);border:1px solid ${s.color}30;border-left:3px solid ${s.color};border-radius:12px;padding:14px">
+      <div style="font-family:var(--fh);font-size:.75rem;color:${s.color};margin-bottom:10px">${s.name}</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div class="ts"><div class="tsv" style="color:${s.color}">${s.avgPts.toFixed(1)}</div><div class="tsl">Točke/tm</div></div>
+        <div class="ts"><div class="tsv">${s.homeWinPct}%</div><div class="tsl">Doma zmagajo</div></div>
+        <div class="ts"><div class="tsv" style="color:var(--mut)">${s.totalMatches}</div><div class="tsl">Tekem</div></div>
+      </div>
+    </div>`).join('');
+
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      ${attByLeague.map(l=>`<div style="background:var(--card);border:1px solid ${l.color}30;border-left:3px solid ${l.color};border-radius:12px;padding:14px">
+        <div style="font-size:.62rem;color:var(--mut);margin-bottom:4px">👥 ${l.name}</div>
+        <div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:${l.color}">${l.avg.toLocaleString()}</div>
+        <div style="font-size:.65rem;color:var(--mut)">povp./tekmo · ${l.count} tekem</div>
+        <div style="font-size:.7rem;margin-top:4px">Rekord: <span style="color:${l.color};font-weight:600">${l.max.toLocaleString()}</span></div>
+      </div>`).join('')}
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div style="font-family:var(--fh);font-size:.75rem;color:var(--mut);margin-bottom:12px">📊 POVPREČNI OBISK PO LIGAH</div>
+        ${attSvg}
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
+        <div style="font-family:var(--fh);font-size:.75rem;color:var(--mut);margin-bottom:10px">🏆 TOP 10 TEKEM PO OBISKU (vse lige)</div>
+        ${top10Html}
+      </div>
+    </div>
+
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">🏛️ SODNIKI V VEČ LIGAH</div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
+      <table class="standings-table">
+        <thead><tr>
+          <th style="text-align:left">SODNIK</th>
+          <th style="text-align:center">SKUPAJ TM</th>
+          <th style="text-align:center;color:${colors[0]}">1.SKL TM</th>
+          <th style="text-align:center;color:${colors[0]}">DOM%</th>
+          <th style="text-align:center;color:${colors[1]}">2.SKL TM</th>
+          <th style="text-align:center;color:${colors[1]}">DOM%</th>
+          <th style="text-align:center;color:${colors[2]}">3.SKL TM</th>
+          <th style="text-align:center;color:${colors[2]}">DOM%</th>
+        </tr></thead>
+        <tbody>${refRows||'<tr><td colspan="8" style="text-align:center;color:var(--mut)">Ni podatkov</td></tr>'}</tbody>
+      </table>
+    </div>
+
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📊 PRIMERJAVA STATISTIKE</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px">
+      ${statsHtml}
+    </div>
+    <div style="font-size:.62rem;color:var(--mut)">DOM% = % tekem ko je zmagal domačin pri tem sodniku v tej ligi</div>`;
 }
 
 // ═══════════════════════════════════════════════════
