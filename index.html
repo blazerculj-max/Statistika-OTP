@@ -554,6 +554,7 @@ select:focus{outline:none;border-color:var(--acc)}
   <button class="nb" onclick="showTab('mvp')">🏆 MVP</button>
   <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
   <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
+  <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
 </nav>
 
 <div class="content">
@@ -801,6 +802,9 @@ select:focus{outline:none;border-color:var(--acc)}
     </div>
     <div class="srch-results" id="srch-results"></div>
     <div style="margin-top:24px" id="cmp-section"></div>
+  </div>
+  <div id="tab-teamstats" class="tab">
+    <div id="teamstats-wrap"></div>
   </div>
   <div id="tab-sodniki" class="tab">
     <div id="sodniki-wrap"></div>
@@ -1584,6 +1588,7 @@ function showTab(t){
   if(t==='mvp')renderMVP();
   if(t==='race')initRaceChart();
   if(t==='sodniki')renderSodniki();
+  if(t==='teamstats')renderTeamStats();
   // Update mobile bottom nav
   document.querySelectorAll('.mbn-btn').forEach(b => {
     b.classList.toggle('active', b.id === 'mbn-' + t);
@@ -4433,6 +4438,304 @@ function initRaceChart(){
 }
 
 // ═══════════════════════════════════════════════════
+// EKIPNA STATISTIKA
+// ═══════════════════════════════════════════════════
+function computeTeamAdvanced(){
+  const teamRaw={};
+
+  Object.entries(matchStatsCache).forEach(([matchId,ms])=>{
+    if(!ms)return;
+    [ms.firstTeam,ms.secondTeam].forEach(side=>{
+      if(!side)return;
+      const tname=side.teamName||'';
+      if(!tname)return;
+      if(!teamRaw[tname])teamRaw[tname]={
+        fg2m:0,fg2a:0,fg3m:0,fg3a:0,fgm:0,fga:0,
+        ftm:0,fta:0,pts:0,
+        oreb:0,dreb:0,reb:0,
+        ast:0,stl:0,blk:0,tov:0,
+        games:0
+      };
+      const r=teamRaw[tname];
+      r.games++;
+      (side.playerStats||[]).forEach(p=>{
+        if(!p.played)return;
+        r.fg2m+=p.twoPM||0;
+        r.fg2a+=p.twoPA||0;
+        r.fg3m+=p.threePM||0;
+        r.fg3a+=p.threePA||0;
+        r.fgm+=p.fgM||0;
+        r.fga+=p.fgA||0;
+        r.ftm+=p.fTM||0;
+        r.fta+=p.fTA||0;
+        r.pts+=p.points||0;
+        r.oreb+=p.offensiveRebounds||0;
+        r.dreb+=p.defensiveRebounds||0;
+        r.reb+=p.totalRebounds||0;
+        r.ast+=p.assists||0;
+        r.stl+=p.steals||0;
+        r.blk+=p.blocksInFavor||0;
+        r.tov+=p.turnovers||0;
+      });
+    });
+  });
+
+  const wlMap={};
+  allMatches.filter(m=>m.status==='FINISHED').forEach(m=>{
+    [m.firstTeamName,m.secondTeamName].forEach((team,ti)=>{
+      if(!wlMap[team])wlMap[team]={W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,ptsArr:[],G:0};
+      const t=wlMap[team];
+      const myPts=ti===0?m.firstTeamScore:m.secondTeamScore;
+      const oppPts=ti===0?m.secondTeamScore:m.firstTeamScore;
+      t.ptsFor+=myPts;t.ptsAga+=oppPts;t.G++;t.ptsArr.push(myPts);
+      const isHome=ti===0;
+      if(myPts>oppPts){t.W++;isHome?t.homeW++:t.awayW++;}
+      else{t.L++;isHome?t.homeL++:t.awayL++;}
+    });
+  });
+
+  return Object.entries(teamRaw).map(([team,r])=>{
+    if(r.games<3)return null;
+    const wl=wlMap[team]||{W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,ptsArr:[r.pts],G:r.games};
+    const G=wl.G||r.games;
+    const poss=Math.max(r.fga+0.44*r.fta+r.tov-r.oreb,1);
+    // Use actual match scores (100% accurate) as pts for ratings
+    const actualPtsPerG=wl.ptsFor/G;
+    const actualOppPerG=wl.ptsAga/G;
+    // ortg = pts per 100 possessions
+    const ortg=wl.ptsFor/poss*100;
+    // drtg = opponent pts per 100 possessions (same poss estimate)
+    const drtg=wl.ptsAga/poss*100;
+    const netrtg=ortg-drtg;
+    // TS%: actual pts / (2*(FGA + 0.44*FTA)) — numerator from real scores
+    const tsDenom=2*(r.fga+0.44*r.fta);
+    const ts=tsDenom>10?Math.min(wl.ptsFor/tsDenom*100, 75):0;
+    const efg=r.fga>0?(r.fgm+0.5*r.fg3m)/r.fga*100:0;
+
+
+    const meanPts=wl.ptsFor/G;
+    const stdDev=Math.sqrt((wl.ptsArr||[]).reduce((s,x)=>s+(x-meanPts)**2,0)/((wl.ptsArr||[]).length||1));
+
+    return {
+      team,G,W:wl.W,L:wl.L,
+      ptsFor:wl.ptsFor/G,ptsAga:wl.ptsAga/G,
+      ortg,drtg,netrtg,ts,efg,
+      fg2pct:r.fg2a>0?r.fg2m/r.fg2a*100:0,
+      fg3pct:r.fg3a>0?r.fg3m/r.fg3a*100:0,
+      ftpct:r.fta>0?r.ftm/r.fta*100:0,
+      threePtRate:r.fga>0?r.fg3a/r.fga*100:0,
+      astTov:r.tov>0?r.ast/r.tov:r.ast,
+      rebPg:r.reb/G,orebPg:r.oreb/G,
+      pace:poss/G,
+      stlPg:r.stl/G,blkPg:r.blk/G,tovPg:r.tov/G,astPg:r.ast/G,
+      homeW:wl.homeW,homeL:wl.homeL,awayW:wl.awayW,awayL:wl.awayL,
+      stdDev,winPct:wl.W/G*100,
+    };
+  }).filter(Boolean);
+}
+
+function renderTeamStats(){
+  const wrap=document.getElementById('teamstats-wrap');
+  if(!wrap||!P.length){if(wrap)wrap.innerHTML='<div class="empty">Naloži podatke</div>';return;}
+
+  if(!window.tsSort)window.tsSort={col:'netrtg',asc:false};
+  window.sortTS=(col)=>{
+    if(window.tsSort.col===col)window.tsSort.asc=!window.tsSort.asc;
+    else{window.tsSort.col=col;window.tsSort.asc=false;}
+    renderTeamStats();
+  };
+
+  const data=computeTeamAdvanced();
+  if(!data.length){wrap.innerHTML='<div class="empty">Ni dovolj podatkov</div>';return;}
+
+  const sortFns={
+    netrtg:t=>t.netrtg, ortg:t=>t.ortg, drtg:t=>-t.drtg,
+    ts:t=>t.ts, efg:t=>t.efg, fg3:t=>t.fg3pct, fg2:t=>t.fg2pct,
+    pace:t=>t.pace, astTov:t=>t.astTov, reb:t=>t.rebPg,
+    stl:t=>t.stlPg, blk:t=>t.blkPg, tov:t=>-t.tovPg,
+    pts:t=>t.ptsFor, ptsAga:t=>-t.ptsAga,
+    home:t=>t.homeW/(t.homeW+t.homeL||1),
+    away:t=>t.awayW/(t.awayW+t.awayL||1),
+    cons:t=>-t.stdDev,
+  };
+  const sorted=[...data].sort((a,b)=>{
+    const fn=sortFns[window.tsSort.col]||sortFns.netrtg;
+    return window.tsSort.asc?fn(a)-fn(b):fn(b)-fn(a);
+  });
+
+  function th(col,label,title,color){
+    const active=window.tsSort.col===col;
+    const arrow=active?(window.tsSort.asc?'↑':'↓'):'↕';
+    return `<th onclick="sortTS('${col}')" title="${title||label}"
+      style="text-align:center;cursor:pointer;user-select:none;white-space:nowrap;color:${active?(color||'var(--acc)'):'var(--sub)'};padding:8px 6px">
+      ${label} <span style="font-size:.6rem">${arrow}</span></th>`;
+  }
+
+  // League averages
+  const avg=(key)=>data.reduce((s,t)=>s+t[key],0)/data.length;
+
+  const rows=sorted.map((t,i)=>{
+    const tc=TEAM_COLORS[t.team]||'#888';
+    const netColor=t.netrtg>2?'#22c55e':t.netrtg<-2?'#ef4444':'var(--text)';
+    const tsColor=t.ts>avg('ts')+2?'#22c55e':t.ts<avg('ts')-2?'#ef4444':'var(--text)';
+    const homeWL=`${t.homeW}-${t.homeL}`;
+    const awayWL=`${t.awayW}-${t.awayL}`;
+    return `<tr onclick="showTeamDashboard('${encodeURIComponent(t.team)}')" style="cursor:pointer">
+      <td style="text-align:center;color:var(--mut)">${i+1}.</td>
+      <td style="font-weight:700;color:${tc};white-space:nowrap">${t.team}</td>
+      <td style="text-align:center">${t.W}-${t.L}</td>
+      <td style="text-align:center;font-weight:700;color:${netColor}">${t.netrtg>0?'+':''}${t.netrtg.toFixed(1)}</td>
+      <td style="text-align:center;color:#f97316;font-weight:600">${t.ortg.toFixed(1)}</td>
+      <td style="text-align:center;color:#60a5fa;font-weight:600">${t.drtg.toFixed(1)}</td>
+      <td style="text-align:center;color:${tsColor}">${t.ts.toFixed(1)}%</td>
+      <td style="text-align:center">${t.fg3pct.toFixed(1)}%</td>
+      <td style="text-align:center">${t.astTov.toFixed(2)}</td>
+      <td style="text-align:center">${t.pace.toFixed(1)}</td>
+      <td style="text-align:center">${t.ptsFor.toFixed(1)}</td>
+      <td style="text-align:center">${t.ptsAga.toFixed(1)}</td>
+      <td style="text-align:center;color:#22c55e;font-size:.75rem">${homeWL}</td>
+      <td style="text-align:center;color:#a855f7;font-size:.75rem">${awayWL}</td>
+      <td style="text-align:center;color:var(--mut);font-size:.75rem">${t.stdDev.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+
+  // League leader cards
+  const leaders=[
+    {label:'⚡ NET RATING',col:'netrtg',val:t=>(t.netrtg>0?'+':'')+t.netrtg.toFixed(1),color:'#22c55e'},
+    {label:'🎯 TRUE SHOOTING',col:'ts',val:t=>t.ts.toFixed(1)+'%',color:'#f97316'},
+    {label:'🏃 PACE',col:'pace',val:t=>t.pace.toFixed(1),color:'#60a5fa'},
+    {label:'🎪 AST/TOV',col:'astTov',val:t=>t.astTov.toFixed(2),color:'#a855f7'},
+    {label:'🛡️ DEF RATING',col:'drtg',val:t=>t.drtg.toFixed(1),color:'#60a5fa',low:true},
+    {label:'📊 KONSISTENCA',col:'cons',val:t=>t.stdDev.toFixed(1)+' σ',color:'#fbbf24',low:true},
+  ].map(l=>{
+    const best=sorted.reduce((b,t)=>{
+      const fn=sortFns[l.col];
+      return fn(t)>fn(b)?t:b;
+    },sorted[0]);
+    const tc=TEAM_COLORS[best?.team]||'#888';
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:12px;padding:12px 14px">
+      <div style="font-size:.6rem;color:var(--mut);margin-bottom:4px">${l.label}</div>
+      <div style="font-weight:700;font-size:.82rem;color:${tc}">${best?.team||'—'}</div>
+      <div style="font-family:var(--fh);font-size:1.5rem;font-weight:800;color:${l.color};line-height:1.1">${best?l.val(best):'—'}</div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:24px">
+      ${leaders}
+    </div>
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">
+      📊 EKIPNA STATISTIKA — klikni naslov za sort · klikni ekipo za dashboard
+    </div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
+      <table class="standings-table">
+        <thead><tr>
+          <th style="text-align:center">M</th>
+          <th style="text-align:left">EKIPA</th>
+          <th style="text-align:center;color:var(--sub)">Z-P</th>
+          ${th('netrtg','NET RTG','Net Rating = Off - Def rating','#22c55e')}
+          ${th('ortg','OFF RTG','Točke na 100 posesti','#f97316')}
+          ${th('drtg','DEF RTG','Prejete točke na 100 posesti','#60a5fa')}
+          ${th('ts','TS%','True Shooting %','#fbbf24')}
+          ${th('fg3','3PT%','Odstotek trojk','')}
+          ${th('astTov','AST/TOV','Razmerje asistence/izgube žoge','')}
+          ${th('pace','PACE','Posesti na tekmo','')}
+          ${th('pts','PTS/TM','Točke na tekmo','#f97316')}
+          ${th('ptsAga','PTS/TM PR','Prejete točke na tekmo','#60a5fa')}
+          ${th('home','DOMA','Zmage doma','#22c55e')}
+          ${th('away','GOSTJE','Zmage v gosteh','#a855f7')}
+          ${th('cons','σ','Konsistenca (nižje = bolj enakomerna)','#fbbf24')}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="font-size:.62rem;color:var(--mut)">
+      NET RTG = Off Rating − Def Rating · TS% = točke/(2×(FGA+0.44×FTA)) · PACE = posesti/tekmo · σ = std. deviacija točk (konsistenca)
+    </div>
+    <div id="team-dashboard-wrap" style="margin-top:24px"></div>`;
+}
+
+function showTeamDashboard(encodedTeam){
+  const team=decodeURIComponent(encodedTeam);
+  const tc=TEAM_COLORS[team]||'#888';
+  const wrap=document.getElementById('team-dashboard-wrap');
+  if(!wrap)return;
+
+  const data=computeTeamAdvanced();
+  const t=data.find(x=>x.team===team);
+  if(!t){wrap.innerHTML='';return;}
+
+  // All teams for comparison
+  const avgOrtg=data.reduce((s,x)=>s+x.ortg,0)/data.length;
+  const avgDrtg=data.reduce((s,x)=>s+x.drtg,0)/data.length;
+  const avgTs=data.reduce((s,x)=>s+x.ts,0)/data.length;
+  const avgPace=data.reduce((s,x)=>s+x.pace,0)/data.length;
+  const avgAstTov=data.reduce((s,x)=>s+x.astTov,0)/data.length;
+
+  function statRow(label,val,avg,unit,higherBetter=true){
+    const diff=val-avg;
+    const better=higherBetter?diff>0:diff<0;
+    const color=Math.abs(diff)>1?( better?'#22c55e':'#ef4444' ):'var(--text)';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <div style="flex:1;font-size:.78rem;color:var(--mut)">${label}</div>
+      <div style="font-family:var(--fh);font-size:1rem;font-weight:700;color:${color};min-width:60px;text-align:right">${typeof val==='number'?val.toFixed(1):val}${unit}</div>
+      <div style="font-size:.68rem;color:${color};min-width:60px;text-align:right">${diff>0?'+':''}${diff.toFixed(1)} vs avg</div>
+    </div>`;
+  }
+
+  // Last 5 form
+  const matches=[...allMatches.filter(m=>m.status==='FINISHED'&&
+    (m.firstTeamName===team||m.secondTeamName===team))]
+    .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime));
+  const last5=matches.slice(0,5);
+  const formDots=last5.map(m=>{
+    const myPts=m.firstTeamName===team?m.firstTeamScore:m.secondTeamScore;
+    const oppPts=m.firstTeamName===team?m.secondTeamScore:m.firstTeamScore;
+    const won=myPts>oppPts;
+    return `<div style="width:28px;height:28px;border-radius:50%;background:${won?'#22c55e':'#ef4444'};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff">${won?'Z':'P'}</div>`;
+  }).join('');
+
+  wrap.scrollIntoView({behavior:'smooth',block:'nearest'});
+  wrap.innerHTML=`
+    <div style="background:var(--card2);border:2px solid ${tc}30;border-radius:16px;padding:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;color:${tc}">${team}</div>
+        <div style="display:flex;gap:6px">${formDots}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div>
+          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">⚡ ADVANCED METRICS</div>
+          ${statRow('Net Rating',t.netrtg,0,'',true)}
+          ${statRow('Off Rating',t.ortg,avgOrtg,'',true)}
+          ${statRow('Def Rating',t.drtg,avgDrtg,'',false)}
+          ${statRow('True Shooting',t.ts,avgTs,'%',true)}
+          ${statRow('Pace',t.pace,avgPace,'',true)}
+          ${statRow('AST/TOV',t.astTov,avgAstTov,'',true)}
+        </div>
+        <div>
+          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">🎯 SHOOTING & SPLITS</div>
+          ${statRow('2PT%',t.fg2pct,data.reduce((s,x)=>s+x.fg2pct,0)/data.length,'%',true)}
+          ${statRow('3PT%',t.fg3pct,data.reduce((s,x)=>s+x.fg3pct,0)/data.length,'%',true)}
+          ${statRow('FT%',t.ftpct,data.reduce((s,x)=>s+x.ftpct,0)/data.length,'%',true)}
+          ${statRow('3PT Rate',t.threePtRate,data.reduce((s,x)=>s+x.threePtRate,0)/data.length,'%',true)}
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <div style="flex:1;background:var(--card);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:.62rem;color:var(--mut)">🏠 DOMA</div>
+              <div style="font-family:var(--fh);font-size:1.2rem;color:#22c55e;font-weight:700">${t.homeW}-${t.homeL}</div>
+              <div style="font-size:.65rem;color:var(--mut)">${Math.round(t.homeW/(t.homeW+t.homeL||1)*100)}%</div>
+            </div>
+            <div style="flex:1;background:var(--card);border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:.62rem;color:var(--mut)">✈️ GOSTJE</div>
+              <div style="font-family:var(--fh);font-size:1.2rem;color:#a855f7;font-weight:700">${t.awayW}-${t.awayL}</div>
+              <div style="font-size:.65rem;color:var(--mut)">${Math.round(t.awayW/(t.awayW+t.awayL||1)*100)}%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
 // SODNIKI
 // ═══════════════════════════════════════════════════
 function showRefCross(encodedName){
@@ -5172,6 +5475,9 @@ function renderBracketHTML(byPhase,phaseColors){
   </button>
   <button class="mbn-btn" id="mbn-compare" onclick="showTab('compare')">
     <span class="mbn-icon">⚡</span><span class="mbn-lbl">Primerjava</span>
+  </button>
+  <button class="mbn-btn" id="mbn-teamstats" onclick="showTab('teamstats')">
+    <span class="mbn-icon">📊</span><span class="mbn-lbl">Ekipe</span>
   </button>
   <button class="mbn-btn" id="mbn-sodniki" onclick="showTab('sodniki')">
     <span class="mbn-icon">🏛️</span><span class="mbn-lbl">Sodniki</span>
