@@ -1931,7 +1931,8 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   const periods = Object.keys(byPeriod).map(Number).sort((a,b)=>a-b);
   const maxPeriod = Math.max(...periods);
 
-  // Auto-select latest period
+  // Auto-select LIVE tab for live, latest period for finished
+  if(liveScore && !pbpQuarterTab) pbpQuarterTab = 'live';
   if(pbpQuarterTab === 0 || !byPeriod[pbpQuarterTab]) pbpQuarterTab = maxPeriod;
 
   // Store for tab re-render
@@ -1961,7 +1962,11 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   }).join('');
 
   // Events for selected period — oldest at top (chronological)
-  const periodEvents = (byPeriod[pbpQuarterTab]||[]).slice().reverse();
+  // For live tab: show all events newest-first
+  const isLiveFeed = pbpQuarterTab === 'live';
+  const periodEvents = isLiveFeed
+    ? [...events].reverse()
+    : (byPeriod[pbpQuarterTab]||[]).slice().reverse();
 
   const rows = periodEvents.map(ev => {
     const isHome = ev.tno === 1;
@@ -1989,7 +1994,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
 
   return `${scoreHtml}
     <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-      <div style="display:flex;gap:5px;flex-wrap:wrap">${tabs}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">${liveTab}${tabs}</div>
       <span style="font-size:.6rem;color:var(--mut)">↻ 20s</span>
     </div>
     <div style="max-height:440px;overflow-y:auto">
