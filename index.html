@@ -1949,6 +1949,11 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
          Q${ls.quarter||'?'} · ${ls.time||''}
        </div>` : '';
 
+  // Live tab for live matches (newest events first)
+  const liveTab = liveScore ? `<button onclick="pbpQuarterTab='live';document.getElementById('pbp-section').innerHTML=renderPbpFeed(events,t1,t2,c1,c2,liveScore)"
+    style="background:${pbpQuarterTab==='live'?'#ef4444':'var(--card2)'};color:${pbpQuarterTab==='live'?'#fff':'var(--sub)'};border:1px solid ${pbpQuarterTab==='live'?'#ef4444':'var(--border2)'};border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.72rem;font-weight:700">
+    🔴 LIVE</button>` : '';
+
   // Period tabs
   const tabs = periods.map(p => {
     const label = p <= 4 ? 'Q'+p : 'OT'+(p-4);
