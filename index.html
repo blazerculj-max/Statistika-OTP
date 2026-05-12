@@ -2066,10 +2066,25 @@ async function openMatch(matchId){
       <div class="mo-tabs">
         ${matchInfo.status!=='FINISHED'&&!isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-preview')">🔮 PREVIEW</button>`:''}
         ${boxScore||matchData?`<button class="mo-tab ${matchInfo.status!=='FINISHED'&&!isLive?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
+        ${hasFiba&&isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-livebox')">📊 LIVE BOX</button>`:''}
         ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
       </div>
       ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
       ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${matchInfo.status!=='FINISHED'&&!isLive?'none':'block'}"><div class="mo-section">${boxScore||''}</div></div>`:''}
+      ${(()=>{
+        if(!hasFiba||!isLive)return '';
+        const _fid=(matchInfo.fibaLiveStatsUrl||'').split('/').filter(Boolean).pop();
+        return `<div id="mo-tab-livebox" class="mo-tab-panel" style="display:block">
+          <div style="text-align:center;margin-bottom:8px;font-size:.7rem;color:var(--mut)">
+            🔴 Live boxscore via FIBA LiveStats
+          </div>
+          <iframe
+            src="https://fibalivestats.dcd.shared.geniussports.com/u/KZS/${_fid}/bs.html"
+            style="width:100%;height:600px;border:none;border-radius:10px;background:#fff"
+            loading="lazy">
+          </iframe>
+        </div>`;
+      })()}
       ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:none"><div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div></div>`:''}
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
