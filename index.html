@@ -1948,7 +1948,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
     hookshot:'Hook shot', fadeaway:'Fadeaway', turnaroundjumpshot:'Turnaround',
     alleyoop:'Alley-oop 🙌', badpass:'Slaba podaja', ballhandling:'Izguba žoge',
     travel:'Korakanje', offensive:'Napad. skok', defensive:'Obr. skok',
-    '24sec':'24 sekund', '3sec':'3 sekunde'
+    '3sec':'3 sekunde', ballhandling:'Vodenje žoge'
   };
   const actionEmoji = {
     '2pt':'🏀','3pt':'🎯','freethrow':'⚪','turnover':'❌','foul':'✋',
@@ -3767,7 +3767,7 @@ function computeNerdStats(){
              layup:{a:0,m:0},reverselayup:{a:0,m:0},tipinlayup:{a:0,m:0},
              dunk:{a:0,m:0},alleyoop:{a:0,m:0},fadeaway:{a:0,m:0},
              turnaroundjumpshot:{a:0,m:0}},
-      tovReasons:{badpass:0,ballhandling:0,travel:0,'24sec':0,'3sec':0,offensive:0},
+      tovReasons:{badpass:0,ballhandling:0,travel:0,'3sec':0,offensive:0,other:0},
       rebounds:{offensive:0,defensive:0},
     };
   }
@@ -3912,9 +3912,8 @@ function renderTurnovers({stats}){
   const e=Object.entries(stats);
   const types=[
     {k:'badpass',lbl:'Slaba podaja',color:'#ef4444',icon:'🎯'},
-    {k:'ballhandling',lbl:'Izguba žoge',color:'#f97316',icon:'💨'},
+    {k:'ballhandling',lbl:'Vodenje (ballhandling)',color:'#f97316',icon:'💨'},
     {k:'travel',lbl:'Korakanje',color:'#a855f7',icon:'🚶'},
-    {k:'24sec',lbl:'24 sekund',color:'#60a5fa',icon:'⏱️'},
     {k:'3sec',lbl:'3 sekunde',color:'#34d399',icon:'⏱️'},
     {k:'offensive',lbl:'Ofenzivna napaka',color:'#fbbf24',icon:'💥'},
   ];
