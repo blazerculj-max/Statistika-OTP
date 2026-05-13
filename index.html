@@ -2,22 +2,27 @@
 <html lang="sl">
 <head>
 <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Liga OTP banka – Statistika 2025/26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#08080f;--card:#0e0e1c;--card2:#12122a;--border:#1a1a32;--border2:#22223a;--acc:#f97316;--blue:#60a5fa;--purple:#a78bfa;--green:#34d399;--red:#f87171;--text:#e2e8f0;--sub:#94a3b8;--mut:#475569;--fh:'Bebas Neue',cursive;--fm:'DM Mono',monospace;--fs:'DM Sans',sans-serif}
+:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--fs);min-height:100vh}
-.hdr{background:linear-gradient(135deg,#07071a,#110826,#071120);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 30px #000a}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100vh}
+.hdr{background:rgba(6,6,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .hdr-title{font-family:var(--fh);font-size:2rem;letter-spacing:.06em}.hdr-title span{color:var(--acc)}
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
 .hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
-.nav{display:flex;flex-direction:column;gap:0;background:var(--card);border-bottom:1px solid var(--border)}
-.nav-row{display:flex;gap:3px;padding:6px 28px;overflow-x:auto;justify-content:center}
-.nav-row:first-child{border-bottom:1px solid rgba(255,255,255,.05)}
-.nb{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--mut);font-family:var(--fs);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.nav{display:flex;flex-direction:column;gap:0;background:rgba(6,6,15,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
+.nav-row{display:flex;gap:1px;padding:4px 20px;overflow-x:auto;justify-content:center;align-items:center}
+
+.nb{padding:7px 14px;border-radius:7px;border:none;background:transparent;color:var(--mut);font-family:var(--fm);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .18s;letter-spacing:.01em;white-space:nowrap}
 .nb:hover{color:var(--text);background:var(--border)}.nb.active{background:var(--acc);color:#fff}
 .content{padding:20px 28px;max-width:1900px;margin:0 auto}
 .tab{display:none}.tab.active{display:block}
@@ -35,7 +40,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .tstats{display:flex;gap:20px;margin-left:auto}
 .ts{text-align:center}.tsv{font-family:var(--fh);font-size:1.4rem}
 .tsl{font-size:.62rem;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
-.tw{overflow-x:auto;border-radius:10px;border:1px solid var(--border)}
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
 .st{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.75rem}
 .st .gr{font-size:.6rem;letter-spacing:.12em;text-align:center;padding:3px;font-family:var(--fh);border-bottom:1px solid var(--border)}
 .gr-met{background:#0f0f20;color:var(--acc)}.gr-sk{background:#0a1020;color:var(--blue)}.gr-on{background:#120a20;color:var(--purple)}.gr-bl{background:#0a1a12;color:var(--green)}.gr-em{background:#0e0e1a;color:transparent}
@@ -130,7 +135,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .pp-close:hover{background:var(--red);color:white}
 .pp-header{display:flex;align-items:center;gap:16px;padding:20px 22px;position:relative;overflow:hidden}
 .pp-color-bar{width:4px;height:60px;border-radius:2px;flex-shrink:0}
-.pp-name{font-family:var(--fh);font-size:2rem;letter-spacing:.04em;line-height:1}
+.pp-name{font-family:var(--fh);font-size:2.2rem;font-weight:800;letter-spacing:-.04em;line-height:.95}
 .pp-meta{font-size:.78rem;color:var(--mut);margin-top:4px}
 .pp-key-stats{display:flex;gap:16px;margin-left:auto}
 .pp-stat{text-align:center;background:var(--card2);border-radius:8px;padding:8px 14px;min-width:64px}
@@ -175,7 +180,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .mc-teams{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .mc-team{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;flex:1}
 .mc-team.away{text-align:right}
-.mc-score{font-family:var(--fh);font-size:1.6rem;letter-spacing:.04em;text-align:center;flex-shrink:0}
+.mc-score{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.03em;text-align:center;flex-shrink:0}
 .mc-score.win1{color:var(--acc)}
 .mc-score.win2{color:var(--blue)}
 .mc-meta{font-size:.68rem;color:var(--mut);display:flex;justify-content:space-between}
@@ -185,14 +190,14 @@ select:focus{outline:none;border-color:var(--acc)}
 .mc-status.live{background:rgba(34,197,94,.2);color:#22c55e}
 /* MATCH DETAIL OVERLAY */
 #match-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:998;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
-.mo-modal{background:var(--card);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:1100px;max-height:94vh;overflow-y:auto;position:relative}
+.mo-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:1100px;max-height:94vh;overflow-y:auto;position:relative}
 .mo-close{position:sticky;top:12px;float:right;margin:12px 14px 0 0;width:32px;height:32px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--sub);z-index:10}
 .mo-close:hover{background:var(--red);color:white}
-.mo-header{padding:20px 22px;border-bottom:1px solid var(--border)}
+.mo-header{padding:22px 24px 16px;border-bottom:1px solid var(--border)}
 .mo-score-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:8px}
-.mo-team{font-family:var(--fh);font-size:1.8rem;letter-spacing:.04em;flex:1}
+.mo-team{font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:-.02em;flex:1}
 .mo-team.away{text-align:right}
-.mo-score{font-family:var(--fh);font-size:3rem;letter-spacing:.04em;color:var(--acc)}
+.mo-score{font-family:'Space Grotesk',sans-serif;font-size:3.5rem;font-weight:800;letter-spacing:-.04em;color:var(--acc);line-height:1}
 .mo-meta{font-size:.72rem;color:var(--mut);text-align:center}
 .mo-body{padding:16px 20px}
 .mo-section{margin-bottom:20px}
@@ -249,12 +254,12 @@ select:focus{outline:none;border-color:var(--acc)}
 .hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none}
 .hero-wrap{position:relative;z-index:1;text-align:center;padding:40px 24px;max-width:700px;width:100%}
 .hero-badge{display:inline-block;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--acc);padding:5px 16px;border-radius:20px;font-family:var(--fm);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
-.hero-title{font-family:var(--fh);font-size:clamp(2.5rem,8vw,5rem);letter-spacing:.06em;line-height:.95;margin-bottom:8px}
+.hero-title{font-family:var(--fh);font-size:clamp(2.8rem,8vw,5.5rem);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:10px}
 .hero-title span{color:var(--acc)}
 .hero-sub{font-size:.9rem;color:var(--mut);margin-bottom:48px;font-family:var(--fm)}
 .hero-leagues{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
 @media(max-width:768px){.hero-leagues{grid-template-columns:1fr;gap:10px}}
-.hero-card{border-radius:14px;border:2px solid var(--border2);background:var(--card);padding:24px 20px;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
+.hero-card{border-radius:12px;border:1px solid var(--border);background:transparent;padding:20px 18px;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
 .hero-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s}
 .hero-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
 .hero-card.liga1::before{background:linear-gradient(135deg,rgba(249,115,22,.12),transparent)}
@@ -457,6 +462,26 @@ select:focus{outline:none;border-color:var(--acc)}
   #mobile-nav::-webkit-scrollbar{display:none}
   .mbn-btn{min-width:56px;flex-shrink:0}
 }
+
+/* Animated hero canvas orbs */
+.hero-bg{
+  background:
+    radial-gradient(ellipse at 15% 60%,rgba(249,115,22,.07) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 20%,rgba(168,85,247,.05) 0%,transparent 45%),
+    radial-gradient(ellipse at 50% 90%,rgba(59,130,246,.04) 0%,transparent 40%);
+  animation:heroBgShift 12s ease-in-out infinite alternate;
+}
+@keyframes heroBgShift{
+  0%{opacity:1;transform:scale(1)}
+  50%{opacity:.8;transform:scale(1.02)}
+  100%{opacity:1;transform:scale(1)}
+}
+/* Smooth fade in for content */
+.hero-wrap{animation:fadeUp .6s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* Content tab fade */
+.tab.active{animation:tabFade .2s ease both}
+@keyframes tabFade{from{opacity:0}to{opacity:1}}
 </style>
 </head>
 <body>
@@ -464,6 +489,7 @@ select:focus{outline:none;border-color:var(--acc)}
 <!-- HERO PAGE -->
 <div id="hero-overlay">
   <div class="hero-bg"></div>
+  <canvas id="hero-canvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:.4;pointer-events:none"></canvas>
   <div class="hero-wrap">
     <div class="hero-badge">🇸🇮 Sezona 2025/26</div>
     <div class="hero-title">SLOVENSKA<br><span>KOŠARKA</span></div>
@@ -545,21 +571,20 @@ select:focus{outline:none;border-color:var(--acc)}
       🔴 LIVE
       <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
     </button>
-    <button class="nb active" onclick="showTab('ekipe')">🏀 EKIPE</button>
-    <button class="nb" onclick="showTab('lestvica')">🏆 LESTVICA</button>
-    <button class="nb" onclick="showTab('tekme')">📅 TEKME</button>
-    <button class="nb" onclick="showTab('iskanje')">🔍 ISKANJE</button>
-    <button class="nb" onclick="showTab('compare')">⚡ PRIMERJAVA</button>
-    <button class="nb" onclick="showTab('mvp')">⭐ MVP</button>
-    <button class="nb" onclick="showTab('race')">📈 SEZONA</button>
-  </div>
-  <div class="nav-row">
-<button class="nb" onclick="showTab('liga')">🏅 LIGA</button>
-    <button class="nb" onclick="showTab('teamstats')">📊 EK. STATISTIKA</button>
-    <button class="nb" onclick="showTab('nerd')">🧠 NERD STATS</button>
-    <button class="nb" onclick="showTab('sodniki')">🏛️ SODNIKI</button>
-    <button class="nb" onclick="showTab('starost')">📊 STAROST</button>
-    <button class="nb" onclick="showTab('obisk')">👥 OBISK</button>
+    <button class="nb active" onclick="showTab('ekipe')">Ekipe</button>
+    <button class="nb" onclick="showTab('lestvica')">Lestvica</button>
+    <button class="nb" onclick="showTab('tekme')">Tekme</button>
+    <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
+    <button class="nb" onclick="showTab('compare')">Primerjava</button>
+    <button class="nb" onclick="showTab('mvp')">MVP</button>
+    <button class="nb" onclick="showTab('race')">Sezona</button>
+    <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
+        style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
+        Analitika
+        <svg id="analytics-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition:transform .2s;opacity:.6">
+          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
   </div>
 </nav>
 
@@ -740,22 +765,20 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
-  <div id="tab-race" class="tab">
+  <di  <div id="tab-race" class="tab">
     <div class="ctrls">
       <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Gibanje ekip na lestvici po krogih — redni del</div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <div id="race-standings" style="margin-bottom:16px"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
       <span style="font-size:.72rem;color:var(--mut);font-family:var(--fm)">K1</span>
       <input type="range" id="race-slider" min="1" max="30" value="1" step="1"
         oninput="raceRound=parseInt(this.value);drawRaceChart();drawRaceStandings()"
         style="flex:1;accent-color:var(--acc);cursor:pointer">
       <span id="race-round-lbl" style="font-family:var(--fh);font-size:.85rem;color:var(--acc);min-width:36px;text-align:right">K1</span>
     </div>
-    <div id="race-wrap" style="position:relative;margin-bottom:20px">
-      <canvas id="race-canvas" style="width:100%;border-radius:12px;background:var(--card);border:1px solid var(--border)"></canvas>
-    </div>
-    <div id="race-standings" style="margin-top:8px"></div>
-  </div>
+    <div id="race-wrap" style="position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
+    </div></div>
   <div id="tab-mvp" class="tab">
     <div id="mvp-wrap"></div>
   </div>
@@ -1067,6 +1090,9 @@ async function selectCrossLeague(){
 }
 
 function selectLeague(lg) {
+  if(window.gsap) {
+    gsap.to('#hero-overlay', {opacity:0, duration:.25, ease:'power2.in'});
+  }
   // Hide hero, show loading
   document.getElementById('hero-overlay').style.display = 'none';
   document.getElementById('loading-overlay').style.display = 'flex';
@@ -1285,6 +1311,30 @@ function aggregatePlayers(phaseFilter) {
   const byPid = {}; // playerId_teamId → stats
 
   const phaseMatchIds = getPhaseMatchIds(phaseFilter);
+  // Always rebuild playerGameLog from ALL matches (not filtered by phase)
+  Object.values(matchStatsCache).forEach(matchData => {
+    if (!matchData) return;
+    const round = allMatches.find(m => m.id === matchData.matchId)?.round || 0;
+    [matchData.firstTeam, matchData.secondTeam].forEach(team => {
+      if (!team) return;
+      const teamName = team.teamName || '';
+      (team.playerStats || []).forEach(ps => {
+        if (!ps.played) return;
+        if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
+        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
+        if (!alreadyLogged) {
+          playerGameLog[ps.playerId].push({
+            round, matchId: matchData.matchId, team: teamName,
+            pts: ps.points || 0, reb: ps.totalRebounds || 0,
+            ast: ps.assists || 0, stl: ps.steals || 0, blk: ps.blocksInFavor || 0,
+            tov: ps.turnovers || 0, min: ps.minutes || 0,
+            efe: ps.pIR || ps.efficiency || 0,
+          });
+        }
+      });
+    });
+  });
+
   Object.values(matchStatsCache).forEach(matchData => {
     if (!matchData) return;
     if (phaseMatchIds && !phaseMatchIds.has(matchData.matchId)) return;
@@ -1329,19 +1379,7 @@ function aggregatePlayers(phaseFilter) {
         // IZS = foulReceived
         p.izs += ps.foulReceived;
 
-        // Game log for trend — deduplicate by matchId
-        if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
-        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
-        if (!alreadyLogged) {
-          playerGameLog[ps.playerId].push({
-            round, matchId: matchData.matchId, team: teamName,
-            pts: ps.points,
-            reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
-            ast: ps.assists || 0,
-            efe: ps.efficiencyCustom || ps.efficiency || 0,
-            min: ps.minutes
-          });
-        }
+        // playerGameLog populated in pre-pass above
       });
     });
   });
@@ -2097,7 +2135,7 @@ async function openMatch(matchId){
         ${scoreDisplay}
         <div class="mo-team away" style="color:${c2}">${t2}</div>
       </div>
-      <div class="mo-meta">${date} · ${matchInfo.sportHallName||''} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
+      <div class="mo-meta" style="font-size:.75rem;color:var(--mut);letter-spacing:.02em;margin-top:6px">${date} · ${matchInfo.sportHallName||''} · ${getRoundLabel(matchInfo)}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
       ${(()=>{
         const yt=matchInfo.streams?.find(s=>s.type==='YOUTUBE'&&s.url);
         if(!yt)return '';
@@ -2473,7 +2511,7 @@ function renderAge(){
 
     wrap.innerHTML = `
       ${renderAgeGrid(teamPlayers, false)}
-      <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);margin-top:14px">
+      <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-top:14px">
         <div style="font-family:var(--fh);font-size:.72rem;font-weight:700;letter-spacing:.06em;color:var(--sub);padding:12px 14px 8px">IGRALCI</div>
         <table class="standings-table" style="font-size:.78rem">
           <thead><tr>
@@ -2845,44 +2883,72 @@ async function loadPlayerCareer() {
 
 function drawTrend(pid, color){
   const log=playerGameLog[pid];
-  if(!log||log.length<3)return '';
-  const last=log.slice(-10);
-  const w=280, h=90, padL=8, padR=8, padT=20, padB=24;
-  const bw=Math.max(4,Math.floor((w-padL-padR)/last.length)-3);
-  const chartH=h-padT-padB;
-  const maxEfe=Math.max(...last.map(g=>g.efe),1);
+  if(!log||log.length<2)return '';
 
-  // Build HTML tooltip overlay instead of SVG title
-  let bars='', tooltips='', labels='';
-  last.forEach((g,i)=>{
+  // Split into redni del and playoff
+  const pfPhases=new Set(['Četrtfinale','Polfinale','Finale','Osmina finala']);
+  const rdLog=log.filter(g=>{
+    const m=allMatches.find(x=>x.id===g.matchId);
+    const ph=m?.competitions?.[0]?.competitionPhaseName||'';
+    return !pfPhases.has(ph);
+  });
+  const pfLog=log.filter(g=>{
+    const m=allMatches.find(x=>x.id===g.matchId);
+    const ph=m?.competitions?.[0]?.competitionPhaseName||'';
+    return pfPhases.has(ph);
+  });
+
+  // Use last 10 from RD + all playoff
+  const rdLast=rdLog.slice(-10);
+  const allGames=[...rdLast,...pfLog];
+  if(allGames.length<2)return '';
+
+  const w=280,h=110,padL=8,padR=8,padT=24,padB=24;
+  const bw=Math.max(4,Math.floor((w-padL-padR)/allGames.length)-3);
+  const chartH=h-padT-padB;
+  const maxEfe=Math.max(...allGames.map(g=>g.efe),1);
+
+  let bars='',labels='';
+
+  // Divider line between RD and playoff
+  const hasPf=pfLog.length>0;
+  if(hasPf&&rdLast.length>0){
+    const divX=padL+rdLast.length*(bw+3)-1;
+    bars+=`<line x1="${divX}" y1="${padT-4}" x2="${divX}" y2="${padT+chartH}" stroke="rgba(249,115,22,.4)" stroke-width="1" stroke-dasharray="3,2"/>`;
+    bars+=`<text x="${divX+3}" y="${padT-6}" font-size="7" fill="rgba(249,115,22,.7)" font-family="Space Grotesk,sans-serif">KONČNICA</text>`;
+  }
+
+  allGames.forEach((g,i)=>{
     const bh=g.efe>0?Math.max(4,Math.round(g.efe/maxEfe*chartH)):4;
     const col=g.efe>15?'#34d399':g.efe>8?'#facc15':g.efe>0?'#f97316':'#f87171';
     const x=padL+i*(bw+3);
     const y=padT+chartH-bh;
+    const isPf=i>=rdLast.length&&hasPf;
 
-    // Bar
-    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${g.efe>0?'.9':'.6'}"/>`;
-
-    // EFE value on top of bar
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${isPf?1:.8}"/>`;
     if(bh>12){
-      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="DM Mono,monospace" font-weight="bold">${g.efe}</text>`;
+      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="Space Grotesk,sans-serif" font-weight="600">${g.efe}</text>`;
     }
 
-    // Round label at bottom
-    labels+=`<text x="${x+bw/2}" y="${h-4}" font-size="7" text-anchor="middle" fill="rgba(148,163,184,.5)" font-family="DM Mono,monospace">K${g.round}</text>`;
+    // Label: round for RD, QF/SF/F for playoff
+    let lbl;
+    if(isPf){
+      const m=allMatches.find(x=>x.id===g.matchId);
+      const ph=m?.competitions?.[0]?.competitionPhaseName||'';
+      lbl=ph==='Četrtfinale'?'QF'+g.round:ph==='Polfinale'?'SF'+g.round:ph==='Finale'?'F'+g.round:'T'+g.round;
+    } else {
+      lbl='K'+g.round;
+    }
+    labels+=`<text x="${x+bw/2}" y="${h-6}" font-size="7" text-anchor="middle" fill="${isPf?'rgba(249,115,22,.6)':'rgba(148,163,184,.4)'}" font-family="Space Grotesk,sans-serif">${lbl}</text>`;
 
-    // Invisible hover rect for tooltip
     bars+=`<rect x="${x}" y="${padT}" width="${bw}" height="${chartH}" fill="transparent" class="trend-hover"
-      data-tip="K${g.round} | ${g.pts} točk · ${g.reb} sk · ${g.ast} ast · EFE: ${g.efe} | ${Math.round(g.min)} min"
+      data-tip="${lbl} | ${g.pts}pts · ${g.reb}sk · ${g.ast}ast · EFE:${g.efe}"
       onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()"/>`;
   });
 
-  // Zero line
   const zeroY=padT+chartH;
-  bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
-
-  // Legend
-  bars+=`<text x="${padL}" y="12" font-size="8" fill="rgba(148,163,184,.6)" font-family="DM Sans,sans-serif">EFE po krogu (zadnjih 10)</text>`;
+  bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
+  bars+=`<text x="${padL}" y="14" font-size="8" fill="rgba(148,163,184,.5)" font-family="Space Grotesk,sans-serif">EFE po krogu${hasPf?' (RD + Končnica)':' (zadnjih 10)'}</text>`;
 
   return `<div style="position:relative">
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block;overflow:visible">
@@ -3090,7 +3156,7 @@ function buildLiveCard(m, lgKey) {
     onclick="openMatch(${m.id})">
     <div class="live-header">
       <span style="color:${lg.color};font-weight:600">${lg.short}</span>
-      <span style="color:var(--mut)">K${m.round} · ${phaseName}${groupTag}</span>
+      <span style="color:var(--mut)">${getRoundLabel(m)} · ${phaseName}${groupTag}</span>
       ${headerRight}
     </div>
     <div class="live-teams">
@@ -4364,98 +4430,94 @@ function buildRaceData() {
   }
 }
 
-function drawRaceChart() {
-  const canvas = document.getElementById('race-canvas');
-  if(!canvas) return;
-  const teams = Object.keys(raceData);
-  const nTeams = teams.length;
-  if(!nTeams) return;
+function drawRaceChart(){
+  const wrap=document.getElementById('race-wrap');
+  if(!wrap||!Object.keys(raceData).length){
+    if(wrap)wrap.innerHTML='<div class="empty" style="padding:40px 0;text-align:center">Ni podatkov</div>';
+    return;
+  }
 
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.parentElement.clientWidth;
-  const H = Math.max(380, nTeams * 32 + 80);
-  canvas.width = W * dpr;
-  canvas.height = H * dpr;
-  canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
+  const teams=Object.keys(raceData);
+  const nTeams=teams.length;
+  const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
+  const slider=document.getElementById('race-slider');
+  const lbl=document.getElementById('race-round-lbl');
+  if(slider){slider.max=raceMaxRound;slider.value=currentRound;}
+  if(lbl)lbl.textContent='K'+currentRound;
 
-  const PAD_L=28, PAD_R=52, PAD_T=36, PAD_B=28;
-  const chartW=W-PAD_L-PAD_R, chartH=H-PAD_T-PAD_B;
-  const currentRound=Math.min(raceRound||raceMaxRound, raceMaxRound);
+  const W=wrap.offsetWidth||800;
+  const H=Math.max(360,nTeams*34+60);
+  const PAD={l:28,r:100,t:18,b:26};
+  const chartW=W-PAD.l-PAD.r;
+  const chartH=H-PAD.t-PAD.b;
 
-  ctx.fillStyle='#0e0e1c';
-  ctx.fillRect(0,0,W,H);
+  const xR=r=>PAD.l+(r-1)/(Math.max(raceMaxRound-1,1))*chartW;
+  const yP=p=>PAD.t+(p-1)/(Math.max(nTeams-1,1))*chartH;
+
+  let svg='';
 
   // Grid
   for(let r=1;r<=raceMaxRound;r++){
-    const x=PAD_L+(r-1)/(raceMaxRound-1||1)*chartW;
-    ctx.strokeStyle=r===currentRound?'rgba(255,255,255,.15)':'rgba(255,255,255,.04)';
-    ctx.lineWidth=r===currentRound?1.5:1;
-    ctx.beginPath();ctx.moveTo(x,PAD_T);ctx.lineTo(x,H-PAD_B);ctx.stroke();
-    if(r%5===0||r===1||r===raceMaxRound){
-      ctx.fillStyle='rgba(255,255,255,.3)';
-      ctx.font='10px DM Sans,sans-serif';
-      ctx.textAlign='center';
-      ctx.fillText('K'+r,x,H-PAD_B+16);
+    if(r===1||r%5===0||r===raceMaxRound){
+      const x=xR(r);
+      const isNow=r===currentRound;
+      svg+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+chartH}"
+        stroke="${isNow?'rgba(249,115,22,.25)':'rgba(255,255,255,.04)'}"
+        stroke-width="${isNow?1.5:1}"/>`;
+      svg+=`<text x="${x}" y="${H-6}" text-anchor="middle"
+        fill="${isNow?'rgba(249,115,22,.7)':'rgba(255,255,255,.2)'}"
+        font-size="10" font-family="Space Grotesk,sans-serif"
+        font-weight="${isNow?700:400}">K${r}</text>`;
     }
   }
 
-  const yPos=pos=>PAD_T+(pos-1)/(nTeams-1||1)*chartH;
-  const xRound=r=>PAD_L+(r-1)/(raceMaxRound-1||1)*chartW;
+  // Position labels
+  for(let p=1;p<=Math.min(nTeams,10);p++){
+    svg+=`<text x="${PAD.l-6}" y="${yP(p)+4}" text-anchor="end"
+      fill="rgba(255,255,255,.18)" font-size="10"
+      font-family="Space Grotesk,sans-serif">${p}</text>`;
+  }
 
+  // Full lines (all rounds) + moving dot
   teams.forEach(team=>{
     const data=raceData[team]||[];
     if(!data.length)return;
     const color=TEAM_COLORS[team]||'#888';
 
-    // Full line
-    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.globalAlpha=0.6;
-    ctx.lineJoin='round';ctx.lineCap='round';
-    ctx.beginPath();
-    data.forEach((d,i)=>{
-      const x=xRound(d.round),y=yPos(d.pos);
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    });
-    ctx.stroke();
+    // Full line always
+    const pts=data.map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
+    svg+=`<polyline points="${pts}" fill="none" stroke="${color}"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+      opacity="0.35"/>`;
 
-    // End dot + label
-    const last=data[data.length-1];
-    ctx.globalAlpha=1;
-    ctx.fillStyle=color;
-    ctx.beginPath();ctx.arc(xRound(last.round),yPos(last.pos),4,0,Math.PI*2);ctx.fill();
-    ctx.font='600 11px DM Sans,sans-serif';ctx.textAlign='left';
-    ctx.fillText(TEAM_SHORT[team]||team.substring(0,6),xRound(last.round)+8,yPos(last.pos)+4);
-
-    // Selected round dot
-    const sel=data.find(d=>d.round===currentRound);
-    if(sel){
-      ctx.fillStyle='#fff';
-      ctx.beginPath();ctx.arc(xRound(sel.round),yPos(sel.pos),6,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle=color;
-      ctx.beginPath();ctx.arc(xRound(sel.round),yPos(sel.pos),4,0,Math.PI*2);ctx.fill();
+    // Bold segment up to currentRound
+    const activePts=data.filter(d=>d.round<=currentRound)
+      .map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
+    if(activePts){
+      svg+=`<polyline points="${activePts}" fill="none" stroke="${color}"
+        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        opacity="0.9"/>`;
     }
-    ctx.globalAlpha=1;
+
+    // Moving dot at currentRound
+    const cur=data.find(d=>d.round===currentRound)||data.filter(d=>d.round<=currentRound).slice(-1)[0];
+    if(cur){
+      const cx=xR(cur.round),cy=yP(cur.pos);
+      svg+=`<circle cx="${cx}" cy="${cy}" r="5" fill="${color}"/>`;
+      svg+=`<circle cx="${cx}" cy="${cy}" r="9" fill="${color}" opacity="0.2"/>`;
+      svg+=`<text x="${cx+12}" y="${cy+4}" fill="${color}"
+        font-size="11" font-family="Space Grotesk,sans-serif"
+        font-weight="600">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+    } else {
+      // End label
+      const last=data[data.length-1];
+      svg+=`<text x="${xR(last.round)+10}" y="${yP(last.pos)+4}" fill="${color}"
+        font-size="11" font-family="Space Grotesk,sans-serif"
+        font-weight="600" opacity="0.5">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+    }
   });
 
-  // Position numbers
-  for(let pos=1;pos<=nTeams;pos++){
-    const y=PAD_T+(pos-1)/(nTeams-1||1)*chartH;
-    ctx.fillStyle=pos<=3?'rgba(255,200,0,.5)':'rgba(255,255,255,.2)';
-    ctx.font='600 11px DM Sans,sans-serif';ctx.textAlign='right';
-    ctx.fillText(pos+'.',PAD_L-6,y+4);
-  }
-
-  ctx.fillStyle='rgba(255,255,255,.5)';
-  ctx.font='700 13px Bricolage Grotesque,sans-serif';
-  ctx.textAlign='center';
-  ctx.fillText('KROG '+currentRound,W/2,20);
-
-  // Update slider
-  const slider=document.getElementById('race-slider');
-  const lbl=document.getElementById('race-round-lbl');
-  if(slider){slider.max=raceMaxRound;slider.value=currentRound;}
-  if(lbl)lbl.textContent='K'+currentRound;
+  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">${svg}</svg>`;
 }
 
 function drawRaceStandings(){
@@ -4483,7 +4545,7 @@ function drawRaceStandings(){
       <td style="font-weight:700;color:var(--acc)">${s.pts}</td></tr>`;
   }).join('');
   wrap.innerHTML=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">LESTVICA — KROG ${currentRound}</div>
-    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border)">
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
       <table class="standings-table"><thead><tr>
         <th>M</th><th>EKIPA</th><th>T</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th><th style="color:var(--acc)">TČ</th>
       </tr></thead><tbody>${rows}</tbody></table>
@@ -4497,8 +4559,13 @@ function initRaceChart(){
   if(slider){slider.max=raceMaxRound;slider.value=raceMaxRound;}
   const lbl=document.getElementById('race-round-lbl');
   if(lbl)lbl.textContent='K'+raceMaxRound;
-  drawRaceChart();
-  drawRaceStandings();
+  // Wait for tab to be visible before rendering chart
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      drawRaceChart();
+      drawRaceStandings();
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════
@@ -5614,6 +5681,19 @@ function showRefDetail(name, refStats){
   // Could expand to show per-team stats for this ref
 }
 
+// Round label helper - QF/SF/F for playoff
+function getRoundLabel(m){
+  const phase = m.competitions?.[0]?.competitionPhaseName || '';
+  const round = m.round || 0;
+  if(phase === 'Četrtfinale') return 'QF · Tekma ' + round;
+  if(phase === 'Polfinale') return 'SF · Tekma ' + round;
+  if(phase === 'Finale') return 'F · Tekma ' + round;
+  if(phase === 'Osmina finala') return 'R16 · Tekma ' + round;
+  if(phase === 'Liga za obstanek') return 'Obst. · K' + round;
+  if(phase === 'Zaključni turnir') return 'ZT · K' + round;
+  return 'K' + round;
+}
+
 let agePhase = 'all';
 let attPhase = 'all';
 
@@ -5633,6 +5713,66 @@ function setAttPhase(ph){
     if(btn) btn.classList.toggle('active', p===ph);
   });
   renderAttendance();
+}
+
+function toggleAnalyticsMenu(e){
+  e.stopPropagation();
+  const d=document.getElementById('analytics-dropdown');
+  const a=document.getElementById('analytics-arrow');
+  const btn=document.getElementById('analytics-btn');
+  if(!d||!btn)return;
+  const open=d.style.display==='block';
+  if(!open){
+    const rect=btn.getBoundingClientRect();
+    d.style.top=(rect.bottom+4)+'px';
+    d.style.left=rect.left+'px';
+    d.style.display='block';
+    if(window.gsap){
+      gsap.fromTo(d,{opacity:0,y:-6},{opacity:1,y:0,duration:.18,ease:'power2.out'});
+    }
+  } else {
+    d.style.display='none';
+  }
+  if(a)a.style.transform=open?'':'rotate(180deg)';
+}
+function closeAnalyticsMenu(){
+  const d=document.getElementById('analytics-dropdown');
+  const a=document.getElementById('analytics-arrow');
+  if(d)d.style.display='none';
+  if(a)a.style.transform='';
+}
+document.addEventListener('click',()=>closeAnalyticsMenu());
+
+
+// Hero canvas animation - subtle floating orbs
+function initHeroCanvas(){
+  const canvas=document.getElementById('hero-canvas');
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  let W=canvas.offsetWidth,H=canvas.offsetHeight;
+  canvas.width=W;canvas.height=H;
+
+  const orbs=[
+    {x:W*.15,y:H*.5,r:200,color:'249,115,22',vx:.3,vy:-.2},
+    {x:W*.8,y:H*.2,r:180,color:'168,85,247',vx:-.25,vy:.3},
+    {x:W*.5,y:H*.85,r:150,color:'59,130,246',vx:.2,vy:-.15},
+  ];
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    orbs.forEach(o=>{
+      const g=ctx.createRadialGradient(o.x,o.y,0,o.x,o.y,o.r);
+      g.addColorStop(0,`rgba(${o.color},.12)`);
+      g.addColorStop(1,`rgba(${o.color},0)`);
+      ctx.fillStyle=g;
+      ctx.beginPath();ctx.arc(o.x,o.y,o.r,0,Math.PI*2);ctx.fill();
+      o.x+=o.vx;o.y+=o.vy;
+      if(o.x<-o.r||o.x>W+o.r)o.vx*=-1;
+      if(o.y<-o.r||o.y>H+o.r)o.vy*=-1;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -5969,6 +6109,20 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="mbn-btn" id="mbn-race" onclick="showTab('race')">
     <span class="mbn-icon">📈</span><span class="mbn-lbl">Sezona</span>
   </button>
+</div>
+
+<div id="analytics-dropdown"
+  style="display:none;position:fixed;min-width:200px;
+    background:#0d0d1e;
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;padding:6px;
+    z-index:9999;box-shadow:0 20px 48px rgba(0,0,0,.8)">
+  <button class="nb" onclick="showTab('liga');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Liga</button>
+  <button class="nb" onclick="showTab('teamstats');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Ekipna statistika</button>
+  <button class="nb" onclick="showTab('nerd');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Nerd stats</button>
+  <button class="nb" onclick="showTab('sodniki');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Sodniki</button>
+  <button class="nb" onclick="showTab('starost');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Starost</button>
+  <button class="nb" onclick="showTab('obisk');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block">Obisk</button>
 </div>
 </body>
 </html>
