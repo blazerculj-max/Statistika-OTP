@@ -1308,28 +1308,24 @@ function getPhaseMatchIds(phaseFilter) {
 }
 
 function aggregatePlayers(phaseFilter) {
-  const byPid = {}; // playerId_teamId → stats
-
+  const byPid = {};
   const phaseMatchIds = getPhaseMatchIds(phaseFilter);
-  // Always rebuild playerGameLog from ALL matches (not filtered by phase)
-  Object.values(matchStatsCache).forEach(matchData => {
-    if (!matchData) return;
-    const round = allMatches.find(m => m.id === matchData.matchId)?.round || 0;
-    [matchData.firstTeam, matchData.secondTeam].forEach(team => {
-      if (!team) return;
-      const teamName = team.teamName || '';
-      (team.playerStats || []).forEach(ps => {
-        if (!ps.played) return;
-        if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
-        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
-        if (!alreadyLogged) {
-          playerGameLog[ps.playerId].push({
-            round, matchId: matchData.matchId, team: teamName,
-            pts: ps.points || 0, reb: ps.totalRebounds || 0,
-            ast: ps.assists || 0, stl: ps.steals || 0, blk: ps.blocksInFavor || 0,
-            tov: ps.turnovers || 0, min: ps.minutes || 0,
-            efe: ps.pIR || ps.efficiency || 0,
-          });
+
+  // Pre-pass: build playerGameLog from ALL matches regardless of phase
+  Object.entries(matchStatsCache).forEach(([mid, md]) => {
+    if(!md) return;
+    const mId=parseInt(mid);
+    const mRound=allMatches.find(m=>m.id===mId)?.round||0;
+    [md.firstTeam,md.secondTeam].forEach(side=>{
+      if(!side?.playerStats) return;
+      side.playerStats.forEach(ps=>{
+        if(!ps.played) return;
+        if(!playerGameLog[ps.playerId]) playerGameLog[ps.playerId]=[];
+        if(!playerGameLog[ps.playerId].some(g=>g.matchId===mId)){
+          playerGameLog[ps.playerId].push({round:mRound,matchId:mId,team:side.teamName||'',
+            pts:ps.points||0,reb:ps.totalRebounds||0,ast:ps.assists||0,
+            stl:ps.steals||0,blk:ps.blocksInFavor||0,tov:ps.turnovers||0,
+            min:ps.minutes||0,efe:ps.pIR||ps.efficiency||0});
         }
       });
     });
@@ -1379,7 +1375,19 @@ function aggregatePlayers(phaseFilter) {
         // IZS = foulReceived
         p.izs += ps.foulReceived;
 
-        // playerGameLog populated in pre-pass above
+        // Game log for trend — deduplicate by matchId
+        if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
+        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
+        if (!alreadyLogged) {
+          playerGameLog[ps.playerId].push({
+            round, matchId: matchData.matchId, team: teamName,
+            pts: ps.points,
+            reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
+            ast: ps.assists || 0,
+            efe: ps.efficiencyCustom || ps.efficiency || 0,
+            min: ps.minutes
+          });
+        }
       });
     });
   });
