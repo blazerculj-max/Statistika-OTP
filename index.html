@@ -765,20 +765,21 @@ select:focus{outline:none;border-color:var(--acc)}
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
-  <di  <div id="tab-race" class="tab">
+  <div id="tab-race" class="tab">
     <div class="ctrls">
       <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Gibanje ekip na lestvici po krogih — redni del</div>
     </div>
-    <div id="race-standings" style="margin-bottom:16px"></div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
       <span style="font-size:.72rem;color:var(--mut);font-family:var(--fm)">K1</span>
       <input type="range" id="race-slider" min="1" max="30" value="1" step="1"
         oninput="raceRound=parseInt(this.value);drawRaceChart();drawRaceStandings()"
         style="flex:1;accent-color:var(--acc);cursor:pointer">
       <span id="race-round-lbl" style="font-family:var(--fh);font-size:.85rem;color:var(--acc);min-width:36px;text-align:right">K1</span>
     </div>
-    <div id="race-wrap" style="position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
-    </div></div>
+    <div id="race-wrap" style="position:relative;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
+    </div>
+    <div id="race-standings" style="margin-top:8px"></div>
+  </div>
   <div id="tab-mvp" class="tab">
     <div id="mvp-wrap"></div>
   </div>
@@ -1308,29 +1309,9 @@ function getPhaseMatchIds(phaseFilter) {
 }
 
 function aggregatePlayers(phaseFilter) {
-  const byPid = {};
+  const byPid = {}; // playerId_teamId → stats
+
   const phaseMatchIds = getPhaseMatchIds(phaseFilter);
-
-  // Pre-pass: build playerGameLog from ALL matches regardless of phase
-  Object.entries(matchStatsCache).forEach(([mid, md]) => {
-    if(!md) return;
-    const mId=parseInt(mid);
-    const mRound=allMatches.find(m=>m.id===mId)?.round||0;
-    [md.firstTeam,md.secondTeam].forEach(side=>{
-      if(!side?.playerStats) return;
-      side.playerStats.forEach(ps=>{
-        if(!ps.played) return;
-        if(!playerGameLog[ps.playerId]) playerGameLog[ps.playerId]=[];
-        if(!playerGameLog[ps.playerId].some(g=>g.matchId===mId)){
-          playerGameLog[ps.playerId].push({round:mRound,matchId:mId,team:side.teamName||'',
-            pts:ps.points||0,reb:ps.totalRebounds||0,ast:ps.assists||0,
-            stl:ps.steals||0,blk:ps.blocksInFavor||0,tov:ps.turnovers||0,
-            min:ps.minutes||0,efe:ps.pIR||ps.efficiency||0});
-        }
-      });
-    });
-  });
-
   Object.values(matchStatsCache).forEach(matchData => {
     if (!matchData) return;
     if (phaseMatchIds && !phaseMatchIds.has(matchData.matchId)) return;
@@ -2143,7 +2124,7 @@ async function openMatch(matchId){
         ${scoreDisplay}
         <div class="mo-team away" style="color:${c2}">${t2}</div>
       </div>
-      <div class="mo-meta" style="font-size:.75rem;color:var(--mut);letter-spacing:.02em;margin-top:6px">${date} · ${matchInfo.sportHallName||''} · ${getRoundLabel(matchInfo)}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
+      <div class="mo-meta" style="font-size:.75rem;color:var(--mut);letter-spacing:.02em;margin-top:6px">${date} · ${matchInfo.sportHallName||''} · Krog ${matchInfo.round}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
       ${(()=>{
         const yt=matchInfo.streams?.find(s=>s.type==='YOUTUBE'&&s.url);
         if(!yt)return '';
@@ -2891,72 +2872,44 @@ async function loadPlayerCareer() {
 
 function drawTrend(pid, color){
   const log=playerGameLog[pid];
-  if(!log||log.length<2)return '';
-
-  // Split into redni del and playoff
-  const pfPhases=new Set(['Četrtfinale','Polfinale','Finale','Osmina finala']);
-  const rdLog=log.filter(g=>{
-    const m=allMatches.find(x=>x.id===g.matchId);
-    const ph=m?.competitions?.[0]?.competitionPhaseName||'';
-    return !pfPhases.has(ph);
-  });
-  const pfLog=log.filter(g=>{
-    const m=allMatches.find(x=>x.id===g.matchId);
-    const ph=m?.competitions?.[0]?.competitionPhaseName||'';
-    return pfPhases.has(ph);
-  });
-
-  // Use last 10 from RD + all playoff
-  const rdLast=rdLog.slice(-10);
-  const allGames=[...rdLast,...pfLog];
-  if(allGames.length<2)return '';
-
-  const w=280,h=110,padL=8,padR=8,padT=24,padB=24;
-  const bw=Math.max(4,Math.floor((w-padL-padR)/allGames.length)-3);
+  if(!log||log.length<3)return '';
+  const last=log.slice(-10);
+  const w=280, h=90, padL=8, padR=8, padT=20, padB=24;
+  const bw=Math.max(4,Math.floor((w-padL-padR)/last.length)-3);
   const chartH=h-padT-padB;
-  const maxEfe=Math.max(...allGames.map(g=>g.efe),1);
+  const maxEfe=Math.max(...last.map(g=>g.efe),1);
 
-  let bars='',labels='';
-
-  // Divider line between RD and playoff
-  const hasPf=pfLog.length>0;
-  if(hasPf&&rdLast.length>0){
-    const divX=padL+rdLast.length*(bw+3)-1;
-    bars+=`<line x1="${divX}" y1="${padT-4}" x2="${divX}" y2="${padT+chartH}" stroke="rgba(249,115,22,.4)" stroke-width="1" stroke-dasharray="3,2"/>`;
-    bars+=`<text x="${divX+3}" y="${padT-6}" font-size="7" fill="rgba(249,115,22,.7)" font-family="Space Grotesk,sans-serif">KONČNICA</text>`;
-  }
-
-  allGames.forEach((g,i)=>{
+  // Build HTML tooltip overlay instead of SVG title
+  let bars='', tooltips='', labels='';
+  last.forEach((g,i)=>{
     const bh=g.efe>0?Math.max(4,Math.round(g.efe/maxEfe*chartH)):4;
     const col=g.efe>15?'#34d399':g.efe>8?'#facc15':g.efe>0?'#f97316':'#f87171';
     const x=padL+i*(bw+3);
     const y=padT+chartH-bh;
-    const isPf=i>=rdLast.length&&hasPf;
 
-    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${isPf?1:.8}"/>`;
+    // Bar
+    bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${g.efe>0?'.9':'.6'}"/>`;
+
+    // EFE value on top of bar
     if(bh>12){
-      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="Space Grotesk,sans-serif" font-weight="600">${g.efe}</text>`;
+      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="DM Mono,monospace" font-weight="bold">${g.efe}</text>`;
     }
 
-    // Label: round for RD, QF/SF/F for playoff
-    let lbl;
-    if(isPf){
-      const m=allMatches.find(x=>x.id===g.matchId);
-      const ph=m?.competitions?.[0]?.competitionPhaseName||'';
-      lbl=ph==='Četrtfinale'?'QF'+g.round:ph==='Polfinale'?'SF'+g.round:ph==='Finale'?'F'+g.round:'T'+g.round;
-    } else {
-      lbl='K'+g.round;
-    }
-    labels+=`<text x="${x+bw/2}" y="${h-6}" font-size="7" text-anchor="middle" fill="${isPf?'rgba(249,115,22,.6)':'rgba(148,163,184,.4)'}" font-family="Space Grotesk,sans-serif">${lbl}</text>`;
+    // Round label at bottom
+    labels+=`<text x="${x+bw/2}" y="${h-4}" font-size="7" text-anchor="middle" fill="rgba(148,163,184,.5)" font-family="DM Mono,monospace">K${g.round}</text>`;
 
+    // Invisible hover rect for tooltip
     bars+=`<rect x="${x}" y="${padT}" width="${bw}" height="${chartH}" fill="transparent" class="trend-hover"
-      data-tip="${lbl} | ${g.pts}pts · ${g.reb}sk · ${g.ast}ast · EFE:${g.efe}"
+      data-tip="K${g.round} | ${g.pts} točk · ${g.reb} sk · ${g.ast} ast · EFE: ${g.efe} | ${Math.round(g.min)} min"
       onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()"/>`;
   });
 
+  // Zero line
   const zeroY=padT+chartH;
-  bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
-  bars+=`<text x="${padL}" y="14" font-size="8" fill="rgba(148,163,184,.5)" font-family="Space Grotesk,sans-serif">EFE po krogu${hasPf?' (RD + Končnica)':' (zadnjih 10)'}</text>`;
+  bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.15)" stroke-width="1"/>`;
+
+  // Legend
+  bars+=`<text x="${padL}" y="12" font-size="8" fill="rgba(148,163,184,.6)" font-family="DM Sans,sans-serif">EFE po krogu (zadnjih 10)</text>`;
 
   return `<div style="position:relative">
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block;overflow:visible">
@@ -3164,7 +3117,7 @@ function buildLiveCard(m, lgKey) {
     onclick="openMatch(${m.id})">
     <div class="live-header">
       <span style="color:${lg.color};font-weight:600">${lg.short}</span>
-      <span style="color:var(--mut)">${getRoundLabel(m)} · ${phaseName}${groupTag}</span>
+      <span style="color:var(--mut)">K${m.round} · ${phaseName}${groupTag}</span>
       ${headerRight}
     </div>
     <div class="live-teams">
@@ -4441,7 +4394,7 @@ function buildRaceData() {
 function drawRaceChart(){
   const wrap=document.getElementById('race-wrap');
   if(!wrap||!Object.keys(raceData).length){
-    if(wrap)wrap.innerHTML='<div class="empty" style="padding:40px 0;text-align:center">Ni podatkov</div>';
+    if(wrap)wrap.innerHTML='<div class="empty" style="padding:60px 0;text-align:center">Ni podatkov</div>';
     return;
   }
 
@@ -4455,77 +4408,50 @@ function drawRaceChart(){
 
   const W=wrap.offsetWidth||800;
   const H=Math.max(360,nTeams*34+60);
-  const PAD={l:28,r:100,t:18,b:26};
+  const PAD={l:32,r:110,t:20,b:28};
   const chartW=W-PAD.l-PAD.r;
   const chartH=H-PAD.t-PAD.b;
 
-  const xR=r=>PAD.l+(r-1)/(Math.max(raceMaxRound-1,1))*chartW;
+  const xR=r=>PAD.l+(r-1)/(Math.max(currentRound-1,1))*chartW;
   const yP=p=>PAD.t+(p-1)/(Math.max(nTeams-1,1))*chartH;
 
-  let svg='';
+  let lines='',dots='',labels='',grid='';
 
-  // Grid
-  for(let r=1;r<=raceMaxRound;r++){
-    if(r===1||r%5===0||r===raceMaxRound){
+  // Grid lines
+  for(let r=1;r<=currentRound;r++){
+    if(r===1||r%5===0||r===currentRound){
       const x=xR(r);
-      const isNow=r===currentRound;
-      svg+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+chartH}"
-        stroke="${isNow?'rgba(249,115,22,.25)':'rgba(255,255,255,.04)'}"
-        stroke-width="${isNow?1.5:1}"/>`;
-      svg+=`<text x="${x}" y="${H-6}" text-anchor="middle"
-        fill="${isNow?'rgba(249,115,22,.7)':'rgba(255,255,255,.2)'}"
-        font-size="10" font-family="Space Grotesk,sans-serif"
-        font-weight="${isNow?700:400}">K${r}</text>`;
+      grid+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+chartH}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <text x="${x}" y="${H-8}" text-anchor="middle" fill="rgba(255,255,255,.28)" font-size="10" font-family="Space Grotesk,sans-serif">K${r}</text>`;
     }
   }
 
-  // Position labels
-  for(let p=1;p<=Math.min(nTeams,10);p++){
-    svg+=`<text x="${PAD.l-6}" y="${yP(p)+4}" text-anchor="end"
-      fill="rgba(255,255,255,.18)" font-size="10"
-      font-family="Space Grotesk,sans-serif">${p}</text>`;
-  }
-
-  // Full lines (all rounds) + moving dot
+  // Team lines
   teams.forEach(team=>{
-    const data=raceData[team]||[];
+    const data=(raceData[team]||[]).filter(d=>d.round<=currentRound);
     if(!data.length)return;
     const color=TEAM_COLORS[team]||'#888';
-
-    // Full line always
     const pts=data.map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
-    svg+=`<polyline points="${pts}" fill="none" stroke="${color}"
-      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-      opacity="0.35"/>`;
+    lines+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
 
-    // Bold segment up to currentRound
-    const activePts=data.filter(d=>d.round<=currentRound)
-      .map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
-    if(activePts){
-      svg+=`<polyline points="${activePts}" fill="none" stroke="${color}"
-        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-        opacity="0.9"/>`;
-    }
-
-    // Moving dot at currentRound
-    const cur=data.find(d=>d.round===currentRound)||data.filter(d=>d.round<=currentRound).slice(-1)[0];
-    if(cur){
-      const cx=xR(cur.round),cy=yP(cur.pos);
-      svg+=`<circle cx="${cx}" cy="${cy}" r="5" fill="${color}"/>`;
-      svg+=`<circle cx="${cx}" cy="${cy}" r="9" fill="${color}" opacity="0.2"/>`;
-      svg+=`<text x="${cx+12}" y="${cy+4}" fill="${color}"
-        font-size="11" font-family="Space Grotesk,sans-serif"
-        font-weight="600">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
-    } else {
-      // End label
-      const last=data[data.length-1];
-      svg+=`<text x="${xR(last.round)+10}" y="${yP(last.pos)+4}" fill="${color}"
-        font-size="11" font-family="Space Grotesk,sans-serif"
-        font-weight="600" opacity="0.5">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
-    }
+    // Dots at key points
+    data.forEach((d,i)=>{
+      if(i===data.length-1){
+        const x=xR(d.round),y=yP(d.pos);
+        dots+=`<circle cx="${x}" cy="${y}" r="5" fill="${color}"/>`;
+        labels+=`<text x="${x+10}" y="${y+4}" fill="${color}" font-size="11" font-family="Space Grotesk,sans-serif" font-weight="600">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+      }
+    });
   });
 
-  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">${svg}</svg>`;
+  // Position labels on left
+  for(let p=1;p<=nTeams;p++){
+    grid+=`<text x="${PAD.l-8}" y="${yP(p)+4}" text-anchor="end" fill="rgba(255,255,255,.2)" font-size="10" font-family="Space Grotesk,sans-serif">${p}</text>`;
+  }
+
+  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+    ${grid}${lines}${dots}${labels}
+  </svg>`;
 }
 
 function drawRaceStandings(){
@@ -5687,19 +5613,6 @@ function toggleRefTeamGames(safeTeam){
 
 function showRefDetail(name, refStats){
   // Could expand to show per-team stats for this ref
-}
-
-// Round label helper - QF/SF/F for playoff
-function getRoundLabel(m){
-  const phase = m.competitions?.[0]?.competitionPhaseName || '';
-  const round = m.round || 0;
-  if(phase === 'Četrtfinale') return 'QF · Tekma ' + round;
-  if(phase === 'Polfinale') return 'SF · Tekma ' + round;
-  if(phase === 'Finale') return 'F · Tekma ' + round;
-  if(phase === 'Osmina finala') return 'R16 · Tekma ' + round;
-  if(phase === 'Liga za obstanek') return 'Obst. · K' + round;
-  if(phase === 'Zaključni turnir') return 'ZT · K' + round;
-  return 'K' + round;
 }
 
 let agePhase = 'all';
