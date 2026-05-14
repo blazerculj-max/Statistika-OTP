@@ -766,19 +766,20 @@ select:focus{outline:none;border-color:var(--acc)}
   </div>
 
   <div id="tab-race" class="tab">
-    <div class="ctrls">
+    <div class="ctrls" style="flex-wrap:wrap;gap:8px">
       <div style="font-size:.8rem;color:var(--mut);font-family:var(--fm)">Gibanje ekip na lestvici po krogih — redni del</div>
+      <div id="race-group-btns" style="display:flex;gap:4px"></div>
     </div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <div id="race-standings" style="margin-bottom:16px"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
       <span style="font-size:.72rem;color:var(--mut);font-family:var(--fm)">K1</span>
       <input type="range" id="race-slider" min="1" max="30" value="1" step="1"
-        oninput="raceRound=parseInt(this.value);drawRaceChart();drawRaceStandings()"
+        oninput="raceRound=parseInt(this.value);updateRaceDots();drawRaceStandings()"
         style="flex:1;accent-color:var(--acc);cursor:pointer">
       <span id="race-round-lbl" style="font-family:var(--fh);font-size:.85rem;color:var(--acc);min-width:36px;text-align:right">K1</span>
     </div>
-    <div id="race-wrap" style="position:relative;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
+    <div id="race-wrap" style="position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
     </div>
-    <div id="race-standings" style="margin-top:8px"></div>
   </div>
   <div id="tab-mvp" class="tab">
     <div id="mvp-wrap"></div>
@@ -902,12 +903,33 @@ let currentLeague = 'liga1';
 function getLg() { return LEAGUES[currentLeague]; }
 
 const TEAM_COLORS = {
+  // 1. SKL
   'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
   'Laško':'#ef4444','Rogaška':'#a855f7',
   'Perspektiva Ilirija':'#ec4899','Ilirija':'#ec4899',
   'Šentjur':'#06b6d4','Terme Olimia Podčetrtek':'#f97316',
-  'Hopsi Polzela':'#22c55e','Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1'
+  'Hopsi Polzela':'#22c55e','Hopsi':'#22c55e','ECE Triglav Kranj':'#6366f1',
+  // 2. SKL
+  'Voga Grosuplje':'#f97316','Ipros Vrhnika':'#3b82f6','Celje':'#22c55e',
+  'Gorica':'#ef4444','Hidria':'#a855f7','Ježica':'#06b6d4',
+  'LTH Castings':'#f59e0b','Ljubljana':'#ec4899','Plama Pur Ilirska Bistrica':'#84cc16',
+  'Portorož':'#14b8a6','Postojna':'#fb923c','Slovan':'#6366f1',
+  // 3. SKL Vzhod
+  'Konjice':'#f97316','Branik Maribor':'#3b82f6','Bistrica Kety Emmi':'#22c55e',
+  'Innoduler Dravograd Koroška':'#ef4444','Vojnik G7':'#a855f7','Elektra Šoštanj':'#f59e0b',
+  'Hrastnik':'#06b6d4','Vrani Vransko':'#ec4899','Kovinarstvo Bučar Miklavž':'#84cc16',
+  'Nazarje':'#14b8a6',
+  // 3. SKL Zahod
+  'Leone Ajdovščina':'#f97316','Armicafe Troti':'#3b82f6','Cedevita Olimpija mladi':'#ef4444',
+  'Koper':'#22c55e','Mesarija Prunk Sežana':'#a855f7','Kolpa':'#f59e0b',
+  'Litija':'#06b6d4','Janče ECP Tactical':'#ec4899','Gorenja vas':'#84cc16','Tera Tolmin':'#14b8a6',
 };
+// Pridobi barvo ekipe (s fallback hash-based barvo za neznane ekipe)
+function getTeamColor(team){
+  if(TEAM_COLORS[team])return TEAM_COLORS[team];
+  let h=0;for(const c of team)h=(h*31+c.charCodeAt(0))&0xFFFFFF;
+  return `hsl(${h%360},60%,55%)`;
+}
 const TEAM_SHORT = {
   // 1. SKL
   'Krka':'KRK',
@@ -1391,12 +1413,25 @@ function aggregatePlayers(phaseFilter) {
 }
 
 function normalizeTeamName(n) {
-  // Normalize to canonical full names used in LEAGUES.teams
+  if(!n)return n;
   const map = {
     'Ilirija': 'Perspektiva Ilirija',
     'Hopsi': 'Hopsi Polzela',
     'Kansai Helios': 'Kansai Helios Domžale',
     'Calcit Volley Kamnik': 'Laško',
+    // 3. SKL variante
+    'Branik': 'Branik Maribor',
+    'Maribor': 'Branik Maribor',
+    'Dravograd': 'Innoduler Dravograd Koroška',
+    'Innoduler Dravograd': 'Innoduler Dravograd Koroška',
+    'Bistrica': 'Bistrica Kety Emmi',
+    'Kovinarstvo Miklavž': 'Kovinarstvo Bučar Miklavž',
+    'Cedevita mladi': 'Cedevita Olimpija mladi',
+    'Leone': 'Leone Ajdovščina',
+    'Armicafe': 'Armicafe Troti',
+    'Mesarija Sežana': 'Mesarija Prunk Sežana',
+    'Janče': 'Janče ECP Tactical',
+    'Tera': 'Tera Tolmin',
   };
   return map[n] || n;
 }
@@ -4362,12 +4397,20 @@ function renderMVP(){
 let raceRound = 0;
 let raceMaxRound = 0;
 let raceData = {};
+let raceGroup = null; // 'vzhod','zahod' za liga3, null = vse
 
-function buildRaceData() {
-  const rdMatches = allMatches
+function buildRaceData(group) {
+  let rdMatches = allMatches
     .filter(m => m.status === 'FINISHED' &&
       m.competitions?.[0]?.competitionPhaseName === 'Redni del')
     .sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+
+  // Za liga3: filtriraj po skupini (Vzhod/Zahod)
+  if(group === 'vzhod'){
+    rdMatches = rdMatches.filter(m => LIGA3_VZHOD.has(m.firstTeamName) && LIGA3_VZHOD.has(m.secondTeamName));
+  } else if(group === 'zahod'){
+    rdMatches = rdMatches.filter(m => LIGA3_ZAHOD.has(m.firstTeamName) && LIGA3_ZAHOD.has(m.secondTeamName));
+  }
 
   raceMaxRound = Math.max(...rdMatches.map(m => m.round), 0);
   raceData = {};
@@ -4400,9 +4443,9 @@ function drawRaceChart(){
 
   const teams=Object.keys(raceData);
   const nTeams=teams.length;
-  const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
   const slider=document.getElementById('race-slider');
   const lbl=document.getElementById('race-round-lbl');
+  const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
   if(slider){slider.max=raceMaxRound;slider.value=currentRound;}
   if(lbl)lbl.textContent='K'+currentRound;
 
@@ -4412,52 +4455,121 @@ function drawRaceChart(){
   const chartW=W-PAD.l-PAD.r;
   const chartH=H-PAD.t-PAD.b;
 
-  const xR=r=>PAD.l+(r-1)/(Math.max(currentRound-1,1))*chartW;
+  // X os VEDNO na raceMaxRound — chart je vedno cel
+  const xR=r=>PAD.l+(r-1)/(Math.max(raceMaxRound-1,1))*chartW;
   const yP=p=>PAD.t+(p-1)/(Math.max(nTeams-1,1))*chartH;
 
-  let lines='',dots='',labels='',grid='';
+  let lines='',grid='';
 
-  // Grid lines
-  for(let r=1;r<=currentRound;r++){
-    if(r===1||r%5===0||r===currentRound){
+  // Grid: vsi krogli (full chart)
+  for(let r=1;r<=raceMaxRound;r++){
+    if(r===1||r%5===0||r===raceMaxRound){
       const x=xR(r);
-      grid+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+chartH}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
-        <text x="${x}" y="${H-8}" text-anchor="middle" fill="rgba(255,255,255,.28)" font-size="10" font-family="Space Grotesk,sans-serif">K${r}</text>`;
+      const isCur=(r===currentRound);
+      grid+=`<line x1="${x}" y1="${PAD.t}" x2="${x}" y2="${PAD.t+chartH}"
+        stroke="${isCur?'rgba(249,115,22,.4)':'rgba(255,255,255,.05)'}" stroke-width="${isCur?2:1}"/>
+        <text x="${x}" y="${H-8}" text-anchor="middle"
+          fill="${isCur?'#f97316':'rgba(255,255,255,.28)'}"
+          font-size="${isCur?11:10}" font-weight="${isCur?700:400}"
+          font-family="Space Grotesk,sans-serif">K${r}</text>`;
     }
   }
-
-  // Team lines
-  teams.forEach(team=>{
-    const data=(raceData[team]||[]).filter(d=>d.round<=currentRound);
-    if(!data.length)return;
-    const color=TEAM_COLORS[team]||'#888';
-    const pts=data.map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
-    lines+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
-
-    // Dots at key points
-    data.forEach((d,i)=>{
-      if(i===data.length-1){
-        const x=xR(d.round),y=yP(d.pos);
-        dots+=`<circle cx="${x}" cy="${y}" r="5" fill="${color}"/>`;
-        labels+=`<text x="${x+10}" y="${y+4}" fill="${color}" font-size="11" font-family="Space Grotesk,sans-serif" font-weight="600">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
-      }
-    });
-  });
-
-  // Position labels on left
+  // Levi pozicijski labeli
   for(let p=1;p<=nTeams;p++){
     grid+=`<text x="${PAD.l-8}" y="${yP(p)+4}" text-anchor="end" fill="rgba(255,255,255,.2)" font-size="10" font-family="Space Grotesk,sans-serif">${p}</text>`;
   }
 
-  wrap.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
-    ${grid}${lines}${dots}${labels}
+  // Linije: CELOTNA historia vsake ekipe
+  teams.forEach(team=>{
+    const data=raceData[team]||[];
+    if(!data.length)return;
+    const color=getTeamColor(team);
+    const pts=data.map(d=>`${xR(d.round).toFixed(1)},${yP(d.pos).toFixed(1)}`).join(' ');
+    lines+=`<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>`;
+  });
+
+  wrap.innerHTML=`<svg id="race-svg" viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+    <g id="race-grid">${grid}</g>
+    <g id="race-lines">${lines}</g>
+    <g id="race-dots"></g>
+    <g id="race-labels"></g>
   </svg>`;
+
+  _updateRaceDotsInner(teams,nTeams,xR,yP,currentRound);
+}
+
+function updateRaceDots(){
+  const svg=document.getElementById('race-svg');
+  if(!svg){drawRaceChart();return;}
+  const lbl=document.getElementById('race-round-lbl');
+  if(lbl)lbl.textContent='K'+(raceRound||raceMaxRound);
+
+  const teams=Object.keys(raceData);
+  const nTeams=teams.length;
+  const vb=svg.viewBox.baseVal;
+  const W=vb.width||800, H=vb.height||400;
+  const PAD={l:32,r:110,t:20,b:28};
+  const chartW=W-PAD.l-PAD.r, chartH=H-PAD.t-PAD.b;
+  const xR=r=>PAD.l+(r-1)/(Math.max(raceMaxRound-1,1))*chartW;
+  const yP=p=>PAD.t+(p-1)/(Math.max(nTeams-1,1))*chartH;
+  const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
+
+  // Posodobi označevalnik kroga v gridu
+  const gridG=document.getElementById('race-grid');
+  if(gridG){
+    gridG.querySelectorAll('line').forEach(l=>{
+      const x=parseFloat(l.getAttribute('x1'));
+      const r=Math.round((x-PAD.l)/((Math.max(raceMaxRound-1,1))/chartW)+1);
+      const isCur=(r===currentRound);
+      l.setAttribute('stroke',isCur?'rgba(249,115,22,.4)':'rgba(255,255,255,.05)');
+      l.setAttribute('stroke-width',isCur?2:1);
+    });
+    gridG.querySelectorAll('text').forEach(t=>{
+      const x=parseFloat(t.getAttribute('x'));
+      const r=Math.round((x-PAD.l)/((Math.max(raceMaxRound-1,1))/chartW)+1);
+      const isCur=(r===currentRound);
+      t.setAttribute('fill',isCur?'#f97316':'rgba(255,255,255,.28)');
+      t.setAttribute('font-size',isCur?11:10);
+      t.setAttribute('font-weight',isCur?700:400);
+    });
+  }
+  _updateRaceDotsInner(teams,nTeams,xR,yP,currentRound);
+}
+
+function _updateRaceDotsInner(teams,nTeams,xR,yP,currentRound){
+  const dotsG=document.getElementById('race-dots');
+  const labelsG=document.getElementById('race-labels');
+  if(!dotsG||!labelsG)return;
+  let dots='',labels='';
+  teams.forEach(team=>{
+    const data=raceData[team]||[];
+    const d=data.find(x=>x.round===currentRound);
+    if(!d)return;
+    const color=getTeamColor(team);
+    const x=xR(currentRound),y=yP(d.pos);
+    dots+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="6" fill="${color}" stroke="#06060f" stroke-width="2"/>`;
+    labels+=`<text x="${(x+12).toFixed(1)}" y="${(y+4).toFixed(1)}" fill="${color}" font-size="11" font-family="Space Grotesk,sans-serif" font-weight="700">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+  });
+  dotsG.innerHTML=dots;
+  labelsG.innerHTML=labels;
 }
 
 function drawRaceStandings(){
   const wrap=document.getElementById('race-standings');
   if(!wrap||!Object.keys(raceData).length)return;
   const currentRound=Math.min(raceRound||raceMaxRound,raceMaxRound);
+  const prevRound=Math.max(1,currentRound-1);
+
+  // Pozicije za prejšnji krog → trend puščice
+  const prevPositions={};
+  if(prevRound<currentRound){
+    Object.entries(raceData).forEach(([team,data])=>{
+      const d=data.find(x=>x.round===prevRound);
+      if(d)prevPositions[team]=d.pos;
+    });
+  }
+
   const standings=[];
   Object.entries(raceData).forEach(([team,data])=>{
     const d=data.find(x=>x.round===currentRound);
@@ -4465,41 +4577,96 @@ function drawRaceStandings(){
   });
   standings.sort((a,b)=>a.pos-b.pos);
   const medals=['🥇','🥈','🥉'];
+
+  function trendBadge(team,pos){
+    if(prevRound>=currentRound||prevPositions[team]==null)
+      return '<span style="color:var(--mut);font-size:.8rem;min-width:28px;text-align:center;display:inline-block">—</span>';
+    const diff=prevPositions[team]-pos; // pozitivno = napredek
+    if(diff>0) return `<span style="color:#22c55e;font-size:.8rem;font-weight:700;min-width:28px;text-align:center;display:inline-block">▲${diff}</span>`;
+    if(diff<0) return `<span style="color:#ef4444;font-size:.8rem;font-weight:700;min-width:28px;text-align:center;display:inline-block">▼${Math.abs(diff)}</span>`;
+    return '<span style="color:var(--mut);font-size:.8rem;min-width:28px;text-align:center;display:inline-block">═</span>';
+  }
+
   const rows=standings.map((s,i)=>{
-    const tc=TEAM_COLORS[s.team]||'#888';
+    const tc=getTeamColor(s.team);
     const rdMs=allMatches.filter(m=>m.status==='FINISHED'&&m.round<=currentRound&&
       m.competitions?.[0]?.competitionPhaseName==='Redni del'&&
       (m.firstTeamName===s.team||m.secondTeamName===s.team));
     const W=rdMs.filter(m=>(m.firstTeamName===s.team&&m.firstTeamScore>m.secondTeamScore)||(m.secondTeamName===s.team&&m.secondTeamScore>m.firstTeamScore)).length;
-    return `<tr><td>${medals[i]||s.pos+'.'}</td>
-      <td style="color:${tc};font-weight:600">${s.team}</td>
-      <td>${rdMs.length}</td>
-      <td style="color:#22c55e;font-weight:600">${W}</td>
-      <td style="color:#ef4444">${rdMs.length-W}</td>
-      <td style="font-weight:700;color:var(--acc)">${s.pts}</td></tr>`;
+    const last5=rdMs.slice(-5).map(m=>{
+      const won=(m.firstTeamName===s.team&&m.firstTeamScore>m.secondTeamScore)||(m.secondTeamName===s.team&&m.secondTeamScore>m.firstTeamScore);
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:${won?'#22c55e':'#ef4444'};font-size:.55rem;font-weight:700;color:#fff">${won?'Z':'P'}</span>`;
+    }).join('');
+    return `<tr>
+      <td style="text-align:center;color:var(--mut)">${medals[i]||s.pos+'.'}</td>
+      <td style="color:${tc};font-weight:700;white-space:nowrap">${s.team}</td>
+      <td style="text-align:center">${rdMs.length}</td>
+      <td style="text-align:center;color:#22c55e;font-weight:700">${W}</td>
+      <td style="text-align:center;color:#ef4444">${rdMs.length-W}</td>
+      <td style="text-align:center;font-weight:700;color:var(--acc)">${s.pts}</td>
+      <td style="text-align:center">${trendBadge(s.team,s.pos)}</td>
+      <td style="text-align:center"><div style="display:flex;gap:2px;justify-content:center">${last5}</div></td>
+    </tr>`;
   }).join('');
-  wrap.innerHTML=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">LESTVICA — KROG ${currentRound}</div>
+
+  wrap.innerHTML=`
+    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">
+      LESTVICA — KROG ${currentRound}
+      ${currentRound>1?`<span style="font-size:.65rem;color:var(--mut);margin-left:8px">▲▼ vs krog ${prevRound}</span>`:''}
+    </div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)">
-      <table class="standings-table"><thead><tr>
-        <th>M</th><th>EKIPA</th><th>T</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th><th style="color:var(--acc)">TČ</th>
-      </tr></thead><tbody>${rows}</tbody></table>
+      <table class="standings-table">
+        <thead><tr>
+          <th>M</th><th style="text-align:left">EKIPA</th><th>T</th>
+          <th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th>
+          <th style="color:var(--acc)">TČ</th>
+          <th title="Sprememba mesta vs prejšnji krog">TREND</th>
+          <th>FORMA</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
     </div>`;
 }
 
 function initRaceChart(){
-  buildRaceData();
+  // Liga3: nastavi privzeto skupino in group buttons
+  const isLiga3=getLg().id===582;
+  const groupBtns=document.getElementById('race-group-btns');
+  if(groupBtns){
+    if(isLiga3){
+      if(!raceGroup)raceGroup='vzhod';
+      groupBtns.innerHTML=`
+        <button class="tb ${raceGroup==='vzhod'?'active':''}" onclick="setRaceGroup('vzhod')" style="font-size:.75rem">🔵 Vzhod</button>
+        <button class="tb ${raceGroup==='zahod'?'active':''}" onclick="setRaceGroup('zahod')" style="font-size:.75rem">🔴 Zahod</button>`;
+    } else {
+      raceGroup=null;
+      groupBtns.innerHTML='';
+    }
+  }
+  buildRaceData(raceGroup);
   raceRound=raceMaxRound;
   const slider=document.getElementById('race-slider');
   if(slider){slider.max=raceMaxRound;slider.value=raceMaxRound;}
   const lbl=document.getElementById('race-round-lbl');
   if(lbl)lbl.textContent='K'+raceMaxRound;
-  // Wait for tab to be visible before rendering chart
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      drawRaceChart();
-      drawRaceStandings();
-    });
-  });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    drawRaceChart();
+    drawRaceStandings();
+  }));
+}
+function setRaceGroup(g){
+  raceGroup=g;
+  // Posodobi gumbe
+  const btns=document.getElementById('race-group-btns');
+  if(btns)btns.querySelectorAll('.tb').forEach(b=>b.classList.toggle('active',b.textContent.includes(g==='vzhod'?'Vzhod':'Zahod')));
+  buildRaceData(g);
+  raceRound=raceMaxRound;
+  const slider=document.getElementById('race-slider');
+  if(slider){slider.max=raceMaxRound;slider.value=raceMaxRound;}
+  const lbl=document.getElementById('race-round-lbl');
+  if(lbl)lbl.textContent='K'+raceMaxRound;
+  drawRaceChart();
+  drawRaceStandings();
 }
 
 // ═══════════════════════════════════════════════════
@@ -4981,7 +5148,11 @@ function computeTeamAdvanced(){
 
   return Object.entries(teamRaw).map(([team,r])=>{
     if(r.games<3)return null;
-    const wl=wlMap[team]||{W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,ptsArr:[r.pts],G:r.games};
+    // Fuzzy lookup: poiščemo po exact, nato po normalizeTeamName, nato po začetku
+    const wl=wlMap[team]
+      ||wlMap[normalizeTeamName(team)]
+      ||Object.entries(wlMap).find(([k])=>k.startsWith(team)||team.startsWith(k))?.[1]
+      ||{W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,ptsArr:[r.pts],G:r.games};
     const G=wl.G||r.games;
     const poss=Math.max(r.fga+0.44*r.fta+r.tov-r.oreb,1);
     // Use actual match scores (100% accurate) as pts for ratings
@@ -5932,33 +6103,59 @@ function renderStandings(){
 
 function computePlayoffSeries(){
   const playoffPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  // Liga3: Osmina finala + Četrtfinale = aggregate (seštevek točk)
+  // Polfinale + Finale = best-of (zmage), tako za liga3 kot ostale
   const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
+  // Vključimo VSE tekme (FINISHED + SCHEDULED) da se finale prikaže
   allMatches.forEach(m=>{
-    if(m.status!=='FINISHED')return;
     const phase=m.competitions?.[0]?.competitionPhaseName||'';
     if(!playoffPhases.includes(phase))return;
     const a=m.firstTeamName,b=m.secondTeamName;
     const key=phase+'|'+[a,b].sort().join('|');
-    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],done:false,isAggregate:aggregatePhases.has(phase)};
-    const s=series[key];s.matches.push(m);
-    const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
-    if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
-    if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],finMatches:[],done:false,isAggregate:aggregatePhases.has(phase)};
+    const s=series[key];
+    s.matches.push(m);
+    // Samo zaključene tekme štejejo za rezultat
+    if(m.status==='FINISHED'){
+      s.finMatches.push(m);
+      const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
+      if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
+      if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    }
   });
   Object.values(series).forEach(s=>{
-    if(s.isAggregate){s.done=s.matches.length>=2;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;}
+    if(s.isAggregate){s.done=s.finMatches.length>=2;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;}
     else{s.done=s.w1>=2||s.w2>=2;s.winner=s.w1>=2?s.t1:s.w2>=2?s.t2:null;}
   });
   return Object.values(series);
 }
 
 function seriesCard(s){
-  const c1=TEAM_COLORS[s.t1]||'#888',c2=TEAM_COLORS[s.t2]||'#888';
+  const c1=getTeamColor(s.t1),c2=getTeamColor(s.t2);
   const w1=s.winner===s.t1,w2=s.winner===s.t2;
   const sc1=s.isAggregate?s.pts1:s.w1,sc2=s.isAggregate?s.pts2:s.w2;
-  return `<div class="bracket-series ${s.done?'done':''}">
-    ${s.isAggregate?'<div style="font-size:.55rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK</div>':''}
+  const safeKey=(s.phase+'_'+s.t1+'_'+s.t2).replace(/[^a-zA-Z0-9]/g,'_');
+  const finMs=s.finMatches||s.matches.filter(m=>m.status==='FINISHED');
+  const modeLabel=s.isAggregate?'🔢 SEŠTEVEK':'🏆 ZMAGE';
+  const matchDetails=finMs.length?finMs.map(m=>{
+    const isT1h=m.firstTeamName===s.t1;
+    const ms1=isT1h?m.firstTeamScore:m.secondTeamScore;
+    const ms2=isT1h?m.secondTeamScore:m.firstTeamScore;
+    const t1w=ms1>ms2;
+    const date=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+    return `<div onclick="openMatch(${m.id});event.stopPropagation()" style="display:flex;align-items:center;justify-content:space-between;padding:4px 10px;border-top:1px solid var(--border);cursor:pointer;font-size:.7rem" onmouseover="this.style.background='rgba(255,255,255,.04)'" onmouseout="this.style.background=''">
+      <span style="color:var(--mut)">${date}</span>
+      <span style="font-family:var(--fh)">
+        <span style="${t1w?'color:#22c55e;font-weight:700':'opacity:.5'}">${ms1}</span>
+        <span style="color:var(--mut);margin:0 3px">:</span>
+        <span style="${!t1w?'color:#22c55e;font-weight:700':'opacity:.5'}">${ms2}</span>
+      </span>
+      <span style="color:var(--mut);font-size:.6rem">→</span>
+    </div>`;
+  }).join(''):'<div style="padding:5px 10px;font-size:.65rem;color:var(--mut)">Ni odigranih tekem</div>';
+  return `<div class="bracket-series ${s.done?'done':s.matches.length&&!s.finMatches?.length?'pending':''}" style="cursor:pointer" onclick="toggleSeriesDetail('${safeKey}')">
+    <div style="font-size:.5rem;color:var(--mut);text-align:center;padding:1px 0;border-bottom:1px solid var(--border)">${modeLabel} · klikni za tekme</div>
     <div class="bracket-team ${w1?'winner':w2?'loser':''}">
       <span style="color:${c1};font-size:.75rem;font-weight:600">${s.t1}</span>
       <span style="font-family:var(--fh);color:${w1?'#22c55e':'var(--sub)'}">${sc1}</span>
@@ -5967,8 +6164,14 @@ function seriesCard(s){
       <span style="color:${c2};font-size:.75rem;font-weight:600">${s.t2}</span>
       <span style="font-family:var(--fh);color:${w2?'#22c55e':'var(--sub)'}">${sc2}</span>
     </div>
+    <div id="sd_${safeKey}" style="display:none">${matchDetails}</div>
   </div>`;
 }
+function toggleSeriesDetail(key){
+  const el=document.getElementById('sd_'+key);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+}
+
 
 function renderBracketHTML(byPhase,phaseColors){
   const phaseOrder=['Osmina finala','Četrtfinale','Polfinale','Finale'];
