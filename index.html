@@ -924,11 +924,10 @@ const LEAGUES = {
     name: '3. SKL',
     short: '3. SKL',
     color: '#a855f7',
-    statsUrl: GITHUB_RAW + '/liga3_stats.json',
+    statsUrl: null,  // liga3 vedno iz API (GitHub je zastarel za finale)
     pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
-    cacheStats: 'liga3_stats_v3',
+    cacheStats: 'liga3_stats_v4',
     cachePbp:   'liga3_pbp_v3',
-    // Redni del — client-side delimo v Vzhod/Zahod po znanih ekipah
     // phaseIds=null → fetchamo po straneh (zanesljivo dobi VSE tekme vklj. finale)
     phaseIds: null,
     groups: {}, // brez group filtra — client-side split
