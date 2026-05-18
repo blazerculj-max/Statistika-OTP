@@ -553,6 +553,15 @@ select:focus{outline:none;border-color:var(--acc)}
   <div class="hdr-right">
     <span class="hdr-season">SEZONA 2025/26</span>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="season-sel" onchange="switchSeason(parseInt(this.value))"
+        style="background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:5px 28px 5px 10px;border-radius:7px;font-family:var(--fs);font-size:.78rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 4px center;background-size:18px;min-height:36px">
+        <option value="26">2025/26 ★</option>
+        <option value="25">2024/25</option>
+        <option value="24">2023/24</option>
+        <option value="23">2022/23</option>
+        <option value="22">2021/22</option>
+        <option value="21">2020/21</option>
+      </select>
       <div class="tgl" style="margin-right:4px">
         <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')" style="min-height:36px;min-width:60px">1. SKL</button>
         <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')" style="min-height:36px;min-width:60px">2. SKL</button>
@@ -691,6 +700,24 @@ select:focus{outline:none;border-color:var(--acc)}
     <div style="margin-top:28px">
       <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">⚡ ELO RATING — MOČ EKIP</div>
       <div id="elo-wrap"></div>
+    </div>
+    <div style="margin-top:28px">
+      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">📅 PRIMERJAVA SEZON</div>
+      <div id="season-compare-wrap"><div class="empty" style="font-size:.78rem">Odpri Lestvico za primerjavo sezon</div></div>
+    </div>
+    <div style="margin-top:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+        <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut)">🎲 SCENARIJI — KAJ ŠE MORA BITI</div>
+        <div style="display:flex;gap:6px">
+          <div class="tgl" id="scen-mode-tgl">
+            <button class="tb active" id="scen-btn-mc" onclick="setScenMode('mc')">🎲 SIMULACIJA</button>
+            <button class="tb" id="scen-btn-magic" onclick="setScenMode('magic')">🔢 MAGIC #</button>
+            <button class="tb" id="scen-btn-interactive" onclick="setScenMode('interactive')">🖱️ INTERAKTIVNO</button>
+          </div>
+          <button onclick="runScenarios()" style="background:var(--acc);color:#fff;border:none;border-radius:7px;padding:6px 14px;cursor:pointer;font-family:var(--fh);font-size:.8rem">▶ Zaženi</button>
+        </div>
+      </div>
+      <div id="scen-wrap"><div class="empty" style="padding:40px">Klikni ▶ Zaženi za analizo scenarijev</div></div>
     </div>
   </div>
 
@@ -849,7 +876,22 @@ select:focus{outline:none;border-color:var(--acc)}
 const API = 'https://api.kzs.si/api/v1/public';
 const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
 const GITHUB_MAX_AGE = 6 * 3600 * 1000;
-const SEASON_ID = 26;
+const CURRENT_SEASON = 26;
+
+// Konfiguracija vseh sezon — competition IDji se spremenijo vsako sezono
+const SEASON_CONFIG = {
+  26: { sid:26, name:'2025/26', label:'Trenutna sezona', liga1:579, liga2:581, liga3:582 },
+  25: { sid:25, name:'2024/25', label:'',                liga1:524, liga2:522, liga3:523 },
+  24: { sid:24, name:'2023/24', label:'',                liga1:478, liga2:480, liga3:481 },
+  23: { sid:23, name:'2022/23', label:'',                liga1:443, liga2:445, liga3:446 },
+  22: { sid:22, name:'2021/22', label:'',                liga1:410, liga2:412, liga3:null },
+  21: { sid:21, name:'2020/21', label:'',                liga1:375, liga2:377, liga3:null },
+};
+
+let currentSeason = CURRENT_SEASON; // aktivna sezona
+function getSeasonCfg(){ return SEASON_CONFIG[currentSeason]||SEASON_CONFIG[CURRENT_SEASON]; }
+function getSeasonId(){ return getSeasonCfg().sid; }
+function isCurrentSeason(){ return currentSeason===CURRENT_SEASON; }
 
 const LEAGUES = {
   'liga1': {
@@ -884,12 +926,11 @@ const LEAGUES = {
     color: '#a855f7',
     statsUrl: GITHUB_RAW + '/liga3_stats.json',
     pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
-    cacheStats: 'liga3_stats_v1',
-    cachePbp:   'liga3_pbp_v1',
-    // Redni del — brez group filtra (paginacija ne dela z group filtrom)
-    // Client-side delimo v Vzhod/Zahod po znanih ekipah
-    // Playoff 3. SKL še ni v API-ju
-    phaseIds: [5814, 5868, 5869, 5878, 5884],
+    cacheStats: 'liga3_stats_v3',
+    cachePbp:   'liga3_pbp_v3',
+    // Redni del — client-side delimo v Vzhod/Zahod po znanih ekipah
+    // phaseIds=null → fetchamo po straneh (zanesljivo dobi VSE tekme vklj. finale)
+    phaseIds: null,
     groups: {}, // brez group filtra — client-side split
     teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
@@ -900,7 +941,25 @@ const LEAGUES = {
 };
 
 let currentLeague = 'liga1';
-function getLg() { return LEAGUES[currentLeague]; }
+function getLg() {
+  const cfg = getSeasonCfg();
+  const lg = LEAGUES[currentLeague];
+  if(!lg) return LEAGUES['liga1'];
+  // Za zgodovinske sezone zamenjamo competition ID
+  const histId = cfg[currentLeague]; // npr. cfg.liga1 = 524
+  if(histId && histId !== lg.id) {
+    return {
+      ...lg,
+      id: histId,
+      cacheStats: currentLeague+'_s'+currentSeason+'_v3',
+      cachePbp:   currentLeague+'_s'+currentSeason+'_pbp_v1',
+      // GitHub ima samo trenutno sezono
+      statsUrl: isCurrentSeason() ? lg.statsUrl : null,
+      pbpUrl:   isCurrentSeason() ? lg.pbpUrl   : null,
+    };
+  }
+  return {...lg, cacheStats: currentLeague+'_s'+currentSeason+'_v3'};
+}
 
 const TEAM_COLORS = {
   // 1. SKL
@@ -1144,6 +1203,10 @@ function updateHeader() {
     badge.textContent = l.name;
     badge.style.background = l.color;
   }
+  const seasonEl = document.querySelector('.hdr-season');
+  if(seasonEl) seasonEl.textContent = 'SEZONA ' + (getSeasonCfg()?.name||'2025/26');
+  const seasonSel = document.getElementById('season-sel');
+  if(seasonSel) seasonSel.value = currentSeason;
   Object.keys(LEAGUES).forEach(k => {
     const btn = document.getElementById('lg-btn-' + k);
     if (btn) btn.classList.toggle('active', k === currentLeague);
@@ -1159,7 +1222,7 @@ async function switchLeague(lg) {
   // Reset state
   P = []; allMatches = []; matchStatsCache = {}; pbpData = {};
   pbpLoaded = false; nerdStats = null; _leaguePlayers = null; _tmAgg = {};
-  sortCol = -1;
+  sortCol = -1; raceGroup = null; _eloRatings = null; playerGameLog = {};
   // Show loading and reload
   document.getElementById('loading-overlay').style.display = 'flex';
   document.getElementById('load-bar').style.width = '0%';
@@ -1198,9 +1261,11 @@ async function loadAllData() {
       return;
     }
 
-    // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
+    // ── 2. Poskusi GitHub (samo za trenutno sezono) ──
     setProgress(10, '🐙 Nalagam iz GitHub...');
-    try {
+    if(!isCurrentSeason() || !getLg().statsUrl) {
+      setProgress(15, '📅 Zgodovinska sezona — nalagam iz API...');
+    } else try {
       const ghRes = await fetch(getLg().statsUrl + '?t=' + Date.now());
       if (ghRes.ok) {
         const ghData = await ghRes.json();
@@ -1242,33 +1307,38 @@ async function loadAllData() {
       for(let i=0; i<phaseIds.length; i++) {
         const pid = phaseIds[i];
         // Fetch page 1
-        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
+        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${getSeasonId()}&competitionPhaseId=${pid}`);
         const data = await res.json();
         const items1 = data.data?.items || [];
         allItems = allItems.concat(items1);
         // If 150 items, fetch page 2 (polfinale has overflow)
         if(items1.length >= 150) {
-          const res2 = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}&page=2`);
+          const res2 = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${getSeasonId()}&competitionPhaseId=${pid}&page=2`);
           const data2 = await res2.json();
           allItems = allItems.concat(data2.data?.items || []);
         }
         setProgress(16 + Math.round((i+1)/phaseIds.length*10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
       }
     } else {
-      // Liga2 + Liga3: phase filter pokvarjen — fetchamo po straneh
+      // Liga3: phase filter ne deluje zanesljivo — fetchamo po straneh
       const knownTeams = isLiga2 ? LIGA2_TEAMS : new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
+      const playoffNames = new Set(['Osmina finala','Četrtfinale','Polfinale','Finale']);
       let page = 1;
-      const maxPages = isLiga2 ? 2 : 2; // API returns duplicates on page 3+
+      const maxPages = isLiga2 ? 2 : 5; // liga3 ima več tekem + playoff
       while(page <= maxPages) {
-        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&page=${page}`);
+        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${getSeasonId()}&page=${page}`);
         const data = await res.json();
         const items = data.data?.items || [];
         if(!items.length) break;
         allItems = allItems.concat(items);
         setProgress(17 + page*4, `Nalagam tekme... stran ${page} (${allItems.length})`);
         if(items.length < 150) break;
-        // Stop if no known teams on this page
-        if(!items.some(m => knownTeams.has(m.firstTeamName))) break;
+        // Nadaljuj samo če so znane ekipe ali playoff tekme
+        const hasRelevant = items.some(m =>
+          knownTeams.has(m.firstTeamName) ||
+          playoffNames.has(m.competitions?.[0]?.competitionPhaseName||'')
+        );
+        if(!hasRelevant) break;
         page++;
       }
     }
@@ -1276,9 +1346,14 @@ async function loadAllData() {
     // Filter by known teams (liga2 + liga3)
     if(isLiga3) {
       const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
-      allItems = allItems.filter(m =>
-        liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
-      );
+      // Playoff tekme (Osmina finala, Četrtfinale, Polfinale, Finale) obdržimo VEDNO
+      // — ne filtriramo po imenih, ker so te ekipe že prišle skozi redni del
+      const playoffPhaseNames = new Set(['Osmina finala','Četrtfinale','Polfinale','Finale']);
+      allItems = allItems.filter(m => {
+        const phase = m.competitions?.[0]?.competitionPhaseName || '';
+        if(playoffPhaseNames.has(phase)) return true;
+        return liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName);
+      });
     }
 
     // Deduplicate by match ID (API returns duplicates on later pages)
@@ -1683,7 +1758,11 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
-  if(t==='lestvica'){renderStandings();renderEloTable();}
+  if(t==='lestvica'){
+    renderStandings();renderEloTable();scenMode='mc';
+    const scw=document.getElementById('season-compare-wrap');
+    if(scw)renderSeasonCompare(scw);
+  }
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
   if(t==='mvp')renderMVP();
@@ -2784,6 +2863,7 @@ function showPlayer(idx){
     </div>
   </div>`;
   window._currentPid = p[F.pid];
+  setTimeout(()=>loadPlayerCareer(),100);
 }
 
 async function loadPlayerCareer() {
@@ -5865,6 +5945,506 @@ function initHeroCanvas(){
     requestAnimationFrame(draw);
   }
   draw();
+}
+
+// ═══════════════════════════════════════════════════
+// MULTI-SEZONA — SWITCH + PRIMERJAVA
+// ═══════════════════════════════════════════════════
+async function switchSeason(sid){
+  if(currentSeason===sid)return;
+  // Preveri ali ima izbrana liga podatke za to sezono
+  const cfg=SEASON_CONFIG[sid];
+  if(!cfg){alert('Sezona ni na voljo.');return;}
+  if(!cfg[currentLeague]){
+    // Preklopi na ligo1 če izbrana liga nima podatkov
+    currentLeague='liga1';
+  }
+  currentSeason=sid;
+  // Reset state
+  P=[];allMatches=[];matchStatsCache={};pbpData={};
+  pbpLoaded=false;nerdStats=null;_leaguePlayers=null;_tmAgg={};
+  sortCol=-1;raceGroup=null;_eloRatings=null;playerGameLog={};
+  updateHeader();
+  // Histor. sezone ne morejo imeti live — skrij live badge
+  const badge=document.getElementById('live-badge');
+  if(badge&&!isCurrentSeason())badge.style.display='none';
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('load-bar').style.width='0%';
+  document.getElementById('load-detail').textContent='Nalagam sezono '+cfg.name+'...';
+  await loadAllData();
+  showTabDirect('ekipe');
+  updateSeasonCompareUI();
+}
+
+// ── Sezona primerjava — naloži stats za dve sezoni in prikaži ──
+let _seasonCompareData = {}; // sid → {allMatches, matchStatsCache}
+
+async function loadSeasonForCompare(sid){
+  if(_seasonCompareData[sid])return _seasonCompareData[sid];
+  const cfg=SEASON_CONFIG[sid];
+  const lgKey=currentLeague;
+  const lgId=cfg[lgKey];
+  if(!lgId)return null;
+  const cacheKey=lgKey+'_s'+sid+'_v3';
+  const cached=cacheGet(cacheKey,TTL_STATS*30); // dlje cache za arhivske sezone
+  if(cached){_seasonCompareData[sid]=cached;return cached;}
+  // Fetch iz API
+  const res=await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${sid}`);
+  const data=await res.json();
+  let items=data.data?.items||[];
+  const seen=new Set();
+  items=items.filter(m=>{if(seen.has(m.id))return false;seen.add(m.id);return true;});
+  const finished=items.filter(m=>m.status==='FINISHED');
+  const statsCache={};
+  // Batch fetch stats (max 20 tekem za hitrost)
+  const sample=finished.slice(0,40);
+  await Promise.all(sample.map(async m=>{
+    try{const r=await fetch(`${API}/matches/${m.id}/stats`);const d=await r.json();statsCache[m.id]=d.data;}catch(e){}
+  }));
+  const result={allMatches:items,matchStatsCache:statsCache};
+  cacheSet(cacheKey,result);
+  _seasonCompareData[sid]=result;
+  return result;
+}
+
+function updateSeasonCompareUI(){
+  // Sezona primerjava se renders ko je v Lestvica tabu
+  const wrap=document.getElementById('season-compare-wrap');
+  if(wrap)renderSeasonCompare(wrap);
+}
+
+async function renderSeasonCompare(wrap){
+  wrap.innerHTML='<div class="empty">⏳ Nalagam primerjavo sezon...</div>';
+  const cfg=getSeasonCfg();
+  const lgKey=currentLeague;
+
+  // Prikaži zadnje 3 razpoložljive sezone za ta liga
+  const availSids=Object.keys(SEASON_CONFIG)
+    .map(Number).filter(s=>SEASON_CONFIG[s][lgKey])
+    .sort((a,b)=>b-a).slice(0,4);
+
+  if(availSids.length<2){wrap.innerHTML='<div class="empty">Ni dovolj sezon za primerjavo</div>';return;}
+
+  // Za vsako sezono pridobi osnovne stats
+  const seasonStats=await Promise.all(availSids.map(async sid=>{
+    // Za trenutno sezono използи že naložene podatke
+    if(sid===currentSeason&&P.length){
+      const cur=getCurrentRdStandings();
+      const topPts=Math.max(...cur.map(t=>t.ptsFor/Math.max(t.T,1)),0);
+      const topDef=Math.min(...cur.filter(t=>t.T>0).map(t=>t.ptsAga/t.T),99);
+      const avgPts=cur.reduce((s,t)=>s+t.ptsFor/Math.max(t.T,1),0)/Math.max(cur.length,1);
+      const homeWins=allMatches.filter(m=>m.status==='FINISHED'&&m.firstTeamScore>m.secondTeamScore).length;
+      const totalFin=allMatches.filter(m=>m.status==='FINISHED').length;
+      const topScorer=getLeaguePlayers().filter(p=>p[F.T]>=5)
+        .sort((a,b)=>b[F.toc]/b[F.T]-a[F.toc]/a[F.T])[0];
+      return{sid,name:SEASON_NAMES[sid]||sid,avgPts:avgPts.toFixed(1),homeWinPct:Math.round(homeWins/Math.max(totalFin,1)*100),topScorer:topScorer?topScorer[F.name]:'-',topScorerPts:topScorer?(topScorer[F.toc]/topScorer[F.T]).toFixed(1):'-',teams:cur.length};
+    }
+    // Za zgodovinske sezone — samo osnovni match podatki (brez stats za hitrost)
+    const d=await loadSeasonForCompare(sid);
+    if(!d)return null;
+    const finished=d.allMatches.filter(m=>m.status==='FINISHED');
+    const homeWins=finished.filter(m=>m.firstTeamScore>m.secondTeamScore).length;
+    const teams=[...new Set(finished.flatMap(m=>[m.firstTeamName,m.secondTeamName]))];
+    const avgPts=finished.length?
+      finished.reduce((s,m)=>s+(m.firstTeamScore+m.secondTeamScore)/2,0)/finished.length:0;
+    return{sid,name:SEASON_NAMES[sid]||sid,avgPts:avgPts.toFixed(1),homeWinPct:Math.round(homeWins/Math.max(finished.length,1)*100),topScorer:'—',topScorerPts:'—',teams:teams.length,matches:finished.length};
+  }));
+
+  const valid=seasonStats.filter(Boolean);
+  const lg=getLg();
+
+  // Karte po sezonah
+  const cards=valid.map(s=>{
+    const isCur=s.sid===currentSeason;
+    return `<div style="background:var(--card);border:2px solid ${isCur?lg.color:'var(--border)'};border-radius:12px;padding:14px 16px;${isCur?'box-shadow:0 0 20px '+lg.color+'22':''}" onclick="if(${s.sid}!==${currentSeason})switchSeason(${s.sid})" style="cursor:${isCur?'default':'pointer'}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--fh);font-size:1.1rem;color:${isCur?lg.color:'var(--text)'}">${s.name}</div>
+        ${isCur?`<span style="background:${lg.color};color:#fff;font-size:.6rem;padding:2px 8px;border-radius:10px;font-family:var(--fm);font-weight:700">AKTIVNA</span>`:`<span style="font-size:.65rem;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="switchSeason(${s.sid})">Naloži →</span>`}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center">
+          <div style="font-family:var(--fh);font-size:1.1rem">${s.avgPts}</div>
+          <div style="font-size:.6rem;color:var(--mut)">TOČ/tekmo avg</div>
+        </div>
+        <div style="background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center">
+          <div style="font-family:var(--fh);font-size:1.1rem;color:#22c55e">${s.homeWinPct}%</div>
+          <div style="font-size:.6rem;color:var(--mut)">Domači zmagajo</div>
+        </div>
+        <div style="background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center">
+          <div style="font-family:var(--fh);font-size:1rem">${s.teams}</div>
+          <div style="font-size:.6rem;color:var(--mut)">Ekip</div>
+        </div>
+        <div style="background:var(--card2);border-radius:6px;padding:8px 10px;text-align:center">
+          <div style="font-size:.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.topScorer}</div>
+          <div style="font-size:.6rem;color:var(--mut)">${s.topScorerPts} pts/tm</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="font-size:.72rem;color:var(--mut);margin-bottom:12px">
+      Klikni na sezono za nalaganje · prikazane so zadnje ${valid.length} sezone za ${lg.name}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${cards}</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// SCENARIJI — SIMULACIJA / MAGIC NUMBER / INTERAKTIVNO
+// ═══════════════════════════════════════════════════
+let scenMode = 'mc';
+let _scenInteractiveResults = {}; // matchId → 'home'|'away'
+
+function setScenMode(m){
+  scenMode=m;
+  ['mc','magic','interactive'].forEach(x=>{
+    const b=document.getElementById('scen-btn-'+x);
+    if(b)b.classList.toggle('active',x===m);
+  });
+}
+
+function runScenarios(){
+  const wrap=document.getElementById('scen-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="empty" style="padding:30px">⏳ Računam...</div>';
+  setTimeout(()=>{
+    if(scenMode==='mc') renderMonteCarlo(wrap);
+    else if(scenMode==='magic') renderMagicNumbers(wrap);
+    else renderInteractiveScenario(wrap);
+  },30);
+}
+
+// ── Skupna osnova ──
+function getRemainingRd(){
+  return allMatches.filter(m=>
+    m.status!=='FINISHED'&&
+    m.competitions?.[0]?.competitionPhaseName==='Redni del'
+  ).sort((a,b)=>a.round-b.round);
+}
+function getCurrentRdStandings(){
+  const fin=allMatches.filter(m=>
+    m.status==='FINISHED'&&
+    m.competitions?.[0]?.competitionPhaseName==='Redni del'
+  );
+  return computeTeamStats(fin,'Redni del').sort((a,b)=>(b.W*2+b.L)-(a.W*2+a.L)||b.W-a.W);
+}
+function getFinalStandings(curMap, extraMatches){
+  const s={};
+  Object.entries(curMap).forEach(([t,d])=>s[t]={...d});
+  extraMatches.forEach(m=>{
+    const t1=m.firstTeamName,t2=m.secondTeamName;
+    if(!s[t1])s[t1]={W:0,L:0,ptsFor:0,ptsAga:0};
+    if(!s[t2])s[t2]={W:0,L:0,ptsFor:0,ptsAga:0};
+    const sc1=m.firstTeamScore||75,sc2=m.secondTeamScore||73;
+    if(sc1>sc2){s[t1].W++;s[t2].L++;}else{s[t2].W++;s[t1].L++;}
+    s[t1].ptsFor+=sc1;s[t1].ptsAga+=sc2;
+    s[t2].ptsFor+=sc2;s[t2].ptsAga+=sc1;
+  });
+  return Object.entries(s).map(([name,d])=>({name,...d}))
+    .sort((a,b)=>(b.W*2+b.L)-(a.W*2+a.L)||b.W-a.W);
+}
+
+// ── MONTE CARLO ──
+function renderMonteCarlo(wrap){
+  const remaining=getRemainingRd();
+  const curStandings=getCurrentRdStandings();
+  if(!remaining.length){
+    wrap.innerHTML=`<div class="empty">Vsi redni del tekme so zaključene.</div>`;
+    return;
+  }
+  const {ratings}=computeElo();
+  const N=40000;
+  const teams=curStandings.map(t=>t.name);
+  // posCounts[team][position] = število simulacij
+  const posCounts={};
+  teams.forEach(t=>posCounts[t]={});
+  // Current base map
+  const baseMap={};
+  curStandings.forEach(t=>baseMap[t.name]={W:t.W,L:t.L,ptsFor:t.ptsFor||0,ptsAga:t.ptsAga||0});
+
+  for(let i=0;i<N;i++){
+    const simMatches=remaining.map(m=>{
+      const r1=ratings[m.firstTeamName]||1500,r2=ratings[m.secondTeamName]||1500;
+      const p1=1/(1+Math.pow(10,(r2-r1)/400));
+      const homeWins=Math.random()<p1;
+      return{...m,firstTeamScore:homeWins?85:78,secondTeamScore:homeWins?78:85,status:'FINISHED'};
+    });
+    const final=getFinalStandings(baseMap,simMatches);
+    final.forEach(({name},pos)=>{
+      posCounts[name][pos+1]=(posCounts[name][pos+1]||0)+1;
+    });
+  }
+
+  // Playoff cutoff — top 4 (ali 8 za 3. SKL)
+  const cutoff=getLg().id===582?5:5; // top 4 = playoff
+  const nTeams=teams.length;
+
+  // Tabela
+  const posHeaders=Array.from({length:Math.min(nTeams,8)},(_,i)=>`<th style="text-align:center;min-width:44px">${i+1}.</th>`).join('');
+
+  const rows=teams.map(team=>{
+    const tc=getTeamColor(team);
+    const cur=curStandings.find(t=>t.name===team);
+    const playoffPct=Math.round(
+      Object.entries(posCounts[team]||{})
+        .filter(([pos])=>parseInt(pos)<cutoff)
+        .reduce((s,[,c])=>s+c,0)/N*100
+    );
+    const pctColor=playoffPct>=80?'#22c55e':playoffPct>=40?'#facc15':playoffPct>=10?'#f97316':'#ef4444';
+    const posCells=Array.from({length:Math.min(nTeams,8)},(_,i)=>{
+      const pos=i+1;
+      const pct=Math.round((posCounts[team][pos]||0)/N*100);
+      const bg=pct>=50?'rgba(34,197,94,.2)':pct>=20?'rgba(250,204,21,.15)':pct>=5?'rgba(249,115,22,.1)':'';
+      return `<td style="text-align:center;background:${bg};font-family:var(--fm);font-size:.78rem;color:${pct>=20?'var(--text)':'var(--mut)'}">${pct?pct+'%':'—'}</td>`;
+    }).join('');
+    return `<tr>
+      <td style="color:${tc};font-weight:600;white-space:nowrap">${team}</td>
+      <td style="text-align:center;color:var(--mut)">${(cur?.W||0)*2+(cur?.L||0)}</td>
+      <td style="text-align:center;font-weight:700;color:${pctColor}">${playoffPct}%</td>
+      ${posCells}
+    </tr>`;
+  }).join('');
+
+  // "Kaj mora narediti" kartica za vsako ekipo
+  const summaryCards=teams.map(team=>{
+    const tc=getTeamColor(team);
+    const playoffPct=Math.round(
+      Object.entries(posCounts[team]||{})
+        .filter(([pos])=>parseInt(pos)<cutoff)
+        .reduce((s,[,c])=>s+c,0)/N*100
+    );
+    const mostLikelyPos=Object.entries(posCounts[team]||{})
+      .sort((a,b)=>b[1]-a[1])[0];
+    const ml=mostLikelyPos?parseInt(mostLikelyPos[0]):null;
+    const mlPct=mostLikelyPos?Math.round(mostLikelyPos[1]/N*100):0;
+    const eliminated=playoffPct===0&&ml>4;
+    const qualified=playoffPct>=99;
+    const badge=qualified
+      ?`<span style="background:#22c55e22;color:#22c55e;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700">✓ ZAGOTOVLJENO</span>`
+      :eliminated
+      ?`<span style="background:#ef444422;color:#ef4444;padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700">✗ IZPADLO</span>`
+      :`<span style="background:${tc}22;color:${tc};padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700">${playoffPct}% možnosti</span>`;
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:10px;padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-weight:700;color:${tc}">${team}</span>${badge}
+      </div>
+      <div style="font-size:.75rem;color:var(--mut)">
+        Najpogosteje konča na <b style="color:var(--text)">${ml}. mestu</b> (${mlPct}% simulacij)
+      </div>
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.75rem;color:var(--mut)">
+      🎲 Monte Carlo — ${N.toLocaleString()} simulacij, ELO-utežene verjetnosti · ${remaining.length} preostalih tekem
+    </div>
+    <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:20px">
+      <table class="standings-table">
+        <thead><tr>
+          <th style="text-align:left">EKIPA</th>
+          <th style="text-align:center">TČ zdaj</th>
+          <th style="text-align:center;color:#22c55e">KONČNICA%</th>
+          ${posHeaders}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div style="font-family:var(--fh);font-size:.72rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px">POVZETEK PO EKIPAH</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px">${summaryCards}</div>`;
+}
+
+// ── MAGIC NUMBERS ──
+function renderMagicNumbers(wrap){
+  const remaining=getRemainingRd();
+  const cur=getCurrentRdStandings();
+  if(!remaining.length){wrap.innerHTML='<div class="empty">Sezona zaključena.</div>';return;}
+
+  const nTeams=cur.length;
+  // Playoff meja — top 4 (prilagodi za ligo)
+  const playoffSpots=4;
+  const bubbleTeams=cur.filter((_,i)=>i>=playoffSpots-2&&i<=playoffSpots+1);
+
+  // Za vsako ekipo: max možne točke (zmaga vseh preostalih)
+  function maxPts(team){
+    const t=cur.find(x=>x.name===team);if(!t)return 0;
+    const remWins=remaining.filter(m=>m.firstTeamName===team||m.secondTeamName===team).length;
+    return t.W*2+t.L+remWins*2;
+  }
+  // Min možne točke (izguba vseh preostalih)
+  function minPts(team){
+    const t=cur.find(x=>x.name===team);if(!t)return 0;
+    const remGs=remaining.filter(m=>m.firstTeamName===team||m.secondTeamName===team).length;
+    return t.W*2+t.L+remGs; // vsaka tekma da vsaj 1 točko (poraz)
+  }
+  // Magic number za pozicijo: koliko zmag potrebuješ + koliko izgub tekmec
+  function magicNum(team,targetPos){
+    const t=cur.find(x=>x.name===team);if(!t)return null;
+    // Ekipa na targetPos (naslednja neposredno za ciljnim mestom)
+    const competitor=cur[targetPos];if(!competitor)return 0;
+    const myPts=t.W*2+t.L;
+    const compMaxPts=maxPts(competitor.name);
+    const needed=compMaxPts-myPts+1;
+    return Math.max(0,needed);
+  }
+
+  const colors=['#22c55e','#84cc16','#f97316','#60a5fa'];
+  const spotLabels=['1. mesto','2. mesto','3. mesto','4. mesto (zadnje v končnico)'];
+
+  const cards=cur.slice(0,Math.min(playoffSpots+3,nTeams)).map((team,i)=>{
+    const tc=getTeamColor(team.name);
+    const pts=team.W*2+team.L;
+    const remGs=remaining.filter(m=>m.firstTeamName===team.name||m.secondTeamName===team.name).length;
+    const maxP=maxPts(team.name);
+    const isIn=i<playoffSpots;
+    const isBubble=!isIn&&i<playoffSpots+2;
+
+    // Magic numbers za relevantna mesta
+    const magics=[];
+    if(i>0) magics.push({lbl:`zagotovi #${i}`,val:magicNum(team.name,i-1),desc:'za eno mesto višje'});
+    if(isIn) magics.push({lbl:`obdrži #${playoffSpots}`,val:magicNum(team.name,playoffSpots),desc:'ostati v končnici'});
+    if(!isIn) magics.push({lbl:`vstop v končnico`,val:magicNum(team.name,playoffSpots-1),desc:`priti na ${playoffSpots}. mesto`});
+
+    // Eliminiran?
+    const eliminatedFromPlayoff=maxP<(cur[playoffSpots-1]?.W*2+cur[playoffSpots-1]?.L||0);
+    const secured=isIn&&minPts(team.name)>(maxPts(cur[playoffSpots]?.name)||0);
+
+    const statusBadge=secured
+      ?`<span style="background:#22c55e22;color:#22c55e;font-size:.6rem;padding:2px 8px;border-radius:10px;font-weight:700">✓ ZAGOTOVLJENO</span>`
+      :eliminatedFromPlayoff&&!isIn
+      ?`<span style="background:#ef444422;color:#ef4444;font-size:.6rem;padding:2px 8px;border-radius:10px;font-weight:700">✗ IZPADLO</span>`
+      :`<span style="background:${isIn?'#22c55e':'#f97316'}22;color:${isIn?'#22c55e':'#f97316'};font-size:.6rem;padding:2px 8px;border-radius:10px;font-weight:700">${isIn?'V KONČNICI':'IZVEN'}</span>`;
+
+    const magicRows=magics.map(mg=>mg.val===null?'':
+      mg.val===0
+      ?`<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:.75rem"><span style="color:var(--mut)">${mg.lbl}</span><span style="color:#22c55e;font-weight:700">✓ Doseženo</span></div>`
+      :`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid var(--border)">
+          <span style="font-size:.72rem;color:var(--mut)">${mg.lbl}</span>
+          <div style="text-align:right">
+            <div style="font-family:var(--fh);font-size:1.4rem;color:${tc};line-height:1">${mg.val}</div>
+            <div style="font-size:.6rem;color:var(--mut)">${mg.desc}</div>
+          </div>
+        </div>`
+    ).join('');
+
+    return `<div style="background:var(--card);border:1px solid ${isIn?tc+'40':isBubble?'rgba(249,115,22,.3)':'var(--border)'};border-left:4px solid ${tc};border-radius:12px;padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <span style="font-size:.65rem;color:var(--mut)">${i+1}. mesto</span>
+          <div style="font-weight:700;color:${tc};font-size:.95rem">${team.name}</div>
+        </div>
+        ${statusBadge}
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:8px">
+        <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.1rem">${pts}</div><div style="font-size:.6rem;color:var(--mut)">TČ zdaj</div></div>
+        <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.1rem">${maxP}</div><div style="font-size:.6rem;color:var(--mut)">Maks. možno</div></div>
+        <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.1rem">${remGs}</div><div style="font-size:.6rem;color:var(--mut)">Preostale</div></div>
+      </div>
+      ${magicRows}
+    </div>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:.75rem;color:var(--mut)">
+      🔢 Magic number = koliko točk mora ekipa zbrati preden tekmec matematično ne more več prehiteti · ${remaining.length} preostalih tekem
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">${cards}</div>`;
+}
+
+// ── INTERAKTIVNO ──
+function renderInteractiveScenario(wrap){
+  const remaining=getRemainingRd();
+  const cur=getCurrentRdStandings();
+  if(!remaining.length){wrap.innerHTML='<div class="empty">Vsi tekme so zaključene.</div>';return;}
+
+  // Skupiraj po krogih
+  const byRound={};
+  remaining.forEach(m=>{
+    if(!byRound[m.round])byRound[m.round]=[];
+    byRound[m.round].push(m);
+  });
+
+  // Izpiši tekme za izbiro + živo lestvico
+  const matchCards=Object.entries(byRound).sort((a,b)=>a[0]-b[0]).map(([r,ms])=>{
+    const cards=ms.map(m=>{
+      const c1=getTeamColor(m.firstTeamName),c2=getTeamColor(m.secondTeamName);
+      const sel=_scenInteractiveResults[m.id];
+      return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <button onclick="setInterMatch(${m.id},'home');event.stopPropagation()"
+          style="flex:1;min-width:80px;padding:5px 8px;border-radius:6px;border:2px solid ${sel==='home'?c1:'var(--border)'};background:${sel==='home'?c1+'22':'transparent'};color:${sel==='home'?c1:'var(--sub)'};font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center">
+          ${m.firstTeamName.split(' ').slice(-1)[0]}
+        </button>
+        <span style="color:var(--mut);font-size:.7rem;font-family:var(--fm);flex-shrink:0">vs</span>
+        <button onclick="setInterMatch(${m.id},'away');event.stopPropagation()"
+          style="flex:1;min-width:80px;padding:5px 8px;border-radius:6px;border:2px solid ${sel==='away'?c2:'var(--border)'};background:${sel==='away'?c2+'22':'transparent'};color:${sel==='away'?c2:'var(--sub)'};font-size:.75rem;font-weight:700;cursor:pointer;transition:all .15s;text-align:center">
+          ${m.secondTeamName.split(' ').slice(-1)[0]}
+        </button>
+        ${sel?'':`<span style="font-size:.6rem;color:var(--mut);width:100%;text-align:center">klikni zmagovalca</span>`}
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:12px">
+      <div style="font-size:.65rem;color:var(--mut);font-family:var(--fm);margin-bottom:6px;letter-spacing:.06em">KROG ${r}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px">${cards}</div>
+    </div>`;
+  }).join('');
+
+  // Izračunaj projektirano lestvico
+  const simMatches=remaining.map(m=>{
+    const sel=_scenInteractiveResults[m.id];
+    if(!sel)return null;
+    return{...m,firstTeamScore:sel==='home'?85:78,secondTeamScore:sel==='home'?78:85,status:'FINISHED'};
+  }).filter(Boolean);
+
+  const baseMap={};
+  cur.forEach(t=>baseMap[t.name]={W:t.W,L:t.L,ptsFor:t.ptsFor||0,ptsAga:t.ptsAga||0});
+  const projected=getFinalStandings(baseMap,simMatches);
+  const selectedCount=Object.keys(_scenInteractiveResults).length;
+
+  const standRows=projected.map((t,i)=>{
+    const tc=getTeamColor(t.name);
+    const curPos=cur.findIndex(x=>x.name===t.name)+1;
+    const diff=curPos-(i+1);
+    const trendIcon=diff>0?`<span style="color:#22c55e;font-size:.8rem">▲${diff}</span>`:diff<0?`<span style="color:#ef4444;font-size:.8rem">▼${Math.abs(diff)}</span>`:`<span style="color:var(--mut);font-size:.8rem">═</span>`;
+    const isPlayoff=i<4;
+    return `<tr style="${isPlayoff?'background:rgba(34,197,94,.04)':''}">
+      <td style="text-align:center;color:var(--mut)">${i+1}.</td>
+      <td style="color:${tc};font-weight:700">${t.name}</td>
+      <td style="text-align:center">${t.W*2+t.L}</td>
+      <td style="text-align:center;color:#22c55e">${t.W}</td>
+      <td style="text-align:center;color:#ef4444">${t.L}</td>
+      <td style="text-align:center">${trendIcon}</td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">
+      <div>
+        <div style="font-size:.72rem;color:var(--mut);margin-bottom:12px">Izberi zmagovalce preostalih tekem — lestvica se posodablja sproti</div>
+        ${matchCards}
+        <button onclick="_scenInteractiveResults={};renderInteractiveScenario(document.getElementById('scen-wrap'))" style="background:var(--card2);border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:.72rem;margin-top:8px">↺ Ponastavi</button>
+      </div>
+      <div style="position:sticky;top:80px">
+        <div style="font-family:var(--fh);font-size:.72rem;letter-spacing:.06em;color:var(--mut);margin-bottom:8px">
+          PROJEKTIRANA LESTVICA
+          ${selectedCount?`<span style="color:var(--acc);margin-left:6px">(${selectedCount}/${remaining.length} izbranih)</span>`:''}
+        </div>
+        <div style="border-radius:10px;border:1px solid var(--border);overflow:hidden">
+          <table class="standings-table" style="font-size:.75rem">
+            <thead><tr>
+              <th>M</th><th style="text-align:left">EKIPA</th><th>TČ</th><th style="color:#22c55e">Z</th><th style="color:#ef4444">P</th><th>±</th>
+            </tr></thead>
+            <tbody>${standRows}</tbody>
+          </table>
+        </div>
+        <div style="font-size:.6rem;color:var(--mut);margin-top:6px">🟢 = v končnici (top 4)</div>
+      </div>
+    </div>`;
+}
+
+function setInterMatch(matchId,winner){
+  _scenInteractiveResults[matchId]=winner;
+  // Live re-render samo lestvice
+  const wrap=document.getElementById('scen-wrap');
+  if(wrap&&scenMode==='interactive')renderInteractiveScenario(wrap);
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
