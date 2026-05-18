@@ -6673,24 +6673,28 @@ function renderStandings(){
   }
   const series=computePlayoffSeries();
   const byPhase={};
-  ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{const s=series.filter(x=>x.phase===p);if(s.length)byPhase[p]=s;});
+  // Dinamično — vse playoff faze ki so v podatkih
+  series.forEach(s=>{if(!byPhase[s.phase])byPhase[s.phase]=[];byPhase[s.phase].push(s);});
   if(Object.keys(byPhase).length){
     html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">🏆 KONČNICA</div>`;
-    html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24'});
+    html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24','Zaključni turnir':'#fbbf24'});
   }
   wrap.innerHTML=html;
 }
 
 function computePlayoffSeries(){
-  const playoffPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
+  // Dinamično — preskok samo redni del in obstanek, vse ostalo je playoff
+  const skipPhases=new Set(['Redni del','Liga za obstanek','']);
   // Liga3: Osmina finala + Četrtfinale = aggregate (seštevek točk)
-  // Polfinale + Finale = best-of (zmage), tako za liga3 kot ostale
   const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
-  // Vključimo VSE tekme (FINISHED + SCHEDULED) da se finale prikaže
+  // Debug: izpiši vse faze v konzolo
+  const allPhases=[...new Set(allMatches.map(m=>m.competitions?.[0]?.competitionPhaseName||''))];
+  console.log('[KZS] Vse faze v podatkih:', allPhases);
+  // Vključimo VSE tekme (FINISHED + SCHEDULED)
   allMatches.forEach(m=>{
     const phase=m.competitions?.[0]?.competitionPhaseName||'';
-    if(!playoffPhases.includes(phase))return;
+    if(skipPhases.has(phase))return;
     const a=m.firstTeamName,b=m.secondTeamName;
     const key=phase+'|'+[a,b].sort().join('|');
     if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],finMatches:[],done:false,isAggregate:aggregatePhases.has(phase)};
@@ -6754,7 +6758,9 @@ function toggleSeriesDetail(key){
 
 
 function renderBracketHTML(byPhase,phaseColors){
-  const phaseOrder=['Osmina finala','Četrtfinale','Polfinale','Finale'];
+  // Znane faze v pravem vrstnem redu, ostale (npr. Zaključni turnir) dodamo na konec
+  const knownOrder=['Osmina finala','Četrtfinale','Polfinale','Finale'];
+  const phaseOrder=[...knownOrder,...Object.keys(byPhase).filter(p=>!knownOrder.includes(p))];
   let html='<div style="overflow-x:auto"><div style="display:flex;gap:20px;padding:10px 0;min-width:600px">';
   phaseOrder.forEach(ph=>{
     if(!byPhase[ph])return;
