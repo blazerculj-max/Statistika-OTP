@@ -946,20 +946,21 @@ function getLg() {
   const cfg = getSeasonCfg();
   const lg = LEAGUES[currentLeague];
   if(!lg) return LEAGUES['liga1'];
-  // Za zgodovinske sezone zamenjamo competition ID
-  const histId = cfg[currentLeague]; // npr. cfg.liga1 = 524
-  if(histId && histId !== lg.id) {
-    return {
-      ...lg,
-      id: histId,
-      cacheStats: currentLeague+'_s'+currentSeason+'_v3',
-      cachePbp:   currentLeague+'_s'+currentSeason+'_pbp_v1',
-      // GitHub ima samo trenutno sezono
-      statsUrl: isCurrentSeason() ? lg.statsUrl : null,
-      pbpUrl:   isCurrentSeason() ? lg.pbpUrl   : null,
-    };
-  }
-  return {...lg, cacheStats: currentLeague+'_s'+currentSeason+'_v3'};
+  const histId = cfg[currentLeague];
+  const isCurrent = isCurrentSeason();
+  return {
+    ...lg,
+    id: histId || lg.id,
+    // Za zgodovinske sezone: phaseIds=null → vedno page-based fetch
+    phaseIds: isCurrent ? lg.phaseIds : null,
+    cacheStats: currentLeague+'_s'+currentSeason+'_v3',
+    cachePbp:   currentLeague+'_s'+currentSeason+'_pbp_v1',
+    statsUrl: isCurrent ? lg.statsUrl : null,
+    pbpUrl:   isCurrent ? lg.pbpUrl   : null,
+    // isLiga3/isLiga2 po ključu, ne po ID (ker se ID spremeni)
+    isLiga3: currentLeague === 'liga3',
+    isLiga2: currentLeague === 'liga2',
+  };
 }
 
 const TEAM_COLORS = {
@@ -1298,8 +1299,8 @@ async function loadAllData() {
     setProgress(16, 'Nalagam tekme...');
     const phaseIds = getLg().phaseIds;
     const lgId = getLg().id;
-    const isLiga3 = lgId === 582;
-    const isLiga2 = lgId === 581;
+    const isLiga3 = getLg().isLiga3;
+    const isLiga2 = getLg().isLiga2;
     let allItems = [];
 
     if(phaseIds) {
@@ -1340,7 +1341,9 @@ async function loadAllData() {
     }
 
     // Filter by known teams (liga2 + liga3)
-    if(isLiga3) {
+    if(isLiga3 && isCurrentSeason()) {
+      // Za trenutno sezono filtriraj po znanih ekipah
+      // Za zgodovinske sezone vzemi vse (ekipe so drugačne)
       const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
       allItems = allItems.filter(m =>
         liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
@@ -6637,8 +6640,8 @@ function renderStandings(){
   });
   const sort=document.getElementById('standings-sort')?.value||'pts';
   const lg=getLg();
-  const isLiga3=getLg().id===582;
-  const isLiga2=getLg().id===581;
+  const isLiga3=getLg().isLiga3;
+  const isLiga2=getLg().isLiga2;
   let html='';
 
   if(isLiga3){
@@ -6730,7 +6733,7 @@ function computePlayoffSeries(){
   const playoffPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
   // Liga3: Osmina finala + Četrtfinale = aggregate (seštevek točk)
   // Polfinale + Finale = best-of (zmage), tako za liga3 kot ostale
-  const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
+  const aggregatePhases=getLg().isLiga3?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
   // Vključimo VSE tekme (FINISHED + SCHEDULED) da se finale prikaže
   allMatches.forEach(m=>{
