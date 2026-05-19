@@ -6637,37 +6637,91 @@ function renderStandings(){
   });
   const sort=document.getElementById('standings-sort')?.value||'pts';
   const lg=getLg();
-  const VZHOD=new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška','Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
+  const isLiga3=getLg().id===582;
+  const isLiga2=getLg().id===581;
   let html='';
-  if(lg.id===582){
-    const rdM=allMatches.filter(m=>m.competitions?.[0]?.competitionPhaseName==='Redni del');
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>VZHOD.has(m.firstTeamName)||VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!VZHOD.has(m.firstTeamName)&&!VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
+
+  if(isLiga3){
+    const rdM=allMatches.filter(m=>m.competitions?.[0]?.competitionPhaseName==='Redni del'&&m.status==='FINISHED');
+
+    // Dinamično ugotovi skupini iz allMatches (ne hardkodirano)
+    // Vzemi vse ekipe, deli na dve skupini po medsebojnih tekmah
+    const allTeams=[...new Set(rdM.flatMap(m=>[m.firstTeamName,m.secondTeamName]))];
+
+    // Poišči skupini — igrajo samo med seboj (no cross-group games v rednem delu)
+    // Grafi medsebojnih tekem → connected components
+    const adj={};
+    allTeams.forEach(t=>adj[t]=new Set());
+    rdM.forEach(m=>{adj[m.firstTeamName]?.add(m.secondTeamName);adj[m.secondTeamName]?.add(m.firstTeamName);});
+
+    // BFS za dve skupini
+    const visited=new Set();
+    const groups=[];
+    allTeams.forEach(start=>{
+      if(visited.has(start))return;
+      const grp=[];
+      const queue=[start];
+      while(queue.length){
+        const t=queue.shift();
+        if(visited.has(t))return;
+        visited.add(t);grp.push(t);
+        adj[t].forEach(n=>{if(!visited.has(n))queue.push(n);});
+      }
+      groups.push(grp);
+    });
+
+    // Poimenuj skupini — Vzhod ima Maribor/Konjice, Zahod ima Koper/Leone
+    const VZHOD_HINTS=new Set(['Branik Maribor','Konjice','Hrastnik','Nazarje']);
+    const ZAHOD_HINTS=new Set(['Koper','Leone Ajdovščina','Litija','Kolpa']);
+    const grpNames=groups.map(g=>{
+      const hasV=g.some(t=>VZHOD_HINTS.has(t));
+      const hasZ=g.some(t=>ZAHOD_HINTS.has(t));
+      return hasV?'🔵 VZHOD':hasZ?'🔴 ZAHOD':'⚪ SKUPINA';
+    });
+    const grpColors=grpNames.map(n=>n.includes('VZHOD')?'#60a5fa':n.includes('ZAHOD')?'#f97316':'#a855f7');
+    const grpSets=groups.map(g=>new Set(g));
+
+    if(groups.length>=2){
+      groups.forEach((grp,gi)=>{
+        const grpSet=grpSets[gi];
+        const grpMs=rdM.filter(m=>grpSet.has(m.firstTeamName)&&grpSet.has(m.secondTeamName));
+        html+=buildStandingsTable(computeTeamStats(grpMs,'Redni del').filter(t=>grpSet.has(t.name)),sort,grpNames[gi],grpColors[gi]);
+      });
+    } else {
+      // Samo ena skupina (mogoče stara sezona brez dveh skupin)
+      html+=buildStandingsTable(computeTeamStats(rdM,'Redni del'),sort,'🏀 3. SKL','#a855f7');
+    }
   } else {
     html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
-    if(lg.id===581){
-      // Liga za obstanek: carry over H2H from redni del + new obstanek games
-      const obstMatches = allMatches.filter(m=>m.status==='FINISHED'&&
+    if(isLiga2){
+      const obstMatches=allMatches.filter(m=>m.status==='FINISHED'&&
         m.competitions?.[0]?.competitionPhaseName==='Liga za obstanek');
       if(obstMatches.length){
-        const obstTeams = new Set(obstMatches.flatMap(m=>[m.firstTeamName,m.secondTeamName]));
-        // Include carried-over H2H from redni del between these teams
-        const rdH2H = allMatches.filter(m=>m.status==='FINISHED'&&
+        const obstTeams=new Set(obstMatches.flatMap(m=>[m.firstTeamName,m.secondTeamName]));
+        const rdH2H=allMatches.filter(m=>m.status==='FINISHED'&&
           m.competitions?.[0]?.competitionPhaseName==='Redni del'&&
           obstTeams.has(m.firstTeamName)&&obstTeams.has(m.secondTeamName));
-        const allObstMatches = [...rdH2H, ...obstMatches];
-        const od=computeTeamStats(allObstMatches,'');
-        const odFiltered=od.filter(t=>obstTeams.has(t.name));
-        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'⚠️ LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
+        const od=computeTeamStats([...rdH2H,...obstMatches],'');
+        const odF=od.filter(t=>obstTeams.has(t.name));
+        if(odF.length)html+=buildStandingsTable(odF,sort,'⚠️ LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
       }
     }
   }
+
+  // Playoff bracket — samo če imamo playoff tekme za to sezono
   const series=computePlayoffSeries();
   const byPhase={};
-  ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{const s=series.filter(x=>x.phase===p);if(s.length)byPhase[p]=s;});
+  ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{
+    const s=series.filter(x=>x.phase===p);
+    if(s.length)byPhase[p]=s;
+  });
   if(Object.keys(byPhase).length){
     html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">🏆 KONČNICA</div>`;
     html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24'});
+  } else if(!isCurrentSeason()){
+    html+=`<div style="color:var(--mut);font-size:.78rem;margin-top:16px;padding:12px 0;border-top:1px solid var(--border)">
+      ℹ️ Podatki o končnici za zgodovinske sezone niso naloženi. Naloži vse tekme za prikaz bracketа.
+    </div>`;
   }
   wrap.innerHTML=html;
 }
