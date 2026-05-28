@@ -14,9 +14,9 @@ LEAGUES = {
     'liga1': {
         'id': 579,
         'name': 'Liga OTP banka',
-        'phase_ids': None,
+        'phase_ids': [5811, 5889, 5890, 5894],  # Redni del, Četrtfinale, Polfinale, Finale
         'groups': {},
-        'max_pages': 1,
+        'max_pages': 99,
     },
     'liga2': {
         'id': 581,
