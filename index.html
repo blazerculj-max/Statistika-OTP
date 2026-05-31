@@ -19,12 +19,12 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 .hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
 .hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
 .hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
-.nav{display:flex;flex-direction:column;gap:0;background:rgba(6,6,15,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
+.nav{display:flex;flex-direction:column;gap:0;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
 .nav-row{display:flex;gap:1px;padding:4px 20px;overflow-x:auto;justify-content:center;align-items:center}
 
 .nb{padding:7px 14px;border-radius:7px;border:none;background:transparent;color:var(--mut);font-family:var(--fm);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .18s;letter-spacing:.01em;white-space:nowrap}
 .nb:hover{color:var(--text);background:var(--border)}.nb.active{background:var(--acc);color:#fff}
-.content{padding:20px 28px;max-width:1900px;margin:0 auto}
+.content{padding:20px 28px;max-width:1900px;margin:0 auto;min-height:calc(100vh - 120px)}
 .tab{display:none}.tab.active{display:block}
 .ctrls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 select{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 34px 7px 12px;border-radius:7px;font-family:var(--fs);font-size:.82rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:20px}
@@ -4933,6 +4933,18 @@ function renderCrossTop(wrap,d1,d2,d3,names,colors){
 // ═══════════════════════════════════════════════════
 // REKORDI
 // ═══════════════════════════════════════════════════
+function getRoundLabel(m){
+  const phase = m.competitions?.[0]?.competitionPhaseName || '';
+  const round = m.round || 0;
+  if(phase === 'Četrtfinale') return 'QF · Tekma ' + round;
+  if(phase === 'Polfinale') return 'SF · Tekma ' + round;
+  if(phase === 'Finale') return 'F · Tekma ' + round;
+  if(phase === 'Osmina finala') return 'R16 · Tekma ' + round;
+  if(phase === 'Liga za obstanek') return 'Obst. · K' + round;
+  if(phase === 'Zaključni turnir') return 'ZT · K' + round;
+  return 'K' + round;
+}
+
 function renderRekordi(){
   const wrap=document.getElementById('rekordi-wrap');
   if(!wrap)return;
@@ -5830,17 +5842,7 @@ function showRefDetail(name, refStats){
 }
 
 // Round label helper - QF/SF/F for playoff
-function getRoundLabel(m){
-  const phase = m.competitions?.[0]?.competitionPhaseName || '';
-  const round = m.round || 0;
-  if(phase === 'Četrtfinale') return 'QF · Tekma ' + round;
-  if(phase === 'Polfinale') return 'SF · Tekma ' + round;
-  if(phase === 'Finale') return 'F · Tekma ' + round;
-  if(phase === 'Osmina finala') return 'R16 · Tekma ' + round;
-  if(phase === 'Liga za obstanek') return 'Obst. · K' + round;
-  if(phase === 'Zaključni turnir') return 'ZT · K' + round;
-  return 'K' + round;
-}
+
 
 let agePhase = 'all';
 let attPhase = 'all';
