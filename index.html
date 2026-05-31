@@ -4951,7 +4951,27 @@ function renderRekordi(){
 
   // ── SEASON TOTALS from P array ──
   const minT=3; // min tekem
-  const qualified=P.filter(p=>p[F.T]>=minT);
+  // Merge players with SAME playerId across teams (e.g. mid-season transfer like Mahkovic).
+  // Players with different playerId (same name but different person, e.g. two Klobučars) stay separate.
+  const _byPid={};
+  P.forEach(p=>{
+    const pid=p[F.pid];
+    if(!_byPid[pid]){
+      _byPid[pid]=[...p]; // clone
+      // mark teams seen for combined label
+      _byPid[pid]._teams=new Set([p[F.team]]);
+    } else {
+      const m=_byPid[pid];
+      m._teams.add(p[F.team]);
+      // sum all numeric stat fields
+      [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>{m[fi]+=p[fi];});
+    }
+  });
+  const mergedP=Object.values(_byPid).map(m=>{
+    if(m._teams.size>1) m[F.team]=[...m._teams].join(' / ');
+    return m;
+  });
+  const qualified=mergedP.filter(p=>p[F.T]>=minT);
   const t=Math.max;
 
   // Season record helpers
@@ -5007,10 +5027,12 @@ function renderRekordi(){
 
   // ── RENDER HELPERS ──
   function sezonRow(p,val,suf=''){
-    const tc=TEAM_COLORS[p[F.team]]||'#888';
+    const tc=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||'#888';
+    // Merged players may not be in P directly; find a P entry by pid for the profile click
+    const pIdx=P.findIndex(x=>x[F.pid]===p[F.pid]);
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
       <div style="flex:1">
-        <span style="font-weight:600;cursor:pointer" onclick="showPlayer(${P.indexOf(p)})">${p[F.name]}</span>
+        <span style="font-weight:600;cursor:pointer" onclick="showPlayer(${pIdx})">${p[F.name]}</span>
         <span style="font-size:.68rem;color:${tc};margin-left:6px">${p[F.team]}</span>
       </div>
       <div style="font-family:var(--fs);font-weight:700;color:var(--acc)">${val}${suf}</div>
