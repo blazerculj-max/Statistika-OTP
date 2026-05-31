@@ -5108,23 +5108,23 @@ function renderRekordi(){
   // ── HALL OF SHAME ──
   const shameCards=[
     {title:'ZGREŠENI MET ZA 2 — skupaj',color:'#f87171',icon:'😬',
-      rows:topN(qualified,F.fg2a,5).map(p=>sezonRow(p,p[F.fg2a]-(p[F.fg2m]||0),' zgrešenih')).join('')},
+      rows:[...qualified].sort((a,b)=>(b[F.fg2a]-b[F.fg2m])-(a[F.fg2a]-a[F.fg2m])).slice(0,5).map(p=>sezonRow(p,p[F.fg2a]-(p[F.fg2m]||0),' zgrešenih')).join('')},
     {title:'ZGREŠENI MET ZA 3 — skupaj',color:'#f87171',icon:'😬',
-      rows:topN(qualified,F.fg3a,5).map(p=>sezonRow(p,p[F.fg3a]-p[F.fg3m],' zgrešenih')).join('')},
+      rows:[...qualified].sort((a,b)=>(b[F.fg3a]-b[F.fg3m])-(a[F.fg3a]-a[F.fg3m])).slice(0,5).map(p=>sezonRow(p,p[F.fg3a]-p[F.fg3m],' zgrešenih')).join('')},
     {title:'ZGREŠENI PROSTI METI — skupaj',color:'#f87171',icon:'😬',
-      rows:topN(qualified,F.fta,5).map(p=>sezonRow(p,p[F.fta]-p[F.ftm],' zgrešenih')).join('')},
+      rows:[...qualified].sort((a,b)=>(b[F.fta]-b[F.ftm])-(a[F.fta]-a[F.ftm])).slice(0,5).map(p=>sezonRow(p,p[F.fta]-p[F.ftm],' zgrešenih')).join('')},
     {title:'IZGUBE ŽOGE — skupaj',color:'#f87171',icon:'💸',
       rows:topN(qualified,F.izg).map(p=>sezonRow(p,p[F.izg])).join('')},
     {title:'IZGUBE ŽOGE — povp./tm',color:'#f87171',icon:'💸',
       rows:topNAvg(qualified,F.izg).map(p=>sezonRow(p,(p[F.izg]/p[F.T]).toFixed(1))).join('')},
     {title:'ZGREŠENI MET ZA 2 — 1 tekma',color:'#fb923c',icon:'😱',
-      rows:topGame('fg2a').map(r=>gameRow(r,r.fg2a-r.fg2m,' zg.')).join('')},
+      rows:[...gameRecords].sort((a,b)=>(b.fg2a-b.fg2m)-(a.fg2a-a.fg2m)).slice(0,5).map(r=>gameRow(r,r.fg2a-r.fg2m,' zg.')).join('')},
     {title:'ZGREŠENI MET ZA 3 — 1 tekma',color:'#fb923c',icon:'😱',
-      rows:topGame('fg3a').map(r=>gameRow(r,r.fg3a-r.fg3m,' zg.')).join('')},
+      rows:[...gameRecords].sort((a,b)=>(b.fg3a-b.fg3m)-(a.fg3a-a.fg3m)).slice(0,5).map(r=>gameRow(r,r.fg3a-r.fg3m,' zg.')).join('')},
     {title:'IZGUBE ŽOGE — 1 tekma',color:'#fb923c',icon:'💸',
       rows:topGame('tov').map(r=>gameRow(r,r.tov)).join('')},
     {title:'ZGREŠENI PROSTI METI — 1 tekma',color:'#fb923c',icon:'😱',
-      rows:topGame('fta').map(r=>gameRow(r,r.fta-r.ftm,' zg.')).join('')},
+      rows:[...gameRecords].sort((a,b)=>(b.fta-b.ftm)-(a.fta-a.ftm)).slice(0,5).map(r=>gameRow(r,r.fta-r.ftm,' zg.')).join('')},
   ].map(({title,color,icon,rows})=>card(title,color,icon,rows)).join('');
 
   wrap.innerHTML=`
