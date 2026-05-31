@@ -479,9 +479,7 @@ select:focus{outline:none;border-color:var(--acc)}
 /* Smooth fade in for content */
 .hero-wrap{animation:fadeUp .6s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-/* Content tab fade */
-.tab.active{animation:tabFade .2s ease both}
-@keyframes tabFade{from{opacity:0}to{opacity:1}}
+/* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
 <body>
