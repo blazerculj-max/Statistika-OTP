@@ -1640,6 +1640,7 @@ function showTab(t){
   document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
   // Mark active nav button safely (works both from click and programmatic call)
   document.querySelectorAll('.nb').forEach(b=>{
     if(b.getAttribute('onclick')?.includes("'"+t+"'")) b.classList.add('active');
