@@ -234,7 +234,11 @@ select:focus{outline:none;border-color:var(--acc)}
 .live-pulse::before{content:'';width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s ease infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 .live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 16px;gap:10px}
-.live-team-name{font-family:var(--fh);font-size:1.05rem;font-weight:700;letter-spacing:.02em;line-height:1.2}
+.live-team-name{font-family:var(--fh);font-size:1rem;font-weight:700;letter-spacing:.01em;line-height:1.2;display:flex;align-items:center;gap:8px;min-width:0}
+.live-team-name.home{justify-content:flex-end;text-align:right}
+.live-team-name.away{justify-content:flex-start;text-align:left}
+.live-team-name .tn-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-team-logo{width:30px;height:30px;object-fit:contain;flex-shrink:0}
 .live-team-name.home{text-align:left}
 .live-team-name.away{text-align:right}
 .live-score{font-family:var(--fs);font-size:2.3rem;font-weight:800;letter-spacing:-.02em;text-align:center;min-width:90px;color:var(--text)}
@@ -706,9 +710,10 @@ html{scroll-behavior:smooth}
 .mo-hero::before{content:'';position:absolute;inset:0;background:var(--mo-grad);opacity:.16;z-index:0}
 .mo-hero>*{position:relative;z-index:1}
 .mo-hero-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px}
-.mo-hero-team{text-align:center}
-.mo-hero-team.home{text-align:right}
-.mo-hero-team.away{text-align:left}
+.mo-hero-team{display:flex;flex-direction:column;gap:8px}
+.mo-hero-team.home{align-items:flex-end;text-align:right}
+.mo-hero-team.away{align-items:flex-start;text-align:left}
+.mo-hero-team .mo-logo{width:56px;height:56px;object-fit:contain}
 .mo-hero-tname{font-family:var(--fh);font-size:1.3rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .mo-hero-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin:8px 0}
 .mo-hero-score{font-family:var(--fs);font-size:4.2rem;font-weight:800;letter-spacing:-.04em;line-height:.9;display:flex;align-items:center;gap:14px}
@@ -958,6 +963,29 @@ html{scroll-behavior:smooth}
 /* ═══ TEAM HEADER LOGO ═══ */
 .team-hdr-logo{width:58px;height:58px;background:var(--card2);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:7px;flex-shrink:0;border:1px solid var(--border2)}
 
+/* ═══ ROUND CARD GENERATOR ═══ */
+.rc-open-btn{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--acc),#ea580c);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:var(--fh);font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:18px;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 16px rgba(249,115,22,.35)}
+.rc-open-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,.45)}
+#roundcard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1300;align-items:center;justify-content:center;padding:16px;flex-direction:column;gap:14px;overflow-y:auto}
+.rc-modal{display:flex;flex-direction:column;gap:14px;align-items:center;max-width:100%;padding:20px 0}
+.rc-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+.rc-format-toggle{display:flex;gap:4px;background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:4px}
+.rc-fmt{background:transparent;border:none;color:var(--mut);font-family:var(--fh);font-size:.8rem;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;transition:all .18s}
+.rc-fmt.active{background:var(--acc);color:#fff}
+#rc-round-sel{background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:9px 14px;color:var(--text);font-family:var(--fm);font-size:.82rem;cursor:pointer}
+.rc-canvas-wrap{border-radius:18px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.6);max-height:70vh}
+#rc-canvas{display:block;max-width:100%;max-height:70vh;height:auto;width:auto}
+.rc-actions{display:flex;gap:10px}
+
+/* ═══ SOCIAL TAB ═══ */
+.social-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.social-card{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:18px;padding:24px;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;position:relative;overflow:hidden}
+.social-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4);border-color:var(--border2)}
+.social-card-icon{width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.social-card-title{font-family:var(--fh);font-size:1.3rem;font-weight:800;margin-bottom:8px}
+.social-card-desc{font-size:.82rem;color:var(--sub);line-height:1.5;margin-bottom:16px}
+.social-card-cta{font-family:var(--fh);font-size:.85rem;font-weight:700;color:var(--acc)}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -1034,6 +1062,22 @@ html{scroll-behavior:smooth}
 
 <div id="player-overlay" onclick="if(event.target===this)closePlayer()"></div>
 <div id="team-overlay" onclick="if(event.target===this)closeTeamProfile()"></div>
+<div id="roundcard-overlay" onclick="if(event.target===this)closeRoundCard()">
+  <div class="rc-modal">
+    <div class="rc-controls">
+      <div class="rc-format-toggle">
+        <button id="rc-fmt-post" class="rc-fmt active" onclick="setRoundCardFormat('post')">📷 Post (1:1)</button>
+        <button id="rc-fmt-story" class="rc-fmt" onclick="setRoundCardFormat('story')">📱 Story (9:16)</button>
+      </div>
+      <select id="rc-round-sel" onchange="renderRoundCard()"></select>
+    </div>
+    <div class="rc-canvas-wrap"><canvas id="rc-canvas"></canvas></div>
+    <div class="rc-actions">
+      <button class="share-btn primary" onclick="downloadRoundCard()">⬇ Prenesi sliko</button>
+      <button class="share-btn ghost" onclick="closeRoundCard()">Zapri</button>
+    </div>
+  </div>
+</div>
 <div id="toast-wrap"></div>
 <canvas id="confetti-canvas"></canvas>
 <div id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
@@ -1081,6 +1125,7 @@ html{scroll-behavior:smooth}
     <button class="nb" onclick="showTab('compare')">Primerjava</button>
     <button class="nb" onclick="showTab('mvp')">MVP</button>
     <button class="nb" onclick="showTab('race')">Sezona</button>
+    <button class="nb" onclick="showTab('social')">📸 Social</button>
     <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
         style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
         Analitika
@@ -1203,6 +1248,7 @@ html{scroll-behavior:smooth}
 
   <div id="tab-tekme" class="tab">
     <div id="featured-match"></div>
+
     <div class="ctrls" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <div class="tgl">
         <button class="tb active" id="mt-rd" onclick="setMatchTab('rd')">📅 Redni del</button>
@@ -1293,6 +1339,30 @@ html{scroll-behavior:smooth}
     </div>
     <div id="race-wrap" style="position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
     </div></div>
+  <div id="tab-social" class="tab">
+    <div class="sec-head" style="--sh-c:var(--acc)">📸 Social — deljive kartice</div>
+    <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-bottom:20px">Generiraj profesionalne kartice za Instagram in X — po krogih rednega dela ali končnice.</div>
+    <div class="social-grid">
+      <div class="social-card" onclick="openRoundCard('rd')">
+        <div class="social-card-icon" style="background:linear-gradient(135deg,#f97316,#ea580c)">🏀</div>
+        <div class="social-card-title">Kartica kroga</div>
+        <div class="social-card-desc">MVP kroga, top strelci, največja zmaga in lestvica po krogu rednega dela.</div>
+        <div class="social-card-cta">Generiraj →</div>
+      </div>
+      <div class="social-card" onclick="openRoundCard('po')">
+        <div class="social-card-icon" style="background:linear-gradient(135deg,#fbbf24,#d97706)">🏆</div>
+        <div class="social-card-title">Kartica končnice</div>
+        <div class="social-card-desc">Najboljši v posamezni rundi končnice — MVP, strelci in rezultati serij.</div>
+        <div class="social-card-cta">Generiraj →</div>
+      </div>
+      <div class="social-card" onclick="openSeasonCard()">
+        <div class="social-card-icon" style="background:linear-gradient(135deg,#a855f7,#7e22ce)">⭐</div>
+        <div class="social-card-title">Igralec sezone</div>
+        <div class="social-card-desc">Deljiva kartica vodilnega kandidata za MVP sezone z vso statistiko.</div>
+        <div class="social-card-cta">Generiraj →</div>
+      </div>
+    </div>
+  </div>
   <div id="tab-mvp" class="tab">
     <div id="mvp-wrap"></div>
   </div>
@@ -2737,9 +2807,9 @@ async function openMatch(matchId){
     <div class="mo-hero" style="--mo-grad:linear-gradient(135deg,${c1},${c2})">
       <div class="mo-hero-row">
         <div class="mo-hero-team home">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:8px">${teamLogoHtml(t1,52)}</div>
+          ${teamLogoHtml(t1,56)}
           <div class="mo-hero-tname" style="color:${c1}">${t1}</div>
-          ${matchInfo.status==='FINISHED'&&s1>s2?'<div><span class="mo-hero-wlabel">Zmaga</span></div>':''}
+          ${matchInfo.status==='FINISHED'&&s1>s2?'<span class="mo-hero-wlabel">Zmaga</span>':''}
         </div>
         ${isLive
           ? `<div class="mo-hero-score live-glow" style="padding:4px 10px;border-radius:12px"><span class="sc">${s1}</span><span class="sep">:</span><span class="sc">${s2}</span></div>`
@@ -2747,9 +2817,9 @@ async function openMatch(matchId){
             ? `<div class="mo-hero-score"><span class="sc ${s1>s2?'win':'lose'}">${s1}</span><span class="sep">:</span><span class="sc ${s2>s1?'win':'lose'}">${s2}</span></div>`
             : `<div class="mo-hero-score"><span class="sep" style="font-size:2.4rem">VS</span></div>`}
         <div class="mo-hero-team away">
-          <div style="display:flex;justify-content:flex-start;margin-bottom:8px">${teamLogoHtml(t2,52)}</div>
+          ${teamLogoHtml(t2,56)}
           <div class="mo-hero-tname" style="color:${c2}">${t2}</div>
-          ${matchInfo.status==='FINISHED'&&s2>s1?'<div><span class="mo-hero-wlabel">Zmaga</span></div>':''}
+          ${matchInfo.status==='FINISHED'&&s2>s1?'<span class="mo-hero-wlabel">Zmaga</span>':''}
         </div>
       </div>
       ${isLive?'<div style="text-align:center;margin-top:8px"><span style="font-size:.7rem;color:#ef4444;font-family:var(--fm);font-weight:700">🔴 V ŽIVO</span></div>':''}
@@ -3151,6 +3221,345 @@ function downloadShare(){
   },'image/png');
 }
 function closeShare(){document.getElementById('share-overlay').style.display='none';}
+
+// ═══════════════════════════════════════════════════
+// ROUND CARD GENERATOR (IG Post 1:1 + Story 9:16)
+// ═══════════════════════════════════════════════════
+let _rcFormat='post', _rcRound=null;
+
+// Preload an image, resolve with the Image (or null on fail)
+function _loadImg(url){
+  return new Promise(resolve=>{
+    if(!url){resolve(null);return;}
+    const img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=()=>resolve(img);
+    img.onerror=()=>resolve(null);
+    img.src=url;
+  });
+}
+
+let _rcMode='rd'; // 'rd' = redni del, 'po' = končnica
+function openRoundCard(mode){
+  if(!allMatches.length){toast('Najprej naloži ligo','⏳');return;}
+  _rcMode=mode||'rd';
+  const sel=document.getElementById('rc-round-sel');
+  if(_rcMode==='po'){
+    // Playoff: list phases that have finished matches
+    const pfPhases=['Osmina finala','Četrtfinale','Polfinale','Finale'];
+    const present=pfPhases.filter(ph=>allMatches.some(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName===ph));
+    if(!present.length){toast('Ni odigranih tekem končnice','🏆');return;}
+    sel.innerHTML=present.reverse().map(ph=>`<option value="${ph}">${ph}</option>`).join('');
+    _rcRound=present[0];
+  }else{
+    const rounds=[...new Set(allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Redni del'&&m.round).map(m=>m.round))].sort((a,b)=>b-a);
+    if(!rounds.length){toast('Ni odigranih krogov','⏳');return;}
+    sel.innerHTML=rounds.map(r=>`<option value="${r}">Krog ${r}</option>`).join('');
+    _rcRound=rounds[0];
+  }
+  document.getElementById('roundcard-overlay').style.display='flex';
+  renderRoundCard();
+}
+function closeRoundCard(){document.getElementById('roundcard-overlay').style.display='none';}
+function setRoundCardFormat(fmt){
+  _rcFormat=fmt;
+  document.getElementById('rc-fmt-post').classList.toggle('active',fmt==='post');
+  document.getElementById('rc-fmt-story').classList.toggle('active',fmt==='story');
+  renderRoundCard();
+}
+
+async function renderRoundCard(){
+  const sel=document.getElementById('rc-round-sel');
+  const val=sel.value;
+  const isPlayoff=_rcMode==='po';
+  _rcRound=isPlayoff?val:(parseInt(val)||_rcRound);
+  const cv=document.getElementById('rc-canvas');
+  const isStory=_rcFormat==='story';
+  const W=1080, H=isStory?1920:1080;
+  cv.width=W;cv.height=H;
+  const x=cv.getContext('2d');
+  const acc=isPlayoff?'#fbbf24':'#f97316';
+
+  // ── Gather data ──
+  let roundMatches, mvps, title, subtitle;
+  if(isPlayoff){
+    roundMatches=allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName===_rcRound);
+    title=_rcRound.toUpperCase();
+    subtitle='KONČNICA';
+    // MVP of this phase
+    const phaseScores=[];
+    P.forEach(p=>{
+      const log=playerGameLog[p[F.pid]];if(!log)return;
+      const pgs=log.filter(g=>roundMatches.some(m=>m.id===g.matchId));
+      if(!pgs.length)return;
+      const avgPts=pgs.reduce((s,g)=>s+g.pts,0)/pgs.length;
+      const avgReb=pgs.reduce((s,g)=>s+g.reb,0)/pgs.length;
+      const avgAst=pgs.reduce((s,g)=>s+g.ast,0)/pgs.length;
+      const avgEfe=pgs.reduce((s,g)=>s+g.efe,0)/pgs.length;
+      const sc=avgPts+avgReb*0.7+avgAst*0.8+avgEfe*0.3;
+      phaseScores.push({p,s:sc,game:{pts:Math.round(avgPts),reb:Math.round(avgReb),ast:Math.round(avgAst),efe:Math.round(avgEfe)}});
+    });
+    mvps=phaseScores.sort((a,b)=>b.s-a.s).slice(0,3);
+  }else{
+    roundMatches=allMatches.filter(m=>m.round===_rcRound&&m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Redni del');
+    mvps=getMvpByRound(_rcRound)||[];
+    title='KROG '+_rcRound;
+    subtitle=getLg().name.toUpperCase();
+  }
+  const mvp=mvps[0];
+
+  // Top scorers
+  const scorers=[];
+  P.forEach(p=>{
+    const log=playerGameLog[p[F.pid]];if(!log)return;
+    const gs=log.filter(gg=>roundMatches.some(m=>m.id===gg.matchId));
+    if(gs.length){
+      const totPts=gs.reduce((s,g)=>s+g.pts,0);
+      const maxG=gs.reduce((a,g)=>g.pts>a.pts?g:a,gs[0]);
+      scorers.push({p,pts:isPlayoff?Math.round(totPts/gs.length):maxG.pts});
+    }
+  });
+  scorers.sort((a,b)=>b.pts-a.pts);
+
+  // Biggest win
+  let bigWin=null,bigDiff=0;
+  roundMatches.forEach(m=>{
+    const d=Math.abs((m.firstTeamScore||0)-(m.secondTeamScore||0));
+    if(d>bigDiff){bigDiff=d;bigWin=m;}
+  });
+
+  // Standings (redni del only)
+  const standings=[];
+  if(!isPlayoff&&typeof raceData!=='undefined'){
+    Object.entries(raceData).forEach(([team,data])=>{
+      const d=data.find(z=>z.round===_rcRound);
+      if(d)standings.push({team,pos:d.pos,pts:d.pts});
+    });
+    standings.sort((a,b)=>a.pos-b.pos);
+  }
+
+  // ══ BACKGROUND — modern IG vibe ══
+  x.fillStyle='#070710';x.fillRect(0,0,W,H);
+  // Large diagonal accent shapes
+  const g1=x.createLinearGradient(0,0,W,H*0.5);
+  g1.addColorStop(0,_shade(acc,-55));g1.addColorStop(1,'transparent');
+  x.fillStyle=g1;x.fillRect(0,0,W,H);
+  // Radial glow
+  const rg=x.createRadialGradient(W*0.85,H*0.08,0,W*0.85,H*0.08,W*0.7);
+  rg.addColorStop(0,acc+'22');rg.addColorStop(1,'transparent');
+  x.fillStyle=rg;x.fillRect(0,0,W,H);
+  // Bottom subtle
+  const g2=x.createLinearGradient(0,H,0,H*0.6);
+  g2.addColorStop(0,_shade(acc,-70)+'cc');g2.addColorStop(1,'transparent');
+  x.fillStyle=g2;x.fillRect(0,0,W,H);
+  // Mesh dots pattern (subtle)
+  x.fillStyle='rgba(255,255,255,.025)';
+  for(let py=0;py<H;py+=44)for(let px=0;px<W;px+=44){x.beginPath();x.arc(px,py,1.4,0,Math.PI*2);x.fill();}
+
+  const M=70; // margin
+
+  // ══ HEADER ══
+  x.textAlign='left';
+  x.fillStyle=acc;
+  x.font='700 26px "Space Mono", monospace';
+  x.fillText(subtitle+' · 2025/26',M,95);
+  x.fillStyle='#fff';
+  x.font='800 '+(isPlayoff&&title.length>10?78:96)+'px "Space Grotesk", sans-serif';
+  x.fillText(title,M-2,185);
+  // accent underline
+  const tw=x.measureText(title).width;
+  x.fillStyle=acc;_roundRect(x,M,205,Math.min(tw,W-2*M),7,4);x.fill();
+
+  let y=isStory?300:265;
+
+  // ══ MVP HERO CARD ══
+  if(mvp){
+    const p=mvp.p,gm=mvp.game,tm=p[F.team];
+    const col=TEAM_COLORS[(tm||'').split(' / ')[0]]||acc;
+    const cardH=isStory?460:380;
+    // gradient card
+    x.save();
+    const cg=x.createLinearGradient(M,y,W-M,y+cardH);
+    cg.addColorStop(0,col);cg.addColorStop(1,_shade(col,-50));
+    _roundRect(x,M,y,W-2*M,cardH,28);x.fillStyle=cg;x.fill();
+    // glossy overlay
+    const gloss=x.createLinearGradient(M,y,M,y+cardH*0.5);
+    gloss.addColorStop(0,'rgba(255,255,255,.12)');gloss.addColorStop(1,'transparent');
+    x.fillStyle=gloss;_roundRect(x,M,y,W-2*M,cardH,28);x.fill();
+    x.restore();
+    // decorative circle
+    x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
+    x.globalAlpha=0.1;x.fillStyle='#fff';x.beginPath();x.arc(W-M-100,y+60,200,0,Math.PI*2);x.fill();x.restore();
+    // MVP badge
+    x.fillStyle='rgba(255,255,255,.9)';
+    x.font='700 26px "Space Mono", monospace';
+    x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
+    // Player photo — big, right side
+    const photo=await _loadImg(playerPhotoUrl(p[F.pid]));
+    const pSize=isStory?280:250, pX=W-pSize-M-20, pY=y+cardH-pSize-30;
+    x.save();
+    // photo bg ring
+    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2+6,0,Math.PI*2);
+    x.fillStyle='rgba(255,255,255,.18)';x.fill();
+    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2,0,Math.PI*2);x.closePath();x.clip();
+    if(photo){
+      const iw=photo.naturalWidth,ih=photo.naturalHeight,side=Math.min(iw,ih);
+      x.drawImage(photo,(iw-side)/2,0,side,side,pX,pY,pSize,pSize);
+    }else{
+      x.fillStyle=_shade(col,-30);x.fillRect(pX,pY,pSize,pSize);
+      x.fillStyle='#fff';x.font='800 90px "Space Grotesk",sans-serif';x.textAlign='center';
+      x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),pX+pSize/2,pY+pSize/2+30);x.textAlign='left';
+    }
+    x.restore();
+    // ring stroke
+    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2,0,Math.PI*2);
+    x.strokeStyle='rgba(255,255,255,.45)';x.lineWidth=5;x.stroke();
+    // Name
+    x.fillStyle='#fff';
+    x.font='800 60px "Space Grotesk", sans-serif';
+    const nm=p[F.name].toUpperCase(),parts=nm.split(' ');
+    const maxNW=pX-M-60;
+    let nl1=nm,nl2='';
+    if(x.measureText(nm).width>maxNW&&parts.length>1){
+      const mid=Math.ceil(parts.length/2);nl1=parts.slice(0,mid).join(' ');nl2=parts.slice(mid).join(' ');
+    }
+    x.fillText(nl1,M+40,y+150);
+    if(nl2)x.fillText(nl2,M+40,y+212);
+    const nbot=nl2?y+255:y+195;
+    // team + logo
+    const logo=await _loadImg(teamLogoUrl((tm||'').split(' / ')[0]));
+    let tx=M+40;
+    if(logo){try{x.drawImage(logo,tx,nbot-26,36,36);}catch(e){}tx+=46;}
+    x.fillStyle='rgba(255,255,255,.85)';
+    x.font='600 30px "Space Grotesk", sans-serif';
+    x.fillText(tm,tx,nbot);
+    // Big stats
+    const sy=nbot+70;
+    const stats=[['TČK',gm.pts],['SK',gm.reb],['AS',gm.ast],['EFE',gm.efe]];
+    let sx=M+40;
+    stats.forEach(([l,v])=>{
+      x.fillStyle='#fff';x.font='800 52px "Space Mono", monospace';
+      x.fillText(v+'',sx,sy);
+      const vw=x.measureText(v+'').width;
+      x.fillStyle='rgba(255,255,255,.7)';x.font='600 22px "Space Mono", monospace';
+      x.fillText(l,sx,sy+30);
+      sx+=Math.max(vw,60)+44;
+    });
+    y+=cardH+44;
+  }
+
+  // ══ TOP SCORERS ══
+  if(scorers.length){
+    x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+    x.fillText('🏀 NAJBOLJŠI STRELCI',M,y);
+    y+=34;
+    const top=scorers.slice(0,3);
+    for(let i=0;i<top.length;i++){
+      const {p,pts}=top[i];
+      const col=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||acc;
+      const rowH=96;
+      x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
+      x.fillStyle=col;_roundRect(x,M,y,6,rowH,3);x.fill();
+      // rank
+      x.fillStyle=col;x.font='800 40px "Space Grotesk",sans-serif';
+      x.fillText((i+1)+'',M+30,y+62);
+      // photo
+      const ph=await _loadImg(playerPhotoUrl(p[F.pid]));
+      const ps=68,px2=M+75,py2=y+(rowH-ps)/2;
+      x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
+      if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
+      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);}
+      x.restore();
+      x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=col+'88';x.lineWidth=2;x.stroke();
+      // name + team
+      x.fillStyle='#fff';x.font='700 36px "Space Grotesk", sans-serif';
+      x.fillText(p[F.name],px2+ps+24,y+46);
+      x.fillStyle='rgba(255,255,255,.5)';x.font='400 24px "Space Mono", monospace';
+      x.fillText(TEAM_SHORT[p[F.team]]||p[F.team],px2+ps+24,y+78);
+      // points
+      x.fillStyle=acc;x.font='800 52px "Space Mono", monospace';x.textAlign='right';
+      x.fillText(pts+'',W-M-30,y+62);x.textAlign='left';
+      y+=rowH+14;
+    }
+    y+=24;
+  }
+
+  // ══ STORY EXTRAS ══
+  if(isStory){
+    if(bigWin){
+      x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+      x.fillText('💥 NAJVEČJA ZMAGA',M,y);y+=24;
+      const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
+      const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
+      const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
+      const rowH=92;
+      x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,16);x.fill();
+      const wl=await _loadImg(teamLogoUrl(win));
+      let bx=M+24;
+      if(wl){try{x.drawImage(wl,bx,y+(rowH-48)/2,48,48);}catch(e){}bx+=62;}
+      x.fillStyle='#fff';x.font='700 32px "Space Grotesk", sans-serif';
+      x.fillText(`${win}`,bx,y+44);
+      x.fillStyle='rgba(255,255,255,.5)';x.font='400 24px "Space Mono",monospace';
+      x.fillText(`${Math.max(s1,s2)} : ${Math.min(s1,s2)} · ${lose}`,bx,y+74);
+      x.fillStyle=acc;x.font='800 44px "Space Mono", monospace';x.textAlign='right';
+      x.fillText('+'+bigDiff,W-M-30,y+58);x.textAlign='left';
+      y+=rowH+34;
+    }
+    if(standings.length){
+      x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+      x.fillText('📊 LESTVICA',M,y);y+=24;
+      for(let i=0;i<Math.min(5,standings.length);i++){
+        const s=standings[i];const col=TEAM_COLORS[s.team]||acc;
+        const rh=70;
+        x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rh,14);x.fill();
+        x.fillStyle=i<3?col:'rgba(255,255,255,.6)';x.font='800 32px "Space Mono", monospace';
+        x.fillText((i+1)+'.',M+26,y+46);
+        const logo=await _loadImg(teamLogoUrl(s.team));
+        if(logo){try{x.drawImage(logo,M+78,y+13,44,44);}catch(e){}}
+        x.fillStyle='#fff';x.font='600 30px "Space Grotesk", sans-serif';
+        x.fillText(s.team,M+138,y+46);
+        x.fillStyle=acc;x.font='800 34px "Space Mono", monospace';x.textAlign='right';
+        x.fillText(s.pts+'',W-M-30,y+46);x.textAlign='left';
+        y+=rh+12;
+      }
+    }
+  }
+
+  // ══ FOOTER ══
+  x.fillStyle='rgba(255,255,255,.35)';
+  x.font='600 24px "Space Mono", monospace';x.textAlign='center';
+  x.fillText('@ slovenska košarka · blazerculj-max.github.io/Statistika-OTP',W/2,H-46);
+  x.textAlign='left';
+}
+
+function openSeasonCard(){
+  if(!P.length){toast('Najprej naloži ligo','⏳');return;}
+  // Find player of the season (same logic as spotlight)
+  const allLP=getLeaguePlayers();
+  const maxGames=Math.max(...allLP.map(p=>p[F.T]),1);
+  const minGames=Math.max(Math.ceil(maxGames*0.6),8);
+  let LPa=allLP.filter(p=>p[F.T]>=minGames);
+  if(LPa.length<3)LPa=allLP.filter(p=>p[F.T]>=Math.max(Math.ceil(maxGames*0.5),5));
+  if(!LPa.length){toast('Premalo podatkov','⏳');return;}
+  const isLiga3=getLg().id===582;
+  const score=p=>{const t=Math.max(p[F.T],1);return isLiga3?(p[F.toc]/t+p[F.fg3m]/t*1.2):(p[F.toc]/t+(p[F.nap]+p[F.obr])/t*0.7+p[F.pod]/t*0.8+p[F.sto]/t*1.5+p[F.blk]/t*1.5-p[F.izg]/t*0.8+p[F.efe]/t*0.3);};
+  const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
+  const pIdx=P.findIndex(x=>x[F.pid]===best[F.pid]);
+  if(pIdx>=0)openShareCard(pIdx);
+}
+
+function downloadRoundCard(){
+  const cv=document.getElementById('rc-canvas');
+  cv.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=`${_rcMode==='po'?'koncnica':'krog'}_${(''+_rcRound).replace(/\s+/g,'_')}_${_rcFormat}.png`;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Kartica kroga shranjena!','📸');
+  },'image/png');
+}
+
 
 // ═══ TEAM PROFILE OVERLAY ═══
 function showTeamProfile(teamName){
@@ -4826,9 +5235,17 @@ function buildLiveCard(m, lgKey) {
       ${headerRight}
     </div>
     <div class="live-teams">
-      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1};display:flex;align-items:center;gap:8px;justify-content:flex-end">${m.firstTeamName}${w1?' <span style="font-size:.7rem">▸</span>':''}${teamLogoHtml(m.firstTeamName,28)}</div>
+      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1}">
+        ${w1?'<span style="font-size:.7rem;color:#22c55e">▸</span>':''}
+        <span class="tn-txt">${m.firstTeamName}</span>
+        ${teamLogoHtml(m.firstTeamName,30,'')}
+      </div>
       ${scoreHtml}
-      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1};display:flex;align-items:center;gap:8px">${teamLogoHtml(m.secondTeamName,28)}${w2?'<span style="font-size:.7rem">◂</span> ':''}${m.secondTeamName}</div>
+      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1}">
+        ${teamLogoHtml(m.secondTeamName,30,'')}
+        <span class="tn-txt">${m.secondTeamName}</span>
+        ${w2?'<span style="font-size:.7rem;color:#22c55e">◂</span>':''}
+      </div>
     </div>
     <div class="live-footer">
       <span>${m.sportHallName || ''}</span>
