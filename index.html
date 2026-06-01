@@ -6688,7 +6688,11 @@ function computePlayoffSeries(){
     if(!playoffPhases.includes(phase))return;
     const a=m.firstTeamName,b=m.secondTeamName;
     const key=phase+'|'+[a,b].sort().join('|');
-    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],games:[],done:false,live:false,isAggregate:aggregatePhases.has(phase)};
+    if(!series[key]){
+      // 1. SKL Finale is best-of-5 (3 wins); everything else best-of-3 (2 wins)
+      const winsNeeded = (getLg().id===579 && phase==='Finale') ? 3 : 2;
+      series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],games:[],done:false,live:false,winsNeeded,isAggregate:aggregatePhases.has(phase)};
+    }
     const s=series[key];
     s.matches.push(m);
     const finished=m.status==='FINISHED';
@@ -6709,7 +6713,9 @@ function computePlayoffSeries(){
       const playedAll=s.games.filter(g=>g.finished).length>=2;
       s.done=playedAll;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;
     }else{
-      s.done=s.w1>=2||s.w2>=2;s.winner=s.w1>=2?s.t1:s.w2>=2?s.t2:null;
+      const need=s.winsNeeded||2;
+      s.done=s.w1>=need||s.w2>=need;
+      s.winner=s.w1>=need?s.t1:s.w2>=need?s.t2:null;
     }
   });
   return Object.values(series);
@@ -6726,7 +6732,7 @@ function seriesCard(s){
     if(g.finished)return `<span class="pbgame">${g.s1}:${g.s2}</span>`;
     return `<span class="pbgame" style="opacity:.4">T${i+1}</span>`;
   }).join('');
-  const seriesType=s.isAggregate?'SEŠTEVEK':'NA 2 ZMAGI';
+  const seriesType=s.isAggregate?'SEŠTEVEK':(s.winsNeeded===3?'NA 3 ZMAGE':'NA 2 ZMAGI');
   return `<div class="pbseries ${s.live?'live':''} ${isChamp?'champ':''}">
     <div class="pbseries-tag">${s.live?'🔴 V ŽIVO':seriesType}</div>
     <div class="pbteam ${w1?'win':w2?'lose':''}">
