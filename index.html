@@ -709,11 +709,13 @@ html{scroll-behavior:smooth}
 .mo-hero{position:relative;padding:30px 26px 22px;overflow:hidden}
 .mo-hero::before{content:'';position:absolute;inset:0;background:var(--mo-grad);opacity:.16;z-index:0}
 .mo-hero>*{position:relative;z-index:1}
-.mo-hero-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px}
-.mo-hero-team{display:flex;flex-direction:column;gap:8px}
+.mo-hero-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:20px}
+.mo-hero-team{display:flex;flex-direction:column;gap:8px;min-height:140px}
 .mo-hero-team.home{align-items:flex-end;text-align:right}
 .mo-hero-team.away{align-items:flex-start;text-align:left}
 .mo-hero-team .mo-logo{width:56px;height:56px;object-fit:contain}
+.mo-hero-wlabel{margin-top:2px}
+.mo-hero-score{align-self:center;margin-top:30px}
 .mo-hero-tname{font-family:var(--fh);font-size:1.3rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
 .mo-hero-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin:8px 0}
 .mo-hero-score{font-family:var(--fs);font-size:4.2rem;font-weight:800;letter-spacing:-.04em;line-height:.9;display:flex;align-items:center;gap:14px}
@@ -3192,10 +3194,10 @@ function drawShareCard(d){
   });
 
   // Footer
-  x.fillStyle='rgba(255,255,255,.3)';
-  x.font='400 24px "Space Mono", monospace';
-  x.textAlign='center';
-  x.fillText('blazerculj-max.github.io/Statistika-OTP', W/2, H-50);
+  x.fillStyle='rgba(255,255,255,.4)';
+  x.font='600 22px "Space Mono", monospace';
+  x.textAlign='right';
+  x.fillText('by Blaž Erčulj', W-70, H-50);
   x.textAlign='left';
 }
 
@@ -3228,15 +3230,42 @@ function closeShare(){document.getElementById('share-overlay').style.display='no
 let _rcFormat='post', _rcRound=null;
 
 // Preload an image, resolve with the Image (or null on fail)
-function _loadImg(url){
-  return new Promise(resolve=>{
-    if(!url){resolve(null);return;}
-    const img=new Image();
-    img.crossOrigin='anonymous';
-    img.onload=()=>resolve(img);
-    img.onerror=()=>resolve(null);
-    img.src=url;
+// Load an image so it can be drawn on canvas AND exported (toBlob).
+// Strategy: fetch as blob via CORS proxy -> objectURL -> Image. This guarantees
+// the canvas is not tainted, because the blob is same-origin (objectURL).
+// Load an image so it can be drawn on canvas AND exported (toBlob).
+// objectURL from a fetched blob is same-origin, so the canvas never gets tainted.
+// Try direct fetch first (works if KZS sends CORS headers), then proxies.
+async function _blobToImg(blob){
+  if(!blob||blob.size<100)return null;
+  const objUrl=URL.createObjectURL(blob);
+  return await new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>res(im);
+    im.onerror=()=>{URL.revokeObjectURL(objUrl);res(null);};
+    im.src=objUrl;
   });
+}
+async function _loadImg(url){
+  if(!url)return null;
+  const bare=url.replace(/^https?:\/\//,'');
+  const sources=[
+    url,  // direct — cleanest if KZS allows CORS
+    'https://wsrv.nl/?url='+encodeURIComponent(bare),
+    'https://images.weserv.nl/?url='+encodeURIComponent(bare),
+    'https://corsproxy.io/?url='+encodeURIComponent(url),
+    'https://api.allorigins.win/raw?url='+encodeURIComponent(url)
+  ];
+  for(const src of sources){
+    try{
+      const resp=await fetch(src,{mode:'cors',cache:'force-cache'});
+      if(!resp.ok)continue;
+      const blob=await resp.blob();
+      const img=await _blobToImg(blob);
+      if(img)return img;
+    }catch(e){/* next */}
+  }
+  return null;
 }
 
 let _rcMode='rd'; // 'rd' = redni del, 'po' = končnica
@@ -3390,6 +3419,15 @@ async function renderRoundCard(){
     // decorative circle
     x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
     x.globalAlpha=0.1;x.fillStyle='#fff';x.beginPath();x.arc(W-M-100,y+60,200,0,Math.PI*2);x.fill();x.restore();
+    // Large team logo watermark (CGP — clearly marks the player's club)
+    const wmLogo=await _loadImg(teamLogoUrl((tm||'').split(' / ')[0]));
+    if(wmLogo){
+      x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
+      x.globalAlpha=0.12;
+      const wmS=cardH*0.95;
+      try{x.drawImage(wmLogo,M+30,y+(cardH-wmS)/2,wmS,wmS);}catch(e){}
+      x.restore();
+    }
     // MVP badge
     x.fillStyle='rgba(255,255,255,.9)';
     x.font='700 26px "Space Mono", monospace';
@@ -3526,9 +3564,9 @@ async function renderRoundCard(){
   }
 
   // ══ FOOTER ══
-  x.fillStyle='rgba(255,255,255,.35)';
-  x.font='600 24px "Space Mono", monospace';x.textAlign='center';
-  x.fillText('@ slovenska košarka · blazerculj-max.github.io/Statistika-OTP',W/2,H-46);
+  x.fillStyle='rgba(255,255,255,.4)';
+  x.font='600 22px "Space Mono", monospace';x.textAlign='right';
+  x.fillText('by Blaž Erčulj',W-M,H-46);
   x.textAlign='left';
 }
 
@@ -3550,14 +3588,19 @@ function openSeasonCard(){
 
 function downloadRoundCard(){
   const cv=document.getElementById('rc-canvas');
-  cv.toBlob(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download=`${_rcMode==='po'?'koncnica':'krog'}_${(''+_rcRound).replace(/\s+/g,'_')}_${_rcFormat}.png`;
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('Kartica kroga shranjena!','📸');
-  },'image/png');
+  try{
+    cv.toBlob(blob=>{
+      if(!blob){toast('Napaka pri shranjevanju','⚠️');return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=`${_rcMode==='po'?'koncnica':'krog'}_${(''+_rcRound).replace(/\s+/g,'_')}_${_rcFormat}.png`;
+      document.body.appendChild(a);a.click();a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      toast('Kartica kroga shranjena!','📸');
+    },'image/png');
+  }catch(e){
+    toast('Slike se ne dajo izvoziti (CORS). Poskusi screenshot.','⚠️');
+  }
 }
 
 
