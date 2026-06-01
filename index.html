@@ -2619,17 +2619,41 @@ function buildTicker(){
   if(!LPa.length){bar.style.display='none';return;}
   const best=(fn)=>[...LPa].sort((a,b)=>fn(b)-fn(a))[0];
   const items=[];
+  const isLiga3 = getLg().id===582; // 3. SKL: only reliable points & threes
+
+  // Points leader — reliable in all leagues
   const ptsL=best(p=>p[F.toc]/p[F.T]);
   items.push(`🏀 <b>${ptsL[F.name]}</b> vodi v točkah — ${(ptsL[F.toc]/ptsL[F.T]).toFixed(1)}/tekmo`);
-  const rebL=best(p=>(p[F.nap]+p[F.obr])/p[F.T]);
-  items.push(`💪 <b>${rebL[F.name]}</b> kralj skokov — ${((rebL[F.nap]+rebL[F.obr])/rebL[F.T]).toFixed(1)}/tekmo`);
-  const astL=best(p=>p[F.pod]/p[F.T]);
-  items.push(`🎯 <b>${astL[F.name]}</b> največ asistenc — ${(astL[F.pod]/astL[F.T]).toFixed(1)}/tekmo`);
+
+  // Threes — reliable in all leagues
   const trojkeL=best(p=>p[F.fg3m]);
   items.push(`🌟 <b>${trojkeL[F.name]}</b> — ${trojkeL[F.fg3m]} trojk skupaj`);
-  const efeL=best(p=>p[F.efe]/p[F.T]);
-  items.push(`⚡ <b>${efeL[F.name]}</b> najvišji EFE — ${(efeL[F.efe]/efeL[F.T]).toFixed(1)}`);
-  // Single-game high score from matchStatsCache
+
+  if(!isLiga3){
+    // Advanced stats only for 1./2. SKL where data is complete
+    const rebL=best(p=>(p[F.nap]+p[F.obr])/p[F.T]);
+    items.push(`💪 <b>${rebL[F.name]}</b> kralj skokov — ${((rebL[F.nap]+rebL[F.obr])/rebL[F.T]).toFixed(1)}/tekmo`);
+    const astL=best(p=>p[F.pod]/p[F.T]);
+    items.push(`🎯 <b>${astL[F.name]}</b> največ asistenc — ${(astL[F.pod]/astL[F.T]).toFixed(1)}/tekmo`);
+    const efeL=best(p=>p[F.efe]/p[F.T]);
+    items.push(`⚡ <b>${efeL[F.name]}</b> najvišji EFE — ${(efeL[F.efe]/efeL[F.T]).toFixed(1)}`);
+  } else {
+    // 3. SKL: lean on points-based & team-level stats instead
+    const pts2L=[...LPa].sort((a,b)=>(b[F.toc]/b[F.T])-(a[F.toc]/a[F.T]))[1];
+    if(pts2L)items.push(`🔥 <b>${pts2L[F.name]}</b> — ${(pts2L[F.toc]/pts2L[F.T]).toFixed(1)} točk/tekmo`);
+    const threeTotL=[...LPa].sort((a,b)=>b[F.fg3m]-a[F.fg3m])[1];
+    if(threeTotL)items.push(`🎯 <b>${threeTotL[F.name]}</b> — ${threeTotL[F.fg3m]} trojk`);
+    // Team with most points scored (from match results)
+    const teamPts={};
+    allMatches.filter(m=>m.status==='FINISHED').forEach(m=>{
+      teamPts[m.firstTeamName]=(teamPts[m.firstTeamName]||0)+(m.firstTeamScore||0);
+      teamPts[m.secondTeamName]=(teamPts[m.secondTeamName]||0)+(m.secondTeamScore||0);
+    });
+    const topTeam=Object.entries(teamPts).sort((a,b)=>b[1]-a[1])[0];
+    if(topTeam)items.push(`🏆 <b>${topTeam[0]}</b> — najbolj napadalna ekipa (${topTeam[1]} točk)`);
+  }
+
+  // Single-game high score — reliable everywhere
   let topGamePts=0,topGameName='';
   Object.values(matchStatsCache).forEach(md=>{
     if(!md)return;
@@ -2640,7 +2664,8 @@ function buildTicker(){
     });
   });
   if(topGamePts>0)items.push(`🔥 Rekord tekme — <b>${topGameName}</b> ${topGamePts} točk`);
-  // ELO leader
+
+  // ELO leader — reliable everywhere
   try{
     const {ratings}=computeElo();
     const eloTop=Object.entries(ratings).sort((a,b)=>b[1]-a[1])[0];
@@ -2648,7 +2673,6 @@ function buildTicker(){
   }catch(e){}
 
   const itemHtml=items.map(t=>`<span class="ticker-item"><span class="ticker-dot"></span>${t}</span>`).join('');
-  // Duplicate for seamless loop
   track.innerHTML=itemHtml+itemHtml;
   bar.style.display='block';
 }
