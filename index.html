@@ -568,6 +568,39 @@ body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22
 .elo-bar-fill{animation:eloGrow .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes eloGrow{from{width:0 !important;opacity:.3}to{opacity:1}}
 
+/* ═══ PREMIUM PLAYOFF BRACKET ═══ */
+.pbracket{position:relative;overflow-x:auto;padding:8px 4px 20px}
+.pbracket-inner{display:flex;gap:0;align-items:stretch;min-width:max-content}
+.pbcol{display:flex;flex-direction:column;justify-content:space-around;position:relative;padding:0 30px}
+.pbcol-title{font-family:var(--fh);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--pbc-c,var(--acc));color:var(--pbc-c,var(--acc))}
+.pbseries{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:13px;overflow:hidden;width:230px;margin:10px 0;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative}
+.pbseries:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.35);border-color:var(--border2)}
+.pbseries.live{border-color:rgba(239,68,68,.5);box-shadow:0 0 22px rgba(239,68,68,.14)}
+.pbseries.champ{border-color:#fbbf24;box-shadow:0 0 30px rgba(251,191,36,.25)}
+.pbteam{display:flex;align-items:center;gap:9px;padding:11px 13px;position:relative}
+.pbteam+.pbteam{border-top:1px solid var(--border)}
+.pbteam-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pbteam-name{flex:1;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbteam-score{font-family:var(--fs);font-size:1.25rem;font-weight:800;min-width:22px;text-align:center;flex-shrink:0}
+.pbteam.win .pbteam-name{font-weight:800}
+.pbteam.win .pbteam-score{color:#22c55e}
+.pbteam.win::after{content:'▸';position:absolute;left:-2px;color:#22c55e;font-size:.7rem}
+.pbteam.lose{opacity:.45}
+.pbgames{display:flex;gap:3px;padding:7px 13px;background:rgba(255,255,255,.02);border-top:1px solid var(--border);flex-wrap:wrap}
+.pbgame{font-family:var(--fm);font-size:.6rem;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--mut);white-space:nowrap}
+.pbgame.live{background:rgba(239,68,68,.2);color:#ef4444;font-weight:700}
+.pbseries-tag{font-size:.55rem;text-align:center;padding:3px;color:var(--mut);font-family:var(--fm);letter-spacing:.05em;border-bottom:1px solid var(--border)}
+/* Connector lines */
+.pbconn{position:absolute;right:0;width:30px;border-right:2px solid var(--border2)}
+.pbconn-h{position:absolute;height:2px;background:var(--border2);right:-30px;width:30px}
+/* Champion trophy card */
+.pbchamp-col{display:flex;flex-direction:column;justify-content:center;padding:0 20px}
+.pbchamp{text-align:center;padding:24px 20px;background:linear-gradient(155deg,rgba(251,191,36,.12),rgba(251,191,36,.03));border:1px solid rgba(251,191,36,.3);border-radius:16px;width:200px}
+.pbchamp-trophy{font-size:3rem;line-height:1;margin-bottom:8px;filter:drop-shadow(0 4px 12px rgba(251,191,36,.4))}
+.pbchamp-lbl{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:#fbbf24;font-family:var(--fm);margin-bottom:6px}
+.pbchamp-name{font-family:var(--fh);font-size:1.15rem;font-weight:800;line-height:1.1}
+.pbchamp-pending{opacity:.4}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -1246,6 +1279,7 @@ function selectLeague(lg) {
   document.getElementById('hero-overlay').style.display = 'none';
   document.getElementById('loading-overlay').style.display = 'flex';
   currentLeague = lg;
+  _eloRatings = null;
   const l = getLg();
   // Update loading title
   let loadHtml = 'LIGA <span style="color:var(--acc)">OTP BANKA</span>';
@@ -1285,6 +1319,7 @@ async function switchLeague(lg) {
   // Reset state
   P = []; allMatches = []; matchStatsCache = {}; pbpData = {};
   pbpLoaded = false; nerdStats = null; _leaguePlayers = null; _tmAgg = {};
+  _eloRatings = null; playerGameLog = {};
   sortCol = -1;
   // Show loading and reload
   document.getElementById('loading-overlay').style.display = 'flex';
@@ -6649,20 +6684,33 @@ function computePlayoffSeries(){
   const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
   allMatches.forEach(m=>{
-    if(m.status!=='FINISHED')return;
     const phase=m.competitions?.[0]?.competitionPhaseName||'';
     if(!playoffPhases.includes(phase))return;
     const a=m.firstTeamName,b=m.secondTeamName;
     const key=phase+'|'+[a,b].sort().join('|');
-    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],done:false,isAggregate:aggregatePhases.has(phase)};
-    const s=series[key];s.matches.push(m);
+    if(!series[key])series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],games:[],done:false,live:false,isAggregate:aggregatePhases.has(phase)};
+    const s=series[key];
+    s.matches.push(m);
+    const finished=m.status==='FINISHED';
+    const isLive=m.status==='LIVE';
+    if(isLive)s.live=true;
     const sc1=m.firstTeamScore||0,sc2=m.secondTeamScore||0;
-    if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
-    if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    // Normalize scores to t1/t2 orientation
+    const myS1=s.t1===a?sc1:sc2, myS2=s.t1===a?sc2:sc1;
+    s.games.push({s1:myS1,s2:myS2,finished,live:isLive,date:m.dateTime});
+    if(finished){
+      if(sc1>sc2){if(s.t1===a)s.w1++;else s.w2++;}else{if(s.t2===b)s.w2++;else s.w1++;}
+      if(s.t1===a){s.pts1+=sc1;s.pts2+=sc2;}else{s.pts1+=sc2;s.pts2+=sc1;}
+    }
   });
   Object.values(series).forEach(s=>{
-    if(s.isAggregate){s.done=s.matches.length>=2;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;}
-    else{s.done=s.w1>=2||s.w2>=2;s.winner=s.w1>=2?s.t1:s.w2>=2?s.t2:null;}
+    s.games.sort((a,b)=>new Date(a.date)-new Date(b.date));
+    if(s.isAggregate){
+      const playedAll=s.games.filter(g=>g.finished).length>=2;
+      s.done=playedAll;s.winner=s.done?(s.pts1>s.pts2?s.t1:s.t2):null;
+    }else{
+      s.done=s.w1>=2||s.w2>=2;s.winner=s.w1>=2?s.t1:s.w2>=2?s.t2:null;
+    }
   });
   return Object.values(series);
 }
@@ -6671,32 +6719,85 @@ function seriesCard(s){
   const c1=TEAM_COLORS[s.t1]||'#888',c2=TEAM_COLORS[s.t2]||'#888';
   const w1=s.winner===s.t1,w2=s.winner===s.t2;
   const sc1=s.isAggregate?s.pts1:s.w1,sc2=s.isAggregate?s.pts2:s.w2;
-  return `<div class="bracket-series ${s.done?'done':''}">
-    ${s.isAggregate?'<div style="font-size:.55rem;color:var(--mut);text-align:center;padding:2px;border-bottom:1px solid var(--border)">SEŠTEVEK</div>':''}
-    <div class="bracket-team ${w1?'winner':w2?'loser':''}">
-      <span style="color:${c1};font-size:.75rem;font-weight:600">${s.t1}</span>
-      <span style="font-family:var(--fh);color:${w1?'#22c55e':'var(--sub)'}">${sc1}</span>
+  const isChamp=s.phase==='Finale'&&s.done;
+  // Game-by-game results
+  const gamesHtml=s.games.map((g,i)=>{
+    if(g.live)return `<span class="pbgame live">● ${g.s1}:${g.s2}</span>`;
+    if(g.finished)return `<span class="pbgame">${g.s1}:${g.s2}</span>`;
+    return `<span class="pbgame" style="opacity:.4">T${i+1}</span>`;
+  }).join('');
+  const seriesType=s.isAggregate?'SEŠTEVEK':'NA 2 ZMAGI';
+  return `<div class="pbseries ${s.live?'live':''} ${isChamp?'champ':''}">
+    <div class="pbseries-tag">${s.live?'🔴 V ŽIVO':seriesType}</div>
+    <div class="pbteam ${w1?'win':w2?'lose':''}">
+      <span class="pbteam-dot" style="background:${c1};box-shadow:0 0 8px ${c1}66"></span>
+      <span class="pbteam-name" style="color:${c1}">${s.t1}</span>
+      <span class="pbteam-score">${sc1}</span>
     </div>
-    <div class="bracket-team ${w2?'winner':w1?'loser':''}">
-      <span style="color:${c2};font-size:.75rem;font-weight:600">${s.t2}</span>
-      <span style="font-family:var(--fh);color:${w2?'#22c55e':'var(--sub)'}">${sc2}</span>
+    <div class="pbteam ${w2?'win':w1?'lose':''}">
+      <span class="pbteam-dot" style="background:${c2};box-shadow:0 0 8px ${c2}66"></span>
+      <span class="pbteam-name" style="color:${c2}">${s.t2}</span>
+      <span class="pbteam-score">${sc2}</span>
     </div>
+    ${s.games.length?`<div class="pbgames">${gamesHtml}</div>`:''}
   </div>`;
 }
 
 function renderBracketHTML(byPhase,phaseColors){
   const phaseOrder=['Osmina finala','Četrtfinale','Polfinale','Finale'];
-  let html='<div style="overflow-x:auto"><div style="display:flex;gap:20px;padding:10px 0;min-width:600px">';
-  phaseOrder.forEach(ph=>{
-    if(!byPhase[ph])return;
+  const present=phaseOrder.filter(p=>byPhase[p]);
+  if(!present.length)return '';
+  const lastPhase=present[present.length-1];
+  const lastSeries=byPhase[lastPhase]||[];
+  // The deciding series = last phase IF it's a single series (true final).
+  // If last phase has multiple series (e.g. 3.SKL "Polfinale" is actually the last round
+  // with 2 parallel series), there is no single champion yet.
+  const isTrueFinal = lastSeries.length===1;
+  const decidingSeries = isTrueFinal ? lastSeries[0] : null;
+
+  let cols='';
+  present.forEach(ph=>{
     const color=phaseColors[ph]||'#888';
-    html+=`<div style="flex:1;min-width:160px">
-      <div style="font-family:var(--fh);font-size:.7rem;letter-spacing:.08em;color:${color};margin-bottom:8px;text-align:center">${ph.toUpperCase()}</div>
-      <div style="display:flex;flex-direction:column;gap:8px">${byPhase[ph].map(s=>seriesCard(s)).join('')}</div>
+    const cards=byPhase[ph].map(s=>seriesCard(s)).join('');
+    cols+=`<div class="pbcol" style="--pbc-c:${color}">
+      <div class="pbcol-title">${ph}</div>
+      ${cards}
     </div>`;
   });
-  html+='</div></div>';
-  return html;
+
+  // Champion column
+  let champCol='';
+  if(decidingSeries){
+    if(decidingSeries.done&&decidingSeries.winner){
+      const cc=TEAM_COLORS[decidingSeries.winner]||'#fbbf24';
+      champCol=`<div class="pbchamp-col">
+        <div class="pbchamp">
+          <div class="pbchamp-trophy">🏆</div>
+          <div class="pbchamp-lbl">Prvak</div>
+          <div class="pbchamp-name" style="color:${cc}">${decidingSeries.winner}</div>
+        </div>
+      </div>`;
+    }else{
+      champCol=`<div class="pbchamp-col">
+        <div class="pbchamp pbchamp-pending">
+          <div class="pbchamp-trophy">🏆</div>
+          <div class="pbchamp-lbl">Prvak</div>
+          <div class="pbchamp-name" style="color:var(--mut)">?</div>
+        </div>
+      </div>`;
+    }
+  } else if(lastSeries.length>1){
+    // Last round still has multiple series → champion undecided
+    const allDone=lastSeries.every(s=>s.done);
+    champCol=`<div class="pbchamp-col">
+      <div class="pbchamp pbchamp-pending">
+        <div class="pbchamp-trophy">🏆</div>
+        <div class="pbchamp-lbl">Prvak</div>
+        <div class="pbchamp-name" style="color:var(--mut)">${allDone?'Čaka finale':'?'}</div>
+      </div>
+    </div>`;
+  }
+  return `<div class="pbracket"><div class="pbracket-inner">${cols}${champCol}</div></div>`;
 }
 
 </script>
