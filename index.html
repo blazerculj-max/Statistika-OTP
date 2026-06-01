@@ -497,13 +497,14 @@ select:focus{outline:none;border-color:var(--acc)}
 .hero-wrap{animation:fadeUp .6s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 /* ═══ PREMIUM PLAYER CARDS ═══ */
+.hcard-photo{position:absolute;right:0;bottom:0;height:88%;width:auto;max-width:48%;object-fit:contain;object-position:bottom right;z-index:1;opacity:.92;filter:drop-shadow(-4px 0 12px rgba(0,0,0,.25));-webkit-mask-image:linear-gradient(to left,#000 60%,transparent);mask-image:linear-gradient(to left,#000 60%,transparent)}
 .hero-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
 @media(max-width:760px){.hero-cards{grid-template-columns:1fr}}
 .hcard{position:relative;border-radius:18px;padding:20px;overflow:hidden;border:1px solid var(--border2);cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
 .hcard:hover{transform:translateY(-4px) scale(1.015)}
 .hcard::before{content:'';position:absolute;inset:0;background:var(--hc-grad);opacity:.92;z-index:0}
 .hcard::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);z-index:0}
-.hcard>*{position:relative;z-index:1}
+.hcard>*{position:relative;z-index:2}
 .hcard-rank{position:absolute;top:14px;right:16px;font-family:var(--fh);font-size:2.4rem;font-weight:800;color:rgba(255,255,255,.18);line-height:1;z-index:1}
 .hcard-cat{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-bottom:auto}
 .hcard-val{font-family:var(--fs);font-size:3rem;font-weight:800;color:#fff;line-height:.95;letter-spacing:-.03em;text-shadow:0 2px 20px rgba(0,0,0,.3)}
@@ -660,6 +661,16 @@ html{scroll-behavior:smooth}
 
 /* Glow ring on focused/active nav */
 .nb.active{box-shadow:0 2px 12px rgba(249,115,22,.35)}
+
+/* ═══ PLAYER PHOTO ═══ */
+.pp-photo-wrap{position:relative;width:84px;height:96px;flex-shrink:0}
+.pp-photo{width:84px;height:96px;border-radius:14px;object-fit:cover;object-position:top center;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.pp-photo-fallback{width:84px;height:96px;border-radius:14px;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:1.8rem;font-weight:800;color:#fff}
+.pp-photo-logo{position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;background:var(--card);border-radius:9px;display:flex;align-items:center;justify-content:center;padding:4px;box-shadow:0 2px 8px rgba(0,0,0,.4);border:1px solid var(--border2)}
+@media(max-width:680px){
+  .pp-photo-wrap,.pp-photo,.pp-photo-fallback{width:66px;height:78px}
+  .pp-photo-fallback{font-size:1.3rem}
+}
 
 /* ═══ PLAYER PROFILE REDESIGN ═══ */
 .pp-hero{position:relative;padding:28px 26px 22px;overflow:hidden;border-radius:16px 16px 0 0}
@@ -924,6 +935,8 @@ html{scroll-behavior:smooth}
 .sf-reset:hover{border-color:var(--red);color:var(--red)}
 
 /* Search result cards */
+.scard-photo{width:42px;height:42px;border-radius:11px;object-fit:cover;object-position:top center;flex-shrink:0;border:1px solid var(--border2);background:var(--card2)}
+.scard-photo-fb{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.9rem;flex-shrink:0}
 .srch-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
 .scard{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:13px;padding:14px 16px;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;overflow:hidden}
 .scard:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
@@ -1531,6 +1544,24 @@ function buildTeamLogoMap(){
   });
 }
 
+let _playerPhotos = {}; // playerId -> photoUuid
+function buildPlayerPhotoMap(){
+  _playerPhotos = {};
+  Object.values(matchStatsCache).forEach(md=>{
+    if(!md)return;
+    [md.firstTeam,md.secondTeam].forEach(side=>{
+      (side?.playerStats||[]).forEach(ps=>{
+        if(ps.playerId && ps.photoUuid && !_playerPhotos[ps.playerId])
+          _playerPhotos[ps.playerId] = ps.photoUuid;
+      });
+    });
+  });
+}
+function playerPhotoUrl(pid){
+  const uuid=_playerPhotos[pid];
+  return uuid ? 'https://api.kzs.si/public/images/'+uuid : null;
+}
+
 function teamLogoUrl(teamName){
   const uuid=_teamLogos[teamName];
   return uuid ? TEAM_LOGO_BASE+uuid : null;
@@ -2040,6 +2071,7 @@ function subscribeToLiveMatches() {
 // ═══════════════════════════════════════════════════
 function initUI() {
   buildTeamLogoMap();
+  buildPlayerPhotoMap();
   // Use league team list if available, otherwise derive from data
   const lgTeams = getLg().teams;
   // Vključi VSE ekipe iz LEAGUES.teams (tudi Cedevita ki nima rednega dela)
@@ -2926,7 +2958,8 @@ function openShareCard(pIdx){
     efe:merged[F.efe]/t, fg3:pct(merged[F.fg3m],merged[F.fg3a]),
     ts:tsOf(merged),
     color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
-    logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0])
+    logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0]),
+    photoUrl:playerPhotoUrl(merged[F.pid])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_');
   document.getElementById('share-overlay').style.display='flex';
@@ -2962,21 +2995,62 @@ function drawShareCard(d){
   x.textAlign='left';
   x.fillText('SLOVENSKA KOŠARKA · 2025/26', 70, 100);
 
-  // Team logo (top-right) — drawn async, then re-trigger any pending
-  if(d.logoUrl){
+  // Player photo — big circular, top-right. Logo badge sits on it.
+  const photoSize=260, photoCX=W-photoSize/2-80, photoCY=photoSize/2+90;
+  function drawLogoBadge(){
+    if(!d.logoUrl)return;
     const logo=new Image();
     logo.crossOrigin='anonymous';
     logo.onload=()=>{
-      // white rounded backdrop for contrast
       x.save();
-      x.globalAlpha=0.95;
-      const ls=150, lx=W-ls-70, ly=70;
-      _roundRect(x,lx-12,ly-12,ls+24,ls+24,20);
-      x.fillStyle='rgba(255,255,255,.12)';x.fill();
-      try{x.drawImage(logo,lx,ly,ls,ls);}catch(e){}
+      const bs=84, bx=photoCX+photoSize/2-bs-6, by=photoCY+photoSize/2-bs-6;
+      // white rounded backdrop
+      _roundRect(x,bx-6,by-6,bs+12,bs+12,18);
+      x.fillStyle='rgba(10,10,20,.85)'; x.fill();
+      x.strokeStyle='rgba(255,255,255,.2)'; x.lineWidth=2; x.stroke();
+      try{x.drawImage(logo,bx,by,bs,bs);}catch(e){}
       x.restore();
     };
     logo.src=d.logoUrl;
+  }
+  if(d.photoUrl){
+    const ph=new Image();
+    ph.crossOrigin='anonymous';
+    ph.onload=()=>{
+      x.save();
+      // outer ring
+      x.beginPath();x.arc(photoCX,photoCY,photoSize/2+5,0,Math.PI*2);
+      x.fillStyle='rgba(255,255,255,.15)';x.fill();
+      // clip to circle
+      x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);x.closePath();x.clip();
+      try{
+        // top-aligned square crop so head is fully visible
+        const iw=ph.naturalWidth||ph.width, ih=ph.naturalHeight||ph.height;
+        const side=Math.min(iw,ih);
+        const sx=(iw-side)/2, sy=0;
+        x.drawImage(ph, sx, sy, side, side, photoCX-photoSize/2, photoCY-photoSize/2, photoSize, photoSize);
+      }catch(e){}
+      x.restore();
+      // ring stroke
+      x.save();
+      x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);
+      x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=4;x.stroke();
+      x.restore();
+      drawLogoBadge();
+    };
+    ph.src=d.photoUrl;
+  } else {
+    // No photo — just show logo big top-right
+    if(d.logoUrl){
+      const logo=new Image();
+      logo.crossOrigin='anonymous';
+      logo.onload=()=>{
+        x.save();const ls=160,lx=W-ls-90,ly=110;
+        try{x.drawImage(logo,lx,ly,ls,ls);}catch(e){}
+        x.restore();
+      };
+      logo.src=d.logoUrl;
+    }
   }
 
   // Player name (wrap if long)
@@ -3346,8 +3420,10 @@ function renderCmdkResults(){
         <span class="cmdk-item-tag">Profil ekipe</span>
       </div>`;
     }
+    const ph=playerPhotoUrl(r.pid);
+    const ini=r.name.split(' ').map(x=>x[0]).join('').slice(0,2);
     return `<div class="cmdk-item ${i===_cmdkActive?'active':''}" data-i="${i}" onclick="cmdkPick(${i})" onmouseenter="_cmdkActive=${i};renderCmdkResults()">
-      <span class="cmdk-item-icon" style="background:${tc}22;color:${tc}">👤</span>
+      ${ph?`<img src="${ph}" class="cmdk-item-icon" style="object-fit:cover;object-position:top center;padding:0" onerror="this.outerHTML='<span class=\'cmdk-item-icon\' style=\'background:${tc}22;color:${tc}\'>${ini}</span>'">`:`<span class="cmdk-item-icon" style="background:${tc}22;color:${tc};font-weight:700;font-size:.72rem">${ini}</span>`}
       <div><div class="cmdk-item-name">${r.name}</div><div class="cmdk-item-sub">${r.team} · ${r.pts} tč/tekmo</div></div>
       <span class="cmdk-item-tag">Igralec</span>
     </div>`;
@@ -3584,7 +3660,8 @@ function renderSpotlight(){
     <div class="spotlight-badge">⭐ Igralec sezone</div>
     <div class="spotlight-body">
       <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:54px;height:54px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:7px;backdrop-filter:blur(8px);flex-shrink:0">${teamLogoHtml(best[F.team],40)}</div>
+        ${(()=>{const ph=playerPhotoUrl(best[F.pid]);const ini=best[F.name].split(' ').map(x=>x[0]).join('').slice(0,2);
+          return `<div class="pp-photo-wrap" style="width:64px;height:64px">${ph?`<img src="${ph}" class="pp-photo" style="width:64px;height:64px" onerror="this.outerHTML='<div class=\'pp-photo-fallback\' style=\'width:64px;height:64px\'>${ini}</div>'">`:`<div class="pp-photo-fallback" style="width:64px;height:64px">${ini}</div>`}<span class="pp-photo-logo">${teamLogoHtml(best[F.team],22)}</span></div>`;})()}
         <div>
           <div class="spotlight-name">${best[F.name]}</div>
           <div class="spotlight-team">${best[F.team]} · ${best[F.T]} tekem</div>
@@ -3642,8 +3719,9 @@ function renderLigaFeatured(){
     const spark=last6.map(g=>`<span style="height:${Math.max(8,Math.round(Math.max(g.efe,0)/maxE*100))}%"></span>`).join('');
     const pIdx=P.findIndex(x=>x[F.pid]===p[F.pid]);
     const logoUrl=teamLogoUrl((p[F.team]||'').split(' / ')[0]);
+    const photoUrl=playerPhotoUrl(p[F.pid]);
     return `<div class="hcard" style="--hc-grad:${grad}" onclick="showPlayer(${pIdx})">
-      ${logoUrl?`<img src="${logoUrl}" alt="" loading="lazy" style="position:absolute;right:14px;bottom:14px;width:42px;height:42px;object-fit:contain;opacity:.32;z-index:1" onerror="this.style.display='none'">`:''}
+      ${photoUrl?`<img src="${photoUrl}" alt="" loading="lazy" class="hcard-photo" onerror="this.style.display='none'">`:(logoUrl?`<img src="${logoUrl}" alt="" loading="lazy" style="position:absolute;right:14px;bottom:14px;width:42px;height:42px;object-fit:contain;opacity:.32;z-index:1" onerror="this.style.display='none'">`:'')}
       <div class="hcard-rank">${i+1}</div>
       <div class="hcard-cat">🏀 Najboljši strelec #${i+1}</div>
       <div>
@@ -3959,7 +4037,8 @@ function doSearch(){
     return `<div class="scard" onclick="showPlayerLP(${lpIdx})" style="--sc-c:${color}">
       <div class="scard-rank">${i+1}</div>
       <div class="scard-head">
-        ${teamLogoHtml(p[F.team],32)}
+        ${(()=>{const ph=playerPhotoUrl(p[F.pid]);const ini=p[F.name].split(' ').map(x=>x[0]).join('').slice(0,2);
+          return ph?`<img src="${ph}" class="scard-photo" alt="" onerror="this.outerHTML='<div class=\'scard-photo-fb\' style=\'background:${color}33;color:${color}\'>${ini}</div>'">`:`<div class="scard-photo-fb" style="background:${color}33;color:${color}">${ini}</div>`;})()}
         <div>
           <div class="scard-name">${p[F.name]}</div>
           <div class="scard-team" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
@@ -4079,8 +4158,17 @@ function showPlayer(idx){
     <div class="pp-close" onclick="closePlayer()">✕</div>
     <div class="pp-hero" style="--pph-grad:linear-gradient(135deg,${color},${_shade(color,-45)})">
       <div class="pp-hero-top">
-        <div style="display:flex;align-items:center;gap:14px">
-          <div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:7px;backdrop-filter:blur(8px);flex-shrink:0">${teamLogoHtml(p[F.team],38)}</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          ${(()=>{
+            const photo=playerPhotoUrl(p[F.pid]);
+            if(photo){
+              return `<div class="pp-photo-wrap">
+                <img src="${photo}" alt="${p[F.name]}" class="pp-photo" onerror="this.parentElement.innerHTML='<div class=\'pp-photo-fallback\'>'+'${p[F.name].split(' ').map(x=>x[0]).join('').slice(0,2)}'+'</div>'">
+                <span class="pp-photo-logo">${teamLogoHtml(p[F.team],26)}</span>
+              </div>`;
+            }
+            return `<div class="pp-photo-wrap"><div class="pp-photo-fallback">${p[F.name].split(' ').map(x=>x[0]).join('').slice(0,2)}</div><span class="pp-photo-logo">${teamLogoHtml(p[F.team],26)}</span></div>`;
+          })()}
           <div>
             <div class="pp-hero-name">${p[F.name]}</div>
             <div class="pp-hero-meta">${p[F.team]} · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
@@ -5958,7 +6046,8 @@ function renderMVP(){
       <div class="mvp-hero-badge">👑 Vodilni kandidat za MVP</div>
       <div class="mvp-hero-body">
         <div style="display:flex;align-items:center;gap:16px">
-          <div style="width:62px;height:62px;background:rgba(255,255,255,.16);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:8px;backdrop-filter:blur(8px);flex-shrink:0">${teamLogoHtml(p[F.team],46)}</div>
+          ${(()=>{const ph=playerPhotoUrl(p[F.pid]);const ini=p[F.name].split(' ').map(x=>x[0]).join('').slice(0,2);
+            return `<div class="pp-photo-wrap" style="width:72px;height:72px">${ph?`<img src="${ph}" class="pp-photo" style="width:72px;height:72px" onerror="this.parentElement.querySelector('.pp-photo-logo')?.remove();this.outerHTML='<div class=\'pp-photo-fallback\' style=\'width:72px;height:72px\'>${ini}</div>'">`:`<div class="pp-photo-fallback" style="width:72px;height:72px">${ini}</div>`}<span class="pp-photo-logo">${teamLogoHtml(p[F.team],24)}</span></div>`;})()}
           <div>
             <div class="mvp-hero-name">${p[F.name]}</div>
             <div class="mvp-hero-team">${p[F.team]} · ${p[F.T]} tekem</div>
