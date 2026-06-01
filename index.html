@@ -843,6 +843,11 @@ html{scroll-behavior:smooth}
 .cmdk-trigger kbd{background:var(--border);border-radius:4px;padding:1px 6px;font-size:.66rem;font-family:var(--fm)}
 @media(max-width:680px){.cmdk-trigger span.lbl{display:none}.cmdk-trigger kbd{display:none}}
 
+/* ═══ ANALYTICS DROPDOWN — theme-aware text ═══ */
+#analytics-dropdown .nb{color:var(--text) !important;border-bottom:1px solid var(--border) !important}
+#analytics-dropdown .nb:last-child{border-bottom:none !important}
+#analytics-dropdown .nb:hover{background:var(--card2) !important;color:var(--acc) !important}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -7551,10 +7556,10 @@ function renderBracketHTML(byPhase,phaseColors){
 
 <div id="analytics-dropdown"
   style="display:none;position:fixed;min-width:200px;
-    background:#0d0d1e;
-    border:1px solid rgba(255,255,255,.12);
+    background:var(--card);
+    border:1px solid var(--border2);
     border-radius:10px;padding:6px;
-    z-index:9999;box-shadow:0 20px 48px rgba(0,0,0,.8)">
+    z-index:9999;box-shadow:0 20px 48px rgba(0,0,0,.5)">
   <button class="nb" onclick="showTab('liga');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Liga</button>
   <button class="nb" onclick="showTab('teamstats');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Ekipna statistika</button>
   <button class="nb" onclick="showTab('nerd');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Nerd stats</button>
