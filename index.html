@@ -8,10 +8,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Napredna statistika slovenske košarke — 1., 2. in 3. SKL. Live rezultati, MVP lestvice, rekordi, ELO moč ekip in končnica.">
+  <meta name="theme-color" content="#06060f">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Slovenska Košarka — Statistika 2025/26">
+  <meta property="og:description" content="Live rezultati, MVP lestvice, rekordi in napredna statistika za 1., 2. in 3. SKL.">
+  <meta property="og:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png">
+  <meta property="og:url" content="https://blazerculj-max.github.io/Statistika-OTP/">
+  <meta property="og:site_name" content="Slovenska Košarka Statistika">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Slovenska Košarka — Statistika 2025/26">
+  <meta name="twitter:description" content="Live rezultati, MVP lestvice, rekordi in napredna statistika za vse tri slovenske lige.">
+  <meta name="twitter:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png">
 <title>Liga OTP banka – Statistika 2025/26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace}
+:root[data-theme="light"]{--bg:#f4f5f8;--card:#ffffff;--card2:#eef0f4;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);--text:rgba(15,15,30,.92);--sub:rgba(15,15,30,.55);--mut:rgba(15,15,30,.4);--green:#059669;--acc:#ea580c}
+:root[data-theme="light"] body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22,.06),transparent 55%),radial-gradient(ellipse 1000px 700px at 100% 100%,rgba(59,130,246,.05),transparent 50%),var(--bg)}
+:root[data-theme="light"] .hdr{background:rgba(244,245,248,.95)}
+:root[data-theme="light"] .skeleton{background:linear-gradient(90deg,rgba(0,0,0,.04) 25%,rgba(0,0,0,.08) 50%,rgba(0,0,0,.04) 75%);background-size:200% 100%}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100vh}
 .hdr{background:rgba(6,6,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -163,11 +179,12 @@ select:focus{outline:none;border-color:var(--acc)}
 .cbar-bars{display:flex;flex-direction:column}
 .cbar-lbl{font-size:.62rem;color:var(--mut);text-align:center;letter-spacing:.04em}
 /* LOADING */
-#loading-overlay{position:fixed;inset:0;background:var(--bg);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#loading-overlay{position:fixed;inset:0;background:radial-gradient(ellipse 800px 600px at 50% 40%,rgba(249,115,22,.08),transparent 60%),var(--bg);z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
 .load-title{font-family:var(--fh);font-size:2.5rem;letter-spacing:.08em;color:var(--acc)}
 .load-sub{font-size:.85rem;color:var(--mut);font-family:var(--fm)}
 .load-bar-wrap{width:300px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
-.load-bar{height:100%;background:var(--acc);border-radius:3px;transition:width .3s}
+.load-bar{height:100%;background:linear-gradient(90deg,var(--acc),#fbbf24,var(--acc));background-size:200% 100%;border-radius:3px;transition:width .3s;animation:loadShimmer 1.5s linear infinite;box-shadow:0 0 12px rgba(249,115,22,.5)}@keyframes loadShimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+@keyframes ballBounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(180deg)}}
 .load-detail{font-size:.72rem;color:var(--mut);font-family:var(--fm);min-height:20px;text-align:center}
 /* MATCHES TAB */
 .round-section{margin-bottom:20px}
@@ -691,6 +708,43 @@ html{scroll-behavior:smooth}
 .mo-hero-wlabel{display:inline-block;margin-top:6px;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;font-family:var(--fm);padding:3px 9px;border-radius:20px;background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
 .mo-hero-meta{text-align:center;font-size:.74rem;color:var(--mut);letter-spacing:.02em;margin-top:14px;font-family:var(--fm)}
 
+/* ═══ SPOTLIGHT — IGRALEC SEZONE ═══ */
+.spotlight{position:relative;border-radius:18px;overflow:hidden;padding:26px 28px;margin-bottom:22px;border:1px solid var(--border2);cursor:pointer;transition:transform .25s,box-shadow .25s}
+.spotlight:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.4)}
+.spotlight::before{content:'';position:absolute;inset:0;background:var(--sl-grad);opacity:.94;z-index:0}
+.spotlight::after{content:'';position:absolute;right:-50px;top:-80px;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.08);z-index:0}
+.spotlight>*{position:relative;z-index:1}
+.spotlight-badge{display:inline-flex;align-items:center;gap:7px;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.85);font-family:var(--fm);font-weight:700;background:rgba(255,255,255,.16);padding:5px 13px;border-radius:20px;backdrop-filter:blur(8px);margin-bottom:16px}
+.spotlight-body{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.spotlight-name{font-family:var(--fh);font-size:2.4rem;font-weight:800;letter-spacing:-.03em;line-height:1;color:#fff;text-shadow:0 2px 20px rgba(0,0,0,.3)}
+.spotlight-team{font-size:.85rem;color:rgba(255,255,255,.85);font-family:var(--fm);margin-top:6px}
+.spotlight-stats{display:flex;gap:22px;flex-wrap:wrap}
+.spotlight-stat{text-align:center}
+.spotlight-stat .v{font-family:var(--fs);font-size:2rem;font-weight:800;color:#fff;line-height:1}
+.spotlight-stat .l{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-top:3px}
+
+/* ═══ TEAM PROFILE OVERLAY ═══ */
+#team-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:1100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.tp-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:820px;position:relative;animation:tabIn .35s ease}
+.tp-hero{position:relative;padding:28px 26px 22px;overflow:hidden;border-radius:16px 16px 0 0}
+.tp-hero::before{content:'';position:absolute;inset:0;background:var(--tp-grad);opacity:.92;z-index:0}
+.tp-hero::after{content:'';position:absolute;right:-50px;top:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.07);z-index:0}
+.tp-hero>*{position:relative;z-index:1}
+.tp-name{font-family:var(--fh);font-size:2.3rem;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1;text-shadow:0 2px 20px rgba(0,0,0,.3)}
+.tp-rec{font-size:.9rem;color:rgba(255,255,255,.85);font-family:var(--fm);margin-top:8px}
+.tp-stats{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.tp-st{flex:1;min-width:80px;background:rgba(255,255,255,.13);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 12px;text-align:center}
+.tp-st-v{font-family:var(--fs);font-size:1.5rem;font-weight:800;color:#fff;line-height:1}
+.tp-st-l{font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-top:3px}
+.tp-body{padding:22px 26px}
+.tp-close{position:absolute;top:16px;right:18px;z-index:3;width:32px;height:32px;border-radius:9px;background:rgba(0,0,0,.3);border:none;color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tp-roster-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.tp-roster-row:hover{background:rgba(255,255,255,.03)}
+.tp-rr-name{flex:1;font-weight:600;font-size:.85rem}
+.tp-rr-stat{font-family:var(--fs);font-weight:700;font-size:.82rem;min-width:48px;text-align:right}
+.team-clickable{cursor:pointer;transition:opacity .15s}
+.team-clickable:hover{opacity:.7;text-decoration:underline}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -758,6 +812,7 @@ html{scroll-behavior:smooth}
 
 <!-- LOADING -->
 <div id="loading-overlay" style="display:none">
+  <div class="load-ball" style="font-size:3rem;margin-bottom:18px;animation:ballBounce 1s cubic-bezier(.5,.05,.5,.95) infinite">🏀</div>
   <div class="load-title" id="load-title">LIGA <span style="color:var(--acc)">OTP BANKA</span></div>
   <div class="load-sub" id="load-sub">Nalagam podatke...</div>
   <div class="load-bar-wrap"><div class="load-bar" id="load-bar" style="width:0%"></div></div>
@@ -765,12 +820,14 @@ html{scroll-behavior:smooth}
 </div>
 
 <div id="player-overlay" onclick="if(event.target===this)closePlayer()"></div>
+<div id="team-overlay" onclick="if(event.target===this)closeTeamProfile()"></div>
 <div id="match-overlay" onclick="if(event.target===this)closeMatch()"></div>
 
 <header class="hdr">
   <div class="hdr-title" id="hdr-title">LIGA <span>OTP BANKA</span></div>
   <div class="hdr-right">
     <span class="hdr-season">SEZONA 2025/26</span>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Preklopi temo" style="background:var(--card2);border:1px solid var(--border2);color:var(--text);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:1rem;display:inline-flex;align-items:center;justify-content:center;transition:background .2s,transform .12s">🌙</button>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
       <div class="tgl" style="margin-right:4px">
         <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')" style="min-height:36px;min-width:60px">1. SKL</button>
@@ -984,6 +1041,7 @@ html{scroll-behavior:smooth}
         <button class="tb" id="lph-obstanek" onclick="setLigaPhase('Liga za obstanek')">OBSTANEK</button>
       </div>
     </div>
+    <div id="liga-spotlight"></div>
     <div id="liga-featured" class="featured-strip"></div>
     <div id="liga-herocards" class="hero-cards"></div>
     <div class="ldrs-grid" id="ldrs-grid"></div>
@@ -2725,6 +2783,85 @@ function downloadShare(){
 }
 function closeShare(){document.getElementById('share-overlay').style.display='none';}
 
+// ═══ TEAM PROFILE OVERLAY ═══
+function showTeamProfile(teamName){
+  if(!teamName||!allMatches.length)return;
+  const color=TEAM_COLORS[teamName]||'#f97316';
+  const overlay=document.getElementById('team-overlay');
+  // Compute team standings stats
+  const allStats=computeTeamStats(allMatches,'all');
+  const ts=allStats.find(t=>t.name===teamName);
+  // Roster — players on this team
+  const roster=P.filter(p=>p[F.team]===teamName).sort((a,b)=>(b[F.toc]/Math.max(b[F.T],1))-(a[F.toc]/Math.max(a[F.T],1)));
+  // ELO
+  let eloVal=null;
+  try{const {ratings}=computeElo();eloVal=ratings[teamName];}catch(e){}
+  const diff=ts?ts.ptsFor-ts.ptsAga:0;
+  const grad=`linear-gradient(135deg,${color},${_shade(color,-48)})`;
+  const form=(ts?.form||[]).slice(-8).map(w=>`<span class="form-dot ${w?'w':'l'}">${w?'Z':'P'}</span>`).join('');
+
+  const rosterHtml=roster.slice(0,15).map(p=>{
+    const pIdx=P.indexOf(p);
+    const t=Math.max(p[F.T],1);
+    return `<div class="tp-roster-row" onclick="closeTeamProfile();showPlayer(${pIdx})">
+      <span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0"></span>
+      <span class="tp-rr-name">${p[F.name]}</span>
+      <span style="font-size:.68rem;color:var(--mut);font-family:var(--fm)">${p[F.born]||''}</span>
+      <span class="tp-rr-stat" style="color:${color}">${(p[F.toc]/t).toFixed(1)}</span>
+      <span style="font-size:.6rem;color:var(--mut)">tč</span>
+    </div>`;
+  }).join('');
+
+  overlay.innerHTML=`<div class="tp-modal">
+    <button class="tp-close" onclick="closeTeamProfile()">✕</button>
+    <div class="tp-hero" style="--tp-grad:${grad}">
+      <div class="tp-name">${teamName}</div>
+      <div class="tp-rec">${ts?`${ts.W}-${ts.L} · ${Math.round(ts.W/Math.max(ts.T,1)*100)}% zmag`:'Ni podatkov rednega dela'}</div>
+      <div class="tp-stats">
+        ${ts?`<div class="tp-st"><div class="tp-st-v" data-count="${(ts.ptsFor/Math.max(ts.T,1)).toFixed(1)}" data-dec="1">0</div><div class="tp-st-l">Točk/tm</div></div>
+        <div class="tp-st"><div class="tp-st-v" data-count="${(ts.ptsAga/Math.max(ts.T,1)).toFixed(1)}" data-dec="1">0</div><div class="tp-st-l">Prejetih</div></div>
+        <div class="tp-st"><div class="tp-st-v" style="color:${diff>=0?'#fff':'rgba(255,255,255,.7)'}">${diff>=0?'+':''}${diff}</div><div class="tp-st-l">Razlika</div></div>`:''}
+        ${eloVal?`<div class="tp-st"><div class="tp-st-v" data-count="${eloVal}">0</div><div class="tp-st-l">ELO</div></div>`:''}
+      </div>
+    </div>
+    <div class="tp-body">
+      ${form?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><span style="font-size:.7rem;color:var(--mut);font-family:var(--fm);letter-spacing:.08em">FORMA</span><div style="display:flex;gap:4px">${form}</div></div>`:''}
+      <div class="sec-head" style="--sh-c:${color};margin-top:0">👥 Postava (${roster.length})</div>
+      <div>${rosterHtml||'<div class="empty">Ni igralcev</div>'}</div>
+    </div>
+  </div>`;
+  overlay.style.display='flex';
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>activateCounters(overlay));
+}
+function closeTeamProfile(){
+  document.getElementById('team-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+
+// ═══ THEME TOGGLE ═══
+function toggleTheme(){
+  const root=document.documentElement;
+  const cur=root.getAttribute('data-theme');
+  const next=cur==='light'?'dark':'light';
+  if(next==='dark')root.removeAttribute('data-theme');
+  else root.setAttribute('data-theme','light');
+  try{localStorage.setItem('skl-theme',next);}catch(e){}
+  const btn=document.getElementById('theme-toggle');
+  if(btn)btn.textContent=next==='light'?'☀️':'🌙';
+}
+function initTheme(){
+  let saved='dark';
+  try{saved=localStorage.getItem('skl-theme')||'dark';}catch(e){}
+  if(saved==='light'){
+    document.documentElement.setAttribute('data-theme','light');
+    const btn=document.getElementById('theme-toggle');
+    if(btn)btn.textContent='☀️';
+  }
+}
+
+
 // ═══════════════════════════════════════════════════
 // FEATURED STRIP + HERO CARDS (premium visual leaders)
 // ═══════════════════════════════════════════════════
@@ -2795,6 +2932,51 @@ function buildTicker(){
   const itemHtml=items.map(t=>`<span class="ticker-item"><span class="ticker-dot"></span>${t}</span>`).join('');
   track.innerHTML=itemHtml+itemHtml;
   bar.style.display='block';
+}
+
+function renderSpotlight(){
+  const el=document.getElementById('liga-spotlight');
+  if(!el||!P.length)return;
+  const LPa=getLeaguePlayers().filter(p=>p[F.T]>=Math.min(lMin,3));
+  if(!LPa.length){el.innerHTML='';return;}
+  // MVP-style score to pick player of the season
+  const isLiga3=getLg().id===582;
+  const score=p=>{
+    const t=Math.max(p[F.T],1);
+    if(isLiga3){
+      // 3.SKL: rely on points + threes only (reliable)
+      return p[F.toc]/t*1.0 + p[F.fg3m]/t*1.2;
+    }
+    return p[F.toc]/t*1.0 + (p[F.nap]+p[F.obr])/t*0.7 + p[F.pod]/t*0.8 + p[F.sto]/t*1.5 + p[F.blk]/t*1.5 - p[F.izg]/t*0.8 + p[F.efe]/t*0.3;
+  };
+  const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
+  const t=Math.max(best[F.T],1);
+  const tc=TEAM_COLORS[(best[F.team]||'').split(' / ')[0]]||'#f97316';
+  const grad=`linear-gradient(135deg,${tc},${_shade(tc,-50)})`;
+  const pIdx=P.findIndex(x=>x[F.pid]===best[F.pid]);
+  const stats=isLiga3?[
+    {v:(best[F.toc]/t).toFixed(1),l:'Točk/tekmo'},
+    {v:(best[F.fg3m]/t).toFixed(1),l:'Trojk/tekmo'},
+    {v:best[F.toc],l:'Točk skupaj'},
+    {v:best[F.T],l:'Tekem'},
+  ]:[
+    {v:(best[F.toc]/t).toFixed(1),l:'Točk'},
+    {v:((best[F.nap]+best[F.obr])/t).toFixed(1),l:'Skokov'},
+    {v:(best[F.pod]/t).toFixed(1),l:'Asist.'},
+    {v:(best[F.efe]/t).toFixed(1),l:'EFE'},
+  ];
+  el.innerHTML=`<div class="spotlight" style="--sl-grad:${grad}" onclick="showPlayer(${pIdx})">
+    <div class="spotlight-badge">⭐ Igralec sezone</div>
+    <div class="spotlight-body">
+      <div>
+        <div class="spotlight-name">${best[F.name]}</div>
+        <div class="spotlight-team">${best[F.team]} · ${best[F.T]} tekem</div>
+      </div>
+      <div class="spotlight-stats">
+        ${stats.map(s=>`<div class="spotlight-stat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('')}
+      </div>
+    </div>
+  </div>`;
 }
 
 function renderLigaFeatured(){
@@ -2931,6 +3113,7 @@ function renderLeaders(){
     return `<div class="lc"><div class="lch"><span class="lct" style="color:${cat.color}">${cat.icon} ${cat.lbl}</span>${filterNote}</div><div class="lcb">${rows||'<div class="empty">—</div>'}</div></div>`;
   }).join('');
   document.getElementById('ldrs-grid').innerHTML=html;
+  renderSpotlight();
   renderLigaFeatured();
   requestAnimationFrame(()=>staggerReveal(document.getElementById('ldrs-grid'),'.lc'));
 }
@@ -6606,7 +6789,7 @@ function initHeroCanvas(){
   draw();
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}}); document.addEventListener('DOMContentLoaded',()=>{
   initUI();
   initWebSocket();
   console.log('home page mounted');
@@ -6706,7 +6889,7 @@ function buildStandingsTable(data, sort, title, color){
     let zone = i<clCount?'zone-cl':(i>=N-relCount && relCount>0)?'zone-rel':'';
     return `<tr>
       <td><span class="std-pos ${posCls} ${zone}">${i+1}</span></td>
-      <td><div class="std-team-cell"><span class="std-dot" style="background:${tc};--sd-glow:${tc}66"></span><span class="std-team-name" style="color:${tc}">${t.name}</span></div></td>
+      <td><div class="std-team-cell"><span class="std-dot" style="background:${tc};--sd-glow:${tc}66"></span><span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
       <td>${t.T}</td>
       <td style="color:#22c55e;font-weight:700">${t.W}</td>
       <td style="color:#ef4444">${t.L}</td>
