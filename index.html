@@ -479,6 +479,53 @@ select:focus{outline:none;border-color:var(--acc)}
 /* Smooth fade in for content */
 .hero-wrap{animation:fadeUp .6s ease both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+/* ═══ PREMIUM PLAYER CARDS ═══ */
+.hero-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+@media(max-width:760px){.hero-cards{grid-template-columns:1fr}}
+.hcard{position:relative;border-radius:18px;padding:20px;overflow:hidden;border:1px solid var(--border2);cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;min-height:150px;display:flex;flex-direction:column;justify-content:space-between}
+.hcard:hover{transform:translateY(-4px) scale(1.015)}
+.hcard::before{content:'';position:absolute;inset:0;background:var(--hc-grad);opacity:.92;z-index:0}
+.hcard::after{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);z-index:0}
+.hcard>*{position:relative;z-index:1}
+.hcard-rank{position:absolute;top:14px;right:16px;font-family:var(--fh);font-size:2.4rem;font-weight:800;color:rgba(255,255,255,.18);line-height:1;z-index:1}
+.hcard-cat{font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-bottom:auto}
+.hcard-val{font-family:var(--fs);font-size:3rem;font-weight:800;color:#fff;line-height:.95;letter-spacing:-.03em;text-shadow:0 2px 20px rgba(0,0,0,.3)}
+.hcard-val small{font-size:1rem;font-weight:600;opacity:.8;margin-left:3px}
+.hcard-name{font-family:var(--fh);font-size:1.05rem;font-weight:700;color:#fff;margin-top:6px;letter-spacing:.01em}
+.hcard-team{font-size:.72rem;color:rgba(255,255,255,.8);font-family:var(--fm)}
+.hcard-spark{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:8px}
+.hcard-spark span{flex:1;background:rgba(255,255,255,.55);border-radius:2px 2px 0 0;min-height:2px}
+.hcard-share{position:absolute;bottom:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:background .2s;opacity:0}
+.hcard:hover .hcard-share{opacity:1}
+.hcard-share:hover{background:rgba(255,255,255,.32)}
+
+/* ═══ STAT-OF-THE-DAY HERO BANNER ═══ */
+.featured-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:22px}
+.fstat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;position:relative;overflow:hidden}
+.fstat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fs-color,var(--acc))}
+.fstat-lbl{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-family:var(--fm);margin-bottom:6px}
+.fstat-val{font-family:var(--fs);font-size:1.7rem;font-weight:800;color:var(--fs-color,var(--acc));line-height:1}
+.fstat-name{font-size:.72rem;color:var(--sub);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ═══ LIVE TICKER ═══ */
+.ticker-wrap{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);padding:9px 0;margin-bottom:0;position:relative}
+.ticker-track{display:flex;gap:42px;white-space:nowrap;animation:tickerScroll 38s linear infinite;width:max-content}
+.ticker-wrap:hover .ticker-track{animation-play-state:paused}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-family:var(--fm);color:var(--sub)}
+.ticker-item b{color:var(--text);font-weight:600}
+.ticker-dot{width:5px;height:5px;border-radius:50%;background:var(--acc);flex-shrink:0}
+
+/* ═══ SHARE CARD MODAL ═══ */
+#share-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1200;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:16px}
+#share-canvas-wrap{border-radius:20px;overflow:hidden;box-shadow:0 30px 90px rgba(0,0,0,.6);max-width:92vw}
+#share-canvas{display:block;max-width:100%;height:auto}
+.share-actions{display:flex;gap:10px}
+.share-btn{padding:11px 22px;border-radius:12px;font-family:var(--fh);font-size:.9rem;font-weight:700;letter-spacing:.03em;cursor:pointer;border:none;transition:transform .15s,opacity .2s}
+.share-btn:hover{transform:translateY(-2px)}
+.share-btn.primary{background:var(--acc);color:#fff}
+.share-btn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -491,7 +538,16 @@ select:focus{outline:none;border-color:var(--acc)}
   <div class="hero-wrap">
     <div class="hero-badge">🇸🇮 Sezona 2025/26</div>
     <div class="hero-title">SLOVENSKA<br><span>KOŠARKA</span></div>
-    <div class="hero-sub">1. SKL · 2. SKL · 3. SKL · Napredna statistika · Live rezultati</div>
+    <div class="hero-sub">Napredna statistika · Live rezultati · MVP lestvice · Rekordi · ELO moč ekip</div>
+    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:-24px 0 32px;font-family:var(--fm)">
+      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--acc)">3</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">LIGE</div></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--blue)">40+</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">EKIP</div></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:#a855f7">500+</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">IGRALCEV</div></div>
+      <div style="width:1px;background:var(--border)"></div>
+      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--green)">LIVE</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">REZULTATI</div></div>
+    </div>
     <div class="hero-leagues" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
       <div class="hero-card liga1" onclick="selectLeague('liga1')">
         <div class="hc-badge" style="color:var(--acc)">⭐ Prva liga</div>
@@ -586,6 +642,10 @@ select:focus{outline:none;border-color:var(--acc)}
       </button>
   </div>
 </nav>
+
+<div id="live-ticker-bar" class="ticker-wrap" style="display:none">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
 
 <div class="content">
   <div id="tab-ekipe" class="tab active">
@@ -759,6 +819,8 @@ select:focus{outline:none;border-color:var(--acc)}
         <button class="tb" id="lph-obstanek" onclick="setLigaPhase('Liga za obstanek')">OBSTANEK</button>
       </div>
     </div>
+    <div id="liga-featured" class="featured-strip"></div>
+    <div id="liga-herocards" class="hero-cards"></div>
     <div class="ldrs-grid" id="ldrs-grid"></div>
   </div>
 
@@ -1003,6 +1065,54 @@ let _leaguePlayers=null, _tmAgg={};
 
 // Field indices for P array
 const F={name:0,team:1,born:2,pid:3,T:4,MIN:5,fg2m:6,fg2a:7,fg3m:8,fg3a:9,ftm:10,fta:11,toc:12,nap:13,obr:14,pod:15,sto:16,izs:17,izg:18,pz:19,blk:20,pre:21,pm:22,efe:23,pip:24,fb:25,sc:26};
+
+// ═══════════════════════════════════════════════════
+// PREMIUM UX UTILITIES — count-up, reveal, share
+// ═══════════════════════════════════════════════════
+// Animate a number from 0 → target. Respects decimals & suffix.
+function countUp(el, target, opts={}){
+  if(!el) return;
+  const dur = opts.dur || 900;
+  const dec = opts.dec ?? 0;
+  const suf = opts.suf || '';
+  const pre = opts.pre || '';
+  const startVal = opts.from ?? 0;
+  const t0 = performance.now();
+  const ease = t => 1 - Math.pow(1 - t, 3); // easeOutCubic
+  function frame(now){
+    const t = Math.min((now - t0)/dur, 1);
+    const v = startVal + (target - startVal) * ease(t);
+    el.textContent = pre + (dec>0 ? v.toFixed(dec) : Math.round(v)) + suf;
+    if(t < 1) requestAnimationFrame(frame);
+    else el.textContent = pre + (dec>0 ? Number(target).toFixed(dec) : Math.round(target)) + suf;
+  }
+  requestAnimationFrame(frame);
+}
+
+// Scan a container for [data-count] elements and animate them once visible.
+function activateCounters(root){
+  const els = (root||document).querySelectorAll('[data-count]:not([data-counted])');
+  els.forEach(el=>{
+    el.setAttribute('data-counted','1');
+    const target = parseFloat(el.getAttribute('data-count'));
+    const dec = parseInt(el.getAttribute('data-dec')||'0');
+    const suf = el.getAttribute('data-suf')||'';
+    const pre = el.getAttribute('data-pre')||'';
+    if(isNaN(target)){ return; }
+    countUp(el, target, {dec, suf, pre, dur: 800 + Math.random()*300});
+  });
+}
+
+// Stagger-reveal direct children of a container (GSAP if present, else CSS).
+function staggerReveal(container, sel='.lc, .nerd-card, .att-card, .mvp-card, .rec-card'){
+  if(!container) return;
+  const items = container.querySelectorAll(sel);
+  if(!items.length) return;
+  if(window.gsap){
+    gsap.fromTo(items, {opacity:0, y:14}, {opacity:1, y:0, duration:.45, stagger:.04, ease:'power2.out', overwrite:true});
+  }
+}
+
 
 // ═══════════════════════════════════════════════════
 // API LOADING
@@ -1515,6 +1625,7 @@ function initUI() {
 
   renderTeam();
   renderMatches();
+  buildTicker();
 
   // Populate H2H selects — teams already declared above
   ['h2h-team1','h2h-team2'].forEach(id=>{
@@ -2270,6 +2381,278 @@ const LEADER_CATS=[
   {lbl:'Fast Break',icon:'⚡',color:'#fb7185',k:'fb',fi:F.fb,div:true},
 ];
 
+// ═══════════════════════════════════════════════════
+// SHAREABLE PLAYER CARDS (canvas → PNG for social)
+// ═══════════════════════════════════════════════════
+let _shareName='kartica';
+function openShareCard(pIdx){
+  const p=P[pIdx];
+  if(!p)return;
+  // Merge by pid for full-season totals
+  let merged=[...p]; const teams=new Set([p[F.team]]);
+  P.forEach(x=>{ if(x!==p && x[F.pid]===p[F.pid]){
+    teams.add(x[F.team]);
+    [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>merged[fi]+=x[fi]);
+  }});
+  const teamLabel=[...teams].join(' / ');
+  const t=Math.max(merged[F.T],1);
+  drawShareCard({
+    name:merged[F.name], team:teamLabel, games:merged[F.T],
+    pts:merged[F.toc]/t, reb:(merged[F.nap]+merged[F.obr])/t, ast:merged[F.pod]/t,
+    efe:merged[F.efe]/t, fg3:pct(merged[F.fg3m],merged[F.fg3a]),
+    ts:tsOf(merged),
+    color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316'
+  });
+  _shareName=merged[F.name].replace(/\s+/g,'_');
+  document.getElementById('share-overlay').style.display='flex';
+}
+
+function drawShareCard(d){
+  const cv=document.getElementById('share-canvas');
+  const x=cv.getContext('2d');
+  const W=1080,H=1080;
+  const col=d.color;
+  const dark=_shade(col,-55);
+
+  // Background gradient
+  const bg=x.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,_shade(col,-72));
+  bg.addColorStop(1,'#06060f');
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+
+  // Top color band
+  const band=x.createLinearGradient(0,0,W,0);
+  band.addColorStop(0,col); band.addColorStop(1,dark);
+  x.fillStyle=band; x.fillRect(0,0,W,12);
+
+  // Decorative circle
+  x.save();
+  x.globalAlpha=0.08; x.fillStyle='#fff';
+  x.beginPath(); x.arc(W-120,180,260,0,Math.PI*2); x.fill();
+  x.restore();
+
+  // Header
+  x.fillStyle='rgba(255,255,255,.55)';
+  x.font='600 26px "Space Mono", monospace';
+  x.textAlign='left';
+  x.fillText('SLOVENSKA KOŠARKA · 2025/26', 70, 100);
+
+  // Player name (wrap if long)
+  x.fillStyle='#fff';
+  x.font='800 80px "Space Grotesk", sans-serif';
+  const name=d.name.toUpperCase();
+  const parts=name.split(' ');
+  let line1=name, line2='';
+  if(x.measureText(name).width>W-140 && parts.length>1){
+    const mid=Math.ceil(parts.length/2);
+    line1=parts.slice(0,mid).join(' ');
+    line2=parts.slice(mid).join(' ');
+  }
+  x.fillText(line1, 70, 230);
+  if(line2){ x.fillText(line2, 70, 320); }
+  const nameBottom=line2?360:300;
+
+  // Team + games
+  x.fillStyle=col;
+  x.font='700 34px "Space Grotesk", sans-serif';
+  x.fillText(d.team, 70, nameBottom);
+  x.fillStyle='rgba(255,255,255,.4)';
+  x.font='400 26px "Space Mono", monospace';
+  x.fillText(d.games+' tekem', 70, nameBottom+42);
+
+  // BIG stat — points
+  const bigY=nameBottom+200;
+  x.fillStyle='rgba(255,255,255,.5)';
+  x.font='600 28px "Space Mono", monospace';
+  x.fillText('TOČKE NA TEKMO', 70, bigY-90);
+  x.fillStyle='#fff';
+  x.font='800 220px "Space Mono", monospace';
+  x.fillText(d.pts.toFixed(1), 60, bigY+90);
+
+  // Stat grid (4 boxes)
+  const stats=[
+    {l:'SKOKI',v:d.reb.toFixed(1)},
+    {l:'ASIST.',v:d.ast.toFixed(1)},
+    {l:'EFE',v:d.efe.toFixed(1)},
+    {l:'TS%',v:(d.ts!=null?d.ts.toFixed(0)+'%':'—')},
+  ];
+  const gy=bigY+200, bw=(W-140-30)/4, bh=180;
+  stats.forEach((s,i)=>{
+    const bx=70+i*(bw+10);
+    // box
+    const rg=x.createLinearGradient(bx,gy,bx,gy+bh);
+    rg.addColorStop(0,'rgba(255,255,255,.08)');
+    rg.addColorStop(1,'rgba(255,255,255,.03)');
+    x.fillStyle=rg;
+    _roundRect(x,bx,gy,bw,bh,16); x.fill();
+    x.strokeStyle='rgba(255,255,255,.1)'; x.lineWidth=1; x.stroke();
+    // value
+    x.fillStyle='#fff';
+    x.font='800 58px "Space Mono", monospace';
+    x.textAlign='center';
+    x.fillText(s.v, bx+bw/2, gy+90);
+    // label
+    x.fillStyle=col;
+    x.font='600 24px "Space Mono", monospace';
+    x.fillText(s.l, bx+bw/2, gy+140);
+    x.textAlign='left';
+  });
+
+  // Footer
+  x.fillStyle='rgba(255,255,255,.3)';
+  x.font='400 24px "Space Mono", monospace';
+  x.textAlign='center';
+  x.fillText('blazerculj-max.github.io/Statistika-OTP', W/2, H-50);
+  x.textAlign='left';
+}
+
+function _roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function downloadShare(){
+  const cv=document.getElementById('share-canvas');
+  cv.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url; a.download=_shareName+'_statistika.png';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  },'image/png');
+}
+function closeShare(){document.getElementById('share-overlay').style.display='none';}
+
+// ═══════════════════════════════════════════════════
+// FEATURED STRIP + HERO CARDS (premium visual leaders)
+// ═══════════════════════════════════════════════════
+function _lpAvg(p,fi){return p[fi]/Math.max(p[F.T],1);}
+function _lpReb(p){return p[F.nap]+p[F.obr];}
+
+function buildTicker(){
+  const bar=document.getElementById('live-ticker-bar');
+  const track=document.getElementById('ticker-track');
+  if(!bar||!track||!P.length)return;
+  const LPa=getLeaguePlayers().filter(p=>p[F.T]>=3);
+  if(!LPa.length){bar.style.display='none';return;}
+  const best=(fn)=>[...LPa].sort((a,b)=>fn(b)-fn(a))[0];
+  const items=[];
+  const ptsL=best(p=>p[F.toc]/p[F.T]);
+  items.push(`🏀 <b>${ptsL[F.name]}</b> vodi v točkah — ${(ptsL[F.toc]/ptsL[F.T]).toFixed(1)}/tekmo`);
+  const rebL=best(p=>(p[F.nap]+p[F.obr])/p[F.T]);
+  items.push(`💪 <b>${rebL[F.name]}</b> kralj skokov — ${((rebL[F.nap]+rebL[F.obr])/rebL[F.T]).toFixed(1)}/tekmo`);
+  const astL=best(p=>p[F.pod]/p[F.T]);
+  items.push(`🎯 <b>${astL[F.name]}</b> največ asistenc — ${(astL[F.pod]/astL[F.T]).toFixed(1)}/tekmo`);
+  const trojkeL=best(p=>p[F.fg3m]);
+  items.push(`🌟 <b>${trojkeL[F.name]}</b> — ${trojkeL[F.fg3m]} trojk skupaj`);
+  const efeL=best(p=>p[F.efe]/p[F.T]);
+  items.push(`⚡ <b>${efeL[F.name]}</b> najvišji EFE — ${(efeL[F.efe]/efeL[F.T]).toFixed(1)}`);
+  // Single-game high score from matchStatsCache
+  let topGamePts=0,topGameName='';
+  Object.values(matchStatsCache).forEach(md=>{
+    if(!md)return;
+    [md.firstTeam,md.secondTeam].forEach(side=>{
+      (side?.playerStats||[]).forEach(ps=>{
+        if((ps.points||0)>topGamePts){topGamePts=ps.points;topGameName=(ps.matchTeamPlayerFirstname||'').trim()+' '+(ps.matchTeamPlayerLastname||'').trim();}
+      });
+    });
+  });
+  if(topGamePts>0)items.push(`🔥 Rekord tekme — <b>${topGameName}</b> ${topGamePts} točk`);
+  // ELO leader
+  try{
+    const {ratings}=computeElo();
+    const eloTop=Object.entries(ratings).sort((a,b)=>b[1]-a[1])[0];
+    if(eloTop)items.push(`📊 <b>${eloTop[0]}</b> najmočnejša ekipa — ELO ${eloTop[1]}`);
+  }catch(e){}
+
+  const itemHtml=items.map(t=>`<span class="ticker-item"><span class="ticker-dot"></span>${t}</span>`).join('');
+  // Duplicate for seamless loop
+  track.innerHTML=itemHtml+itemHtml;
+  bar.style.display='block';
+}
+
+function renderLigaFeatured(){
+  const strip=document.getElementById('liga-featured');
+  const cards=document.getElementById('liga-herocards');
+  if(!strip||!cards||!P.length)return;
+  const LPa=getLeaguePlayers().filter(p=>p[F.T]>=Math.min(lMin,3));
+  if(!LPa.length){strip.innerHTML='';cards.innerHTML='';return;}
+
+  const bestAvg=(fn)=>[...LPa].sort((a,b)=>fn(b)-fn(a))[0];
+  const ptsL=bestAvg(p=>_lpAvg(p,F.toc));
+  const rebL=bestAvg(p=>_lpReb(p)/Math.max(p[F.T],1));
+  const astL=bestAvg(p=>_lpAvg(p,F.pod));
+  const efeL=bestAvg(p=>_lpAvg(p,F.efe));
+  const trojkeL=bestAvg(p=>_lpAvg(p,F.fg3m));
+
+  // Featured strip — 5 quick stats with count-up
+  const fstats=[
+    {lbl:'NAJVEČ TOČK',v:_lpAvg(ptsL,F.toc),dec:1,name:ptsL[F.name],color:'#f97316'},
+    {lbl:'NAJVEČ SKOKOV',v:_lpReb(rebL)/Math.max(rebL[F.T],1),dec:1,name:rebL[F.name],color:'#3b82f6'},
+    {lbl:'NAJVEČ ASIST.',v:_lpAvg(astL,F.pod),dec:1,name:astL[F.name],color:'#10b981'},
+    {lbl:'NAJVEČ TROJK',v:_lpAvg(trojkeL,F.fg3m),dec:1,name:trojkeL[F.name],color:'#a855f7'},
+    {lbl:'NAJVIŠJI EFE',v:_lpAvg(efeL,F.efe),dec:1,name:efeL[F.name],color:'#22c55e'},
+  ];
+  strip.innerHTML=fstats.map(s=>`
+    <div class="fstat" style="--fs-color:${s.color}">
+      <div class="fstat-lbl">${s.lbl}</div>
+      <div class="fstat-val" data-count="${s.v}" data-dec="${s.dec}">0</div>
+      <div class="fstat-name">${s.name}</div>
+    </div>`).join('');
+
+  // Hero cards — top 3 scorers as big visual cards
+  const top3=[...LPa].sort((a,b)=>_lpAvg(b,F.toc)-_lpAvg(a,F.toc)).slice(0,3);
+  const gradients=[
+    'linear-gradient(135deg,#f97316,#c2410c)',
+    'linear-gradient(135deg,#3b82f6,#1e40af)',
+    'linear-gradient(135deg,#a855f7,#7e22ce)'
+  ];
+  cards.innerHTML=top3.map((p,i)=>{
+    const tc=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||'#888';
+    const grad=`linear-gradient(135deg,${tc},${_shade(tc,-35)})`;
+    const log=playerGameLog[p[F.pid]]||[];
+    const last6=log.slice(-6);
+    const maxE=Math.max(...last6.map(g=>g.efe),1);
+    const spark=last6.map(g=>`<span style="height:${Math.max(8,Math.round(Math.max(g.efe,0)/maxE*100))}%"></span>`).join('');
+    const pIdx=P.findIndex(x=>x[F.pid]===p[F.pid]);
+    return `<div class="hcard" style="--hc-grad:${grad}" onclick="showPlayer(${pIdx})">
+      <div class="hcard-rank">${i+1}</div>
+      <div class="hcard-cat">🏀 Najboljši strelec #${i+1}</div>
+      <div>
+        <div class="hcard-val"><span data-count="${_lpAvg(p,F.toc)}" data-dec="1">0</span><small>PTS/tm</small></div>
+        <div class="hcard-name">${p[F.name]}</div>
+        <div class="hcard-team">${p[F.team]} · ${p[F.T]} tekem</div>
+        <div class="hcard-spark">${spark}</div>
+      </div>
+      <div class="hcard-share" onclick="event.stopPropagation();openShareCard(${pIdx})" title="Deli kartico">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Trigger animations
+  requestAnimationFrame(()=>{
+    activateCounters(strip);
+    activateCounters(cards);
+    staggerReveal(cards,'.hcard');
+  });
+}
+
+// Darken/lighten a hex color by pct (-100..100)
+function _shade(hex,pct){
+  hex=hex.replace('#','');
+  if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');
+  let r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  const f=pct<0?0:255,t=Math.abs(pct)/100;
+  r=Math.round((f-r)*t)+r;g=Math.round((f-g)*t)+g;b=Math.round((f-b)*t)+b;
+  return '#'+[r,g,b].map(x=>Math.max(0,Math.min(255,x)).toString(16).padStart(2,'0')).join('');
+}
+
 function renderLeaders(){
   if(!P.length){
     document.getElementById('ldrs-grid').innerHTML='<div class="empty" style="grid-column:1/-1">⏳ Naloži ligo najprej</div>';
@@ -2327,6 +2710,8 @@ function renderLeaders(){
     return `<div class="lc"><div class="lch"><span class="lct" style="color:${cat.color}">${cat.icon} ${cat.lbl}</span>${filterNote}</div><div class="lcb">${rows||'<div class="empty">—</div>'}</div></div>`;
   }).join('');
   document.getElementById('ldrs-grid').innerHTML=html;
+  renderLigaFeatured();
+  requestAnimationFrame(()=>staggerReveal(document.getElementById('ldrs-grid'),'.lc'));
 }
 
 // ═══════════════════════════════════════════════════
@@ -4228,7 +4613,7 @@ function mvpCard(player,score,label,color,rank){
     <div style="font-size:.58rem;color:var(--mut)">${x.l}</div>
   </div>`).join('');
   return `<div onclick="showPlayer(${pi})"
-    style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:14px;padding:16px 18px;cursor:pointer;transition:transform .18s"
+    style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:14px;padding:16px 18px;cursor:pointer;transition:transform .18s;position:relative"
     onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
       <div>
@@ -4238,11 +4623,16 @@ function mvpCard(player,score,label,color,rank){
         <div style="font-size:.72rem;color:${tc};margin-top:2px">${player[F.team]}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-family:var(--fh);font-size:2rem;font-weight:800;color:${color};line-height:1">${score.toFixed(1)}</div>
+        <div class="mvp-score-num" style="font-family:var(--fh);font-size:2rem;font-weight:800;color:${color};line-height:1" data-count="${score.toFixed(1)}" data-dec="1">0</div>
         <div style="font-size:.6rem;color:var(--mut)">MVP SCORE</div>
       </div>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">${stats}</div>
+    <div onclick="event.stopPropagation();openShareCard(${pi})" title="Deli kartico"
+      style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s"
+      onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${tc}" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
+    </div>
   </div>`;
 }
 
@@ -4334,6 +4724,7 @@ function renderMVP(){
     +'<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:16px 0 10px">📊 MVP LESTVICA — TOP 10</div>'
     +leaderboard
     +'<div style="font-size:.65rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">MVP Score = PTS×1.0 + SK×0.7 + AS×0.8 + STL×1.5 + BLK×1.5 − TOV×0.8 + EFE×0.3 | Min. tekem: '+minGames+' (K'+maxRd+')</div>';
+  requestAnimationFrame(()=>{activateCounters(wrap);staggerReveal(wrap,'.hcard, [onclick^="showPlayer"]');});
 }
 
 // ═══════════════════════════════════════════════════
@@ -5167,6 +5558,7 @@ function renderRekordi(){
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
       ${shameCards}
     </div>`;
+  requestAnimationFrame(()=>staggerReveal(wrap,'div[style*="border-left:3px solid"]'));
 }
 
 // ═══════════════════════════════════════════════════
@@ -6294,6 +6686,14 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="nb" onclick="showTab('sodniki');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Sodniki</button>
   <button class="nb" onclick="showTab('starost');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Starost</button>
   <button class="nb" onclick="showTab('obisk');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block">Obisk</button>
+</div>
+
+<div id="share-overlay" onclick="if(event.target===this)closeShare()">
+  <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
+  <div class="share-actions">
+    <button class="share-btn primary" onclick="downloadShare()">⬇ Prenesi sliko</button>
+    <button class="share-btn ghost" onclick="closeShare()">Zapri</button>
+  </div>
 </div>
 </body>
 </html>
