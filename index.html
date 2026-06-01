@@ -1636,9 +1636,22 @@ function buildPlayerPhotoMap(){
     });
   });
 }
+// Lokalne slike v repo (prenesene z download_images.py) — iste domene, izvozljive na canvas
+const LOCAL_IMG_BASE='data/images/';
+function playerPhotoUuid(pid){return _playerPhotos[pid]||null;}
+function teamLogoUuidByName(name){return _teamLogos[(name||'').split(' / ')[0]]||null;}
 function playerPhotoUrl(pid){
   const uuid=_playerPhotos[pid];
   return uuid ? 'https://api.kzs.si/public/images/'+uuid : null;
+}
+// URL za canvas: poskusi lokalno (same-origin), sicer KZS
+function playerPhotoLocal(pid){
+  const uuid=_playerPhotos[pid];
+  return uuid ? {local:LOCAL_IMG_BASE+uuid+'.png', remote:'https://api.kzs.si/public/images/'+uuid} : null;
+}
+function teamLogoLocal(name){
+  const uuid=_teamLogos[(name||'').split(' / ')[0]];
+  return uuid ? {local:LOCAL_IMG_BASE+uuid+'.png', remote:'https://api.kzs.si/public/images/'+uuid} : null;
 }
 
 function teamLogoUrl(teamName){
@@ -3038,13 +3051,15 @@ function openShareCard(pIdx){
     ts:tsOf(merged),
     color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
     logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0]),
-    photoUrl:playerPhotoUrl(merged[F.pid])
+    photoUrl:playerPhotoUrl(merged[F.pid]),
+    logoLocal:teamLogoLocal(teamLabel),
+    photoLocal:playerPhotoLocal(merged[F.pid])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_');
   document.getElementById('share-overlay').style.display='flex';
 }
 
-function drawShareCard(d){
+async function drawShareCard(d){
   const cv=document.getElementById('share-canvas');
   const x=cv.getContext('2d');
   const W=1080,H=1080;
@@ -3076,60 +3091,30 @@ function drawShareCard(d){
 
   // Player photo — big circular, top-right. Logo badge sits on it.
   const photoSize=260, photoCX=W-photoSize/2-80, photoCY=photoSize/2+90;
-  function drawLogoBadge(){
-    if(!d.logoUrl)return;
-    const logo=new Image();
-    logo.crossOrigin='anonymous';
-    logo.onload=()=>{
-      x.save();
-      const bs=84, bx=photoCX+photoSize/2-bs-6, by=photoCY+photoSize/2-bs-6;
-      // white rounded backdrop
+  const photoImg=await _loadImg(d.photoLocal||d.photoUrl);
+  const logoImg=await _loadImg(d.logoLocal||d.logoUrl);
+  if(photoImg){
+    x.save();
+    x.beginPath();x.arc(photoCX,photoCY,photoSize/2+5,0,Math.PI*2);
+    x.fillStyle='rgba(255,255,255,.15)';x.fill();
+    x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);x.closePath();x.clip();
+    const iw=photoImg.naturalWidth,ih=photoImg.naturalHeight,side=Math.min(iw,ih);
+    x.drawImage(photoImg,(iw-side)/2,0,side,side,photoCX-photoSize/2,photoCY-photoSize/2,photoSize,photoSize);
+    x.restore();
+    x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);
+    x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=4;x.stroke();
+    // logo badge on photo
+    if(logoImg){
+      const bs=84,bx=photoCX+photoSize/2-bs-6,by=photoCY+photoSize/2-bs-6;
       _roundRect(x,bx-6,by-6,bs+12,bs+12,18);
-      x.fillStyle='rgba(10,10,20,.85)'; x.fill();
-      x.strokeStyle='rgba(255,255,255,.2)'; x.lineWidth=2; x.stroke();
-      try{x.drawImage(logo,bx,by,bs,bs);}catch(e){}
-      x.restore();
-    };
-    logo.src=d.logoUrl;
-  }
-  if(d.photoUrl){
-    const ph=new Image();
-    ph.crossOrigin='anonymous';
-    ph.onload=()=>{
-      x.save();
-      // outer ring
-      x.beginPath();x.arc(photoCX,photoCY,photoSize/2+5,0,Math.PI*2);
-      x.fillStyle='rgba(255,255,255,.15)';x.fill();
-      // clip to circle
-      x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);x.closePath();x.clip();
-      try{
-        // top-aligned square crop so head is fully visible
-        const iw=ph.naturalWidth||ph.width, ih=ph.naturalHeight||ph.height;
-        const side=Math.min(iw,ih);
-        const sx=(iw-side)/2, sy=0;
-        x.drawImage(ph, sx, sy, side, side, photoCX-photoSize/2, photoCY-photoSize/2, photoSize, photoSize);
-      }catch(e){}
-      x.restore();
-      // ring stroke
-      x.save();
-      x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);
-      x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=4;x.stroke();
-      x.restore();
-      drawLogoBadge();
-    };
-    ph.src=d.photoUrl;
-  } else {
-    // No photo — just show logo big top-right
-    if(d.logoUrl){
-      const logo=new Image();
-      logo.crossOrigin='anonymous';
-      logo.onload=()=>{
-        x.save();const ls=160,lx=W-ls-90,ly=110;
-        try{x.drawImage(logo,lx,ly,ls,ls);}catch(e){}
-        x.restore();
-      };
-      logo.src=d.logoUrl;
+      x.fillStyle='rgba(10,10,20,.85)';x.fill();
+      x.strokeStyle='rgba(255,255,255,.2)';x.lineWidth=2;x.stroke();
+      try{x.drawImage(logoImg,bx,by,bs,bs);}catch(e){}
     }
+  } else if(logoImg){
+    // no photo — just big logo top-right
+    const ls=160,lx=W-ls-90,ly=110;
+    try{x.drawImage(logoImg,lx,ly,ls,ls);}catch(e){}
   }
 
   // Player name (wrap if long)
@@ -3213,14 +3198,19 @@ function _roundRect(ctx,x,y,w,h,r){
 
 function downloadShare(){
   const cv=document.getElementById('share-canvas');
-  cv.toBlob(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url; a.download=_shareName+'_statistika.png';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    toast('Kartica shranjena!', '📸');
-  },'image/png');
+  try{
+    cv.toBlob(blob=>{
+      if(!blob){toast('Napaka pri shranjevanju','⚠️');return;}
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download=_shareName+'_statistika.png';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      toast('Kartica shranjena!', '📸');
+    },'image/png');
+  }catch(e){
+    toast('Slike se ne dajo izvoziti. Poskusi screenshot.','⚠️');
+  }
 }
 function closeShare(){document.getElementById('share-overlay').style.display='none';}
 
@@ -3246,19 +3236,26 @@ async function _blobToImg(blob){
     im.src=objUrl;
   });
 }
-async function _loadImg(url){
-  if(!url)return null;
-  const bare=url.replace(/^https?:\/\//,'');
-  const sources=[
-    url,  // direct — cleanest if KZS allows CORS
-    'https://wsrv.nl/?url='+encodeURIComponent(bare),
-    'https://images.weserv.nl/?url='+encodeURIComponent(bare),
-    'https://corsproxy.io/?url='+encodeURIComponent(url),
-    'https://api.allorigins.win/raw?url='+encodeURIComponent(url)
-  ];
+async function _loadImg(input){
+  if(!input)return null;
+  let sources=[];
+  if(typeof input==='string'){
+    const bare=input.replace(/^https?:\/\//,'');
+    sources=[input,
+      'https://wsrv.nl/?url='+encodeURIComponent(bare),
+      'https://corsproxy.io/?url='+encodeURIComponent(input),
+      'https://api.allorigins.win/raw?url='+encodeURIComponent(input)];
+  }else{
+    // {local, remote} — local first (same-origin, always exportable)
+    const bare=(input.remote||'').replace(/^https?:\/\//,'');
+    sources=[input.local, input.remote,
+      'https://wsrv.nl/?url='+encodeURIComponent(bare),
+      'https://corsproxy.io/?url='+encodeURIComponent(input.remote||''),
+      'https://api.allorigins.win/raw?url='+encodeURIComponent(input.remote||'')].filter(Boolean);
+  }
   for(const src of sources){
     try{
-      const resp=await fetch(src,{mode:'cors',cache:'force-cache'});
+      const resp=await fetch(src,{cache:'force-cache'});
       if(!resp.ok)continue;
       const blob=await resp.blob();
       const img=await _blobToImg(blob);
@@ -3420,7 +3417,7 @@ async function renderRoundCard(){
     x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
     x.globalAlpha=0.1;x.fillStyle='#fff';x.beginPath();x.arc(W-M-100,y+60,200,0,Math.PI*2);x.fill();x.restore();
     // Large team logo watermark (CGP — clearly marks the player's club)
-    const wmLogo=await _loadImg(teamLogoUrl((tm||'').split(' / ')[0]));
+    const wmLogo=await _loadImg(teamLogoLocal(tm));
     if(wmLogo){
       x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
       x.globalAlpha=0.12;
@@ -3433,7 +3430,7 @@ async function renderRoundCard(){
     x.font='700 26px "Space Mono", monospace';
     x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
     // Player photo — big, right side
-    const photo=await _loadImg(playerPhotoUrl(p[F.pid]));
+    const photo=await _loadImg(playerPhotoLocal(p[F.pid]));
     const pSize=isStory?280:250, pX=W-pSize-M-20, pY=y+cardH-pSize-30;
     x.save();
     // photo bg ring
@@ -3465,7 +3462,7 @@ async function renderRoundCard(){
     if(nl2)x.fillText(nl2,M+40,y+212);
     const nbot=nl2?y+255:y+195;
     // team + logo
-    const logo=await _loadImg(teamLogoUrl((tm||'').split(' / ')[0]));
+    const logo=await _loadImg(teamLogoLocal(tm));
     let tx=M+40;
     if(logo){try{x.drawImage(logo,tx,nbot-26,36,36);}catch(e){}tx+=46;}
     x.fillStyle='rgba(255,255,255,.85)';
@@ -3502,7 +3499,7 @@ async function renderRoundCard(){
       x.fillStyle=col;x.font='800 40px "Space Grotesk",sans-serif';
       x.fillText((i+1)+'',M+30,y+62);
       // photo
-      const ph=await _loadImg(playerPhotoUrl(p[F.pid]));
+      const ph=await _loadImg(playerPhotoLocal(p[F.pid]));
       const ps=68,px2=M+75,py2=y+(rowH-ps)/2;
       x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
       if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
@@ -3532,7 +3529,7 @@ async function renderRoundCard(){
       const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
       const rowH=92;
       x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,16);x.fill();
-      const wl=await _loadImg(teamLogoUrl(win));
+      const wl=await _loadImg(teamLogoLocal(win));
       let bx=M+24;
       if(wl){try{x.drawImage(wl,bx,y+(rowH-48)/2,48,48);}catch(e){}bx+=62;}
       x.fillStyle='#fff';x.font='700 32px "Space Grotesk", sans-serif';
@@ -3552,7 +3549,7 @@ async function renderRoundCard(){
         x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rh,14);x.fill();
         x.fillStyle=i<3?col:'rgba(255,255,255,.6)';x.font='800 32px "Space Mono", monospace';
         x.fillText((i+1)+'.',M+26,y+46);
-        const logo=await _loadImg(teamLogoUrl(s.team));
+        const logo=await _loadImg(teamLogoLocal(s.team));
         if(logo){try{x.drawImage(logo,M+78,y+13,44,44);}catch(e){}}
         x.fillStyle='#fff';x.font='600 30px "Space Grotesk", sans-serif';
         x.fillText(s.team,M+138,y+46);
