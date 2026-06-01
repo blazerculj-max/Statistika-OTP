@@ -951,6 +951,13 @@ html{scroll-behavior:smooth}
 .scard-st .l{font-size:.56rem;color:var(--mut);font-family:var(--fm);letter-spacing:.06em;margin-top:2px}
 @media(max-width:560px){.srch-results{grid-template-columns:1fr}}
 
+/* ═══ RECORD ROW AVATARS ═══ */
+.rec-avatar{width:34px;height:38px;border-radius:9px;object-fit:cover;object-position:top center;flex-shrink:0;border:1px solid var(--border2);background:var(--card2)}
+.rec-avatar-fb{width:34px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.72rem;flex-shrink:0}
+
+/* ═══ TEAM HEADER LOGO ═══ */
+.team-hdr-logo{width:58px;height:58px;background:var(--card2);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:7px;flex-shrink:0;border:1px solid var(--border2)}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -2381,8 +2388,8 @@ function renderTeam(){
   const tmEfe=allTm.reduce((s,p)=>s+p[F.efe],0);
   document.getElementById('team-hdr-wrap').innerHTML=`
   <div class="team-hdr" style="--tc:${color}">
-    <div class="tdot"></div>
-    <div><div class="tname">${team}</div><div class="tmeta">${allTm.length} igralcev · ${tmGames} tekem</div></div>
+    <div class="team-hdr-logo">${teamLogoHtml(team,48)}</div>
+    <div><div class="tname team-clickable" onclick="showTeamProfile('${team.replace(/'/g,"\\'")}')" style="cursor:pointer">${team}</div><div class="tmeta">${allTm.length} igralcev · ${tmGames} tekem</div></div>
     <div class="tstats">
       <div class="ts"><div class="tsv" style="color:${color}">${tmPts}</div><div class="tsl">Skupaj TOČ</div></div>
       <div class="ts"><div class="tsv" style="color:${color}">${fmt(tmPts/tmGames)}</div><div class="tsl">TOČ/TM</div></div>
@@ -6019,10 +6026,13 @@ function renderMVP(){
     +ranked.slice(0,10).map(({p,score},i)=>{
       const t=Math.max(p[F.T],1),tc=TEAM_COLORS[p[F.team]]||'#888';
       const medals=['🥇','🥈','🥉'];
+      const ph=playerPhotoUrl(p[F.pid]);
+      const ini=p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);
+      const av=ph?'<img src="'+ph+'" class="rec-avatar" style="width:28px;height:32px" onerror="this.outerHTML=\'<span class=&quot;rec-avatar-fb&quot; style=&quot;width:28px;height:32px;background:'+tc+'33;color:'+tc+'&quot;>'+ini+'</span>\'">':'<span class="rec-avatar-fb" style="width:28px;height:32px;background:'+tc+'33;color:'+tc+'">'+ini+'</span>';
       return '<tr onclick="showPlayer('+P.indexOf(p)+')" style="cursor:pointer">'
         +'<td>'+(medals[i]||i+1+'.')+'</td>'
-        +'<td style="font-weight:600">'+p[F.name]+'</td>'
-        +'<td style="color:'+tc+';font-size:.72rem">'+(TEAM_SHORT[p[F.team]]||p[F.team])+'</td>'
+        +'<td><div style="display:flex;align-items:center;gap:8px">'+av+'<span style="font-weight:600">'+p[F.name]+'</span></div></td>'
+        +'<td style="color:'+tc+';font-size:.72rem"><div style="display:flex;align-items:center;gap:6px">'+teamLogoHtml(p[F.team],20)+(TEAM_SHORT[p[F.team]]||p[F.team])+'</div></td>'
         +'<td>'+p[F.T]+'</td>'
         +'<td style="color:var(--acc);font-weight:700">'+(p[F.toc]/t).toFixed(1)+'</td>'
         +'<td>'+((p[F.nap]+p[F.obr])/t).toFixed(1)+'</td>'
@@ -6820,27 +6830,33 @@ function renderRekordi(){
   // ── RENDER HELPERS ──
   function sezonRow(p,val,suf=''){
     const tc=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||'#888';
-    // Merged players may not be in P directly; find a P entry by pid for the profile click
     const pIdx=P.findIndex(x=>x[F.pid]===p[F.pid]);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1">
-        <span style="font-weight:600;cursor:pointer" onclick="showPlayer(${pIdx})">${p[F.name]}</span>
-        <span style="font-size:.68rem;color:${tc};margin-left:6px">${p[F.team]}</span>
+    const ph=playerPhotoUrl(p[F.pid]);
+    const ini=p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);
+    const avatar=ph?`<img src="${ph}" class="rec-avatar" onerror="this.outerHTML='<span class=\'rec-avatar-fb\' style=\'background:${tc}33;color:${tc}\'>${ini}</span>'">`:`<span class="rec-avatar-fb" style="background:${tc}33;color:${tc}">${ini}</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="showPlayer(${pIdx})">
+      ${avatar}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p[F.name]}</div>
+        <div style="font-size:.66rem;color:${tc}">${p[F.team]}</div>
       </div>
-      <div style="font-family:var(--fs);font-weight:700;color:var(--acc)">${val}${suf}</div>
-      <div style="font-size:.68rem;color:var(--mut);min-width:40px;text-align:right">${p[F.T]} tm</div>
+      <div style="font-family:var(--fs);font-weight:800;color:var(--acc);font-size:1.05rem">${val}${suf}</div>
+      <div style="font-size:.64rem;color:var(--mut);min-width:36px;text-align:right">${p[F.T]} tm</div>
     </div>`;
   }
 
   function gameRow(rec,val,suf=''){
     const tc=TEAM_COLORS[rec.team]||'#888';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openMatch(${rec.mId})">
-      <div style="flex:1">
-        <span style="font-weight:600">${rec.name}</span>
-        <span style="font-size:.68rem;color:${tc};margin-left:6px">${rec.team}</span>
-        <div style="font-size:.65rem;color:var(--mut)">${rec.round} · vs ${rec.opp} · ${rec.date}</div>
+    const ph=playerPhotoUrl(rec.pid);
+    const ini=rec.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    const avatar=ph?`<img src="${ph}" class="rec-avatar" onerror="this.outerHTML='<span class=\'rec-avatar-fb\' style=\'background:${tc}33;color:${tc}\'>${ini}</span>'">`:`<span class="rec-avatar-fb" style="background:${tc}33;color:${tc}">${ini}</span>`;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openMatch(${rec.mId})">
+      ${avatar}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${rec.name}</div>
+        <div style="font-size:.64rem;color:var(--mut)">${rec.round} · vs ${rec.opp} · ${rec.date}</div>
       </div>
-      <div style="font-family:var(--fs);font-weight:700;color:var(--acc)">${val}${suf}</div>
+      <div style="font-family:var(--fs);font-weight:800;color:var(--acc);font-size:1.05rem">${val}${suf}</div>
     </div>`;
   }
 
