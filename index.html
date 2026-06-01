@@ -1400,6 +1400,37 @@ let _leaguePlayers=null, _tmAgg={};
 const F={name:0,team:1,born:2,pid:3,T:4,MIN:5,fg2m:6,fg2a:7,fg3m:8,fg3a:9,ftm:10,fta:11,toc:12,nap:13,obr:14,pod:15,sto:16,izs:17,izg:18,pz:19,blk:20,pre:21,pm:22,efe:23,pip:24,fb:25,sc:26};
 
 // ═══════════════════════════════════════════════════
+// TEAM LOGOS (KZS) — uuid map + render helper
+// ═══════════════════════════════════════════════════
+const TEAM_LOGO_BASE = 'https://api.kzs.si/public/images/';
+let _teamLogos = {}; // teamName -> uuid
+
+function buildTeamLogoMap(){
+  _teamLogos = {};
+  (allMatches||[]).forEach(m=>{
+    if(m.firstTeamName && m.firstTeamLogoUuid && !_teamLogos[m.firstTeamName])
+      _teamLogos[m.firstTeamName] = m.firstTeamLogoUuid;
+    if(m.secondTeamName && m.secondTeamLogoUuid && !_teamLogos[m.secondTeamName])
+      _teamLogos[m.secondTeamName] = m.secondTeamLogoUuid;
+  });
+}
+
+function teamLogoUrl(teamName){
+  const uuid=_teamLogos[teamName];
+  return uuid ? TEAM_LOGO_BASE+uuid : null;
+}
+
+// Returns an <img> logo, or a colored dot fallback. size in px.
+function teamLogoHtml(teamName, size=24, extraStyle=''){
+  const url=teamLogoUrl(teamName);
+  const tc=TEAM_COLORS[(teamName||'').split(' / ')[0]]||'#888';
+  if(url){
+    return `<img src="${url}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;flex-shrink:0;${extraStyle}" onerror="this.outerHTML='<span style=\'width:${size}px;height:${size}px;border-radius:50%;background:${tc};box-shadow:0 0 8px ${tc}66;flex-shrink:0;display:inline-block\'></span>'">`;
+  }
+  return `<span style="width:${size}px;height:${size}px;border-radius:50%;background:${tc};box-shadow:0 0 8px ${tc}66;flex-shrink:0;display:inline-block;${extraStyle}"></span>`;
+}
+
+// ═══════════════════════════════════════════════════
 // PREMIUM UX UTILITIES — count-up, reveal, share
 // ═══════════════════════════════════════════════════
 // Animate a number from 0 → target. Respects decimals & suffix.
@@ -1892,6 +1923,7 @@ function subscribeToLiveMatches() {
 // INIT UI
 // ═══════════════════════════════════════════════════
 function initUI() {
+  buildTeamLogoMap();
   // Use league team list if available, otherwise derive from data
   const lgTeams = getLg().teams;
   // Vključi VSE ekipe iz LEAGUES.teams (tudi Cedevita ki nima rednega dela)
@@ -2540,8 +2572,8 @@ async function openMatch(matchId){
     <div class="mo-hero" style="--mo-grad:linear-gradient(135deg,${c1},${c2})">
       <div class="mo-hero-row">
         <div class="mo-hero-team home">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px">${teamLogoHtml(t1,52)}</div>
           <div class="mo-hero-tname" style="color:${c1}">${t1}</div>
-          <span class="mo-hero-dot" style="background:${c1};box-shadow:0 0 12px ${c1}88"></span>
           ${matchInfo.status==='FINISHED'&&s1>s2?'<div><span class="mo-hero-wlabel">Zmaga</span></div>':''}
         </div>
         ${isLive
@@ -2550,8 +2582,8 @@ async function openMatch(matchId){
             ? `<div class="mo-hero-score"><span class="sc ${s1>s2?'win':'lose'}">${s1}</span><span class="sep">:</span><span class="sc ${s2>s1?'win':'lose'}">${s2}</span></div>`
             : `<div class="mo-hero-score"><span class="sep" style="font-size:2.4rem">VS</span></div>`}
         <div class="mo-hero-team away">
+          <div style="display:flex;justify-content:flex-start;margin-bottom:8px">${teamLogoHtml(t2,52)}</div>
           <div class="mo-hero-tname" style="color:${c2}">${t2}</div>
-          <span class="mo-hero-dot" style="background:${c2};box-shadow:0 0 12px ${c2}88"></span>
           ${matchInfo.status==='FINISHED'&&s2>s1?'<div><span class="mo-hero-wlabel">Zmaga</span></div>':''}
         </div>
       </div>
@@ -2767,7 +2799,8 @@ function openShareCard(pIdx){
     pts:merged[F.toc]/t, reb:(merged[F.nap]+merged[F.obr])/t, ast:merged[F.pod]/t,
     efe:merged[F.efe]/t, fg3:pct(merged[F.fg3m],merged[F.fg3a]),
     ts:tsOf(merged),
-    color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316'
+    color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
+    logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_');
   document.getElementById('share-overlay').style.display='flex';
@@ -2802,6 +2835,23 @@ function drawShareCard(d){
   x.font='600 26px "Space Mono", monospace';
   x.textAlign='left';
   x.fillText('SLOVENSKA KOŠARKA · 2025/26', 70, 100);
+
+  // Team logo (top-right) — drawn async, then re-trigger any pending
+  if(d.logoUrl){
+    const logo=new Image();
+    logo.crossOrigin='anonymous';
+    logo.onload=()=>{
+      // white rounded backdrop for contrast
+      x.save();
+      x.globalAlpha=0.95;
+      const ls=150, lx=W-ls-70, ly=70;
+      _roundRect(x,lx-12,ly-12,ls+24,ls+24,20);
+      x.fillStyle='rgba(255,255,255,.12)';x.fill();
+      try{x.drawImage(logo,lx,ly,ls,ls);}catch(e){}
+      x.restore();
+    };
+    logo.src=d.logoUrl;
+  }
 
   // Player name (wrap if long)
   x.fillStyle='#fff';
@@ -2926,7 +2976,10 @@ function showTeamProfile(teamName){
   overlay.innerHTML=`<div class="tp-modal">
     <button class="tp-close" onclick="closeTeamProfile()">✕</button>
     <div class="tp-hero" style="--tp-grad:${grad}">
-      <div class="tp-name">${teamName}</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:4px">
+        <div style="width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:8px;backdrop-filter:blur(8px)">${teamLogoHtml(teamName,48)}</div>
+        <div class="tp-name">${teamName}</div>
+      </div>
       <div class="tp-rec">${ts?`${ts.W}-${ts.L} · ${Math.round(ts.W/Math.max(ts.T,1)*100)}% zmag`:'Ni podatkov rednega dela'}</div>
       <div class="tp-stats">
         ${ts?`<div class="tp-st"><div class="tp-st-v" data-count="${(ts.ptsFor/Math.max(ts.T,1)).toFixed(1)}" data-dec="1">0</div><div class="tp-st-l">Točk/tm</div></div>
@@ -3002,7 +3055,7 @@ function renderCmdkResults(){
     const tc=TEAM_COLORS[(r.team||'').split(' / ')[0]]||'#888';
     if(r.type==='team'){
       return `<div class="cmdk-item ${i===_cmdkActive?'active':''}" data-i="${i}" onclick="cmdkPick(${i})" onmouseenter="_cmdkActive=${i};renderCmdkResults()">
-        <span class="cmdk-item-icon" style="background:${tc}22;color:${tc}">🛡️</span>
+        <span class="cmdk-item-icon" style="background:${tc}22;padding:4px">${teamLogoHtml(r.name,22)}</span>
         <div><div class="cmdk-item-name" style="color:${tc}">${r.name}</div><div class="cmdk-item-sub">Ekipa</div></div>
         <span class="cmdk-item-tag">Profil ekipe</span>
       </div>`;
@@ -3077,13 +3130,13 @@ function renderFeaturedMatch(){
     <div class="fmatch-label">${label}</div>
     <div class="fmatch-teams">
       <div class="fmatch-team">
+        <div style="display:flex;justify-content:center;margin-bottom:8px">${teamLogoHtml(m.firstTeamName,46)}</div>
         <div class="fmatch-tname" style="color:${c1}">${m.firstTeamName}</div>
-        <span class="fmatch-dot" style="background:${c1};box-shadow:0 0 10px ${c1}88"></span>
       </div>
       <div class="fmatch-vs">${centerHtml}</div>
       <div class="fmatch-team">
+        <div style="display:flex;justify-content:center;margin-bottom:8px">${teamLogoHtml(m.secondTeamName,46)}</div>
         <div class="fmatch-tname" style="color:${c2}">${m.secondTeamName}</div>
-        <span class="fmatch-dot" style="background:${c2};box-shadow:0 0 10px ${c2}88"></span>
       </div>
     </div>
     <div class="fmatch-meta">${dateStr} · ${m.sportHallName||''}${phaseName?' · '+phaseName:''}</div>
@@ -3236,9 +3289,12 @@ function renderSpotlight(){
   el.innerHTML=`<div class="spotlight" style="--sl-grad:${grad}" onclick="showPlayer(${pIdx})">
     <div class="spotlight-badge">⭐ Igralec sezone</div>
     <div class="spotlight-body">
-      <div>
-        <div class="spotlight-name">${best[F.name]}</div>
-        <div class="spotlight-team">${best[F.team]} · ${best[F.T]} tekem</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:54px;height:54px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:7px;backdrop-filter:blur(8px);flex-shrink:0">${teamLogoHtml(best[F.team],40)}</div>
+        <div>
+          <div class="spotlight-name">${best[F.name]}</div>
+          <div class="spotlight-team">${best[F.team]} · ${best[F.T]} tekem</div>
+        </div>
       </div>
       <div class="spotlight-stats">
         ${stats.map(s=>`<div class="spotlight-stat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('')}
@@ -3291,7 +3347,9 @@ function renderLigaFeatured(){
     const maxE=Math.max(...last6.map(g=>g.efe),1);
     const spark=last6.map(g=>`<span style="height:${Math.max(8,Math.round(Math.max(g.efe,0)/maxE*100))}%"></span>`).join('');
     const pIdx=P.findIndex(x=>x[F.pid]===p[F.pid]);
+    const logoUrl=teamLogoUrl((p[F.team]||'').split(' / ')[0]);
     return `<div class="hcard" style="--hc-grad:${grad}" onclick="showPlayer(${pIdx})">
+      ${logoUrl?`<img src="${logoUrl}" alt="" loading="lazy" style="position:absolute;right:14px;bottom:14px;width:42px;height:42px;object-fit:contain;opacity:.32;z-index:1" onerror="this.style.display='none'">`:''}
       <div class="hcard-rank">${i+1}</div>
       <div class="hcard-cat">🏀 Najboljši strelec #${i+1}</div>
       <div>
@@ -3719,9 +3777,12 @@ function showPlayer(idx){
     <div class="pp-close" onclick="closePlayer()">✕</div>
     <div class="pp-hero" style="--pph-grad:linear-gradient(135deg,${color},${_shade(color,-45)})">
       <div class="pp-hero-top">
-        <div>
-          <div class="pp-hero-name">${p[F.name]}</div>
-          <div class="pp-hero-meta">${p[F.team]} · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:7px;backdrop-filter:blur(8px);flex-shrink:0">${teamLogoHtml(p[F.team],38)}</div>
+          <div>
+            <div class="pp-hero-name">${p[F.name]}</div>
+            <div class="pp-hero-meta">${p[F.team]} · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
+          </div>
         </div>
         <div class="pp-hero-signature">
           <div class="sv" data-count="${(p[F.toc]/t).toFixed(1)}" data-dec="1">0</div>
@@ -4222,9 +4283,9 @@ function buildLiveCard(m, lgKey) {
       ${headerRight}
     </div>
     <div class="live-teams">
-      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1}">${m.firstTeamName}${w1?' <span style="font-size:.7rem">▸</span>':''}</div>
+      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1};display:flex;align-items:center;gap:8px;justify-content:flex-end">${m.firstTeamName}${w1?' <span style="font-size:.7rem">▸</span>':''}${teamLogoHtml(m.firstTeamName,28)}</div>
       ${scoreHtml}
-      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1}">${w2?'<span style="font-size:.7rem">◂</span> ':''}${m.secondTeamName}</div>
+      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1};display:flex;align-items:center;gap:8px">${teamLogoHtml(m.secondTeamName,28)}${w2?'<span style="font-size:.7rem">◂</span> ':''}${m.secondTeamName}</div>
     </div>
     <div class="live-footer">
       <span>${m.sportHallName || ''}</span>
@@ -7157,7 +7218,7 @@ function buildStandingsTable(data, sort, title, color){
     let zone = i<clCount?'zone-cl':(i>=N-relCount && relCount>0)?'zone-rel':'';
     return `<tr>
       <td><span class="std-pos ${posCls} ${zone}">${i+1}</span></td>
-      <td><div class="std-team-cell"><span class="std-dot" style="background:${tc};--sd-glow:${tc}66"></span><span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
+      <td><div class="std-team-cell">${teamLogoHtml(t.name,26)}<span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
       <td>${t.T}</td>
       <td style="color:#22c55e;font-weight:700">${t.W}</td>
       <td style="color:#ef4444">${t.L}</td>
@@ -7370,12 +7431,12 @@ function seriesCard(s){
   return `<div class="pbseries ${s.live?'live':''} ${isChamp?'champ':''}">
     <div class="pbseries-tag">${s.live?'🔴 V ŽIVO':seriesType}</div>
     <div class="pbteam ${w1?'win':w2?'lose':''}">
-      <span class="pbteam-dot" style="background:${c1};box-shadow:0 0 8px ${c1}66"></span>
+      ${teamLogoHtml(s.t1,22)}
       <span class="pbteam-name" style="color:${c1}">${s.t1}</span>
       <span class="pbteam-score">${sc1}</span>
     </div>
     <div class="pbteam ${w2?'win':w1?'lose':''}">
-      <span class="pbteam-dot" style="background:${c2};box-shadow:0 0 8px ${c2}66"></span>
+      ${teamLogoHtml(s.t2,22)}
       <span class="pbteam-name" style="color:${c2}">${s.t2}</span>
       <span class="pbteam-score">${sc2}</span>
     </div>
@@ -7413,6 +7474,7 @@ function renderBracketHTML(byPhase,phaseColors){
       champCol=`<div class="pbchamp-col">
         <div class="pbchamp">
           <div class="pbchamp-trophy">🏆</div>
+          <div style="display:flex;justify-content:center;margin-bottom:8px">${teamLogoHtml(decidingSeries.winner,44)}</div>
           <div class="pbchamp-lbl">Prvak</div>
           <div class="pbchamp-name" style="color:${cc}">${decidingSeries.winner}</div>
         </div>
