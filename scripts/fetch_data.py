@@ -28,7 +28,7 @@ LEAGUES = {
     'liga3': {
         'id': 582,
         'name': '3. SKL',
-        'phase_ids': [5814, 5868, 5869, 5878, 5884],
+        'phase_ids': [5814, 5868, 5869, 5878, 5884, 5892],  # 5892 = Finale
         'max_pages': 3,
         'phase_limits': {5814: 200},
         'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
