@@ -268,7 +268,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .att-trend-bar:hover{opacity:1}
 /* HERO PAGE */
 #hero-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
-.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none;animation:heroBgDrift 14s ease-in-out infinite alternate}@keyframes heroBgDrift{0%{background-position:0% 0%,100% 0%}100%{background-position:20% 30%,80% 70%}}
 .hero-wrap{position:relative;z-index:1;text-align:center;padding:40px 24px;max-width:700px;width:100%}
 .hero-badge{display:inline-block;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--acc);padding:5px 16px;border-radius:20px;font-family:var(--fm);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
 .hero-title{font-family:var(--fh);font-size:clamp(2.8rem,8vw,5.5rem);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:10px}
@@ -848,6 +848,33 @@ html{scroll-behavior:smooth}
 #analytics-dropdown .nb:last-child{border-bottom:none !important}
 #analytics-dropdown .nb:hover{background:var(--card2) !important;color:var(--acc) !important}
 
+/* ═══ SCROLL REVEAL ═══ */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.2,.8,.2,1),transform .6s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.reveal.d1{transition-delay:.06s}.reveal.d2{transition-delay:.12s}.reveal.d3{transition-delay:.18s}
+
+/* ═══ TOAST NOTIFICATIONS ═══ */
+#toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 20px;font-family:var(--fh);font-size:.85rem;font-weight:600;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;animation:toastIn .35s cubic-bezier(.2,.8,.2,1);backdrop-filter:blur(12px);pointer-events:auto}
+.toast.out{animation:toastOut .3s ease forwards}
+.toast-icon{font-size:1.1rem}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px) scale(.9)}}
+
+/* ═══ MAGNETIC CARD TILT ═══ */
+.tilt{transition:transform .15s ease-out;transform-style:preserve-3d;will-change:transform}
+
+/* ═══ CONFETTI ═══ */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:2500;display:none}
+
+/* ═══ ENHANCED GLASSMORPHISM NAV ═══ */
+.hdr{backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%)}
+.nav{backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%)}
+
+/* ═══ SHIMMER on important numbers ═══ */
+@keyframes textShine{0%{background-position:200% center}100%{background-position:-200% center}}
+.shine{background:linear-gradient(90deg,currentColor 30%,rgba(255,255,255,.95) 50%,currentColor 70%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:textShine 3s linear infinite}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -924,6 +951,8 @@ html{scroll-behavior:smooth}
 
 <div id="player-overlay" onclick="if(event.target===this)closePlayer()"></div>
 <div id="team-overlay" onclick="if(event.target===this)closeTeamProfile()"></div>
+<div id="toast-wrap"></div>
+<canvas id="confetti-canvas"></canvas>
 <div id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
   <div class="cmdk-box">
     <input id="cmdk-input" type="text" placeholder="Išči igralca ali ekipo..." autocomplete="off" oninput="cmdkSearch(this.value)" onkeydown="cmdkKey(event)">
@@ -2162,6 +2191,14 @@ function showTab(t){
     }
   }
   if(t==='nerd'){if(!pbpLoaded)loadPBPData();else renderNerd();}
+  // Modern polish: scroll-reveal + magnetic tilt on the active tab's cards
+  const activeTab=document.getElementById('tab-'+t);
+  requestAnimationFrame(()=>{
+    try{
+      applyReveal(activeTab);
+      applyTilt('#tab-'+t+' .hcard, #tab-'+t+' .spotlight, #tab-'+t+' .fmatch');
+    }catch(e){}
+  });
 }
 function setMode(m){mode=m;document.getElementById('btn-tot').classList.toggle('active',m==='tot');document.getElementById('btn-avg').classList.toggle('active',m==='avg');renderTeam();}
 function setLMin(n){lMin=n;[5,10,15].forEach(v=>document.getElementById('lmin'+v).classList.toggle('active',v===n));renderLeaders();}
@@ -2945,6 +2982,7 @@ function downloadShare(){
     a.href=url; a.download=_shareName+'_statistika.png';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1000);
+    toast('Kartica shranjena!', '📸');
   },'image/png');
 }
 function closeShare(){document.getElementById('share-overlay').style.display='none';}
@@ -2995,6 +3033,7 @@ function showTeamProfile(teamName){
     </div>
     <div class="tp-body">
       ${form?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><span style="font-size:.7rem;color:var(--mut);font-family:var(--fm);letter-spacing:.08em">FORMA</span><div style="display:flex;gap:4px">${form}</div></div>`:''}
+      ${(()=>{const tt=drawTeamTrend(teamName,color);return tt?`<div class="sec-head" style="--sh-c:${color};margin-top:0">📈 Forma skozi sezono</div>${tt}<div style="height:20px"></div>`:'';})()}
       <div class="sec-head" style="--sh-c:${color};margin-top:0">👥 Postava (${roster.length})</div>
       <div>${rosterHtml||'<div class="empty">Ni igralcev</div>'}</div>
     </div>
@@ -3006,6 +3045,164 @@ function showTeamProfile(teamName){
 function closeTeamProfile(){
   document.getElementById('team-overlay').style.display='none';
   document.body.style.overflow='';
+}
+
+// ═══ HERO PARTICLES (subtle floating dots) ═══
+let _heroRAF=null;
+function initHeroParticles(){
+  const cv=document.getElementById('hero-canvas');
+  if(!cv)return;
+  const ov=document.getElementById('hero-overlay');
+  if(!ov||ov.style.display==='none')return;
+  const x=cv.getContext('2d');
+  function resize(){cv.width=ov.offsetWidth;cv.height=ov.offsetHeight;}
+  resize();
+  const N=Math.min(46,Math.floor(cv.width/30));
+  const dots=[];
+  const cols=['rgba(249,115,22,','rgba(96,165,250,','rgba(168,85,247,'];
+  for(let i=0;i<N;i++){
+    dots.push({
+      x:Math.random()*cv.width,y:Math.random()*cv.height,
+      vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,
+      r:1+Math.random()*2.5,
+      col:cols[Math.floor(Math.random()*cols.length)],
+      a:0.15+Math.random()*0.35
+    });
+  }
+  if(_heroRAF)cancelAnimationFrame(_heroRAF);
+  function tick(){
+    const ovNow=document.getElementById('hero-overlay');
+    if(!ovNow||ovNow.style.display==='none'){_heroRAF=null;return;}
+    x.clearRect(0,0,cv.width,cv.height);
+    // connections
+    for(let i=0;i<dots.length;i++){
+      const d=dots[i];
+      d.x+=d.vx;d.y+=d.vy;
+      if(d.x<0||d.x>cv.width)d.vx*=-1;
+      if(d.y<0||d.y>cv.height)d.vy*=-1;
+      for(let j=i+1;j<dots.length;j++){
+        const d2=dots[j];
+        const dx=d.x-d2.x,dy=d.y-d2.y,dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<110){
+          x.strokeStyle=`rgba(249,115,22,${0.06*(1-dist/110)})`;
+          x.lineWidth=1;
+          x.beginPath();x.moveTo(d.x,d.y);x.lineTo(d2.x,d2.y);x.stroke();
+        }
+      }
+    }
+    dots.forEach(d=>{
+      x.fillStyle=d.col+d.a+')';
+      x.beginPath();x.arc(d.x,d.y,d.r,0,Math.PI*2);x.fill();
+    });
+    _heroRAF=requestAnimationFrame(tick);
+  }
+  tick();
+  if(!window._heroResizeBound){window._heroResizeBound=true;window.addEventListener('resize',()=>{if(document.getElementById('hero-overlay')?.style.display!=='none'){resize();}});}
+}
+
+// ═══ TOAST NOTIFICATIONS ═══
+function toast(msg, icon='✓'){
+  const wrap=document.getElementById('toast-wrap');
+  if(!wrap)return;
+  const el=document.createElement('div');
+  el.className='toast';
+  el.innerHTML=`<span class="toast-icon">${icon}</span>${msg}`;
+  wrap.appendChild(el);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},2200);
+}
+
+// ═══ SCROLL REVEAL ═══
+let _revealObserver=null;
+function initScrollReveal(){
+  if(_revealObserver)_revealObserver.disconnect();
+  _revealObserver=new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){e.target.classList.add('in');_revealObserver.unobserve(e.target);}
+    });
+  },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.reveal:not(.in)').forEach(el=>_revealObserver.observe(el));
+}
+// Auto-apply reveal to cards in the active tab
+function applyReveal(container){
+  if(!container)return;
+  const sel='.lc,.nerd-card,.att-card,.fstat,.live-card,.pbseries,.spotlight,.fmatch,.hcard';
+  const vh=window.innerHeight;
+  container.querySelectorAll(sel).forEach((el,i)=>{
+    if(el.classList.contains('reveal')||el.classList.contains('in'))return;
+    const top=el.getBoundingClientRect().top;
+    if(top<vh*0.92){
+      // Already in/near viewport — reveal immediately (no hidden state)
+      el.classList.add('reveal','in');
+    }else{
+      el.classList.add('reveal');
+      if(i%3===1)el.classList.add('d1');else if(i%3===2)el.classList.add('d2');
+    }
+  });
+  initScrollReveal();
+}
+
+// ═══ CONFETTI (champion celebration) ═══
+let _confettiRAF=null;
+function fireConfetti(colors=['#fbbf24','#f97316','#22c55e','#3b82f6','#a855f7','#ffffff']){
+  const cv=document.getElementById('confetti-canvas');
+  if(!cv)return;
+  cv.style.display='block';
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const x=cv.getContext('2d');
+  const N=140;
+  const parts=[];
+  for(let i=0;i<N;i++){
+    parts.push({
+      x:Math.random()*cv.width,
+      y:-20-Math.random()*cv.height*0.4,
+      vx:(Math.random()-0.5)*3,
+      vy:2+Math.random()*4,
+      sz:5+Math.random()*7,
+      rot:Math.random()*Math.PI,
+      vr:(Math.random()-0.5)*0.3,
+      col:colors[Math.floor(Math.random()*colors.length)],
+      shape:Math.random()>0.5?'rect':'circ'
+    });
+  }
+  let frame=0;
+  const maxFrames=220;
+  if(_confettiRAF)cancelAnimationFrame(_confettiRAF);
+  function tick(){
+    frame++;
+    x.clearRect(0,0,cv.width,cv.height);
+    let alive=false;
+    parts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.vy+=0.06;p.rot+=p.vr;
+      if(frame>maxFrames-60)p.vy+=0.02; // settle
+      if(p.y<cv.height+30)alive=true;
+      x.save();
+      x.translate(p.x,p.y);x.rotate(p.rot);
+      x.fillStyle=p.col;
+      const fade=frame>maxFrames-50?Math.max(0,(maxFrames-frame)/50):1;
+      x.globalAlpha=fade;
+      if(p.shape==='rect')x.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz*0.6);
+      else{x.beginPath();x.arc(0,0,p.sz/2,0,Math.PI*2);x.fill();}
+      x.restore();
+    });
+    if(alive&&frame<maxFrames){_confettiRAF=requestAnimationFrame(tick);}
+    else{cv.style.display='none';x.clearRect(0,0,cv.width,cv.height);}
+  }
+  tick();
+}
+
+// ═══ MAGNETIC TILT ═══
+function applyTilt(selector){
+  document.querySelectorAll(selector).forEach(el=>{
+    if(el._tiltBound)return;el._tiltBound=true;
+    el.classList.add('tilt');
+    el.addEventListener('mousemove',ev=>{
+      const r=el.getBoundingClientRect();
+      const px=(ev.clientX-r.left)/r.width-0.5;
+      const py=(ev.clientY-r.top)/r.height-0.5;
+      el.style.transform=`perspective(800px) rotateY(${px*6}deg) rotateX(${-py*6}deg) translateY(-3px)`;
+    });
+    el.addEventListener('mouseleave',()=>{el.style.transform='';});
+  });
 }
 
 // ═══ COMMAND PALETTE (Cmd+K spotlight search) ═══
@@ -3176,6 +3373,7 @@ function toggleTheme(){
   try{localStorage.setItem('skl-theme',next);}catch(e){}
   const btn=document.getElementById('theme-toggle');
   if(btn)btn.textContent=next==='light'?'☀️':'🌙';
+  toast(next==='light'?'Svetla tema':'Temna tema', next==='light'?'☀️':'🌙');
 }
 function initTheme(){
   let saved='dark';
@@ -3263,7 +3461,14 @@ function buildTicker(){
 function renderSpotlight(){
   const el=document.getElementById('liga-spotlight');
   if(!el||!P.length)return;
-  const LPa=getLeaguePlayers().filter(p=>p[F.T]>=Math.min(lMin,3));
+  // Igralec sezone mora odigrati VEČINO sezone (ne le končnico).
+  // Prag = 60% najvišjega števila tekem med igralci (zajame redni del + nekaj končnice).
+  const allLP=getLeaguePlayers();
+  const maxGames=Math.max(...allLP.map(p=>p[F.T]),1);
+  const minGames=Math.max(Math.ceil(maxGames*0.6),8);
+  let LPa=allLP.filter(p=>p[F.T]>=minGames);
+  // Fallback če premalo kvalificiranih (manjša liga): spusti na polovico maxa
+  if(LPa.length<3)LPa=allLP.filter(p=>p[F.T]>=Math.max(Math.ceil(maxGames*0.5),5));
   if(!LPa.length){el.innerHTML='';return;}
   // MVP-style score to pick player of the season
   const isLiga3=getLg().id===582;
@@ -3302,7 +3507,7 @@ function renderSpotlight(){
         </div>
       </div>
       <div class="spotlight-stats">
-        ${stats.map(s=>`<div class="spotlight-stat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('')}
+        ${stats.map((s,si)=>`<div class="spotlight-stat"><div class="v${si===0?' shine':''}">${s.v}</div><div class="l">${s.l}</div></div>`).join('')}
       </div>
     </div>
   </div>`;
@@ -3767,7 +3972,7 @@ function showPlayer(idx){
 
   const radarSVG=drawRadar(axes,axesAvg,color);
   const scoringSVG=drawScoring(p[F.fg2m]*2,p[F.fg3m]*3,p[F.ftm],p[F.toc],color,t);
-  const trendSVG=drawTrend(p[F.pid],color);
+  const trendSVG=drawTrendChart(p[F.pid],color,'pts');
 
   function advBar(lbl,val,min,max,suf,tip,goodHigh=true){
     if(val===null)return '';
@@ -3810,7 +4015,7 @@ function showPlayer(idx){
       <div class="pp-left">
         <div class="pp-section-title">PROFIL (vs liga)</div>${radarSVG}
         <div class="pp-section-title" style="margin-top:14px">TOČKE PO TIPU META</div>${scoringSVG}
-        ${trendSVG?`<div class="pp-section-title" style="margin-top:14px">FORMA (zadnjih 10 tekem)</div>${trendSVG}`:''}
+        <div class="pp-section-title" style="margin-top:14px">FORMA SKOZI SEZONO</div><div id="trend-chart-wrap">${trendSVG}</div>
       </div>
       <div class="pp-right">
         <div class="pp-section-title">NAPREDNA STATISTIKA</div>
@@ -4055,6 +4260,152 @@ function drawTrend(pid, color){
     </svg>
     <div id="trend-tip" style="display:none;position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:.72rem;color:var(--text);font-family:var(--fm);white-space:nowrap;pointer-events:none;z-index:10"></div>
   </div>`;
+}
+
+// ═══ INTERACTIVE TREND CHART (line + avg, stat switcher) ═══
+let _trendStat='pts'; let _trendPid=null;
+function drawTrendChart(pid, color, stat){
+  _trendPid=pid; _trendStat=stat||_trendStat;
+  const log=playerGameLog[pid];
+  if(!log||log.length<2)return '<div class="empty" style="font-size:.75rem">Premalo tekem za graf</div>';
+
+  const pfPhases=new Set(['Četrtfinale','Polfinale','Finale','Osmina finala']);
+  const games=log.slice().sort((a,b)=>{
+    const ma=allMatches.find(x=>x.id===a.matchId),mb=allMatches.find(x=>x.id===b.matchId);
+    return new Date(ma?.dateTime||0)-new Date(mb?.dateTime||0);
+  });
+  if(games.length<2)return '<div class="empty" style="font-size:.75rem">Premalo tekem za graf</div>';
+
+  const statMeta={
+    pts:{lbl:'Točke',key:'pts',col:'#f97316'},
+    reb:{lbl:'Skoki',key:'reb',col:'#3b82f6'},
+    ast:{lbl:'Asist.',key:'ast',col:'#a855f7'},
+    efe:{lbl:'EFE',key:'efe',col:'#10b981'}
+  };
+  const sm=statMeta[_trendStat]||statMeta.pts;
+  const vals=games.map(g=>g[sm.key]||0);
+  const maxV=Math.max(...vals,1);
+  const avg=vals.reduce((s,x)=>s+x,0)/vals.length;
+
+  const W=560,H=220,padL=36,padR=16,padT=20,padB=40;
+  const cw=W-padL-padR,ch=H-padT-padB;
+  const n=games.length;
+  const xAt=i=>padL+(n===1?cw/2:i/(n-1)*cw);
+  const yAt=v=>padT+ch-(v/maxV)*ch;
+
+  // Avg line
+  const avgY=yAt(avg);
+
+  // Build path + area
+  let linePath='',areaPath='';
+  games.forEach((g,i)=>{
+    const x=xAt(i),y=yAt(g[sm.key]||0);
+    linePath+=(i===0?`M${x},${y}`:`L${x},${y}`);
+  });
+  areaPath=linePath+`L${xAt(n-1)},${padT+ch}L${xAt(0)},${padT+ch}Z`;
+
+  // Phase divider
+  const firstPfIdx=games.findIndex(g=>{
+    const m=allMatches.find(x=>x.id===g.matchId);
+    return pfPhases.has(m?.competitions?.[0]?.competitionPhaseName||'');
+  });
+
+  const gid='tr'+Math.random().toString(36).slice(2,7);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${sm.col}" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="${sm.col}" stop-opacity="0"/>
+    </linearGradient></defs>`;
+
+  // Y gridlines
+  [0,0.25,0.5,0.75,1].forEach(f=>{
+    const y=padT+ch-f*ch;const v=Math.round(maxV*f);
+    svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
+    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+  });
+
+  // Playoff shading
+  if(firstPfIdx>0){
+    const px=xAt(firstPfIdx);
+    svg+=`<rect x="${px}" y="${padT}" width="${W-padR-px}" height="${ch}" fill="rgba(251,191,36,.05)"/>`;
+    svg+=`<line x1="${px}" y1="${padT}" x2="${px}" y2="${padT+ch}" stroke="rgba(251,191,36,.4)" stroke-width="1" stroke-dasharray="4,3"/>`;
+    svg+=`<text x="${px+4}" y="${padT+10}" font-size="8" fill="rgba(251,191,36,.8)" font-family="Space Grotesk,sans-serif">KONČNICA</text>`;
+  }
+
+  // Avg line
+  svg+=`<line x1="${padL}" y1="${avgY}" x2="${W-padR}" y2="${avgY}" stroke="${sm.col}" stroke-width="1" stroke-dasharray="5,4" opacity=".5"/>`;
+  svg+=`<text x="${W-padR}" y="${avgY-4}" font-size="9" fill="${sm.col}" text-anchor="end" font-family="Space Mono,monospace">povp. ${avg.toFixed(1)}</text>`;
+
+  // Area + line
+  svg+=`<path d="${areaPath}" fill="url(#${gid})"/>`;
+  svg+=`<path d="${linePath}" fill="none" stroke="${sm.col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${sm.col}66)"/>`;
+
+  // Points
+  games.forEach((g,i)=>{
+    const x=xAt(i),y=yAt(g[sm.key]||0);
+    const v=g[sm.key]||0;
+    const above=v>=avg;
+    svg+=`<circle cx="${x}" cy="${y}" r="4" fill="${above?sm.col:'var(--card)'}" stroke="${sm.col}" stroke-width="2"
+      class="trend-pt" data-tip="K${g.round} · ${g.pts}t ${g.reb}sk ${g.ast}a · EFE ${g.efe}"
+      onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()" style="cursor:pointer"/>`;
+  });
+
+  svg+=`</svg>`;
+
+  // Stat switcher buttons
+  const btns=Object.entries(statMeta).map(([k,m])=>
+    `<button onclick="switchTrendStat('${k}','${color}')" style="padding:5px 12px;border-radius:8px;border:1px solid ${k===_trendStat?m.col:'var(--border)'};background:${k===_trendStat?m.col+'22':'transparent'};color:${k===_trendStat?m.col:'var(--mut)'};font-family:var(--fh);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s">${m.lbl}</button>`
+  ).join('');
+
+  return `<div style="position:relative">
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">${btns}</div>
+    ${svg}
+    <div id="trend-tip" style="display:none;position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:.72rem;color:var(--text);font-family:var(--fm);white-space:nowrap;pointer-events:none;z-index:10"></div>
+  </div>`;
+}
+function drawTeamTrend(teamName,color){
+  // Collect finished matches for this team in chronological order
+  const games=allMatches.filter(m=>m.status==='FINISHED'&&(m.firstTeamName===teamName||m.secondTeamName===teamName))
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+  if(games.length<2)return '';
+  const data=games.map(m=>{
+    const home=m.firstTeamName===teamName;
+    return {for:home?m.firstTeamScore:m.secondTeamScore, against:home?m.secondTeamScore:m.firstTeamScore, opp:home?m.secondTeamName:m.firstTeamName};
+  });
+  const W=560,H=200,padL=36,padR=16,padT=18,padB=30;
+  const cw=W-padL-padR,ch=H-padT-padB,n=data.length;
+  const maxV=Math.max(...data.map(d=>Math.max(d.for,d.against)),1);
+  const xAt=i=>padL+(n===1?cw/2:i/(n-1)*cw);
+  const yAt=v=>padT+ch-(v/maxV)*ch;
+  let forPath='',agPath='';
+  data.forEach((d,i)=>{
+    forPath+=(i===0?'M':'L')+xAt(i)+','+yAt(d.for);
+    agPath+=(i===0?'M':'L')+xAt(i)+','+yAt(d.against);
+  });
+  const gid='tt'+Math.random().toString(36).slice(2,6);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.2"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`;
+  [0,0.5,1].forEach(f=>{const y=padT+ch-f*ch;svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/><text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${Math.round(maxV*f)}</text>`;});
+  svg+=`<path d="${forPath}L${xAt(n-1)},${padT+ch}L${xAt(0)},${padT+ch}Z" fill="url(#${gid})"/>`;
+  svg+=`<path d="${forPath}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px ${color}66)"/>`;
+  svg+=`<path d="${agPath}" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3" opacity=".7" stroke-linejoin="round"/>`;
+  data.forEach((d,i)=>{
+    svg+=`<circle cx="${xAt(i)}" cy="${yAt(d.for)}" r="3.5" fill="${color}" class="trend-pt" data-tip="vs ${d.opp}: ${d.for}:${d.against}" onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()" style="cursor:pointer"/>`;
+  });
+  svg+=`</svg>`;
+  return `<div style="position:relative">
+    <div style="display:flex;gap:16px;margin-bottom:10px;font-size:.7rem;font-family:var(--fm)">
+      <span style="color:${color}">● Dosežene</span>
+      <span style="color:#ef4444">┄ Prejete</span>
+    </div>
+    ${svg}
+    <div id="trend-tip" style="display:none;position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:.72rem;color:var(--text);font-family:var(--fm);white-space:nowrap;pointer-events:none;z-index:10"></div>
+  </div>`;
+}
+function switchTrendStat(stat,color){
+  _trendStat=stat;
+  const container=document.getElementById('trend-chart-wrap');
+  if(container&&_trendPid!=null)container.innerHTML=drawTrendChart(_trendPid,color,stat);
 }
 
 function showTrendTip(evt, el){
@@ -7123,7 +7474,7 @@ function initHeroCanvas(){
   draw();
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}}); document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}try{initHeroParticles();}catch(e){}}); document.addEventListener('DOMContentLoaded',()=>{
   initUI();
   initWebSocket();
   console.log('home page mounted');
