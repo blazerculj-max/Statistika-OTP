@@ -208,8 +208,8 @@ select:focus{outline:none;border-color:var(--acc)}
 .live-container{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:700px){.live-container{grid-template-columns:1fr}}
 .live-section-title{font-family:var(--fh);font-size:1.3rem;letter-spacing:.06em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.live-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s;cursor:pointer}
-.live-card:hover{border-color:var(--border2);transform:translateY(-1px)}
+.live-card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s;cursor:pointer;position:relative}
+.live-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.4)}
 .live-card.is-live{border-color:rgba(239,68,68,.4);box-shadow:0 0 20px rgba(239,68,68,.08)}
 .live-card.is-today{border-color:rgba(249,115,22,.25)}
 .live-header{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:.65rem;font-family:var(--fm);color:var(--mut)}
@@ -217,10 +217,10 @@ select:focus{outline:none;border-color:var(--acc)}
 .live-pulse::before{content:'';width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s ease infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
 .live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 16px;gap:10px}
-.live-team-name{font-family:var(--fh);font-size:1.05rem;letter-spacing:.03em;line-height:1.2}
+.live-team-name{font-family:var(--fh);font-size:1.05rem;font-weight:700;letter-spacing:.02em;line-height:1.2}
 .live-team-name.home{text-align:left}
 .live-team-name.away{text-align:right}
-.live-score{font-family:var(--fh);font-size:2rem;letter-spacing:.04em;text-align:center;min-width:80px;color:var(--text)}
+.live-score{font-family:var(--fs);font-size:2.3rem;font-weight:800;letter-spacing:-.02em;text-align:center;min-width:90px;color:var(--text)}
 .live-score.upcoming{font-size:1rem;color:var(--mut)}
 .live-footer{padding:6px 14px 10px;display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-family:var(--fm);color:var(--mut)}
 .live-quarter{background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700;font-size:.68rem}
@@ -525,6 +525,48 @@ select:focus{outline:none;border-color:var(--acc)}
 .share-btn:hover{transform:translateY(-2px)}
 .share-btn.primary{background:var(--acc);color:#fff}
 .share-btn.ghost{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2)}
+
+/* ═══ PREMIUM STANDINGS ═══ */
+.standings-table tbody tr{transition:background .15s}
+.standings-table tbody tr td:first-child{position:relative}
+.std-pos{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;font-family:var(--fh);font-weight:800;font-size:.82rem;position:relative}
+.std-pos.zone-cl::before,.std-pos.zone-rel::before{content:'';position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:4px;height:30px;border-radius:2px}
+.std-pos.zone-cl::before{background:#22c55e}
+.std-pos.zone-rel::before{background:#ef4444}
+.std-pos.p1{background:linear-gradient(135deg,#fbbf24,#d97706);color:#000;box-shadow:0 2px 12px rgba(251,191,36,.4)}
+.std-pos.p2{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#000}
+.std-pos.p3{background:linear-gradient(135deg,#d97c4a,#b45309);color:#fff}
+.std-pos.pn{background:var(--card2);color:var(--sub)}
+.std-team-cell{display:flex;align-items:center;gap:9px}
+.std-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--sd-glow)}
+.std-team-name{font-weight:600;font-size:.86rem}
+.form-dot{width:18px;height:18px;border-radius:6px;font-size:.62rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+.form-dot.w{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.form-dot.l{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.std-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.68rem;color:var(--mut);font-family:var(--fm);margin:8px 0 4px}
+.std-legend span{display:inline-flex;align-items:center;gap:5px}
+.std-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ═══ PREMIUM MATCH CARDS ═══ */
+.match-card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:0;cursor:pointer;transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s;overflow:hidden;position:relative}
+.match-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.match-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--mc-c1,var(--acc)),var(--mc-c2,var(--blue)))}
+
+/* ═══ GLOBAL DEPTH — subtle gradient bg + glow accents ═══ */
+body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22,.04),transparent 55%),radial-gradient(ellipse 1000px 700px at 100% 100%,rgba(59,130,246,.03),transparent 50%),var(--bg);background-attachment:fixed}
+.lc,.nerd-card,.att-card,.fstat{transition:transform .2s,border-color .2s,box-shadow .2s}
+.lc:hover,.nerd-card:hover{transform:translateY(-2px);border-color:var(--border2)}
+
+/* ═══ SECTION HEADERS WITH ACCENT ═══ */
+.sec-head{display:flex;align-items:center;gap:10px;font-family:var(--fh);font-size:.95rem;letter-spacing:.04em;margin:16px 0 12px;color:var(--text)}
+.sec-head::before{content:'';width:4px;height:18px;border-radius:2px;background:var(--sh-c,var(--acc))}
+
+/* ═══ HEADER LOGO POLISH ═══ */
+.hdr-title{position:relative}
+.hdr-title::after{content:'';position:absolute;left:0;bottom:-4px;width:38px;height:3px;border-radius:2px;background:var(--acc)}
+
+.elo-bar-fill{animation:eloGrow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes eloGrow{from{width:0 !important;opacity:.3}to{opacity:1}}
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
@@ -3498,17 +3540,22 @@ function buildLiveCard(m, lgKey) {
     `<div class="live-ticker-item"><span class="live-ticker-time">${ev.time}</span><span>${ev.text}</span></div>`
   ).join('') : '';
 
+  // Winner emphasis for finished games
+  let w1=false,w2=false;
+  if(isFinished){const s1=m.firstTeamScore??0,s2=m.secondTeamScore??0;w1=s1>s2;w2=s2>s1;}
+  const accentBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,${c1},${c2})"></div>`;
   return `<div class="live-card ${isLive?'is-live':''} ${isUpcoming&&new Date(m.dateTime).toDateString()===new Date().toDateString()?'is-today':''}"
     onclick="openMatch(${m.id})">
+    ${accentBar}
     <div class="live-header">
-      <span style="color:${lg.color};font-weight:600">${lg.short}</span>
+      <span style="color:${lg.color};font-weight:700">${lg.short}</span>
       <span style="color:var(--mut)">${getRoundLabel(m)} · ${phaseName}${groupTag}</span>
       ${headerRight}
     </div>
     <div class="live-teams">
-      <div class="live-team-name home" style="color:${c1}">${m.firstTeamName}</div>
+      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1}">${m.firstTeamName}${w1?' <span style="font-size:.7rem">▸</span>':''}</div>
       ${scoreHtml}
-      <div class="live-team-name away" style="color:${c2}">${m.secondTeamName}</div>
+      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1}">${w2?'<span style="font-size:.7rem">◂</span> ':''}${m.secondTeamName}</div>
     </div>
     <div class="live-footer">
       <span>${m.sportHallName || ''}</span>
@@ -4485,15 +4532,18 @@ function renderEloTable(){
     const tc=TEAM_COLORS[team]||'#888';
     const pct=Math.round((elo-minE)/(Math.max(maxE-minE,1))*100);
     const wp=Math.round(eloWinProb(elo,1500)*100);
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">'
-      +'<span style="font-family:var(--fh);width:28px;text-align:center">'+(medals[i]||i+1+'.')+'</span>'
-      +'<span style="color:'+tc+';font-weight:600;font-size:.85rem;flex:1">'+team+'</span>'
-      +'<div style="width:120px;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">'
-        +'<div style="width:'+pct+'%;height:100%;background:'+tc+';border-radius:3px"></div></div>'
-      +'<span style="font-family:var(--fh);font-size:.95rem;color:'+tc+';min-width:44px;text-align:right;font-weight:700">'+elo+'</span>'
+    const tc2=_shade(tc,30);
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s" onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'\'">'
+      +'<span style="font-family:var(--fh);width:28px;text-align:center;font-size:'+(i<3?'1.1rem':'.9rem')+'">'+(medals[i]||i+1+'.')+'</span>'
+      +'<span style="width:9px;height:9px;border-radius:50%;background:'+tc+';box-shadow:0 0 8px '+tc+'66;flex-shrink:0"></span>'
+      +'<span style="color:'+tc+';font-weight:600;font-size:.88rem;flex:1">'+team+'</span>'
+      +'<div style="width:140px;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden">'
+        +'<div class="elo-bar-fill" style="width:'+pct+'%;height:100%;background:linear-gradient(90deg,'+tc+','+tc2+');border-radius:4px;box-shadow:0 0 10px '+tc+'55"></div></div>'
+      +'<span style="font-family:var(--fs);font-size:1rem;color:'+tc+';min-width:48px;text-align:right;font-weight:800" data-count="'+elo+'">'+elo+'</span>'
       +'<span style="font-size:.65rem;color:var(--mut);min-width:70px;text-align:right">vs avg: '+wp+'%</span>'
       +'</div>';
   }).join('');
+  requestAnimationFrame(()=>activateCounters(wrap));
 }
 function renderMatchPreview(matchInfo,c1,c2){
   const t1=matchInfo.firstTeamName,t2=matchInfo.secondTeamName;
@@ -6419,6 +6469,12 @@ function buildStandingsTable(data, sort, title, color){
   } else {
     data.sort((a,b)=>b.ptsFor-a.ptsFor);
   }
+  const N=data.length;
+  // Playoff/relegation zone thresholds
+  // 1. SKL (liga1): top 7 advance to playoff (Cedevita joins as 8th seed for playoff only)
+  let clCount, relCount;
+  if(getLg().id===579){ clCount=7; relCount=1; }
+  else { clCount = N>=10 ? 8 : N>=8 ? 6 : Math.ceil(N/2); relCount = N>=12 ? 2 : N>=10 ? 1 : 0; }
   const rows=data.map((t,i)=>{
     const tc=TEAM_COLORS[t.name]||'#888';
     const diff=t.ptsFor-t.ptsAga;
@@ -6426,17 +6482,33 @@ function buildStandingsTable(data, sort, title, color){
     const form=(t.form||[]).slice(-5).map(w=>`<span class="form-dot ${w?'w':'l'}">${w?'Z':'P'}</span>`).join('');
     const euPts=t.W*2+t.L,topPts=data[0].W*2+data[0].L;
     const gb=i===0?'—':((topPts-euPts)/2).toFixed(1);
-    return `<tr><td>${i+1}.</td><td><span style="color:${tc};font-weight:600">${t.name}</span></td>
-      <td>${t.T}</td><td style="color:#22c55e;font-weight:600">${t.W}</td><td style="color:#ef4444">${t.L}</td>
-      <td style="font-weight:700">${euPts}</td><td>${gb}</td>
-      <td style="color:${t.W/Math.max(t.T,1)>=.5?'#22c55e':'#ef4444'}">${Math.round(t.W/Math.max(t.T,1)*100)}%</td>
-      <td>${pA}</td><td>${pAga}</td>
-      <td style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:600">${diff>=0?'+':''}${diff}</td>
-      <td>${t.homeW||0}/${t.homeL||0}</td><td>${t.awayW||0}/${t.awayL||0}</td><td><div style="display:flex;gap:2px;justify-content:center">${form}</div></td></tr>`;
+    const winPct=Math.round(t.W/Math.max(t.T,1)*100);
+    // Position badge class
+    let posCls = i===0?'p1':i===1?'p2':i===2?'p3':'pn';
+    let zone = i<clCount?'zone-cl':(i>=N-relCount && relCount>0)?'zone-rel':'';
+    return `<tr>
+      <td><span class="std-pos ${posCls} ${zone}">${i+1}</span></td>
+      <td><div class="std-team-cell"><span class="std-dot" style="background:${tc};--sd-glow:${tc}66"></span><span class="std-team-name" style="color:${tc}">${t.name}</span></div></td>
+      <td>${t.T}</td>
+      <td style="color:#22c55e;font-weight:700">${t.W}</td>
+      <td style="color:#ef4444">${t.L}</td>
+      <td style="font-weight:800;font-size:.95rem">${euPts}</td>
+      <td style="color:var(--mut)">${gb}</td>
+      <td style="color:${winPct>=50?'#22c55e':'#ef4444'};font-weight:600">${winPct}%</td>
+      <td>${pA}</td><td style="color:var(--mut)">${pAga}</td>
+      <td style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:700">${diff>=0?'+':''}${diff}</td>
+      <td style="font-size:.75rem">${t.homeW||0}-${t.homeL||0}</td>
+      <td style="font-size:.75rem">${t.awayW||0}-${t.awayL||0}</td>
+      <td><div style="display:flex;gap:3px;justify-content:center">${form}</div></td></tr>`;
   }).join('');
-  return `<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:${color};margin:16px 0 8px">${title}</div>
-    <div style="overflow-x:auto"><table class="standings-table"><thead><tr>
-      <th>M</th><th>EKIPA</th><th>T</th><th>Z</th><th>P</th><th>TČ</th><th>GB</th>
+  const legend = (clCount<N) ? `<div class="std-legend">
+    <span><i style="background:#22c55e"></i>Napreduje / Končnica</span>
+    ${relCount>0?'<span><i style="background:#ef4444"></i>Cona izpada</span>':''}
+  </div>` : '';
+  return `<div class="sec-head" style="--sh-c:${color}">${title}</div>
+    ${legend}
+    <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr>
+      <th>M</th><th style="text-align:left;padding-left:30px">EKIPA</th><th>T</th><th>Z</th><th>P</th><th>TČ</th><th>GB</th>
       <th>Z%</th><th>TOČ+</th><th>TOČ-</th><th>+/-</th><th>DOM.</th><th>GOST.</th><th>FORMA</th>
     </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
