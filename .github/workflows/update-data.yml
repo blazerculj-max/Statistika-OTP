@@ -2,7 +2,7 @@ name: Posodobi podatke (vse 3 SKL)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'    # vsake 6 ur — stats (hiter, ~3 min)
+    - cron: '0 */6 * * *'    # vsake 6 ur — stats (hiter, ~3 min) + slike (incremental)
     - cron: '0 2 * * 1'      # vsak ponedeljek ob 2:00 — PBP za nove tekme
   workflow_dispatch:
     inputs:
@@ -14,8 +14,8 @@ on:
         options:
           - incremental        # samo stats (hiter)
           - incremental+pbp    # stats + PBP za nove tekme
-          - full               # vse od začetka (počasen)
-          - full+pbp           # vse + PBP (zelo počasen, 1h+)
+          - full               # vse od zacetka (pocasen)
+          - full+pbp           # vse + PBP (zelo pocasen, 1h+)
 
 permissions:
   contents: write
@@ -23,8 +23,7 @@ permissions:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 30      # max 30 min, ne 6h
-
+    timeout-minutes: 40      # +10 min za slike
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,6 +46,19 @@ jobs:
         if: github.event.inputs.mode == 'full+pbp'
         run: python scripts/fetch_data.py --full --pbp
         timeout-minutes: 120
+
+      # ── NOVO: prenesi slike (inkrementalno) po fetchu ──
+      # Tece vedno; inkrementalno je hitro (samo HEAD za obstojece).
+      # Pri 'full' modu uporabi --force za popolno osvezitev slik.
+      - name: Prenesi slike (inkrementalno)
+        if: github.event.inputs.mode != 'full' && github.event.inputs.mode != 'full+pbp'
+        run: python scripts/download_images.py
+        continue-on-error: true    # ce KZS blokira, ne ustavi workflowa
+
+      - name: Prenesi slike (full)
+        if: github.event.inputs.mode == 'full' || github.event.inputs.mode == 'full+pbp'
+        run: python scripts/download_images.py --force --cleanup
+        continue-on-error: true
 
       - name: Commit in push
         run: |
