@@ -7,7 +7,12 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a18">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SKL Statistika">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="description" content="Napredna statistika slovenske košarke — 1., 2. in 3. SKL. Live rezultati, MVP lestvice, rekordi, ELO moč ekip in končnica.">
   <meta name="theme-color" content="#06060f">
   <meta property="og:type" content="website">
@@ -987,6 +992,101 @@ html{scroll-behavior:smooth}
 .social-card-title{font-family:var(--fh);font-size:1.3rem;font-weight:800;margin-bottom:8px}
 .social-card-desc{font-size:.82rem;color:var(--sub);line-height:1.5;margin-bottom:16px}
 .social-card-cta{font-family:var(--fh);font-size:.85rem;font-weight:700;color:var(--acc)}
+
+/* ═══ MOBILE 'VEČ' SHEET ═══ */
+#mobile-more{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1200;backdrop-filter:blur(4px);align-items:flex-end}
+#mobile-more.open{display:flex;animation:mmFade .2s ease}
+@keyframes mmFade{from{opacity:0}to{opacity:1}}
+.mm-sheet{width:100%;background:var(--card);border-radius:24px 24px 0 0;padding:10px 18px calc(24px + env(safe-area-inset-bottom));max-height:80vh;overflow-y:auto;animation:mmSlide .28s cubic-bezier(.2,.8,.2,1);border-top:1px solid var(--border2)}
+@keyframes mmSlide{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mm-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:6px auto 16px}
+.mm-title{font-family:var(--fh);font-size:1.1rem;font-weight:800;margin-bottom:16px;text-align:center}
+.mm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mm-item{background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-family:var(--fh);font-size:.74rem;font-weight:600;color:var(--text);transition:transform .15s,background .15s}
+.mm-item:active{transform:scale(.94);background:var(--card)}
+.mm-ic{font-size:1.6rem;line-height:1}
+
+/* ═══════════════════════════════════════════════════
+   MOBILNA IZKUŠNJA — app-like polish (≤768px)
+   ═══════════════════════════════════════════════════ */
+@media(max-width:768px){
+  /* Tappable: vsi gumbi/povezave min 44px touch target */
+  button, .nb, select, .std-team-name, .team-clickable{min-height:auto}
+
+  /* Tabele — gladko horizontalno drsenje + namig */
+  .standings-table{font-size:.8rem}
+  .standings-table th, .standings-table td{padding:8px 6px}
+  table{ -webkit-overflow-scrolling:touch }
+  /* Scroll wrapper okoli tabel dobi subtle namig sence na robovih */
+  .std-team-name{font-size:.82rem}
+
+  /* Section headings malo manjši */
+  .sec-head{font-size:.92rem}
+
+  /* Profil/kartice: polno širino, manj paddinga */
+  .pp-hero{padding:18px 16px}
+  .pp-hero-name{font-size:1.5rem}
+  .pp-hero-signature .sv{font-size:2.8rem}
+
+  /* Modali (share, round card, match overlay) — skoraj polni zaslon */
+  .share-modal, .rc-modal{max-width:96vw}
+  .rc-canvas-wrap{max-height:60vh}
+
+  /* Match overlay polni zaslon na mobilnem */
+  .mo-hero-tname{font-size:1rem}
+  .mo-hero-score{font-size:3rem}
+
+  /* Iskanje filtri — wrap lepo */
+  .search-filters{gap:8px}
+  .sf-item input{width:64px}
+
+  /* Hero kartice (top 3) — ena na vrstico */
+  .hero-cards{grid-template-columns:1fr !important}
+
+  /* MVP hero stat boxes ne prelivajo */
+  .mvp-hero-name{font-size:1.6rem}
+
+  /* Social kartice ena na vrstico za lažji tap */
+  .social-grid{grid-template-columns:1fr}
+
+  /* Lestvica race — manjši slider gumbi */
+  .race-fmt, .rc-fmt{padding:7px 10px;font-size:.74rem}
+
+  /* Trend graf gumbi tappable */
+  #trend-chart-wrap button{padding:7px 12px;font-size:.76rem}
+
+  /* H2H selektorja polna širina */
+  #h2h-a, #h2h-b{flex:1;min-width:0;font-size:.82rem}
+
+  /* Manj agresivni tilt na mobilnem (brez 3D) */
+  .tilt{transform:none !important}
+}
+
+/* Zelo majhni zasloni (≤400px) */
+@media(max-width:400px){
+  .mbn-lbl{font-size:.5rem}
+  .mbn-icon{font-size:1.1rem}
+  .hero-title{font-size:2.2rem}
+  .mm-grid{grid-template-columns:repeat(2,1fr)}
+  .standings-table{font-size:.74rem}
+}
+
+/* Tap highlight cleanup — brez modre tap barve, ima svoj :active */
+*{-webkit-tap-highlight-color:transparent}
+
+/* Match/share overlay — polni zaslon na mobilnem */
+@media(max-width:768px){
+  #match-overlay{padding:0;align-items:stretch}
+  #match-overlay .mo-content, #match-overlay > div{max-height:100vh;border-radius:0 !important;width:100%}
+}
+
+/* iOS: prepreči auto-zoom ob fokusu inputa (font mora biti ≥16px) */
+@media(max-width:768px){
+  input, select, textarea{font-size:16px !important}
+  .search-input-wrap input{font-size:16px !important}
+  .sf-item input{font-size:16px !important}
+  #srch-team, #h2h-a, #h2h-b, #rc-round-sel{font-size:16px !important}
+}
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
@@ -2420,9 +2520,14 @@ function showTab(t){
   if(t==='sodniki')renderSodniki();
   if(t==='teamstats')renderTeamStats();
   if(t==='rekordi')renderRekordi();
-  // Update mobile bottom nav
+  // Update mobile bottom nav — main tabs highlight directly, others highlight 'Več'
+  const mainMobileTabs=['live','lestvica','tekme','liga'];
   document.querySelectorAll('.mbn-btn').forEach(b => {
-    b.classList.toggle('active', b.id === 'mbn-' + t);
+    if(b.id==='mbn-more'){
+      b.classList.toggle('active', !mainMobileTabs.includes(t));
+    } else {
+      b.classList.toggle('active', b.id === 'mbn-' + t);
+    }
   });
   if(t==='live')renderLiveTab();
   if(t==='obiski'){
@@ -3772,6 +3877,20 @@ function initHeroParticles(){
   }
   tick();
   if(!window._heroResizeBound){window._heroResizeBound=true;window.addEventListener('resize',()=>{if(document.getElementById('hero-overlay')?.style.display!=='none'){resize();}});}
+}
+
+// ═══ MOBILE 'VEČ' SHEET ═══
+function openMobileMore(){
+  const el=document.getElementById('mobile-more');
+  if(el)el.classList.add('open');
+}
+function closeMobileMore(){
+  const el=document.getElementById('mobile-more');
+  if(el)el.classList.remove('open');
+}
+function mmGo(tab){
+  closeMobileMore();
+  showTab(tab);
 }
 
 // ═══ TOAST NOTIFICATIONS ═══
@@ -9045,9 +9164,6 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="mbn-btn active" id="mbn-live" onclick="showTab('live')">
     <span class="mbn-icon">🔴</span><span class="mbn-lbl">Live</span>
   </button>
-  <button class="mbn-btn" id="mbn-ekipe" onclick="showTab('ekipe')">
-    <span class="mbn-icon">🏀</span><span class="mbn-lbl">Ekipe</span>
-  </button>
   <button class="mbn-btn" id="mbn-lestvica" onclick="showTab('lestvica')">
     <span class="mbn-icon">🏆</span><span class="mbn-lbl">Lestvica</span>
   </button>
@@ -9057,33 +9173,34 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="mbn-btn" id="mbn-liga" onclick="showTab('liga')">
     <span class="mbn-icon">🏅</span><span class="mbn-lbl">Liga</span>
   </button>
-  <button class="mbn-btn" id="mbn-mvp" onclick="showTab('mvp')">
-    <span class="mbn-icon">⭐</span><span class="mbn-lbl">MVP</span>
+  <button class="mbn-btn" id="mbn-more" onclick="openMobileMore()">
+    <span class="mbn-icon">⋯</span><span class="mbn-lbl">Več</span>
   </button>
-  <button class="mbn-btn" id="mbn-iskanje" onclick="showTab('iskanje')">
-    <span class="mbn-icon">🔍</span><span class="mbn-lbl">Išči</span>
-  </button>
-  <button class="mbn-btn" id="mbn-nerd" onclick="showTab('nerd')">
-    <span class="mbn-icon">🧠</span><span class="mbn-lbl">Stats</span>
-  </button>
-  <button class="mbn-btn" id="mbn-starost" onclick="showTab('starost')">
-    <span class="mbn-icon">📊</span><span class="mbn-lbl">Starost</span>
-  </button>
-  <button class="mbn-btn" id="mbn-obisk" onclick="showTab('obisk')">
-    <span class="mbn-icon">👥</span><span class="mbn-lbl">Obisk</span>
-  </button>
-  <button class="mbn-btn" id="mbn-compare" onclick="showTab('compare')">
-    <span class="mbn-icon">⚡</span><span class="mbn-lbl">Primerjava</span>
-  </button>
-  <button class="mbn-btn" id="mbn-teamstats" onclick="showTab('teamstats')">
-    <span class="mbn-icon">📊</span><span class="mbn-lbl">Ekipe</span>
-  </button>
-  <button class="mbn-btn" id="mbn-sodniki" onclick="showTab('sodniki')">
-    <span class="mbn-icon">🏛️</span><span class="mbn-lbl">Sodniki</span>
-  </button>
-  <button class="mbn-btn" id="mbn-race" onclick="showTab('race')">
-    <span class="mbn-icon">📈</span><span class="mbn-lbl">Sezona</span>
-  </button>
+</div>
+
+<!-- Mobile "Več" full-screen sheet -->
+<div id="mobile-more" onclick="if(event.target===this)closeMobileMore()">
+  <div class="mm-sheet">
+    <div class="mm-handle"></div>
+    <div class="mm-title">Vse strani</div>
+    <div class="mm-grid">
+      <button class="mm-item" onclick="mmGo('ekipe')"><span class="mm-ic">🏀</span><span>Ekipe</span></button>
+      <button class="mm-item" onclick="mmGo('race')"><span class="mm-ic">📈</span><span>Sezona</span></button>
+      <button class="mm-item" onclick="mmGo('mvp')"><span class="mm-ic">⭐</span><span>MVP</span></button>
+      <button class="mm-item" onclick="mmGo('iskanje')"><span class="mm-ic">🔍</span><span>Iskanje</span></button>
+      <button class="mm-item" onclick="mmGo('social')"><span class="mm-ic">📸</span><span>Social</span></button>
+      <button class="mm-item" onclick="mmGo('rekordi')"><span class="mm-ic">📊</span><span>Rekordi</span></button>
+      <button class="mm-item" onclick="mmGo('compare')"><span class="mm-ic">⚖️</span><span>Primerjava</span></button>
+      <button class="mm-item" onclick="mmGo('h2h')"><span class="mm-ic">⚔️</span><span>H2H</span></button>
+      <button class="mm-item" onclick="mmGo('belo')"><span class="mm-ic">★</span><span>bElo</span></button>
+      <button class="mm-item" onclick="mmGo('seznum')"><span class="mm-ic">📅</span><span>Sezona v št.</span></button>
+      <button class="mm-item" onclick="mmGo('teamstats')"><span class="mm-ic">📋</span><span>Ekipna stat.</span></button>
+      <button class="mm-item" onclick="mmGo('nerd')"><span class="mm-ic">🤓</span><span>Nerd</span></button>
+      <button class="mm-item" onclick="mmGo('starost')"><span class="mm-ic">👶</span><span>Starost</span></button>
+      <button class="mm-item" onclick="mmGo('obisk')"><span class="mm-ic">👥</span><span>Obisk</span></button>
+      <button class="mm-item" onclick="mmGo('sodniki')"><span class="mm-ic">🦓</span><span>Sodniki</span></button>
+    </div>
+  </div>
 </div>
 
 <div id="analytics-dropdown"
