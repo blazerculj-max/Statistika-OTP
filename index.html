@@ -3347,18 +3347,9 @@ async function renderRoundCard(){
   }
   const mvp=mvps[0];
 
-  // Top scorers
-  const scorers=[];
-  P.forEach(p=>{
-    const log=playerGameLog[p[F.pid]];if(!log)return;
-    const gs=log.filter(gg=>roundMatches.some(m=>m.id===gg.matchId));
-    if(gs.length){
-      const totPts=gs.reduce((s,g)=>s+g.pts,0);
-      const maxG=gs.reduce((a,g)=>g.pts>a.pts?g:a,gs[0]);
-      scorers.push({p,pts:isPlayoff?Math.round(totPts/gs.length):maxG.pts});
-    }
-  });
-  scorers.sort((a,b)=>b.pts-a.pts);
+  // Top 3 igralci po EFEKTIVNOSTI (MVP + 2). 'mvps' je ze sortiran po EFE score (getMvpByRound / phase).
+  // Vsak ima svoj game (pts/reb/ast/efe) za prikaz.
+  const top3=mvps.slice(0,3);
 
   // Biggest win
   let bigWin=null,bigDiff=0;
@@ -3415,7 +3406,7 @@ async function renderRoundCard(){
   if(mvp){
     const p=mvp.p,gm=mvp.game,tm=p[F.team];
     const col=TEAM_COLORS[(tm||'').split(' / ')[0]]||acc;
-    const cardH=isStory?460:380;
+    const cardH=isStory?460:330;
     // gradient card
     x.save();
     const cg=x.createLinearGradient(M,y,W-M,y+cardH);
@@ -3444,7 +3435,7 @@ async function renderRoundCard(){
     x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
     // Player photo — big, right side
     const photo=await _loadImg(playerPhotoLocal(p[F.pid]),{w:600});
-    const pSize=isStory?280:250, pX=W-pSize-M-20, pY=y+cardH-pSize-30;
+    const pSize=isStory?280:230, pX=W-pSize-M-20, pY=y+cardH-pSize-25;
     x.save();
     // photo bg ring
     x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2+6,0,Math.PI*2);
@@ -3471,9 +3462,10 @@ async function renderRoundCard(){
     if(x.measureText(nm).width>maxNW&&parts.length>1){
       const mid=Math.ceil(parts.length/2);nl1=parts.slice(0,mid).join(' ');nl2=parts.slice(mid).join(' ');
     }
-    x.fillText(nl1,M+40,y+150);
-    if(nl2)x.fillText(nl2,M+40,y+212);
-    const nbot=nl2?y+255:y+195;
+    const n1y=isStory?150:140;
+    x.fillText(nl1,M+40,y+n1y);
+    if(nl2)x.fillText(nl2,M+40,y+n1y+58);
+    const nbot=nl2?(y+n1y+98):(y+n1y+40);
     // team + logo
     const logo=await _loadImg(teamLogoLocal(tm),{w:140});
     let tx=M+40;
@@ -3482,7 +3474,7 @@ async function renderRoundCard(){
     x.font='600 30px "Space Grotesk", sans-serif';
     x.fillText(tm,tx,nbot);
     // Big stats
-    const sy=nbot+70;
+    const sy=nbot+(isStory?70:56);
     const stats=[['TČK',gm.pts],['SK',gm.reb],['AS',gm.ast],['EFE',gm.efe]];
     let sx=M+40;
     stats.forEach(([l,v])=>{
@@ -3496,81 +3488,89 @@ async function renderRoundCard(){
     y+=cardH+44;
   }
 
-  // ══ TOP SCORERS ══
-  if(scorers.length){
+  // ══ TOP 3 IGRALCI (po efektivnosti) ══
+  if(top3.length){
     x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
-    x.fillText('🏀 NAJBOLJŠI STRELCI',M,y);
+    x.fillText('🏆 NAJBOLJŠI IGRALCI',M,y);
     y+=34;
-    const top=scorers.slice(0,3);
-    for(let i=0;i<top.length;i++){
-      const {p,pts}=top[i];
+    for(let i=0;i<top3.length;i++){
+      const {p,game:gg}=top3[i];
       const col=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||acc;
-      const rowH=96;
+      const rowH=isStory?104:92;
       x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
       x.fillStyle=col;_roundRect(x,M,y,6,rowH,3);x.fill();
       // rank
-      x.fillStyle=col;x.font='800 40px "Space Grotesk",sans-serif';
-      x.fillText((i+1)+'',M+30,y+62);
-      // photo
-      const ph=await _loadImg(playerPhotoLocal(p[F.pid]),{w:200});
-      const ps=68,px2=M+75,py2=y+(rowH-ps)/2;
+      x.fillStyle=col;x.font='800 42px "Space Grotesk",sans-serif';
+      x.fillText((i+1)+'',M+28,y+64);
+      // player photo (circular)
+      const ph=await _loadImg(playerPhotoLocal(p[F.pid]),{w:220});
+      const ps=72,px2=M+72,py2=y+(rowH-ps)/2;
       x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
       if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
-      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);}
+      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);x.fillStyle='#fff';x.font='800 28px "Space Grotesk",sans-serif';x.textAlign='center';x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),px2+ps/2,py2+ps/2+10);x.textAlign='left';}
       x.restore();
-      x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=col+'88';x.lineWidth=2;x.stroke();
+      x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=col+'aa';x.lineWidth=3;x.stroke();
+      // club logo badge (bottom-right of photo) — za kateri klub igra
+      const clubLogo=await _loadImg(teamLogoLocal(p[F.team]),{w:90});
+      if(clubLogo){
+        const bs=34, bx=px2+ps-bs+4, by=py2+ps-bs+4;
+        x.save();
+        x.beginPath();x.arc(bx+bs/2,by+bs/2,bs/2+3,0,Math.PI*2);
+        x.fillStyle='#0a0a18';x.fill();
+        x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=1.5;x.stroke();
+        x.beginPath();x.arc(bx+bs/2,by+bs/2,bs/2,0,Math.PI*2);x.clip();
+        try{x.drawImage(clubLogo,bx,by,bs,bs);}catch(e){}
+        x.restore();
+      }
       // name + team
-      x.fillStyle='#fff';x.font='700 36px "Space Grotesk", sans-serif';
-      x.fillText(p[F.name],px2+ps+24,y+46);
-      x.fillStyle='rgba(255,255,255,.5)';x.font='400 24px "Space Mono", monospace';
-      x.fillText(TEAM_SHORT[p[F.team]]||p[F.team],px2+ps+24,y+78);
-      // points
-      x.fillStyle=acc;x.font='800 52px "Space Mono", monospace';x.textAlign='right';
-      x.fillText(pts+'',W-M-30,y+62);x.textAlign='left';
+      const tx=px2+ps+30;
+      x.fillStyle='#fff';x.font='700 38px "Space Grotesk", sans-serif';
+      x.fillText(p[F.name],tx,y+46);
+      x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Space Mono", monospace';
+      x.fillText(p[F.team],tx,y+80);
+      // stat line: EFE big + pts/reb/ast small
+      x.textAlign='right';
+      x.fillStyle=acc;x.font='800 50px "Space Mono", monospace';
+      x.fillText(gg.efe+'',W-M-30,y+52);
+      x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Space Mono", monospace';
+      x.fillText('EFE',W-M-30,y+78);
+      x.textAlign='left';
       y+=rowH+14;
     }
     y+=24;
   }
 
-  // ══ STORY EXTRAS ══
-  if(isStory){
-    if(bigWin){
-      x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
-      x.fillText('💥 NAJVEČJA ZMAGA',M,y);y+=24;
-      const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
-      const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
-      const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
-      const rowH=92;
-      x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,16);x.fill();
-      const wl=await _loadImg(teamLogoLocal(win),{w:120});
-      let bx=M+24;
-      if(wl){try{x.drawImage(wl,bx,y+(rowH-48)/2,48,48);}catch(e){}bx+=62;}
-      x.fillStyle='#fff';x.font='700 32px "Space Grotesk", sans-serif';
-      x.fillText(`${win}`,bx,y+44);
-      x.fillStyle='rgba(255,255,255,.5)';x.font='400 24px "Space Mono",monospace';
-      x.fillText(`${Math.max(s1,s2)} : ${Math.min(s1,s2)} · ${lose}`,bx,y+74);
-      x.fillStyle=acc;x.font='800 44px "Space Mono", monospace';x.textAlign='right';
-      x.fillText('+'+bigDiff,W-M-30,y+58);x.textAlign='left';
-      y+=rowH+34;
-    }
-    if(standings.length){
-      x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
-      x.fillText('📊 LESTVICA',M,y);y+=24;
-      for(let i=0;i<Math.min(5,standings.length);i++){
-        const s=standings[i];const col=TEAM_COLORS[s.team]||acc;
-        const rh=70;
-        x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rh,14);x.fill();
-        x.fillStyle=i<3?col:'rgba(255,255,255,.6)';x.font='800 32px "Space Mono", monospace';
-        x.fillText((i+1)+'.',M+26,y+46);
-        const logo=await _loadImg(teamLogoLocal(s.team),{w:120});
-        if(logo){try{x.drawImage(logo,M+78,y+13,44,44);}catch(e){}}
-        x.fillStyle='#fff';x.font='600 30px "Space Grotesk", sans-serif';
-        x.fillText(s.team,M+138,y+46);
-        x.fillStyle=acc;x.font='800 34px "Space Mono", monospace';x.textAlign='right';
-        x.fillText(s.pts+'',W-M-30,y+46);x.textAlign='left';
-        y+=rh+12;
-      }
-    }
+  // ══ DODATNO (samo Story — isti slog kot zgoraj, da ostane enoten videz) ══
+  if(isStory && bigWin){
+    x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+    x.fillText('💥 NAJVEČJA ZMAGA',M,y);y+=34;
+    const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
+    const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
+    const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
+    const rowH=104;
+    x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
+    const wcol=TEAM_COLORS[win]||acc;
+    x.fillStyle=wcol;_roundRect(x,M,y,6,rowH,3);x.fill();
+    // winner logo (circular, like player photo)
+    const wl=await _loadImg(teamLogoLocal(win),{w:200});
+    const ps=72,px2=M+72,py2=y+(rowH-ps)/2;
+    x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
+    x.fillStyle='#0a0a18';x.fill();
+    if(wl){try{x.drawImage(wl,px2+6,py2+6,ps-12,ps-12);}catch(e){}}
+    x.restore();
+    x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=wcol+'aa';x.lineWidth=3;x.stroke();
+    const tx=px2+ps+30;
+    x.fillStyle='#fff';x.font='700 38px "Space Grotesk", sans-serif';
+    x.fillText(win,tx,y+46);
+    x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Space Mono", monospace';
+    x.fillText('proti '+lose,tx,y+80);
+    x.textAlign='right';
+    x.fillStyle=acc;x.font='800 50px "Space Mono", monospace';
+    x.fillText(Math.max(s1,s2)+':'+Math.min(s1,s2),W-M-30,y+52);
+    x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Space Mono", monospace';
+    x.fillText('+'+bigDiff,W-M-30,y+78);
+    x.textAlign='left';
+    y+=rowH+14;
   }
 
   // ══ FOOTER ══
