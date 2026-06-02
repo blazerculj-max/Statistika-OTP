@@ -4490,7 +4490,29 @@ function renderAge(){
 
   // === ALL TEAMS (liga view) ===
   const ligaPlayers = getLeaguePlayers();
-  wrap.innerHTML = renderAgeGrid(ligaPlayers, true);
+  // Najmlajši / najstarejši (z vsaj 3 tekmami za relevantnost)
+  const relevant = ligaPlayers.filter(p=>p[F.born]>1950 && p[F.T]>=3);
+  const sorted = [...relevant].sort((a,b)=>b[F.born]-a[F.born]);
+  const youngest = sorted[0], oldest = sorted[sorted.length-1];
+  const ageCard=(p,label,color)=>{
+    if(!p)return '';
+    const age=currentYear-p[F.born];
+    const pIdx=P.findIndex(z=>z[F.pid]===p[F.pid]);
+    const ph=playerPhotoUrl(p[F.pid]);const ini=p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);
+    const av=ph?`<img src="${ph}" class="rec-avatar" style="width:44px;height:50px" onerror="this.outerHTML='<span class=&quot;rec-avatar-fb&quot; style=&quot;width:44px;height:50px;background:${color}33;color:${color}&quot;>${ini}</span>'">`:`<span class="rec-avatar-fb" style="width:44px;height:50px;background:${color}33;color:${color}">${ini}</span>`;
+    return `<div style="background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-left:3px solid ${color};border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="showPlayer(${pIdx})">
+      ${av}
+      <div style="flex:1"><div style="font-size:.66rem;color:${color};font-family:var(--fm);letter-spacing:.08em;text-transform:uppercase;font-weight:700">${label}</div>
+      <div style="font-weight:700;font-size:1rem;margin-top:3px">${p[F.name]}</div>
+      <div style="font-size:.72rem;color:var(--mut)">${p[F.team]} · ${p[F.born]}</div></div>
+      <div style="text-align:center"><div style="font-family:var(--fs);font-size:2rem;font-weight:800;color:${color};line-height:1">${age}</div><div style="font-size:.6rem;color:var(--mut)">let</div></div>
+    </div>`;
+  };
+  const highlights = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+    ${ageCard(youngest,'👶 Najmlajši',' #34d399')}
+    ${ageCard(oldest,'🎓 Najstarejši','#f97316')}
+  </div>`;
+  wrap.innerHTML = highlights + renderAgeGrid(ligaPlayers, true);
 }
 
 // ═══════════════════════════════════════════════════
@@ -5778,8 +5800,9 @@ function renderAttendance(){
     const tc = TEAM_COLORS[normalizeTeamName(m.firstTeamName)]||'#888';
     const date = new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short',year:'2-digit'});
     const pct = Math.round(m.attendance/topGames[0].attendance*100);
-    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
-      <span style="color:var(--mut);width:20px;font-size:.8rem">${i+1}.</span>
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+      <span style="color:var(--mut);width:20px;font-size:.8rem;font-family:var(--fs);font-weight:700">${i+1}.</span>
+      ${teamLogoHtml(m.firstTeamName,24)}${teamLogoHtml(m.secondTeamName,24)}
       <div style="flex:1">
         <div style="font-weight:600;font-size:.82rem;color:${tc}">${m.firstTeamName} vs ${m.secondTeamName}</div>
         <div style="font-size:.65rem;color:var(--mut)">${date} · K${m.round}</div>
@@ -8859,6 +8882,31 @@ function renderStandings(){
   if(Object.keys(byPhase).length){
     html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">🏆 KONČNICA</div>`;
     html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24'});
+  }
+  // ── Liga za obstanek (mini-liga, ne bracket) ──
+  const obstMs=allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Liga za obstanek');
+  if(obstMs.length){
+    const tbl={};
+    obstMs.forEach(m=>{
+      const t1=m.firstTeamName,t2=m.secondTeamName;
+      const s1=m.firstTeamScore,s2=m.secondTeamScore;
+      [t1,t2].forEach(t=>{if(!tbl[t])tbl[t]={t,w:0,l:0,pf:0,pa:0,g:0};});
+      tbl[t1].g++;tbl[t2].g++;tbl[t1].pf+=s1;tbl[t1].pa+=s2;tbl[t2].pf+=s2;tbl[t2].pa+=s1;
+      if(s1>s2){tbl[t1].w++;tbl[t2].l++;}else{tbl[t2].w++;tbl[t1].l++;}
+    });
+    const rows=Object.values(tbl).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
+    let html2=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:28px 0 10px;color:#ef4444">🛡️ LIGA ZA OBSTANEK</div>
+      <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr><th>M</th><th style="text-align:left;padding-left:14px">EKIPA</th><th>T</th><th>Z</th><th>P</th><th>+/−</th></tr></thead><tbody>`;
+    rows.forEach((r,i)=>{
+      const tc=TEAM_COLORS[r.t]||'#888';const diff=r.pf-r.pa;
+      html2+=`<tr><td style="text-align:center;color:var(--mut)">${i+1}.</td>
+        <td><div class="std-team-cell">${teamLogoHtml(r.t,22)}<span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${r.t.replace(/'/g,"\\'")}')">${r.t}</span></div></td>
+        <td style="text-align:center">${r.g}</td><td style="text-align:center;color:#22c55e;font-weight:700">${r.w}</td>
+        <td style="text-align:center;color:#ef4444">${r.l}</td>
+        <td style="text-align:center;color:${diff>=0?'#22c55e':'#ef4444'}">${diff>0?'+':''}${diff}</td></tr>`;
+    });
+    html2+='</tbody></table></div>';
+    html+=html2;
   }
   wrap.innerHTML=html;
 }
