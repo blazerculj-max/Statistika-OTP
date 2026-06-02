@@ -1775,6 +1775,8 @@ let mode='tot', lMode='avg', lMin=5, sortCol=-1, sortDir=1, heatmap=false;
 let min2T=2.0, min3T=1.0, minPM=0.8;
 let selectedPlayers=[];
 let _leaguePlayers=null, _tmAgg={};
+let _eloRatings=null, _bEloRatings=null; // ELO + bElo cache (deklarirano zgodaj zaradi TDZ)
+let _racePlayTimer=null; // race playback timer (zgodaj zaradi TDZ)
 
 // Field indices for P array
 const F={name:0,team:1,born:2,pid:3,T:4,MIN:5,fg2m:6,fg2a:7,fg3m:8,fg3a:9,ftm:10,fta:11,toc:12,nap:13,obr:14,pod:15,sto:16,izs:17,izg:18,pz:19,blk:20,pre:21,pm:22,efe:23,pip:24,fb:25,sc:26};
@@ -2011,7 +2013,7 @@ function updateHeader() {
   });
 }
 
-async // ═══ SEZONE — arhiv + preklop ═══
+// ═══ SEZONE — arhiv + preklop ═══
 async function initSeasonSelector(){
   const seasons=await loadSeasonsManifest();
   const ids=Object.keys(seasons).map(Number);
@@ -6649,7 +6651,7 @@ async function closeMatchOverlay(){
 // ═══════════════════════════════════════════════════
 // ELO + PREVIEW
 // ═══════════════════════════════════════════════════
-let _eloRatings=null;
+_eloRatings=null;
 function computeElo(){
   if(_eloRatings)return _eloRatings;
   const K=32,ratings={},history={};
@@ -6680,7 +6682,7 @@ function computeElo(){
 // Zvezda v šibki ekipi je nagrajena; balast v močni ne.
 // Gradi se čez sezono — vsaka tekma posodobi oceno.
 // ═══════════════════════════════════════════════════
-let _bEloRatings=null;
+_bEloRatings=null;
 function computeBElo(){
   if(_bEloRatings)return _bEloRatings;
   const K=24, START=1500;
@@ -7490,7 +7492,7 @@ function drawRaceStandings(){
 }
 
 // ═══ RACE PLAYBACK ═══
-let _racePlayTimer=null;
+_racePlayTimer=null;
 function updateRaceLbl(){
   const sl=document.getElementById('race-slider');
   const lbl=document.getElementById('race-round-lbl');
