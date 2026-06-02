@@ -216,12 +216,38 @@ def process_league(key, lg):
     stats = fetch_stats_incremental(matches, existing_stats)
 
     now = datetime.now(timezone.utc).isoformat()
+    payload = {'updatedAt': now, 'league': lg['name'], 'seasonId': SEASON_ID,
+               'allMatches': matches, 'matchStats': stats}
     stats_file = f"data/{key}_stats.json"
     with open(stats_file, 'w') as f:
-        json.dump({'updatedAt': now, 'league': lg['name'],
-                   'allMatches': matches, 'matchStats': stats},
-                  f, ensure_ascii=False, separators=(',',':'))
+        json.dump(payload, f, ensure_ascii=False, separators=(',',':'))
     print(f"  ✅ {stats_file} ({os.path.getsize(stats_file)//1024} KB)")
+
+    # Verzionirana kopija sezone (za arhiv + medsezonsko primerjavo)
+    season_file = f"data/{key}_stats_s{SEASON_ID}.json"
+    with open(season_file, 'w') as f:
+        json.dump(payload, f, ensure_ascii=False, separators=(',',':'))
+    print(f"  📅 {season_file} (arhiv sezone {SEASON_ID})")
+
+    # Posodobi seasons.json manifest
+    try:
+        sm_path = "data/seasons.json"
+        sm = {}
+        if os.path.exists(sm_path):
+            with open(sm_path) as f: sm = json.load(f)
+        seasons = sm.get('seasons', {})
+        SEASON_LABELS = {22:'2021/22',23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',27:'2026/27',28:'2027/28',29:'2028/29',30:'2029/30'}
+        entry = seasons.get(str(SEASON_ID), {'id': SEASON_ID, 'name': SEASON_LABELS.get(SEASON_ID, f'Sezona {SEASON_ID}'), 'leagues': [], 'files': {}})
+        if key not in entry['leagues']:
+            entry['leagues'].append(key)
+        entry['files'][key] = f"{key}_stats_s{SEASON_ID}.json"
+        seasons[str(SEASON_ID)] = entry
+        sm['seasons'] = seasons
+        sm['current'] = SEASON_ID
+        with open(sm_path, 'w', encoding='utf-8') as f:
+            json.dump(sm, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"  ! seasons.json: {e}")
 
     if FETCH_PBP:
         if key == 'liga3':
