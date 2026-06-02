@@ -1867,6 +1867,32 @@ function showTabDirect(t) {
   if (t === 'ekipe') renderTeam();
 }
 
+// ── BACKGROUND PRELOAD — tiho naloži ostali dve ligi v cache za hipno preklapljanje ──
+let _preloadStarted=false;
+async function preloadOtherLeagues(){
+  if(_preloadStarted)return;
+  _preloadStarted=true;
+  // Počakaj malo, da prva liga in UI nista motena
+  await new Promise(r=>setTimeout(r,2500));
+  for(const [key,lg] of Object.entries(LEAGUES)){
+    if(key===currentLeague)continue;
+    // Že v cache? Preskoči.
+    if(cacheGet(lg.cacheStats, TTL_STATS))continue;
+    try{
+      const resp=await fetch(lg.statsUrl,{cache:'force-cache'});
+      if(!resp.ok)continue;
+      const data=await resp.json();
+      // Shrani v isti format kot live load
+      const am=data.allMatches||[];
+      const msc={};
+      Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
+      cacheSet(lg.cacheStats,{allMatches:am,matchStatsCache:msc});
+    }catch(e){/* tiho */}
+    // Pavza med ligami, da ne zasede pasovne širine naenkrat
+    await new Promise(r=>setTimeout(r,1500));
+  }
+}
+
 async function loadAllData() {
   try {
     document.getElementById('loading-overlay').style.display = 'flex';
@@ -1884,6 +1910,7 @@ async function loadAllData() {
       setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
       initWebSocket();
     startLiveRefresh();
+      preloadOtherLeagues();
       return;
     }
 
@@ -1999,6 +2026,8 @@ async function loadAllData() {
     setProgress(100, '✅ Naloženo iz API');
     setTimeout(() => document.getElementById('loading-overlay').style.display='none', 400);
     initWebSocket();
+    startLiveRefresh();
+    preloadOtherLeagues();
 
   } catch(e) {
     document.getElementById('load-detail').textContent = 'Napaka: ' + e.message;
@@ -2023,8 +2052,11 @@ function aggregatePlayers(phaseFilter) {
   const byPid = {}; // playerId_teamId → stats
 
   const phaseMatchIds = getPhaseMatchIds(phaseFilter);
+  const validMatchIds = new Set(allMatches.map(m => m.id));
   Object.values(matchStatsCache).forEach(matchData => {
     if (!matchData) return;
+    // Izloči "sirote" — stats tekem, ki niso v uradnem seznamu (npr. ženske ekipe iz drugega vira)
+    if (!validMatchIds.has(matchData.matchId)) return;
     if (phaseMatchIds && !phaseMatchIds.has(matchData.matchId)) return;
     const round = allMatches.find(m => m.id === matchData.matchId)?.round || 0;
 
@@ -7593,7 +7625,7 @@ function renderTeamStats(){
     const awayWL=`${t.awayW}-${t.awayL}`;
     return `<tr onclick="showTeamDashboard('${encodeURIComponent(t.team)}')" style="cursor:pointer">
       <td style="text-align:center;color:var(--mut)">${i+1}.</td>
-      <td style="font-weight:700;color:${tc};white-space:nowrap">${t.team}</td>
+      <td style="font-weight:700;color:${tc};white-space:nowrap"><div style="display:flex;align-items:center;gap:8px">${teamLogoHtml(t.team,22)}<span>${t.team}</span></div></td>
       <td style="text-align:center">${t.W}-${t.L}</td>
       <td style="text-align:center;font-weight:700;color:${netColor}">${t.netrtg>0?'+':''}${t.netrtg.toFixed(1)}</td>
       <td style="text-align:center;color:#f97316;font-weight:600">${t.ortg.toFixed(1)}</td>
