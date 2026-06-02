@@ -1232,6 +1232,7 @@ html{scroll-behavior:smooth}
         <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')" style="min-height:36px;min-width:60px">2. SKL</button>
         <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')" style="min-height:36px;min-width:60px">3. SKL</button>
       </div>
+      <select id="season-select" onchange="switchSeason(parseInt(this.value))" style="display:none;background:var(--card2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:7px 10px;font-family:var(--fh);font-size:.78rem;font-weight:600;cursor:pointer;margin-right:4px;min-height:36px"></select>
       <span class="hdr-badge" id="league-badge">Liga OTP banka</span>
       <button onclick="cacheClear()" title="Počisti predpomnilnik" style="background:transparent;border:1px solid var(--border2);color:var(--mut);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:.65rem;font-family:var(--fm)">♻️ cache</button>
       <span id="live-badge" style="display:none;background:#22c55e;color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;animation:pulse-border 1.5s infinite">● LIVE</span>
@@ -1328,6 +1329,10 @@ html{scroll-behavior:smooth}
 
   <div id="tab-obisk" class="tab">
     <div class="ctrls" style="flex-wrap:wrap;gap:8px">
+      <div class="tgl">
+        <button class="tb active" id="att-scope-liga" onclick="setAttScope('liga')">TA LIGA</button>
+        <button class="tb" id="att-scope-all" onclick="setAttScope('all')">VSE LIGE</button>
+      </div>
       <div class="tgl">
         <button class="tb active" id="att-avg-btn" onclick="setAttMode('avg')">POVPREČJE</button>
         <button class="tb" id="att-tot-btn" onclick="setAttMode('total')">SKUPAJ</button>
@@ -1588,7 +1593,35 @@ html{scroll-behavior:smooth}
 const API = 'https://api.kzs.si/api/v1/public';
 const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
 const GITHUB_MAX_AGE = 6 * 3600 * 1000;
-const SEASON_ID = 26;
+const SEASON_ID = 26; // trenutna (privzeta) sezona
+let _currentSeason = SEASON_ID; // izbrana sezona v aplikaciji (lahko arhivska)
+let _availableSeasons = null; // napolni se iz seasons.json
+// Naloži manifest sezon (katere arhivske sezone obstajajo)
+async function loadSeasonsManifest(){
+  if(_availableSeasons)return _availableSeasons;
+  try{
+    const resp=await fetch(GITHUB_RAW+'/seasons.json',{cache:'no-cache'});
+    if(resp.ok){
+      const data=await resp.json();
+      _availableSeasons=data.seasons||{};
+    }
+  }catch(e){_availableSeasons={};}
+  return _availableSeasons||{};
+}
+
+// Cache ključ glede na ligo + sezono (ločen cache za vsako sezono)
+function seasonCacheKey(){
+  const base=getLg().cacheStats;
+  return _currentSeason===SEASON_ID ? base : base+'_s'+_currentSeason;
+}
+
+// URL do stats datoteke za dano ligo + sezono
+function seasonStatsUrl(leagueKey, seasonId){
+  if(seasonId===SEASON_ID || !seasonId){
+    return GITHUB_RAW+'/'+leagueKey+'_stats.json'; // trenutna
+  }
+  return GITHUB_RAW+'/'+leagueKey+'_stats_s'+seasonId+'.json'; // arhiv
+}
 
 const LEAGUES = {
   'liga1': {
@@ -1717,7 +1750,8 @@ const COMP_NAMES = {
 const SEASON_NAMES = {
   13:'2012/13',14:'2013/14',15:'2014/15',16:'2015/16',17:'2016/17',
   18:'2017/18',19:'2018/19',20:'2019/20',21:'2020/21',22:'2021/22',
-  23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26'
+  23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',
+  27:'2026/27',28:'2027/28',29:'2028/29',30:'2029/30'
 };
 
 // ═══════════════════════════════════════════════════
@@ -1955,6 +1989,7 @@ function selectLeague(lg) {
   // Update header
   updateHeader();
   loadAllData();
+  initSeasonSelector();
 }
 
 function updateHeader() {
@@ -1974,6 +2009,85 @@ function updateHeader() {
     const btn = document.getElementById('lg-btn-' + k);
     if (btn) btn.classList.toggle('active', k === currentLeague);
   });
+}
+
+async // ═══ SEZONE — arhiv + preklop ═══
+async function initSeasonSelector(){
+  const seasons=await loadSeasonsManifest();
+  const ids=Object.keys(seasons).map(Number);
+  // Vedno vključi trenutno sezono
+  if(!ids.includes(SEASON_ID))ids.push(SEASON_ID);
+  ids.sort((a,b)=>b-a); // najnovejša najprej
+  const sel=document.getElementById('season-select');
+  if(!sel)return;
+  // Pokaži selektor samo če je več kot ena sezona
+  if(ids.length<=1){sel.style.display='none';return;}
+  sel.innerHTML=ids.map(id=>{
+    const label=SEASON_NAMES[id]||('Sezona '+id);
+    const isCur=id===SEASON_ID;
+    return `<option value="${id}" ${id===_currentSeason?'selected':''}>${label}${isCur?' (aktualna)':''}</option>`;
+  }).join('');
+  sel.style.display='';
+}
+
+// ═══ MEDSEZONSKA PRIMERJAVA ═══
+// Naloži (in predpomni) statistike poljubne sezone za dano ligo, brez motenja trenutnega stanja.
+const _seasonDataCache={};
+async function loadSeasonData(leagueKey, seasonId){
+  const ck=leagueKey+'_s'+seasonId;
+  if(_seasonDataCache[ck])return _seasonDataCache[ck];
+  try{
+    const resp=await fetch(seasonStatsUrl(leagueKey,seasonId)+'?t='+Date.now());
+    if(!resp.ok)return null;
+    const data=await resp.json();
+    const msc={};
+    Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
+    const result={allMatches:data.allMatches||[],matchStats:msc};
+    _seasonDataCache[ck]=result;
+    return result;
+  }catch(e){return null;}
+}
+
+// Agregira igralca (po imenu) v dani sezoni → povprečja na tekmo
+function aggregatePlayerInSeason(seasonData, playerName){
+  if(!seasonData)return null;
+  const valid=new Set(seasonData.allMatches.map(m=>m.id));
+  let g=0,toc=0,reb=0,ast=0,efe=0,min=0,sto=0,blk=0,team='';
+  Object.values(seasonData.matchStats).forEach(ms=>{
+    if(!ms||!valid.has(ms.matchId))return;
+    [ms.firstTeam,ms.secondTeam].forEach(side=>{
+      if(!side?.playerStats)return;
+      side.playerStats.forEach(ps=>{
+        if(!ps.played)return;
+        const nm=((ps.matchTeamPlayerFirstname||'').trim()+' '+(ps.matchTeamPlayerLastname||'').trim()).trim();
+        if(nm!==playerName)return;
+        g++;toc+=ps.points||0;
+        reb+=(ps.offensiveRebounds||0)+(ps.defensiveRebounds||0);
+        ast+=ps.assists||0;efe+=ps.efficiencyCustom||ps.efficiency||0;
+        min+=ps.minutes||0;sto+=ps.steals||0;blk+=ps.blocks||0;
+        team=normalizeTeamName(side.teamName);
+      });
+    });
+  });
+  if(!g)return null;
+  return {games:g,team,pts:toc/g,reb:reb/g,ast:ast/g,efe:efe/g,min:min/g,sto:sto/g,blk:blk/g};
+}
+
+async function switchSeason(seasonId){
+  if(seasonId===_currentSeason)return;
+  _currentSeason=seasonId;
+  // Reset stanje (kot pri switchLeague)
+  P=[];allMatches=[];matchStatsCache={};pbpData={};
+  pbpLoaded=false;nerdStats=null;_leaguePlayers=null;_tmAgg={};
+  _eloRatings=null;_bEloRatings=null;playerGameLog={};
+  sortCol=-1;
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('load-bar').style.width='0%';
+  const sname=SEASON_NAMES[seasonId]||('Sezona '+seasonId);
+  document.getElementById('load-detail').textContent='Nalagam sezono '+sname+'...';
+  await loadAllData();
+  showTabDirect('ekipe');
+  try{toast('Sezona '+sname,'📅');}catch(e){}
 }
 
 async function switchLeague(lg) {
@@ -2009,6 +2123,7 @@ function showTabDirect(t) {
 let _preloadStarted=false;
 async function preloadOtherLeagues(){
   if(_preloadStarted)return;
+  if(_currentSeason!==SEASON_ID)return; // preload samo za aktualno sezono
   _preloadStarted=true;
   // Počakaj malo, da prva liga in UI nista motena
   await new Promise(r=>setTimeout(r,2500));
@@ -2036,9 +2151,9 @@ async function loadAllData() {
     document.getElementById('loading-overlay').style.display = 'flex';
     setProgress(0, 'Pripravljam...');
     // ── 1. Preveri localStorage cache ──
-    const cached = cacheGet(getLg().cacheStats, TTL_STATS);
+    const cached = cacheGet(seasonCacheKey(), TTL_STATS);
     if (cached) {
-      const age = cacheInfo(getLg().cacheStats);
+      const age = cacheInfo(seasonCacheKey());
       setProgress(85, '⚡ Iz predpomnilnika (' + age + ' star)...');
       allMatches = cached.allMatches;
       matchStatsCache = cached.matchStatsCache;
@@ -2055,7 +2170,7 @@ async function loadAllData() {
     // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
     setProgress(10, '🐙 Nalagam iz GitHub...');
     try {
-      const ghRes = await fetch(getLg().statsUrl + '?t=' + Date.now());
+      const ghRes = await fetch(seasonStatsUrl(currentLeague, _currentSeason) + '?t=' + Date.now());
       if (ghRes.ok) {
         const ghData = await ghRes.json();
         const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
@@ -2066,7 +2181,7 @@ async function loadAllData() {
           Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
             matchStatsCache[parseInt(id)] = stats;
           });
-          cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
+          cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
           setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
@@ -2158,7 +2273,7 @@ async function loadAllData() {
       setProgress(Math.min(pct,90), `Statistika... ${Math.min(i+batchSize, finished.length)}/${finished.length}`);
     }
 
-    cacheSet(getLg().cacheStats, {allMatches, matchStatsCache});
+    cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
     setProgress(100, '✅ Naloženo iz API');
@@ -4930,6 +5045,60 @@ function showPlayer(idx){
     const ov=document.getElementById('player-overlay');
     activateCounters(ov);
   });
+  // Medsezonska primerjava (če obstajajo arhivske sezone)
+  renderPlayerSeasonCompare(p[F.name]);
+}
+
+// Prikaže razvoj igralca skozi sezone (povprečja na tekmo)
+async function renderPlayerSeasonCompare(playerName){
+  const box=document.getElementById('player-season-compare');
+  if(!box)return;
+  const seasons=await loadSeasonsManifest();
+  let ids=Object.keys(seasons).map(Number).filter(id=>id!==_currentSeason);
+  // Dodaj aktualno sezono za primerjavo, če gledamo arhiv
+  if(_currentSeason!==SEASON_ID && !ids.includes(SEASON_ID))ids.push(SEASON_ID);
+  if(!ids.length)return; // ni drugih sezon
+  ids.sort((a,b)=>a-b);
+
+  // Trenutna sezona (iz živih podatkov)
+  const curP=P.find(x=>x[F.name]===playerName);
+  const rows=[];
+  if(curP&&curP[F.T]){
+    rows.push({season:_currentSeason,label:SEASON_NAMES[_currentSeason]||('S'+_currentSeason),
+      games:curP[F.T],pts:curP[F.toc]/curP[F.T],reb:(curP[F.nap]+curP[F.obr])/curP[F.T],
+      ast:curP[F.pod]/curP[F.T],efe:curP[F.efe]/curP[F.T],current:true});
+  }
+  // Arhivske sezone
+  for(const sid of ids){
+    const sd=await loadSeasonData(currentLeague,sid);
+    const agg=aggregatePlayerInSeason(sd,playerName);
+    if(agg)rows.push({season:sid,label:SEASON_NAMES[sid]||('S'+sid),games:agg.games,pts:agg.pts,reb:agg.reb,ast:agg.ast,efe:agg.efe});
+  }
+  if(rows.length<2)return; // primerjava smiselna le z 2+ sezonami
+  rows.sort((a,b)=>a.season-b.season);
+
+  const acc=getLg().color||'#f97316';
+  const maxEfe=Math.max(...rows.map(r=>r.efe),1);
+  let html=`<div class="pp-subtitle" style="margin-top:18px">📅 SKOZI SEZONE</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
+  rows.forEach(r=>{
+    const w=Math.round(r.efe/maxEfe*100);
+    html+=`<div style="background:var(--card2);border-radius:10px;padding:10px 12px;${r.current?`border:1px solid ${acc}66`:'border:1px solid var(--border)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:700;font-size:.82rem">${r.label}${r.current?' <span style="color:'+acc+';font-size:.65rem">aktualna</span>':''}</span>
+        <span style="font-size:.68rem;color:var(--mut)">${r.games} tekem</span>
+      </div>
+      <div style="display:flex;gap:14px;font-family:var(--fm);font-size:.74rem;color:var(--sub)">
+        <span><b style="color:#f97316">${r.pts.toFixed(1)}</b> tč</span>
+        <span><b style="color:#22c55e">${r.reb.toFixed(1)}</b> sk</span>
+        <span><b style="color:#a855f7">${r.ast.toFixed(1)}</b> as</span>
+        <span><b style="color:#10b981">${r.efe.toFixed(1)}</b> efe</span>
+      </div>
+      <div style="height:4px;background:var(--border);border-radius:2px;margin-top:7px;overflow:hidden"><div style="width:${w}%;height:100%;background:${acc}"></div></div>
+    </div>`;
+  });
+  html+='</div>';
+  box.innerHTML=html;
 }
 
 async function loadPlayerCareer() {
@@ -5898,22 +6067,58 @@ function renderPlayerCompare() {
 // ═══════════════════════════════════════
 // TEAM FORM (rolling average)
 // ═══════════════════════════════════════
+let _attScope='liga';
+function setAttScope(s){
+  _attScope=s;
+  document.getElementById('att-scope-liga').classList.toggle('active',s==='liga');
+  document.getElementById('att-scope-all').classList.toggle('active',s==='all');
+  renderAttendance();
+}
+// Zbere tekme iz VSEH lig (iz predpomnilnika) — za primerjavo obiska med ligami
+function getAllLeaguesMatches(){
+  const all=[];
+  Object.entries(LEAGUES).forEach(([key,lg])=>{
+    let matches=null;
+    if(key===currentLeague){matches=allMatches;}
+    else{
+      const cached=cacheGet(lg.cacheStats,TTL_STATS);
+      if(cached&&cached.allMatches)matches=cached.allMatches;
+    }
+    if(matches){
+      matches.forEach(m=>all.push({...m,_league:lg.short,_leagueColor:lg.color}));
+    }
+  });
+  return all;
+}
+
 function renderAttendance(){
   if(!allMatches.length)return;
 
+  // Vir tekem: ta liga ali vse lige
+  const srcMatches = _attScope==='all' ? getAllLeaguesMatches() : allMatches;
+
   const attTeamSel = document.getElementById('att-team-filter');
-  if(attTeamSel && attTeamSel.options.length <= 1){
-    const homeTeams = [...new Set(allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0)
-      .map(m=>m.firstTeamName))].sort();
-    homeTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;attTeamSel.appendChild(o);});
+  // Pri 'vse lige' skrij team filter (ni smiseln), sicer napolni
+  const teamFilterWrap = attTeamSel;
+  if(_attScope==='all'){
+    if(attTeamSel)attTeamSel.style.display='none';
+  } else {
+    if(attTeamSel){
+      attTeamSel.style.display='';
+      if(attTeamSel.options.length <= 1){
+        const homeTeams = [...new Set(allMatches.filter(m=>m.status==='FINISHED'&&m.attendance>0)
+          .map(m=>m.firstTeamName))].sort();
+        homeTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;attTeamSel.appendChild(o);});
+      }
+    }
   }
-  const teamFilter = attTeamSel?.value||'';
+  const teamFilter = _attScope==='all' ? '' : (attTeamSel?.value||'');
   const wrap = document.getElementById('obisk-wrap');
   if(!wrap) return;
 
   // Phase filter
   const pfPhases=['Četrtfinale','Polfinale','Finale','Osmina finala','Liga za obstanek'];
-  const finished = allMatches.filter(m=>{
+  const finished = srcMatches.filter(m=>{
     if(m.status!=='FINISHED'||!m.attendance) return false;
     const ph=m.competitions?.[0]?.competitionPhaseName||'';
     if(attPhase==='rd') return !pfPhases.includes(ph);
@@ -5952,7 +6157,7 @@ function renderAttendance(){
       ${teamLogoHtml(m.firstTeamName,24)}${teamLogoHtml(m.secondTeamName,24)}
       <div style="flex:1">
         <div style="font-weight:600;font-size:.82rem;color:${tc}">${m.firstTeamName} vs ${m.secondTeamName}</div>
-        <div style="font-size:.65rem;color:var(--mut)">${date} · K${m.round}</div>
+        <div style="font-size:.65rem;color:var(--mut)">${date} · K${m.round}${m._league?` · <span style="color:${m._leagueColor||'var(--acc)'};font-weight:700">${m._league}</span>`:''}</div>
       </div>
       <div style="width:100px;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
         <div style="width:${pct}%;height:100%;background:${tc};border-radius:3px"></div>
