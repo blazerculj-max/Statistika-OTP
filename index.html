@@ -1092,6 +1092,24 @@ html{scroll-behavior:smooth}
 
 @media(max-width:480px){#pwa-install .pwa-lbl{display:none}}
 
+/* ═══ MOBILNE TABELE — pokaži samo ključne stolpce ═══ */
+@media(max-width:768px){
+  /* Vsi table-wrapper kontejnerji: dovoli scroll a z momentum + lepši rob */
+  [style*="overflow-x"]{ -webkit-overflow-scrolling:touch; scrollbar-width:none }
+  [style*="overflow-x"]::-webkit-scrollbar{ height:0 }
+  /* Splošno: tabele kompaktnejše */
+  table{font-size:.82rem}
+  th,td{padding:8px 6px}
+  .col-mob-hide{display:none !important}
+  .grp-hdr-row{display:none !important}
+  /* Glavna tabela igralcev — brez horizontalnega scrolla, polepša */
+  #st{font-size:.86rem;width:100%}
+  #st th, #st td{padding:9px 6px}
+  #st .pname-link{font-size:.88rem;font-weight:600}
+  /* Mini-trend in born badge skrij na mobilnem (preveč gneče) */
+  #st .mini-trend{display:none}
+}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -1551,7 +1569,7 @@ html{scroll-behavior:smooth}
   </div>
 
   <div id="tab-h2h" class="tab">
-    <div id="h2h-wrap"></div>
+    <div id="h2htab-wrap"></div>
   </div>
 
   <div id="tab-belo" class="tab">
@@ -2650,7 +2668,8 @@ function renderTeam(){
   function hmStyle(k,p){if(!heatmap||!hmRange[k])return '';const{min,max}=hmRange[k];if(max===min)return '';const raw=sortVal(p,k);if(raw<=-999)return '';let t=(raw-min)/(max-min);if(hmInverse.has(k))t=1-t;if(t<0.15||t>0.85){const op=(t>0.5?(t-0.15):((1-t)-0.15))*0.35;return t>0.5?'background:rgba(52,211,153,'+op.toFixed(2)+') !important':'background:rgba(248,113,113,'+op.toFixed(2)+') !important';}return '';}
 
   const hdrGrpRow=GRPS.map(g=>`<th colspan="${g.span}" class="gr ${g.cls}">${g.lbl}</th>`).join('');
-  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span style="font-size:.55rem;color:var(--mut);margin-left:2px">?</span>':''}</th>`;}).join('');
+  const MOBILE_COLS=['name','T','toc','obr','pod','efe'];
+  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span style="font-size:.55rem;color:var(--mut);margin-left:2px">?</span>':''}</th>`;}).join('');
 
   const rows=players.map(p=>{
     const pidx=P.indexOf(p);
@@ -2661,6 +2680,7 @@ function renderTeam(){
       if(c.k==='pod'&&p===laPlayer)cls='la';
       if(c.k==='efe'&&p===lePlayer)cls='le';
       const hs=hmStyle(c.k,p);
+      if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';
       return `<td class="${cls}" style="${hs}">${val}</td>`;
     }).join('');
     const bornBadge=`<span style="font-size:.62rem;color:var(--mut);margin-left:6px;font-family:var(--fm)">${p[F.born]}</span>`;
@@ -2669,7 +2689,7 @@ function renderTeam(){
     return `<tr>${cells}</tr>`;
   }).join('');
 
-  document.getElementById('st').innerHTML=`<thead><tr>${hdrGrpRow}</tr><tr>${hdrRow}</tr></thead><tbody>${rows||'<tr><td colspan="25" class="empty">Ni podatkov</td></tr>'}</tbody>`;
+  document.getElementById('st').innerHTML=`<thead><tr class="grp-hdr-row">${hdrGrpRow}</tr><tr>${hdrRow}</tr></thead><tbody>${rows||'<tr><td colspan="25" class="empty">Ni podatkov</td></tr>'}</tbody>`;
 }
 
 function renderMiniTrend(pid){
@@ -6585,7 +6605,7 @@ function renderBElo(){
 
 let _h2hA=null,_h2hB=null;
 function renderH2HTab(){
-  const wrap=document.getElementById('h2h-wrap');
+  const wrap=document.getElementById('h2htab-wrap');
   if(!wrap)return;
   if(!allMatches.length){wrap.innerHTML='<div class="empty">Naloži podatke</div>';return;}
   // Vedno dejanske ekipe iz odigranih tekem (najbolj zanesljivo)
