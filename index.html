@@ -3062,6 +3062,7 @@ function openShareCard(pIdx){
 async function drawShareCard(d){
   const cv=document.getElementById('share-canvas');
   const x=cv.getContext('2d');
+  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
   const W=1080,H=1080;
   const col=d.color;
   const dark=_shade(col,-55);
@@ -3091,8 +3092,8 @@ async function drawShareCard(d){
 
   // Player photo — big circular, top-right. Logo badge sits on it.
   const photoSize=260, photoCX=W-photoSize/2-80, photoCY=photoSize/2+90;
-  const photoImg=await _loadImg(d.photoLocal||d.photoUrl);
-  const logoImg=await _loadImg(d.logoLocal||d.logoUrl);
+  const photoImg=await _loadImg(d.photoLocal||d.photoUrl,{w:600});
+  const logoImg=await _loadImg(d.logoLocal||d.logoUrl,{w:200});
   if(photoImg){
     x.save();
     x.beginPath();x.arc(photoCX,photoCY,photoSize/2+5,0,Math.PI*2);
@@ -3236,22 +3237,33 @@ async function _blobToImg(blob){
     im.src=objUrl;
   });
 }
-async function _loadImg(input){
+async function _loadImg(input, opts){
   if(!input)return null;
+  opts=opts||{};
+  const W=opts.w||0; // ciljana sirina za izboljsanje kakovosti
+  // wsrv.nl parametri za vecjo, ostrejso sliko (server-side upscale + sharpen)
+  const enh=W?('&w='+W+'&h='+W+'&fit=cover&output=png&q=95&sharp=1'):'&output=png&q=95';
   let sources=[];
   if(typeof input==='string'){
     const bare=input.replace(/^https?:\/\//,'');
-    sources=[input,
-      'https://wsrv.nl/?url='+encodeURIComponent(bare),
+    sources=[
+      'https://wsrv.nl/?url='+encodeURIComponent(bare)+enh, // enhanced first for quality
+      input,
+      'https://images.weserv.nl/?url='+encodeURIComponent(bare)+enh,
       'https://corsproxy.io/?url='+encodeURIComponent(input),
       'https://api.allorigins.win/raw?url='+encodeURIComponent(input)];
   }else{
-    // {local, remote} — local first (same-origin, always exportable)
     const bare=(input.remote||'').replace(/^https?:\/\//,'');
-    sources=[input.local, input.remote,
-      'https://wsrv.nl/?url='+encodeURIComponent(bare),
-      'https://corsproxy.io/?url='+encodeURIComponent(input.remote||''),
-      'https://api.allorigins.win/raw?url='+encodeURIComponent(input.remote||'')].filter(Boolean);
+    const wsrvEnh='https://wsrv.nl/?url='+encodeURIComponent(bare)+enh;
+    const weservEnh='https://images.weserv.nl/?url='+encodeURIComponent(bare)+enh;
+    if(W){
+      // Kakovost pomembna (kartice): najprej vecja/ostrejsa wsrv verzija, local kot rezerva
+      sources=[wsrvEnh, weservEnh, input.local, input.remote,
+        'https://corsproxy.io/?url='+encodeURIComponent(input.remote||'')].filter(Boolean);
+    }else{
+      // Navaden prikaz: local first (hitro, same-origin)
+      sources=[input.local, wsrvEnh, input.remote, weservEnh].filter(Boolean);
+    }
   }
   for(const src of sources){
     try{
@@ -3259,7 +3271,7 @@ async function _loadImg(input){
       if(!resp.ok)continue;
       const blob=await resp.blob();
       const img=await _blobToImg(blob);
-      if(img)return img;
+      if(img&&img.naturalWidth>=8)return img;
     }catch(e){/* next */}
   }
   return null;
@@ -3304,6 +3316,7 @@ async function renderRoundCard(){
   const W=1080, H=isStory?1920:1080;
   cv.width=W;cv.height=H;
   const x=cv.getContext('2d');
+  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
   const acc=isPlayoff?'#fbbf24':'#f97316';
 
   // ── Gather data ──
@@ -3417,7 +3430,7 @@ async function renderRoundCard(){
     x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
     x.globalAlpha=0.1;x.fillStyle='#fff';x.beginPath();x.arc(W-M-100,y+60,200,0,Math.PI*2);x.fill();x.restore();
     // Large team logo watermark (CGP — clearly marks the player's club)
-    const wmLogo=await _loadImg(teamLogoLocal(tm));
+    const wmLogo=await _loadImg(teamLogoLocal(tm),{w:500});
     if(wmLogo){
       x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
       x.globalAlpha=0.12;
@@ -3430,7 +3443,7 @@ async function renderRoundCard(){
     x.font='700 26px "Space Mono", monospace';
     x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
     // Player photo — big, right side
-    const photo=await _loadImg(playerPhotoLocal(p[F.pid]));
+    const photo=await _loadImg(playerPhotoLocal(p[F.pid]),{w:600});
     const pSize=isStory?280:250, pX=W-pSize-M-20, pY=y+cardH-pSize-30;
     x.save();
     // photo bg ring
@@ -3462,7 +3475,7 @@ async function renderRoundCard(){
     if(nl2)x.fillText(nl2,M+40,y+212);
     const nbot=nl2?y+255:y+195;
     // team + logo
-    const logo=await _loadImg(teamLogoLocal(tm));
+    const logo=await _loadImg(teamLogoLocal(tm),{w:140});
     let tx=M+40;
     if(logo){try{x.drawImage(logo,tx,nbot-26,36,36);}catch(e){}tx+=46;}
     x.fillStyle='rgba(255,255,255,.85)';
@@ -3499,7 +3512,7 @@ async function renderRoundCard(){
       x.fillStyle=col;x.font='800 40px "Space Grotesk",sans-serif';
       x.fillText((i+1)+'',M+30,y+62);
       // photo
-      const ph=await _loadImg(playerPhotoLocal(p[F.pid]));
+      const ph=await _loadImg(playerPhotoLocal(p[F.pid]),{w:200});
       const ps=68,px2=M+75,py2=y+(rowH-ps)/2;
       x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
       if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
@@ -3529,7 +3542,7 @@ async function renderRoundCard(){
       const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
       const rowH=92;
       x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,16);x.fill();
-      const wl=await _loadImg(teamLogoLocal(win));
+      const wl=await _loadImg(teamLogoLocal(win),{w:120});
       let bx=M+24;
       if(wl){try{x.drawImage(wl,bx,y+(rowH-48)/2,48,48);}catch(e){}bx+=62;}
       x.fillStyle='#fff';x.font='700 32px "Space Grotesk", sans-serif';
@@ -3549,7 +3562,7 @@ async function renderRoundCard(){
         x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rh,14);x.fill();
         x.fillStyle=i<3?col:'rgba(255,255,255,.6)';x.font='800 32px "Space Mono", monospace';
         x.fillText((i+1)+'.',M+26,y+46);
-        const logo=await _loadImg(teamLogoLocal(s.team));
+        const logo=await _loadImg(teamLogoLocal(s.team),{w:120});
         if(logo){try{x.drawImage(logo,M+78,y+13,44,44);}catch(e){}}
         x.fillStyle='#fff';x.font='600 30px "Space Grotesk", sans-serif';
         x.fillText(s.team,M+138,y+46);
