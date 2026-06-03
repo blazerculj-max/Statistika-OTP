@@ -1334,6 +1334,13 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
+/* pregled dashboard */
+.pregled-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.pregled-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
+.pregled-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc,var(--acc))}
+.pregled-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:var(--sh-md)}
+.pregled-card-h{font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:14px;font-weight:700}
+@media(max-width:768px){.pregled-grid{grid-template-columns:1fr}}
 /* napoved kartice */
 .napoved-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
 .napoved-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
@@ -1462,7 +1469,8 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
       🔴 LIVE
       <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
     </button>
-    <button class="nb active" onclick="showTab('ekipe')">Ekipe</button>
+    <button class="nb" onclick="showTab('pregled')">Pregled</button>
+    <button class="nb" onclick="showTab('ekipe')">Ekipe</button>
     <button class="nb" onclick="showTab('lestvica')">Lestvica</button>
     <button class="nb" onclick="showTab('tekme')">Tekme</button>
     <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
@@ -1803,6 +1811,10 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
   <div id="tab-power" class="tab">
     <div id="power-wrap"></div>
+  </div>
+
+  <div id="tab-pregled" class="tab">
+    <div id="pregled-wrap"></div>
   </div>
 
   <div id="tab-seznum" class="tab">
@@ -2375,6 +2387,7 @@ function showTabDirect(t) {
   const btn = [...document.querySelectorAll('.nb')].find(b => b.onclick?.toString().includes("'" + t + "'"));
   if (btn) btn.classList.add('active');
   if (t === 'ekipe') renderTeam();
+  if (t === 'pregled') renderPregled();
 }
 
 // ── BACKGROUND PRELOAD — tiho naloži ostali dve ligi v cache za hipno preklapljanje ──
@@ -2779,6 +2792,11 @@ function initUI() {
   renderTeam();
   renderMatches();
   buildTicker();
+  // Ob PRVEM vstopu odpri Pregled (dashboard) namesto Ekipe
+  if(!window._firstTabShown){
+    window._firstTabShown=true;
+    try{showTabDirect('pregled');}catch(e){}
+  }
 
   // Populate H2H selects — teams already declared above
   ['h2h-team1','h2h-team2'].forEach(id=>{
@@ -2954,6 +2972,7 @@ function showTab(t){
   if(t==='belo')renderBElo();
   if(t==='napovedi')renderNapovedi();
   if(t==='power')renderPowerRanking();
+  if(t==='pregled')renderPregled();
   if(t==='seznum')renderSeznum();
   // Modern polish: scroll-reveal + magnetic tilt on the active tab's cards
   const activeTab=document.getElementById('tab-'+t);
@@ -7497,6 +7516,129 @@ function computeTeamPower(){
   return result;
 }
 
+// ═══════════════════════════════════════════════════
+// PREGLED — dashboard: utrip lige v enem pogledu
+// ═══════════════════════════════════════════════════
+function renderPregled(){
+  const wrap=document.getElementById('pregled-wrap');
+  if(!wrap)return;
+  if(!P.length){
+    wrap.innerHTML='<div class="empty">Nalagam pregled…</div>';
+    // P še ni pripravljen — poskusi znova čez hip (do ~3s)
+    if((window._pregledRetry=(window._pregledRetry||0)+1)<=15){
+      setTimeout(()=>{if(document.getElementById('tab-pregled')?.classList.contains('active'))renderPregled();},200);
+    }
+    return;
+  }
+  window._pregledRetry=0;
+
+  const lgName=getLg().short||'1. SKL';
+  const lgColor=getLg().id===579?'#f97316':getLg().id===581?'#3b82f6':'#a855f7';
+
+  // — Vodilni MVP —
+  const rdPlayers=P.filter(p=>p[F.T]>=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5)));
+  const mvp=rdPlayers.map(p=>({p,score:calcMvpScore(p)})).sort((a,b)=>b.score-a.score)[0];
+
+  // — Power top 3 —
+  let power=[]; try{power=computeTeamPower().slice(0,3);}catch(e){}
+
+  // — bElo top 3 —
+  const {ratings,meta}=computeBElo();
+  const beTop=Object.entries(ratings).map(([pid,be])=>({pid:parseInt(pid),be,...meta[pid]}))
+    .filter(x=>x.games>=3).sort((a,b)=>b.be-a.be).slice(0,3);
+
+  // — Naslednja tekma —
+  const now=new Date();
+  const next=allMatches.filter(m=>m.status!=='FINISHED'&&m.status!=='LIVE'&&m.firstTeamName&&m.secondTeamName&&new Date(m.dateTime)>now)
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))[0];
+
+  let html=`<div style="margin-bottom:22px">
+    <div style="font-family:var(--fh);font-weight:800;font-size:1.8rem;letter-spacing:-.01em">Pregled — <span style="color:${lgColor}">${lgName}</span></div>
+    <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-top:2px">Utrip lige na enem mestu</div>
+  </div>`;
+
+  html+='<div class="pregled-grid">';
+
+  // ── Kartica: Vodilni MVP ──
+  if(mvp){
+    const p=mvp.p, t=Math.max(p[F.T],1);
+    const tc=TEAM_COLORS[p[F.team]]||lgColor;
+    const ini=(p[F.name]||'').split(' ').map(w=>w[0]).join('').slice(0,2);
+    const pIdx=P.findIndex(z=>z[F.pid]===p[F.pid]);
+    const ph=playerPhotoUrl(p[F.pid]);
+    const av=ph?`<img src="${ph}" style="width:54px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0" onerror="_ppPhotoErr(this,'${ini}',54)">`:`<div style="width:54px;height:60px;border-radius:10px;background:${tc}33;color:${tc};display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;flex-shrink:0">${ini}</div>`;
+    html+=`<div class="pregled-card" onclick="showPlayer(${pIdx})" style="--pc:${tc}">
+      <div class="pregled-card-h">👑 Vodilni za MVP</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        ${av}
+        <div style="min-width:0">
+          <div style="font-family:var(--fh);font-weight:700;font-size:1.1rem;line-height:1.1">${p[F.name]}</div>
+          <div style="font-size:.72rem;color:var(--mut);font-family:var(--fm);margin:3px 0 6px">${TEAM_SHORT[p[F.team]]||p[F.team]}</div>
+          <div style="display:flex;gap:14px;font-family:var(--fs)">
+            <span><b style="color:${lgColor};font-size:1.05rem">${(p[F.toc]/t).toFixed(1)}</b><span style="font-size:.6rem;color:var(--mut)"> TOČ</span></span>
+            <span><b style="font-size:1.05rem">${((p[F.nap]+p[F.obr])/t).toFixed(1)}</b><span style="font-size:.6rem;color:var(--mut)"> SK</span></span>
+            <span><b style="font-size:1.05rem">${(p[F.pod]/t).toFixed(1)}</b><span style="font-size:.6rem;color:var(--mut)"> AS</span></span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Kartica: Naslednja tekma + napoved ──
+  if(next){
+    const t1=next.firstTeamName,t2=next.secondTeamName;
+    const c1=TEAM_COLORS[normalizeTeamName(t1)]||'#f97316', c2=TEAM_COLORS[normalizeTeamName(t2)]||'#3b82f6';
+    let pr={p1:50,p2:50}; try{pr=predictWinProb(t1,t2);}catch(e){}
+    const dstr=new Date(next.dateTime).toLocaleDateString('sl',{weekday:'short',day:'numeric',month:'short'});
+    const tstr=new Date(next.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
+    html+=`<div class="pregled-card" onclick="showTab('napovedi')" style="--pc:#a855f7">
+      <div class="pregled-card-h">🔮 Naslednja tekma</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">${teamLogoHtml(t1,34)}<span style="font-size:.7rem;font-family:var(--fh);font-weight:600">${TEAM_SHORT[normalizeTeamName(t1)]||t1}</span></div>
+        <div style="text-align:center;padding:0 8px"><div style="font-size:.6rem;color:var(--mut);font-family:var(--fm)">${dstr}</div><div style="font-family:var(--fh);font-weight:700;color:var(--mut)">${tstr}</div></div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">${teamLogoHtml(t2,34)}<span style="font-size:.7rem;font-family:var(--fh);font-weight:600">${TEAM_SHORT[normalizeTeamName(t2)]||t2}</span></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-family:var(--fs);font-weight:800;color:${c1};min-width:38px">${pr.p1}%</span>
+        <div style="flex:1;height:7px;border-radius:4px;overflow:hidden;display:flex;background:rgba(255,255,255,.05)"><div style="width:${pr.p1}%;background:${c1}"></div><div style="width:${pr.p2}%;background:${c2}"></div></div>
+        <span style="font-family:var(--fs);font-weight:800;color:${c2};min-width:38px;text-align:right">${pr.p2}%</span>
+      </div>
+    </div>`;
+  }
+
+  // ── Kartica: Power top 3 ──
+  if(power.length){
+    let rows=power.map((t,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0${i<power.length-1?';border-bottom:1px solid var(--border)':''}">
+      <span style="font-family:var(--fh);font-weight:800;color:${i===0?'#fbbf24':'var(--mut)'};min-width:18px">${i===0?'👑':i+1}</span>
+      ${teamLogoHtml(t.team,26)}
+      <span style="flex:1;font-family:var(--fh);font-weight:600;font-size:.86rem;min-width:0">${t.team}</span>
+      <span style="font-family:var(--fs);font-weight:800;color:${ovrColor(Math.round(t.power))}">${t.power}</span>
+    </div>`).join('');
+    html+=`<div class="pregled-card" onclick="showTab('power')" style="--pc:#10b981">
+      <div class="pregled-card-h">⚡ Najmočnejše ekipe</div>${rows}
+    </div>`;
+  }
+
+  // ── Kartica: bElo top 3 ──
+  if(beTop.length){
+    let rows=beTop.map((x,i)=>{
+      const pIdx=P.findIndex(z=>z[F.pid]===x.pid);
+      return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0${i<beTop.length-1?';border-bottom:1px solid var(--border)':''}" onclick="event.stopPropagation();showPlayer(${pIdx})">
+        <span style="font-family:var(--fh);font-weight:800;color:${i===0?'#fbbf24':'var(--mut)'};min-width:18px">${i+1}</span>
+        ${teamLogoHtml(x.team,26)}
+        <span style="flex:1;font-family:var(--fh);font-weight:600;font-size:.86rem;min-width:0">${x.name}</span>
+        <span style="font-family:var(--fs);font-weight:800;color:#fbbf24">${x.be}</span>
+      </div>`;
+    }).join('');
+    html+=`<div class="pregled-card" onclick="showTab('belo')" style="--pc:#fbbf24">
+      <div class="pregled-card-h">★ Najmočnejši igralci (bElo)</div>${rows}
+    </div>`;
+  }
+
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
 function renderPowerRanking(){
   const wrap=document.getElementById('power-wrap');
   if(!wrap)return;
@@ -7513,14 +7655,35 @@ function renderPowerRanking(){
   const maxPow=teams[0].power, minPow=teams[teams.length-1].power;
   const powPct=p=>Math.max(8,Math.min(100,(p-minPow+2)/(maxPow-minPow+2)*100));
 
+  // ─── Podij top 3 ekip ───
+  const podOrder=[teams[1],teams[0],teams[2]];
+  const podMeta=[{r:'2.',c:'#cbd5e1',cls:''},{r:'1.',c:'#fbbf24',cls:'gold'},{r:'3.',c:'#d8915b',cls:''}];
+  html+='<div class="belo-podium">';
+  podOrder.forEach((t,k)=>{
+    if(!t)return;
+    const tc=TEAM_COLORS[t.team]||'#10b981';
+    const pm=podMeta[k];
+    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:13px;height:13px;line-height:13px;text-align:center;border-radius:3px;font-size:.52rem;font-weight:700;font-family:var(--fm);background:${r==='W'?'#10b98133':'#f8717133'};color:${r==='W'?'#10b981':'#f87171'}">${r}</span>`).join(' ');
+    html+=`<div class="belo-pod-card ${pm.cls}" style="--pod-c:${pm.c};--pod-grad:linear-gradient(160deg,${tc},transparent)" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
+      <div class="belo-pod-rank">${k===1?'👑 ':''}${pm.r} MESTO</div>
+      <div style="margin:0 auto 10px;width:56px;height:56px;display:flex;align-items:center;justify-content:center">${teamLogoHtml(t.team,52)}</div>
+      <div class="belo-pod-name">${t.team}</div>
+      <div class="belo-pod-team" style="justify-content:center">${t.record}</div>
+      <div class="belo-pod-val">${t.power}</div>
+      <div style="display:flex;gap:3px;justify-content:center;margin-top:8px;position:relative;z-index:1">${formHtml}</div>
+    </div>`;
+  });
+  html+='</div>';
+
+  // ─── Tabela 4+ ───
   html+='<div style="display:flex;flex-direction:column;gap:10px">';
-  teams.forEach((t,i)=>{
+  teams.slice(3).forEach((t,idx)=>{
+    const i=idx+3;
     const c=TEAM_COLORS[t.team]||'#10b981';
     const oc=ovrColor(Math.round(t.power));
-    const rankBadge=i===0?'👑':(i+1);
     const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:.6rem;font-weight:700;font-family:var(--fm);background:${r==='W'?'#10b98133':'#f8717133'};color:${r==='W'?'#10b981':'#f87171'}">${r}</span>`).join(' ');
     html+=`<div class="power-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:16px" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
-      <div style="font-family:var(--fh);font-weight:800;font-size:1.3rem;min-width:34px;text-align:center;color:${i===0?'#fbbf24':'var(--mut)'}">${rankBadge}</div>
+      <div style="font-family:var(--fh);font-weight:800;font-size:1.3rem;min-width:34px;text-align:center;color:var(--mut)">${i+1}</div>
       ${teamLogoHtml(t.team,42)}
       <div style="flex:1;min-width:0">
         <div style="font-family:var(--fh);font-weight:700;font-size:1rem;margin-bottom:3px">${t.team}</div>
