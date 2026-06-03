@@ -3608,29 +3608,52 @@ function computePlayerAttributes(merged){
   const t=Math.max(merged[F.T],1);
   const pool=getLeaguePlayers().filter(p=>p[F.T]>=5);
   const per=(fn)=>pool.map(fn);
-  // surove per-game / odstotne vrednosti igralca
-  const myShoot=(tsOf(merged)||0);                              // strelska učinkovitost
-  const myInside=(merged[F.pip]/t)+(pct(merged[F.fg2m],merged[F.fg2a])||0)*0.15; // raketa
-  const myPlay=(merged[F.pod]/t)+(merged[F.izg]>0?merged[F.pod]/merged[F.izg]:merged[F.pod]/t); // podaje + A/T
-  const myReb=((merged[F.nap]+merged[F.obr])/t);                // skoki
-  const myDef=((merged[F.sto]+merged[F.blk])/t);                // obramba (steals+blocks)
-  const myImpact=(merged[F.efe]/t);                             // EFE impact
-  // ligaške porazdelitve
-  const dShoot=per(p=>tsOf(p)||0);
-  const dInside=per(p=>(p[F.pip]/Math.max(p[F.T],1))+(pct(p[F.fg2m],p[F.fg2a])||0)*0.15);
-  const dPlay=per(p=>(p[F.pod]/Math.max(p[F.T],1))+(p[F.izg]>0?p[F.pod]/p[F.izg]:p[F.pod]/Math.max(p[F.T],1)));
-  const dReb=per(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1));
-  const dDef=per(p=>(p[F.sto]+p[F.blk])/Math.max(p[F.T],1));
-  const dImpact=per(p=>p[F.efe]/Math.max(p[F.T],1));
-  // percentil → 45..99 skala
-  const toScale=(v,d)=>Math.round(45+_pctlRank(v,d)*54);
+  const tt=p=>Math.max(p[F.T],1);
+
+  // ── PER-GAME kakovost (kako dober na tekmo) ──
+  const qShoot =(tsOf(merged)||0);
+  const qInside=(merged[F.pip]/t)+(pct(merged[F.fg2m],merged[F.fg2a])||0)*0.15;
+  const qPlay  =(merged[F.pod]/t)+(merged[F.izg]>0?merged[F.pod]/merged[F.izg]:merged[F.pod]/t);
+  const qReb   =((merged[F.nap]+merged[F.obr])/t);
+  const qDef   =((merged[F.sto]+merged[F.blk])/t);
+  const qImpact=(merged[F.efe]/t);
+  // ── SKUPNI doprinos (koliko je ekipi dal čez sezono) ──
+  const sInside=merged[F.pip]+merged[F.fg2m]*0.5;
+  const sPlay  =merged[F.pod];
+  const sReb   =merged[F.nap]+merged[F.obr];
+  const sDef   =merged[F.sto]+merged[F.blk];
+  const sImpact=merged[F.efe];
+  const sShoot =merged[F.toc]; // skupne točke kot volumen strelca
+
+  // ligaške porazdelitve (kakovost)
+  const dqShoot =per(p=>tsOf(p)||0);
+  const dqInside=per(p=>(p[F.pip]/tt(p))+(pct(p[F.fg2m],p[F.fg2a])||0)*0.15);
+  const dqPlay  =per(p=>(p[F.pod]/tt(p))+(p[F.izg]>0?p[F.pod]/p[F.izg]:p[F.pod]/tt(p)));
+  const dqReb   =per(p=>(p[F.nap]+p[F.obr])/tt(p));
+  const dqDef   =per(p=>(p[F.sto]+p[F.blk])/tt(p));
+  const dqImpact=per(p=>p[F.efe]/tt(p));
+  // ligaške porazdelitve (skupni doprinos)
+  const dsShoot =per(p=>p[F.toc]);
+  const dsInside=per(p=>p[F.pip]+p[F.fg2m]*0.5);
+  const dsPlay  =per(p=>p[F.pod]);
+  const dsReb   =per(p=>p[F.nap]+p[F.obr]);
+  const dsDef   =per(p=>p[F.sto]+p[F.blk]);
+  const dsImpact=per(p=>p[F.efe]);
+
+  // Blend percentilov: kakovost W_Q + skupni doprinos W_S, → 45..99
+  // MET ima manjšo težo volumna (TS% je že razmerje), ostali polni blend.
+  const blend=(qv,qd,sv,sd,wQ)=>{
+    const pQ=_pctlRank(qv,qd), pS=_pctlRank(sv,sd);
+    const mix=wQ*pQ+(1-wQ)*pS;
+    return Math.round(45+mix*54);
+  };
   return {
-    met:toScale(myShoot,dShoot),
-    napad:toScale(myInside,dInside),
-    podaja:toScale(myPlay,dPlay),
-    skok:toScale(myReb,dReb),
-    obramba:toScale(myDef,dDef),
-    efekt:toScale(myImpact,dImpact)
+    met:    blend(qShoot, dqShoot, sShoot, dsShoot, 0.78),
+    napad:  blend(qInside,dqInside,sInside,dsInside,0.65),
+    podaja: blend(qPlay,  dqPlay,  sPlay,  dsPlay,  0.65),
+    skok:   blend(qReb,   dqReb,   sReb,   dsReb,   0.65),
+    obramba:blend(qDef,   dqDef,   sDef,   dsDef,   0.65),
+    efekt:  blend(qImpact,dqImpact,sImpact,dsImpact,0.6)
   };
 }
 // Badgi — značke za izstopajoče lastnosti (prag percentil)
