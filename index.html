@@ -1337,6 +1337,8 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 /* napoved kartice */
 .napoved-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
 .napoved-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
+.power-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
+.power-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
 /* bElo podij + bari */
 .belo-podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;margin-bottom:28px}
 .belo-pod-card{position:relative;border-radius:16px;padding:18px 14px 16px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;overflow:hidden}
@@ -1797,6 +1799,10 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
   <div id="tab-napovedi" class="tab">
     <div id="napovedi-wrap"></div>
+  </div>
+
+  <div id="tab-power" class="tab">
+    <div id="power-wrap"></div>
   </div>
 
   <div id="tab-seznum" class="tab">
@@ -2947,6 +2953,7 @@ function showTab(t){
   if(t==='h2h')renderH2HTab();
   if(t==='belo')renderBElo();
   if(t==='napovedi')renderNapovedi();
+  if(t==='power')renderPowerRanking();
   if(t==='seznum')renderSeznum();
   // Modern polish: scroll-reveal + magnetic tilt on the active tab's cards
   const activeTab=document.getElementById('tab-'+t);
@@ -7419,6 +7426,103 @@ function predictTeamStrength(teamName){
   return wTot?Math.round(wSum/wTot):null;
 }
 
+// ═══════════════════════════════════════════════════
+// POWER RANKING — moč ekip iz OVR postave + forma
+// OVR uporablja ligaška sidra → pripravljeno za cross-liga
+// ═══════════════════════════════════════════════════
+function computeTeamPower(){
+  const {ratings:be,meta}=computeBElo();
+  const elo=computeElo().ratings;
+  // Zberi igralce po ekipi z OVR + doprinosom (tekme)
+  const teams={};
+  // Iz P (igralci) — uporabimo OVR (z ligaškim sidrom) + igralčev volumen
+  const seen={};
+  P.forEach(p=>{
+    const pid=p[F.pid];
+    if(seen[pid])return; seen[pid]=1;
+    // združi po pid (več vrstic = več ekip; vzemi glavno)
+    let merged=[...p],teams_set=new Set([p[F.team]]);
+    P.forEach(x=>{if(x!==p&&x[F.pid]===pid){teams_set.add(x[F.team]);[F.T,F.MIN,F.toc,F.nap,F.obr,F.pod,F.sto,F.blk,F.efe,F.pip,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.izg].forEach(fi=>merged[fi]+=x[fi]);}});
+    const team=normalizeTeamName([...teams_set][0]);
+    const ovr=bEloToOvr(be[pid]);
+    if(ovr==null||merged[F.T]<2)return;
+    (teams[team]=teams[team]||[]).push({pid,name:merged[F.name],ovr,games:merged[F.T],min:merged[F.MIN]});
+  });
+  // Moč ekipe = utežen OVR (top postava šteje bolj, utež po minutah)
+  const result=[];
+  Object.entries(teams).forEach(([team,players])=>{
+    players.sort((a,b)=>b.ovr-a.ovr);
+    // utež: minute (nosilci) + bonus za globino postave
+    let wSum=0,wTot=0;
+    players.forEach((pl,i)=>{
+      const w=Math.min(pl.min,800)*(i<8?1:0.4); // rotacija top 8 šteje polno
+      wSum+=pl.ovr*w; wTot+=w;
+    });
+    const coreOvr=wTot?wSum/wTot:0;
+    // forma: zadnjih 5 tekem ekipe
+    const teamMatches=allMatches.filter(m=>m.status==='FINISHED'&&(normalizeTeamName(m.firstTeamName)===team||normalizeTeamName(m.secondTeamName)===team))
+      .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime));
+    const last5=teamMatches.slice(0,5).map(m=>{
+      const home=normalizeTeamName(m.firstTeamName)===team;
+      const won=home?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;
+      return won?'W':'L';
+    });
+    const wins=teamMatches.filter(m=>{const home=normalizeTeamName(m.firstTeamName)===team;return home?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;}).length;
+    result.push({
+      team, players:players.slice(0,3), nPlayers:players.length,
+      power:Math.round(coreOvr*10)/10,
+      elo:Math.round(elo[team]||1500),
+      last5, record:`${wins}-${teamMatches.length-wins}`,
+      games:teamMatches.length
+    });
+  });
+  // Rangiraj po moči postave
+  result.sort((a,b)=>b.power-a.power);
+  return result;
+}
+
+function renderPowerRanking(){
+  const wrap=document.getElementById('power-wrap');
+  if(!wrap)return;
+  if(!P.length){wrap.innerHTML='<div class="empty">Naloži podatke</div>';return;}
+  const teams=computeTeamPower();
+  if(!teams.length){wrap.innerHTML='<div class="empty">Ni dovolj podatkov</div>';return;}
+
+  const lgName=getLg().short||'';
+  let html=`<div class="sec-head" style="--sh-c:#10b981">⚡ Power Ranking — ${lgName}</div>
+    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
+      Moč ekip glede na <strong>OVR postave</strong> (bElo igralcev + doprinos), ne le po rezultatih. Pokaže, kdo ima najmočnejši kader — tudi če lestvica še ne kaže.
+    </div>`;
+
+  const maxPow=teams[0].power, minPow=teams[teams.length-1].power;
+  const powPct=p=>Math.max(8,Math.min(100,(p-minPow+2)/(maxPow-minPow+2)*100));
+
+  html+='<div style="display:flex;flex-direction:column;gap:10px">';
+  teams.forEach((t,i)=>{
+    const c=TEAM_COLORS[t.team]||'#10b981';
+    const oc=ovrColor(Math.round(t.power));
+    const rankBadge=i===0?'👑':(i+1);
+    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:.6rem;font-weight:700;font-family:var(--fm);background:${r==='W'?'#10b98133':'#f8717133'};color:${r==='W'?'#10b981':'#f87171'}">${r}</span>`).join(' ');
+    html+=`<div class="power-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:16px" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
+      <div style="font-family:var(--fh);font-weight:800;font-size:1.3rem;min-width:34px;text-align:center;color:${i===0?'#fbbf24':'var(--mut)'}">${rankBadge}</div>
+      ${teamLogoHtml(t.team,42)}
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--fh);font-weight:700;font-size:1rem;margin-bottom:3px">${t.team}</div>
+        <div style="font-size:.68rem;color:var(--mut);font-family:var(--fm);display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span>${t.record}</span>
+          <span style="display:flex;gap:3px;align-items:center">${formHtml||'—'}</span>
+        </div>
+      </div>
+      <div style="text-align:right;min-width:90px">
+        <div style="font-family:var(--fs);font-weight:800;font-size:1.5rem;color:${oc}">${t.power}</div>
+        <div style="font-size:.58rem;color:var(--mut);font-family:var(--fm);letter-spacing:.05em">MOČ POSTAVE</div>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
 function renderBElo(){
   const wrap=document.getElementById('belo-wrap');
   if(!wrap)return;
@@ -10271,6 +10375,7 @@ function renderBracketHTML(byPhase,phaseColors){
       <button class="mm-item" onclick="mmGo('rekordi')"><span class="mm-ic">📊</span><span>Rekordi</span></button>
       <button class="mm-item" onclick="mmGo('compare')"><span class="mm-ic">⚖️</span><span>Primerjava</span></button>
       <button class="mm-item" onclick="mmGo('h2h')"><span class="mm-ic">⚔️</span><span>H2H</span></button>
+      <button class="mm-item" onclick="mmGo('power')"><span class="mm-ic">⚡</span><span>Power Ranking</span></button>
       <button class="mm-item" onclick="mmGo('napovedi')"><span class="mm-ic">🔮</span><span>Napovedi</span></button>
       <button class="mm-item" onclick="mmGo('belo')"><span class="mm-ic">★</span><span>bElo</span></button>
       <button class="mm-item" onclick="mmGo('seznum')"><span class="mm-ic">📅</span><span>Sezona v št.</span></button>
@@ -10295,6 +10400,7 @@ function renderBracketHTML(byPhase,phaseColors){
   <button class="nb" onclick="showTab('sodniki');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Sodniki</button>
   <button class="nb" onclick="showTab('starost');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Starost</button>
   <button class="nb" onclick="showTab('h2h');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">⚔️ H2H</button>
+  <button class="nb" onclick="showTab('power');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">⚡ Power Ranking</button>
   <button class="nb" onclick="showTab('napovedi');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">🔮 Napovedi</button>
   <button class="nb" onclick="showTab('belo');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">★ bElo</button>
   <button class="nb" onclick="showTab('seznum');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block">📅 Sezona v številkah</button>
