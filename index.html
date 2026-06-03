@@ -70,7 +70,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 .tab.active{display:block;animation:tabFadeUp .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes tabFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.tab.active{animation:none}}
-.ctrls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.ctrls{display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-5);flex-wrap:wrap}
 select{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 34px 7px 12px;border-radius:7px;font-family:var(--fs);font-size:.82rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:20px}
 select:focus{outline:none;border-color:var(--acc)}
 .tgl{display:flex;border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
@@ -89,10 +89,10 @@ select:focus{outline:none;border-color:var(--acc)}
 .st .gr{font-size:.6rem;letter-spacing:.12em;text-align:center;padding:3px;font-family:var(--fh);border-bottom:1px solid var(--border)}
 .gr-met{background:#0f0f20;color:var(--acc)}.gr-sk{background:#0a1020;color:var(--blue)}.gr-on{background:#120a20;color:var(--purple)}.gr-bl{background:#0a1a12;color:var(--green)}.gr-em{background:#0e0e1a;color:transparent}
 .st thead{position:sticky;top:0;z-index:5}
-.st th{background:var(--card2);color:var(--sub);font-weight:500;text-transform:uppercase;font-size:.66rem;letter-spacing:.05em;padding:7px 5px;text-align:center;cursor:pointer;white-space:nowrap;border-bottom:2px solid var(--border);transition:color .2s;user-select:none}
+.st th{background:var(--card2);color:var(--mut);font-weight:600;text-transform:uppercase;font-size:.64rem;letter-spacing:.07em;padding:11px 7px;text-align:center;cursor:pointer;white-space:nowrap;border-bottom:2px solid var(--border);transition:color .2s;user-select:none}
 .st th:hover{color:var(--acc)}.st th.sa::after{content:" ↑";color:var(--acc)}.st th.sd::after{content:" ↓";color:var(--acc)}.st th.sa,.st th.sd{color:var(--acc)}
 .st th:first-child,.st td:first-child{text-align:left;padding-left:12px;min-width:160px;font-family:var(--fs);font-weight:500}
-.st td{padding:7px 5px;text-align:center;border-bottom:1px solid rgba(26,26,50,.7);white-space:nowrap;transition:background .1s}
+.st td{padding:10px 7px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;transition:background .12s;font-variant-numeric:tabular-nums}
 .st tr:hover td{background:rgba(249,115,22,.04)}
 .lp{background:rgba(249,115,22,.16)!important;color:var(--acc)!important;font-weight:700}
 .lr{background:rgba(96,165,250,.14)!important;color:var(--blue)!important;font-weight:700}
@@ -132,7 +132,8 @@ select:focus{outline:none;border-color:var(--acc)}
 .si{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 14px;border-radius:7px;font-family:var(--fs);font-size:.85rem;width:280px}
 .si::placeholder{color:var(--mut)}.si:focus{outline:none;border-color:var(--acc)}
 .srch-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.pcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;transition:border-color .2s}
+.pcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4);transition:border-color .2s,transform .2s,box-shadow .2s}
+.pcard:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--sh-md)}
 .pcard:hover{border-color:var(--acc)}
 .pc-name{font-family:var(--fs);font-weight:600;font-size:.92rem;margin-bottom:3px}
 .pc-meta{font-size:.72rem;color:var(--mut);margin-bottom:10px}
@@ -328,8 +329,8 @@ select:focus{outline:none;border-color:var(--acc)}
   .hero-lg-desc{margin-left:auto}
 }
 /* STANDINGS */
-.standings-table{width:100%;border-collapse:collapse;font-size:.82rem}
-.standings-table tbody td{padding:4px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.standings-table{width:100%;border-collapse:collapse;font-size:var(--t-sm)}
+.standings-table tbody td{padding:11px 10px;text-align:center;border-bottom:1px solid var(--border);vertical-align:middle;font-variant-numeric:tabular-nums}
 .standings-table tbody tr:hover{background:var(--card2)}
 .standings-table thead th{background:var(--card2);color:var(--sub);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 10px;text-align:center;border-bottom:2px solid var(--border);white-space:nowrap}
 .standings-table thead th:first-child{text-align:left;padding-left:14px;min-width:200px}
@@ -772,19 +773,21 @@ html{scroll-behavior:smooth}
 
 /* ═══ TEAM PROFILE OVERLAY ═══ */
 #team-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);z-index:1100;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
-.tp-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:820px;position:relative;animation:tabIn .35s ease}
-.tp-hero{position:relative;padding:28px 26px 22px;overflow:hidden;border-radius:16px 16px 0 0}
-.tp-hero::before{content:'';position:absolute;inset:0;background:var(--tp-grad);opacity:.92;z-index:0}
+.tp-modal{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);width:100%;max-width:860px;position:relative;box-shadow:0 32px 90px -20px rgba(0,0,0,.8);animation:ppModalIn .4s cubic-bezier(.16,.84,.3,1)}
+.tp-hero{position:relative;padding:var(--sp-6) var(--sp-6) var(--sp-5);overflow:hidden;border-radius:var(--r-xl) var(--r-xl) 0 0}
+.tp-hero>*{position:relative;z-index:1}
+.tp-hero::before{content:'';position:absolute;inset:0;background:var(--tp-grad);opacity:.82;z-index:0}
 .tp-hero::after{content:'';position:absolute;right:-50px;top:-60px;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.07);z-index:0}
 .tp-hero>*{position:relative;z-index:1}
 .tp-name{font-family:var(--fh);font-size:2.3rem;font-weight:800;letter-spacing:-.03em;color:#fff;line-height:1;text-shadow:0 2px 20px rgba(0,0,0,.3)}
 .tp-rec{font-size:.9rem;color:rgba(255,255,255,.85);font-family:var(--fm);margin-top:8px}
 .tp-stats{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
-.tp-st{flex:1;min-width:80px;background:rgba(255,255,255,.13);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:10px 12px;text-align:center}
-.tp-st-v{font-family:var(--fs);font-size:1.5rem;font-weight:800;color:#fff;line-height:1}
+.tp-st{flex:1;min-width:80px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-md);padding:10px 12px;text-align:center}
+.tp-st-v{font-family:var(--fs);font-size:1.7rem;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
 .tp-st-l{font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-top:3px}
 .tp-body{padding:22px 26px}
-.tp-close{position:absolute;top:16px;right:18px;z-index:3;width:32px;height:32px;border-radius:9px;background:rgba(0,0,0,.3);border:none;color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tp-close{position:absolute;top:16px;right:18px;z-index:3;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid var(--border);color:#fff;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:background .2s,transform .15s}
+.tp-close:hover{background:rgba(255,255,255,.22);transform:scale(1.08)}
 .tp-roster-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
 .tp-roster-row:hover{background:rgba(255,255,255,.03)}
 .tp-rr-name{flex:1;font-weight:600;font-size:.85rem}
@@ -931,7 +934,8 @@ html{scroll-behavior:smooth}
 #race-play.playing{background:var(--red);box-shadow:0 4px 16px rgba(239,68,68,.4)}
 
 /* ═══ MVP HERO ═══ */
-.mvp-hero{position:relative;border-radius:20px;overflow:hidden;padding:28px;margin-bottom:26px;border:1px solid rgba(251,191,36,.3);cursor:pointer;transition:transform .25s,box-shadow .25s}
+.mvp-hero{position:relative;border-radius:var(--r-xl);overflow:hidden;padding:var(--sp-6);margin-bottom:var(--sp-6);border:1px solid rgba(251,191,36,.3);cursor:pointer;transition:transform .25s,box-shadow .25s;box-shadow:var(--sh-md)}
+.mvp-hero:hover{box-shadow:var(--sh-lg)}
 .mvp-hero:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
 .mvp-hero::before{content:'';position:absolute;inset:0;background:var(--mvph-grad);opacity:.95;z-index:0}
 .mvp-hero>*{position:relative;z-index:1}
@@ -974,7 +978,7 @@ html{scroll-behavior:smooth}
 .scard-photo{width:42px;height:42px;border-radius:11px;object-fit:cover;object-position:top center;flex-shrink:0;border:1px solid var(--border2);background:var(--card2)}
 .scard-photo-fb{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.9rem;flex-shrink:0}
 .srch-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px}
-.scard{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:13px;padding:14px 16px;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;overflow:hidden}
+.scard{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--sp-4);cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;position:relative;overflow:hidden}
 .scard:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
 .scard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc-c,var(--acc))}
 .scard-rank{position:absolute;top:10px;right:14px;font-family:var(--fh);font-size:1.4rem;font-weight:800;color:var(--border2)}
@@ -988,7 +992,7 @@ html{scroll-behavior:smooth}
 @media(max-width:560px){.srch-results{grid-template-columns:1fr}}
 
 /* ═══ RECORD ROW AVATARS ═══ */
-.rec-avatar{width:34px;height:38px;border-radius:9px;object-fit:cover;object-position:top center;flex-shrink:0;border:1px solid var(--border2);background:var(--card2)}
+.rec-avatar{width:36px;height:40px;border-radius:var(--r-sm);object-fit:cover;object-position:top center;flex-shrink:0;border:1px solid var(--border2);background:var(--card2)}
 .rec-avatar-fb{width:34px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.72rem;flex-shrink:0}
 
 /* ═══ TEAM HEADER LOGO ═══ */
@@ -1216,6 +1220,44 @@ button:focus-visible, select:focus-visible, input:focus-visible{
 .cmdk-trigger .lbl{font-weight:500}
 
 /* ═══════════════════════════════════════════════════
+   MIKRO-DETAJLI — polish ki loči dobro od odličnega
+   ═══════════════════════════════════════════════════ */
+/* Globalni smooth scroll */
+html{scroll-behavior:smooth}
+
+/* Vsi gumbi dobijo subtilen press feedback */
+button{transition:transform .1s ease, opacity .15s, background .2s, border-color .2s, color .2s}
+button:active{transform:scale(.97)}
+
+/* Klikabilna imena igralcev/ekip — enoten hover */
+.pname-link{cursor:pointer;transition:color .15s}
+.pname-link:hover{color:var(--acc)}
+.std-team-name{transition:color .15s}
+.std-team-name:hover{color:var(--acc);cursor:pointer}
+
+/* Toast — mehkejši vstop */
+.toast{animation:toastIn .35s cubic-bezier(.16,.84,.3,1)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* Slike se nežno pojavijo ko se naložijo */
+img{transition:opacity .3s}
+
+/* Selekcija besedila v brand barvi */
+::selection{background:rgba(249,115,22,.3);color:var(--text)}
+
+/* Linki in interaktivni elementi — tap highlight off (mobilni) */
+*{-webkit-tap-highlight-color:transparent}
+
+/* Subtilen fokus ring (dostopnost brez grdega outline) */
+a:focus-visible,[role=button]:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:var(--r-sm)}
+
+/* Disabled stanja */
+button:disabled,select:disabled{opacity:.4;cursor:not-allowed}
+
+/* Number count-up se ne sme tresti */
+[data-count]{font-variant-numeric:tabular-nums}
+
+/* ═══════════════════════════════════════════════════
    SKELETON LOADERS — občutek hitrosti med nalaganjem
    ═══════════════════════════════════════════════════ */
 .skel{
@@ -1239,6 +1281,12 @@ button:focus-visible, select:focus-visible, input:focus-visible{
   font-size:var(--t-lg);letter-spacing:-.02em;
   margin-bottom:var(--sp-5);
   display:flex;align-items:center;gap:var(--sp-3);
+  position:relative;padding-left:14px;
+}
+.sec-head::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:4px;height:1.1em;border-radius:2px;
+  background:var(--sh-c,var(--acc));
 }
 /* Velike številke (statistike) — tabularne, izrazite */
 .pp-hs-v, .ts-v, .stat-big{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
@@ -1272,7 +1320,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
   color:var(--mut);font-family:var(--fm);font-size:var(--t-sm);
   display:flex;flex-direction:column;align-items:center;gap:var(--sp-3);
 }
-.empty::before{content:'📊';font-size:2.5rem;opacity:.4;filter:grayscale(.3)}
+
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
@@ -4082,7 +4130,7 @@ function showTeamProfile(teamName){
   let eloVal=null;
   try{const {ratings}=computeElo();eloVal=ratings[teamName];}catch(e){}
   const diff=ts?ts.ptsFor-ts.ptsAga:0;
-  const grad=`linear-gradient(135deg,${color},${_shade(color,-48)})`;
+  const grad=`linear-gradient(140deg,${_shade(color,8)},${_shade(color,-38)})`;
   const form=(ts?.form||[]).slice(-8).map(w=>`<span class="form-dot ${w?'w':'l'}">${w?'Z':'P'}</span>`).join('');
 
   const rosterHtml=roster.slice(0,15).map(p=>{
@@ -4101,7 +4149,7 @@ function showTeamProfile(teamName){
     <button class="tp-close" onclick="closeTeamProfile()">✕</button>
     <div class="tp-hero" style="--tp-grad:${grad}">
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:4px">
-        <div style="width:64px;height:64px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:8px;backdrop-filter:blur(8px)">${teamLogoHtml(teamName,48)}</div>
+        <div style="width:84px;height:84px;background:rgba(255,255,255,.15);border-radius:18px;display:flex;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(8px);box-shadow:0 8px 24px -6px rgba(0,0,0,.4)">${teamLogoHtml(teamName,60)}</div>
         <div class="tp-name">${teamName}</div>
       </div>
       <div class="tp-rec">${ts?`${ts.W}-${ts.L} · ${Math.round(ts.W/Math.max(ts.T,1)*100)}% zmag`:'Ni podatkov rednega dela'}</div>
