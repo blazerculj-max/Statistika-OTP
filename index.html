@@ -1328,6 +1328,25 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
+/* bElo podij + bari */
+.belo-podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;margin-bottom:28px}
+.belo-pod-card{position:relative;border-radius:16px;padding:18px 14px 16px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;overflow:hidden}
+.belo-pod-card:hover{transform:translateY(-4px);box-shadow:var(--sh-lg)}
+.belo-pod-card::before{content:'';position:absolute;inset:0;background:var(--pod-grad);opacity:.13;pointer-events:none}
+.belo-pod-card.gold{border-color:rgba(251,191,36,.55)}
+.belo-pod-rank{font-family:var(--fh);font-size:.7rem;font-weight:800;letter-spacing:.1em;color:var(--mut);margin-bottom:8px}
+.belo-pod-card.gold .belo-pod-rank{color:#fbbf24}
+.belo-pod-photo{width:64px;height:72px;border-radius:12px;object-fit:cover;margin:0 auto 10px;display:block;border:2px solid var(--pod-c)}
+.belo-pod-photo-fb{width:64px;height:72px;border-radius:12px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:1.4rem;border:2px solid var(--pod-c)}
+.belo-pod-name{font-family:var(--fh);font-weight:700;font-size:.86rem;line-height:1.2;margin-bottom:4px;position:relative;z-index:1}
+.belo-pod-team{font-size:.66rem;color:var(--mut);display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:10px;position:relative;z-index:1}
+.belo-pod-val{font-family:var(--fs);font-weight:800;font-size:1.6rem;color:var(--pod-c);position:relative;z-index:1;line-height:1}
+.belo-pod-card.gold .belo-pod-val{font-size:1.9rem}
+.belo-bar-cell{position:relative;min-width:130px}
+.belo-bar-track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:3px}
+.belo-bar-fill{height:100%;border-radius:3px}
+.belo-tier{display:inline-block;font-size:.56rem;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:5px;font-family:var(--fm);vertical-align:middle}
+@media(max-width:560px){.belo-podium{grid-template-columns:1fr;gap:8px}.belo-pod-card{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px}.belo-pod-photo,.belo-pod-photo-fb{margin:0;width:48px;height:54px}.belo-pod-card.gold .belo-pod-val,.belo-pod-card .belo-pod-val{font-size:1.4rem;margin-left:auto}.belo-pod-name{margin-bottom:2px}.belo-pod-team{margin-bottom:0}}
 </style>
 </head>
 <body>
@@ -5573,6 +5592,56 @@ function drawTrendChart(pid, color, stat){
   const log=playerGameLog[pid];
   if(!log||log.length<2)return '<div class="empty" style="font-size:.75rem">Premalo tekem za graf</div>';
 
+  // ─── bElo veja: kumulativni razvoj moči (lasten y-obseg okrog 1500) ───
+  const _statMetaBtns=[['pts','Točke'],['reb','Skoki'],['ast','Asist.'],['efe','EFE'],['belo','bElo ★']];
+  const _btnHtml=()=>_statMetaBtns.map(([k,l])=>{
+    const cmap={pts:'#f97316',reb:'#3b82f6',ast:'#a855f7',efe:'#10b981',belo:'#fbbf24'};
+    const mc=cmap[k];
+    return `<button onclick="switchTrendStat('${k}','${color}')" style="padding:5px 12px;border-radius:8px;border:1px solid ${k===_trendStat?mc:'var(--border)'};background:${k===_trendStat?mc+'22':'transparent'};color:${k===_trendStat?mc:'var(--mut)'};font-family:var(--fh);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s">${l}</button>`;
+  }).join('');
+
+  if(_trendStat==='belo'){
+    const be=computeBElo();
+    const hist=(be.history[pid]||[]).slice();
+    const wrapBtns=`<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">${_btnHtml()}</div>`;
+    if(hist.length<2)return `<div style="position:relative">${wrapBtns}<div class="empty" style="font-size:.75rem">Premalo tekem za bElo graf</div></div>`;
+    const col='#fbbf24';
+    const W=560,H=220,padL=44,padR=16,padT=20,padB=30;
+    const cw=W-padL-padR,ch=H-padT-padB,n=hist.length;
+    const vals=hist.map(h=>h.belo);
+    const lo=Math.min(1500,...vals)-20, hi=Math.max(1500,...vals)+20;
+    const xAt=i=>padL+(n===1?cw/2:i/(n-1)*cw);
+    const yAt=v=>padT+ch-((v-lo)/(hi-lo||1))*ch;
+    const gid='be'+Math.random().toString(36).slice(2,7);
+    let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible">
+      <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity="0.28"/><stop offset="100%" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>`;
+    // gridlines + labels
+    [0,0.25,0.5,0.75,1].forEach(f=>{
+      const y=padT+ch-f*ch;const v=Math.round(lo+(hi-lo)*f);
+      svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/>`;
+      svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+    });
+    // sidro 1500 (povprečje lige)
+    if(1500>=lo&&1500<=hi){
+      const y15=yAt(1500);
+      svg+=`<line x1="${padL}" y1="${y15}" x2="${W-padR}" y2="${y15}" stroke="var(--mut)" stroke-width="1" stroke-dasharray="5,4" opacity=".5"/>`;
+      svg+=`<text x="${W-padR}" y="${y15-4}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">1500 povp.</text>`;
+    }
+    // path + area
+    let linePath='';
+    hist.forEach((h,i)=>{const x=xAt(i),y=yAt(h.belo);linePath+=(i===0?`M${x},${y}`:`L${x},${y}`);});
+    svg+=`<path d="${linePath}L${xAt(n-1)},${padT+ch}L${xAt(0)},${padT+ch}Z" fill="url(#${gid})"/>`;
+    svg+=`<path d="${linePath}" fill="none" stroke="${col}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${col}66)"/>`;
+    hist.forEach((h,i)=>{
+      const x=xAt(i),y=yAt(h.belo);
+      svg+=`<circle cx="${x}" cy="${y}" r="3.5" fill="${col}" class="trend-pt" data-tip="K${h.round} · bElo ${h.belo}" onmouseenter="showTrendTip(event,this)" onmouseleave="hideTrendTip()" style="cursor:pointer"/>`;
+    });
+    svg+=`</svg>`;
+    return `<div style="position:relative">${wrapBtns}${svg}
+      <div id="trend-tip" style="display:none;position:absolute;background:var(--card2);border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:.72rem;color:var(--text);font-family:var(--fm);white-space:nowrap;pointer-events:none;z-index:10"></div>
+    </div>`;
+  }
+
   const pfPhases=new Set(['Četrtfinale','Polfinale','Finale','Osmina finala']);
   const games=log.slice().sort((a,b)=>{
     const ma=allMatches.find(x=>x.id===a.matchId),mb=allMatches.find(x=>x.id===b.matchId);
@@ -5584,7 +5653,8 @@ function drawTrendChart(pid, color, stat){
     pts:{lbl:'Točke',key:'pts',col:'#f97316'},
     reb:{lbl:'Skoki',key:'reb',col:'#3b82f6'},
     ast:{lbl:'Asist.',key:'ast',col:'#a855f7'},
-    efe:{lbl:'EFE',key:'efe',col:'#10b981'}
+    efe:{lbl:'EFE',key:'efe',col:'#10b981'},
+    belo:{lbl:'bElo ★',key:'belo',col:'#fbbf24'}
   };
   const sm=statMeta[_trendStat]||statMeta.pts;
   const vals=games.map(g=>g[sm.key]||0);
@@ -7013,16 +7083,32 @@ function computeBElo(){
         const expected=1/(1+10**((oppElo[team]-myTeamElo)/400));
         const actual=won?1:0;
 
-        // Delež prispevka igralca k ekipni efektivnosti (0..1, cap)
-        const share=Math.max(0,efe)/totEff; // npr 0.15 = 15% ekipne efektivnosti
-        // Multiplikator: kdor več prispeva, bolj čuti rezultat (0.3x do 2.5x)
-        const contribMult=Math.min(2.5,Math.max(0.3,share*side.playerStats.filter(p=>p.played).length));
-        // Individualna kakovost: EFE vs liga povprečje (~10), KAPIRANO ±6 (proti stat-paddingu).
-        // V porazu šteje le 60% — "30 točk v porazu" ne dvigne bElo kot zmaga.
-        let qualityAdj=Math.max(-6,Math.min(6,(efe-10)*0.4));
+        // ─── Relativni prispevek igralca v EKIPI (jedro proti ekipnemu biasu) ───
+        // share = delež ekipne efektivnosti, ki ga prispeva ta igralec.
+        // pricakDelez = 1/n (kolikor bi prispeval povprečen igralec rotacije).
+        // relShare = share / pricakDelez:  1 = povprečen, >1 nosilec, <1 potnik.
+        const nPlayed=side.playerStats.filter(p=>p.played).length||1;
+        const share=Math.max(0,efe)/totEff;
+        const pricakDelez=1/nPlayed;
+        let relShare=share/pricakDelez; // 0 (ni prispeval) .. ~nPlayed (nosi vse)
+
+        // Ekipni izid uteži z relativnim prispevkom:
+        //  - ob ZMAGI nagrado dobi predvsem nosilec (relShare>1), potnik malo (0.3 floor)
+        //  - ob PORAZU je nosilec bolj kaznovan, potnik manj (ni bil glavni krivec)
+        const teamResult=actual-expected; // + ob zmagi (zlasti če nepričakovana), - ob porazu
+        let resultMult;
+        if(teamResult>=0){ // zmaga (ali boljši izid od pričakovanega)
+          resultMult=Math.min(2.2,Math.max(0.3,relShare)); // potnik ne potuje gor z ekipo
+        }else{ // poraz
+          resultMult=Math.min(2.2,Math.max(0.5,relShare)); // nosilec bolj kaznovan
+        }
+        // Individualna kakovost: EFE vs liga povprečje (~10). To je JEDRO neodvisnosti
+        // od ekipe — zvezda v šibki ekipi je nagrajena po svojem EFE, ne po zmagah ekipe.
+        // Teža 0.8, kapica ±12 (proti stat-paddingu). V porazu pozitiv šteje 60%.
+        let qualityAdj=Math.max(-12,Math.min(12,(efe-10)*0.8));
         if(!won&&qualityAdj>0)qualityAdj*=0.6;
 
-        const delta=K*(actual-expected)*contribMult + qualityAdj;
+        const delta=K*teamResult*resultMult + qualityAdj;
         ratings[pid]=Math.round(ratings[pid]+delta);
         history[pid].push({round:m.round||0,belo:ratings[pid]});
       });
@@ -7065,21 +7151,51 @@ function renderBElo(){
       <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono (vključno s končnico, ki šteje več). Uporabno za napoved moči ekip.
     </div>`;
 
-  // Top players
-  const medals=['🥇','🥈','🥉'];
+  // Tier sidro (pomaga uporabniku brati vrednost)
+  const tierOf=(be)=> be>=1700?{l:'ELITA',c:'#fbbf24'}:be>=1620?{l:'ODLIČEN',c:'#34d399'}:be>=1550?{l:'DOBER',c:'#3b82f6'}:be>=1490?{l:'POVPREČEN',c:'var(--mut)'}:{l:'POD POVP.',c:'#f87171'};
+  const maxBe=arr.length?arr[0].be:1700;
+  const minBe=arr.length?Math.min(1450,arr[arr.length-1].be):1450;
+  const barPct=(be)=>Math.max(6,Math.min(100,(be-minBe)/(maxBe-minBe||1)*100));
+
+  // ─── Podij top 3 ───
   html+='<div class="sec-head" style="--sh-c:#fbbf24;font-size:.9rem">Najmočnejši igralci</div>';
-  html+='<div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:28px"><table class="standings-table"><thead><tr><th>M</th><th style="text-align:left">IGRALEC</th><th>EKIPA</th><th>TEKEM</th><th style="color:#fbbf24">bElo ★</th></tr></thead><tbody>';
-  arr.slice(0,25).forEach((x,i)=>{
+  const podOrder=[arr[1],arr[0],arr[2]]; // 2-1-3 razpored (zmagovalec v sredini)
+  const podMeta=[{r:'2. MESTO',c:'#cbd5e1',cls:''},{r:'1. MESTO',c:'#fbbf24',cls:'gold'},{r:'3. MESTO',c:'#d8915b',cls:''}];
+  html+='<div class="belo-podium">';
+  podOrder.forEach((x,k)=>{
+    if(!x)return;
+    const tc=TEAM_COLORS[x.team]||'#888';
+    const pm=podMeta[k];
+    const ph=playerPhotoUrl(x.pid);
+    const ini=(x.name||'').split(' ').map(w=>w[0]).join('').slice(0,2);
+    const pIdx=P.findIndex(z=>z[F.pid]===x.pid);
+    const photo=ph?`<img src="${ph}" class="belo-pod-photo" style="--pod-c:${pm.c}" onerror="_ppPhotoErr(this,'${ini}',64)">`:`<div class="belo-pod-photo-fb" style="--pod-c:${pm.c};background:${tc}33;color:${tc}">${ini}</div>`;
+    html+=`<div class="belo-pod-card ${pm.cls}" style="--pod-c:${pm.c};--pod-grad:linear-gradient(160deg,${tc},transparent)" onclick="showPlayer(${pIdx})">
+      <div class="belo-pod-rank">${pm.r}</div>
+      ${photo}
+      <div class="belo-pod-name">${x.name}</div>
+      <div class="belo-pod-team">${teamLogoHtml(x.team,16)}${TEAM_SHORT[x.team]||x.team}</div>
+      <div class="belo-pod-val">${x.be}</div>
+    </div>`;
+  });
+  html+='</div>';
+
+  // ─── Tabela 4-25 z barom moči in tier ───
+  html+='<div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border);margin-bottom:28px"><table class="standings-table"><thead><tr><th>M</th><th style="text-align:left">IGRALEC</th><th>EKIPA</th><th>TEKEM</th><th style="text-align:left">MOČ</th><th style="color:#fbbf24">bElo ★</th></tr></thead><tbody>';
+  arr.slice(3,25).forEach((x,i)=>{
+    const rank=i+4;
     const tc=TEAM_COLORS[x.team]||'#888';
     const ph=playerPhotoUrl(x.pid);
     const ini=(x.name||'').split(' ').map(w=>w[0]).join('').slice(0,2);
     const av=ph?`<img src="${ph}" class="rec-avatar" style="width:30px;height:34px" onerror="this.outerHTML='<span class=&quot;rec-avatar-fb&quot; style=&quot;width:30px;height:34px;background:${tc}33;color:${tc}&quot;>${ini}</span>'">`:`<span class="rec-avatar-fb" style="width:30px;height:34px;background:${tc}33;color:${tc}">${ini}</span>`;
     const pIdx=P.findIndex(z=>z[F.pid]===x.pid);
+    const tier=tierOf(x.be);
     html+=`<tr onclick="showPlayer(${pIdx})" style="cursor:pointer">
-      <td style="text-align:center">${medals[i]||(i+1)}</td>
+      <td style="text-align:center;color:var(--mut)">${rank}</td>
       <td><div style="display:flex;align-items:center;gap:9px">${av}<span style="font-weight:600">${x.name}</span></div></td>
       <td style="font-size:.72rem"><div style="display:flex;align-items:center;gap:6px">${teamLogoHtml(x.team,18)}${TEAM_SHORT[x.team]||x.team}</div></td>
       <td style="text-align:center;color:var(--mut)">${x.games}</td>
+      <td class="belo-bar-cell"><span class="belo-tier" style="background:${tier.c}22;color:${tier.c}">${tier.l}</span><div class="belo-bar-track"><div class="belo-bar-fill" style="width:${barPct(x.be)}%;background:${tier.c}"></div></div></td>
       <td style="text-align:center;font-weight:800;color:#fbbf24;font-size:1.05rem">${x.be}</td>
     </tr>`;
   });
