@@ -3595,6 +3595,14 @@ let _shareName='kartica';
 // 2K KARTICE — overall iz bElo, atributi iz statistike
 // ═══════════════════════════════════════════════════
 // bElo → 2K skala (0-99). bElo ~1500 = povprečje ligaš ≈ 75.
+// Ekipe izločene iz Power rankinga in 2K kartic.
+// Cedevita Olimpija (prvak) igra le končnico 1.SKL — vzorec je premajhen
+// in nereprezentativen (njihov pravi nivo je Eurocup/ABA). NE velja za
+// "Cedevita Olimpija mladi", ki je redna ekipa 3. lige.
+function _isExcludedTeam(name){
+  const n=normalizeTeamName(name||'');
+  return n==='Cedevita Olimpija';
+}
 function bEloToOvr(be){
   if(be==null)return null;
   const cfg=LEAGUE_OVR_CFG[currentLeague]||LEAGUE_OVR_CFG.liga1;
@@ -3684,6 +3692,7 @@ function ovrColor(ovr){
 function open2KCard(pIdx){
   const p=P[pIdx];
   if(!p)return;
+  if(_isExcludedTeam(p[F.team])){toast('Cedevita Olimpija igra le končnico — premalo podatkov za 2K kartico','🏀');return;}
   let merged=[...p]; const teams=new Set([p[F.team]]);
   P.forEach(x=>{ if(x!==p && x[F.pid]===p[F.pid]){
     teams.add(x[F.team]);
@@ -5569,9 +5578,9 @@ function showPlayer(idx){
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
         Deli
       </div>
-      <div class="pp-hero-share" onclick="open2KCard(${idx})" style="right:130px;background:rgba(251,191,36,.25);border-color:rgba(251,191,36,.5)">
+      ${_isExcludedTeam(p[F.team])?'':`<div class="pp-hero-share" onclick="open2KCard(${idx})" style="right:130px;background:rgba(251,191,36,.25);border-color:rgba(251,191,36,.5)">
         🃏 2K kartica
-      </div>
+      </div>`}
     </div>
     <div class="pp-body">
       <div class="pp-left">
@@ -7451,6 +7460,7 @@ function computeTeamPower(){
   // Moč ekipe = utežen OVR (top postava šteje bolj, utež po minutah)
   const result=[];
   Object.entries(teams).forEach(([team,players])=>{
+    if(_isExcludedTeam(team))return; // Olimpija ven (igra le končnico)
     players.sort((a,b)=>b.ovr-a.ovr);
     // utež: minute (nosilci) + bonus za globino postave
     let wSum=0,wTot=0;
