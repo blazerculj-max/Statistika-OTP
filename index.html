@@ -351,8 +351,6 @@ th:hover .th-q{opacity:.7}
 .standings-table tr.my-team td{background:rgba(249,115,22,.06)}
 .pos-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.72rem;font-weight:700;font-family:var(--fm);margin-right:8px;flex-shrink:0}
 .form-dots{display:flex;gap:3px;justify-content:center}
-.form-dot{width:16px;height:16px;border-radius:50%;font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;color:white}
-.form-dot.w{background:#22c55e}.form-dot.l{background:#ef4444}
 .h2h-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
 .h2h-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
 .h2h-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);color:var(--sub)}
@@ -600,9 +598,9 @@ th:hover .th-q{opacity:.7}
 .std-team-cell{display:flex;align-items:center;gap:9px}
 .std-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--sd-glow)}
 .std-team-name{font-weight:600;font-size:.86rem}
-.form-dot{width:18px;height:18px;border-radius:6px;font-size:.62rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;color:#fff}
-.form-dot.w{background:linear-gradient(135deg,#22c55e,#16a34a)}
-.form-dot.l{background:linear-gradient(135deg,#ef4444,#dc2626)}
+.form-dot{width:19px;height:19px;border-radius:6px;font-size:.6rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);letter-spacing:-.02em}
+.form-dot.w{background:linear-gradient(135deg,#34d399,#10b981)}
+.form-dot.l{background:linear-gradient(135deg,#f87171,#dc2626)}
 .std-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.68rem;color:var(--mut);font-family:var(--fm);margin:8px 0 4px}
 .std-legend span{display:inline-flex;align-items:center;gap:5px}
 .std-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
@@ -732,7 +730,10 @@ html{scroll-behavior:smooth}
 .pp-hs{flex:1;min-width:76px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-2);text-align:center}
 .pp-hs-v{font-family:var(--fs);font-size:1.7rem;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
 .pp-hs-l{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);font-family:var(--fm);margin-top:3px}
-.pp-hero-share{position:absolute;bottom:18px;right:22px;z-index:2;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.28);color:#fff;font-family:var(--fh);font-size:.78rem;font-weight:700;cursor:pointer;transition:background .2s}
+.pp-hero-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.pp-hero-share{z-index:2;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.28);color:#fff;font-family:var(--fh);font-size:.78rem;font-weight:700;cursor:pointer;transition:background .2s}
+.pp-hero-share-2k{background:rgba(251,191,36,.25);border-color:rgba(251,191,36,.5)}
+.pp-hero-share-2k:hover{background:rgba(251,191,36,.4)}
 .pp-hero-share:hover{background:rgba(255,255,255,.32)}
 
 /* Donut scoring */
@@ -824,7 +825,7 @@ html{scroll-behavior:smooth}
   .pp-hero-stats{gap:8px}
   .pp-hs{min-width:60px;padding:8px 9px}
   .pp-hs-v{font-size:1.25rem}
-  .pp-hero-share{position:static;margin-top:14px;width:fit-content}
+  .pp-hero-actions{margin-top:14px}
   .pp-donut-wrap{justify-content:center}
 
   /* Match hero */
@@ -3704,14 +3705,18 @@ function computeBadges(merged,attrs){
   if(attrs.efekt>=92)badges.push({i:'⭐',l:'Zvezda'});
   return badges.slice(0,4);
 }
+// ─── ENOTEN BARVNI JEZIK MOČI (uporabljen v 2K, bElo, power, dashboard) ───
+// Pomen barv je povsod enak: zlato=elita, zeleno=odličen, modro=dober, vijola=povprečen, siva=pod.
+const TIER_COLORS={elita:'#fbbf24',odlicen:'#34d399',dober:'#3b82f6',povprecen:'#a855f7',pod:'#94a3b8'};
 function ovrColor(ovr){
-  return ovr>=90?'#fbbf24':ovr>=82?'#34d399':ovr>=74?'#3b82f6':ovr>=66?'#a855f7':'#94a3b8';
+  return ovr>=90?TIER_COLORS.elita:ovr>=82?TIER_COLORS.odlicen:ovr>=74?TIER_COLORS.dober:ovr>=66?TIER_COLORS.povprecen:TIER_COLORS.pod;
 }
 
 function open2KCard(pIdx){
   const p=P[pIdx];
   if(!p)return;
   if(_isExcludedTeam(p[F.team])){toast('Cedevita Olimpija igra le končnico — premalo podatkov za 2K kartico','🏀');return;}
+  if(P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<5){toast('Premalo tekem za zanesljivo 2K kartico (min. 5)','🃏');return;}
   let merged=[...p]; const teams=new Set([p[F.team]]);
   P.forEach(x=>{ if(x!==p && x[F.pid]===p[F.pid]){
     teams.add(x[F.team]);
@@ -5604,13 +5609,15 @@ function showPlayer(idx){
         <div class="pp-hs"><div class="pp-hs-v" data-count="${tsVal!=null?tsVal.toFixed(0):0}" data-suf="%">0</div><div class="pp-hs-l">TS%</div></div>
         <div class="pp-hs"><div class="pp-hs-v" data-count="${(p[F.MIN]/t).toFixed(0)}" data-suf="'">0</div><div class="pp-hs-l">Min</div></div>
       </div>
-      <div class="pp-hero-share" onclick="openShareCard(${idx})">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
-        Deli
+      <div class="pp-hero-actions">
+        <div class="pp-hero-share" onclick="openShareCard(${idx})">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
+          Deli
+        </div>
+        ${(_isExcludedTeam(p[F.team])||P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<5)?'':`<div class="pp-hero-share pp-hero-share-2k" onclick="open2KCard(${idx})">
+          🃏 2K kartica
+        </div>`}
       </div>
-      ${_isExcludedTeam(p[F.team])?'':`<div class="pp-hero-share" onclick="open2KCard(${idx})" style="right:130px;background:rgba(251,191,36,.25);border-color:rgba(251,191,36,.5)">
-        🃏 2K kartica
-      </div>`}
     </div>
     <div class="pp-body">
       <div class="pp-left">
@@ -7692,6 +7699,16 @@ function renderPowerRanking(){
   const maxPow=teams[0].power, minPow=teams[teams.length-1].power;
   const powPct=p=>Math.max(8,Math.min(100,(p-minPow+2)/(maxPow-minPow+2)*100));
 
+  // Trend forme iz zadnjih 5: primerjaj zadnji 2-3 s prejšnjima
+  const formTrend=last5=>{
+    if(!last5||last5.length<3)return '';
+    const w=last5.filter(r=>r==='W').length;
+    const recent=last5.slice(-2).filter(r=>r==='W').length; // zadnji 2 (last5 je star→nov? preveri)
+    if(w>=4)return '<span style="color:#34d399">▲ vroča</span>';
+    if(w<=1)return '<span style="color:#f87171">▼ mrzla</span>';
+    return '<span style="color:var(--mut)">→ stabilna</span>';
+  };
+
   // ─── Podij top 3 ekip ───
   const podOrder=[teams[1],teams[0],teams[2]];
   const podMeta=[{r:'2.',c:'#cbd5e1',cls:''},{r:'1.',c:'#fbbf24',cls:'gold'},{r:'3.',c:'#d8915b',cls:''}];
@@ -7732,6 +7749,7 @@ function renderPowerRanking(){
       <div style="text-align:right;min-width:90px">
         <div style="font-family:var(--fs);font-weight:800;font-size:1.5rem;color:${oc}">${t.power}</div>
         <div style="font-size:.58rem;color:var(--mut);font-family:var(--fm);letter-spacing:.05em">MOČ POSTAVE</div>
+        <div style="font-size:.56rem;color:var(--mut);font-family:var(--fm);margin-top:3px">kader ${t.kaderPower} · ${formTrend(t.last5)}</div>
       </div>
     </div>`;
   });
@@ -7758,7 +7776,7 @@ function renderBElo(){
     </div>`;
 
   // Tier sidro (pomaga uporabniku brati vrednost)
-  const tierOf=(be)=> be>=1700?{l:'ELITA',c:'#fbbf24'}:be>=1620?{l:'ODLIČEN',c:'#34d399'}:be>=1550?{l:'DOBER',c:'#3b82f6'}:be>=1490?{l:'POVPREČEN',c:'var(--mut)'}:{l:'POD POVP.',c:'#f87171'};
+  const tierOf=(be)=> be>=1700?{l:'ELITA',c:TIER_COLORS.elita}:be>=1620?{l:'ODLIČEN',c:TIER_COLORS.odlicen}:be>=1550?{l:'DOBER',c:TIER_COLORS.dober}:be>=1490?{l:'POVPREČEN',c:TIER_COLORS.povprecen}:{l:'POD POVP.',c:TIER_COLORS.pod};
   const maxBe=arr.length?arr[0].be:1700;
   const minBe=arr.length?Math.min(1450,arr[arr.length-1].be):1450;
   const barPct=(be)=>Math.max(6,Math.min(100,(be-minBe)/(maxBe-minBe||1)*100));
