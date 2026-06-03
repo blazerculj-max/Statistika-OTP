@@ -3744,44 +3744,57 @@ async function draw2KCard(d){
   x.font='400 26px "Space Mono", monospace';
   x.fillText(`${d.born} · ${d.games} tekem`,56,ny+96);
 
-  // ── Atributni bari ──
+  // ── Atributni bari (poravnana mreža: label | bar | vrednost) ──
   const attrList=[
     ['MET',d.attrs.met],['NAPAD',d.attrs.napad],['PODAJA',d.attrs.podaja],
     ['SKOK',d.attrs.skok],['OBRAMBA',d.attrs.obramba],['EFEKT',d.attrs.efekt]
   ];
   let ay=ny+170;
-  const barX=56,barW=560,rowH=58;
-  x.font='700 28px "Space Grotesk", sans-serif';
+  const colL=56;               // začetek labela
+  const barStart=colL+220;     // bar se začne za labelom (fiksno, da je poravnan)
+  const barEnd=540;            // bar konec
+  const valX=620;              // desni rob za vrednost (desno poravnano)
+  const barWidth=barEnd-barStart;
+  const rowH=62;
   attrList.forEach(([lbl,val])=>{
     const c=ovrColor(val);
-    x.fillStyle='rgba(255,255,255,.7)';
+    const cy=ay;               // navpična sredina vrstice — vse poravnano nanjo
+    // label (levo, navpično centriran)
+    x.fillStyle='rgba(255,255,255,.72)';
     x.textAlign='left';
-    x.fillText(lbl,barX,ay+8);
-    // vrednost
+    x.textBaseline='middle';
+    x.font='700 30px "Space Grotesk", sans-serif';
+    x.fillText(lbl,colL,cy);
+    // bar track (centriran na isto cy)
+    const trackH=12, trackY=cy-trackH/2;
+    _roundRect(x,barStart,trackY,barWidth,trackH,trackH/2);
+    x.fillStyle='rgba(255,255,255,.12)';x.fill();
+    _roundRect(x,barStart,trackY,barWidth*(val/99),trackH,trackH/2);
+    x.fillStyle=c;x.fill();
+    // vrednost (desno poravnana, ista cy)
     x.fillStyle=c;
     x.textAlign='right';
-    x.font='800 34px "Space Mono", monospace';
-    x.fillText(String(val),barX+barW,ay+10);
-    x.font='700 28px "Space Grotesk", sans-serif';
-    // track
-    const trackY=ay+22,trackW=barW-220;
-    _roundRect(x,barX+150,trackY,trackW,10,5);x.fillStyle='rgba(255,255,255,.1)';x.fill();
-    _roundRect(x,barX+150,trackY,trackW*(val/99),10,5);x.fillStyle=c;x.fill();
+    x.font='800 36px "Space Mono", monospace';
+    x.fillText(String(val),valX,cy);
     ay+=rowH;
   });
+  x.textBaseline='alphabetic'; // reset za ostalo
 
-  // ── Badgi (desno spodaj) ──
+  // ── Badgi (desno ob barih) ──
   if(d.badges.length){
-    let by=ay-attrList.length*rowH+10, bx=barX+barW+70;
+    const bx=700;                                  // desni stolpec za badge
+    let by=ay-attrList.length*rowH;                // poravnano z vrhom prvega bara
     x.textAlign='left';
+    x.textBaseline='middle';
     d.badges.forEach(bg=>{
-      x.font='400 40px sans-serif';
-      x.fillText(bg.i,bx,by+30);
+      x.font='400 42px sans-serif';
+      x.fillText(bg.i,bx,by);
       x.fillStyle='rgba(255,255,255,.85)';
-      x.font='700 26px "Space Grotesk", sans-serif';
-      x.fillText(bg.l,bx+54,by+28);
-      by+=66;
+      x.font='700 27px "Space Grotesk", sans-serif';
+      x.fillText(bg.l,bx+56,by);
+      by+=rowH;                                    // isti razmik kot bari → poravnano
     });
+    x.textBaseline='alphabetic';
   }
 
   // ── Footer ──
