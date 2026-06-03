@@ -7369,14 +7369,21 @@ function computeBElo(){
       if(!side?.playerStats)return;
       const team=normalizeTeamName(side.teamName);
       const won=teamWon[team];
-      // Povprečna EFE ekipe v tej tekmi (za normalizacijo prispevka)
-      const effs=side.playerStats.filter(p=>p.played).map(p=>(p.efficiencyCustom||p.efficiency||0));
+      // Ali ima ta tekma EFE podatke? (3. SKL jih nima → uporabi TOČKE kot merilo)
+      const hasEfe=side.playerStats.some(p=>p.played&&(p.efficiencyCustom||p.efficiency||0)!==0);
+      // qualVal = merilo individualne kakovosti igralca v tej tekmi
+      const qualVal=ps=>hasEfe?(ps.efficiencyCustom||ps.efficiency||0):(ps.points||ps.toc||0);
+      // Referenca (liga povprečje merila) in teža — različni za EFE vs točke
+      const qRef=hasEfe?10:8;          // ~povprečen EFE ≈10, ~povprečne točke ≈8
+      const qWeight=hasEfe?0.8:0.9;    // točke imajo nekoliko večjo težo (edino merilo)
+      // Vsota merila v ekipi (za delež prispevka)
+      const effs=side.playerStats.filter(p=>p.played).map(p=>qualVal(p));
       const totEff=effs.reduce((s,e)=>s+Math.max(e,0),0)||1;
 
       side.playerStats.forEach(ps=>{
         if(!ps.played)return;
         const pid=ps.playerId;
-        const efe=ps.efficiencyCustom||ps.efficiency||0;
+        const efe=qualVal(ps);   // EFE ali točke, odvisno od lige
         if(!ratings[pid]){ratings[pid]=START;history[pid]=[];meta[pid]={name:(ps.matchTeamPlayerFirstname||'').trim()+' '+(ps.matchTeamPlayerLastname||'').trim(),team,games:0};}
         meta[pid].team=team; meta[pid].games++;
 
@@ -7404,10 +7411,9 @@ function computeBElo(){
         }else{ // poraz
           resultMult=Math.min(2.2,Math.max(0.5,relShare)); // nosilec bolj kaznovan
         }
-        // Individualna kakovost: EFE vs liga povprečje (~10). To je JEDRO neodvisnosti
-        // od ekipe — zvezda v šibki ekipi je nagrajena po svojem EFE, ne po zmagah ekipe.
-        // Teža 0.8, kapica ±12 (proti stat-paddingu). V porazu pozitiv šteje 60%.
-        let qualityAdj=Math.max(-12,Math.min(12,(efe-10)*0.8));
+        // Individualna kakovost: merilo vs liga povprečje. JEDRO neodvisnosti od ekipe.
+        // EFE-lige: EFE vs ~10. Točkovne lige (3.SKL): točke vs ~8.
+        let qualityAdj=Math.max(-12,Math.min(12,(efe-qRef)*qWeight));
         if(!won&&qualityAdj>0)qualityAdj*=0.6;
 
         const delta=K*teamResult*resultMult + qualityAdj;
