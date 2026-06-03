@@ -7527,13 +7527,27 @@ function computeTeamPower(){
     const wins=teamMatches.filter(m=>{const home=normalizeTeamName(m.firstTeamName)===team;return home?m.firstTeamScore>m.secondTeamScore:m.secondTeamScore>m.firstTeamScore;}).length;
     result.push({
       team, players:players.slice(0,3), nPlayers:players.length,
-      power:Math.round(coreOvr*10)/10,
+      kaderPower:Math.round(coreOvr*10)/10,   // surova moč postave
+      power:Math.round(coreOvr*10)/10,         // bo prepisano z mešanico
       elo:Math.round(elo[team]||1500),
       last5, record:`${wins}-${teamMatches.length-wins}`,
       games:teamMatches.length
     });
   });
-  // Rangiraj po moči postave
+
+  // ── Mešanica: 65% moč postave + 35% dejanski rezultati (ELO) ──
+  // Power ranking ne meri le teoretičnega kadra, ampak tudi kdo dejansko zmaguje.
+  if(result.length){
+    const pows=result.map(r=>r.kaderPower), elos=result.map(r=>r.elo);
+    const pMin=Math.min(...pows),pMax=Math.max(...pows);
+    const eMin=Math.min(...elos),eMax=Math.max(...elos);
+    // ELO preslikam na isto skalo kot kadrovska moč
+    const eloToScale=e=>pMin+(e-eMin)/(eMax-eMin||1)*(pMax-pMin);
+    result.forEach(r=>{
+      r.power=Math.round((0.65*r.kaderPower+0.35*eloToScale(r.elo))*10)/10;
+    });
+  }
+  // Rangiraj po skupni moči (kader + rezultati)
   result.sort((a,b)=>b.power-a.power);
   return result;
 }
@@ -7672,7 +7686,7 @@ function renderPowerRanking(){
   const lgName=getLg().short||'';
   let html=`<div class="sec-head" style="--sh-c:#10b981">⚡ Power Ranking — ${lgName}</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
-      Moč ekip glede na <strong>OVR postave</strong> (bElo igralcev + doprinos), ne le po rezultatih. Pokaže, kdo ima najmočnejši kader — tudi če lestvica še ne kaže.
+      Moč ekip: <strong>65% jakost postave</strong> (bElo igralcev + doprinos) in <strong>35% dejanski rezultati</strong> (ELO). Združi kakovost kadra in to, kdo zares zmaguje.
     </div>`;
 
   const maxPow=teams[0].power, minPow=teams[teams.length-1].power;
