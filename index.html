@@ -3573,6 +3573,227 @@ const LEADER_CATS=[
 // SHAREABLE PLAYER CARDS (canvas → PNG for social)
 // ═══════════════════════════════════════════════════
 let _shareName='kartica';
+// ═══════════════════════════════════════════════════
+// 2K KARTICE — overall iz bElo, atributi iz statistike
+// ═══════════════════════════════════════════════════
+// bElo → 2K skala (0-99). bElo ~1500 = povprečje ligaš ≈ 75.
+function bEloToOvr(be){
+  if(be==null)return null;
+  // 1400→65, 1500→75, 1650→88, 1750→97 (mehka linearna preslikava + cap)
+  const ovr=Math.round(75+(be-1500)/13);
+  return Math.max(55,Math.min(99,ovr));
+}
+// Percentil igralčeve vrednosti proti ligi (0..1)
+function _pctlRank(value,allValues){
+  if(value==null||!allValues.length)return 0.5;
+  const valid=allValues.filter(v=>v!=null).sort((a,b)=>a-b);
+  if(!valid.length)return 0.5;
+  let below=0; valid.forEach(v=>{if(v<value)below++;});
+  return below/valid.length;
+}
+// 6 atributov, vsak 0-99, normaliziran proti ligi (igralci z >=5 tekem)
+function computePlayerAttributes(merged){
+  const t=Math.max(merged[F.T],1);
+  const pool=getLeaguePlayers().filter(p=>p[F.T]>=5);
+  const per=(fn)=>pool.map(fn);
+  // surove per-game / odstotne vrednosti igralca
+  const myShoot=(tsOf(merged)||0);                              // strelska učinkovitost
+  const myInside=(merged[F.pip]/t)+(pct(merged[F.fg2m],merged[F.fg2a])||0)*0.15; // raketa
+  const myPlay=(merged[F.pod]/t)+(merged[F.izg]>0?merged[F.pod]/merged[F.izg]:merged[F.pod]/t); // podaje + A/T
+  const myReb=((merged[F.nap]+merged[F.obr])/t);                // skoki
+  const myDef=((merged[F.sto]+merged[F.blk])/t);                // obramba (steals+blocks)
+  const myImpact=(merged[F.efe]/t);                             // EFE impact
+  // ligaške porazdelitve
+  const dShoot=per(p=>tsOf(p)||0);
+  const dInside=per(p=>(p[F.pip]/Math.max(p[F.T],1))+(pct(p[F.fg2m],p[F.fg2a])||0)*0.15);
+  const dPlay=per(p=>(p[F.pod]/Math.max(p[F.T],1))+(p[F.izg]>0?p[F.pod]/p[F.izg]:p[F.pod]/Math.max(p[F.T],1)));
+  const dReb=per(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1));
+  const dDef=per(p=>(p[F.sto]+p[F.blk])/Math.max(p[F.T],1));
+  const dImpact=per(p=>p[F.efe]/Math.max(p[F.T],1));
+  // percentil → 45..99 skala
+  const toScale=(v,d)=>Math.round(45+_pctlRank(v,d)*54);
+  return {
+    met:toScale(myShoot,dShoot),
+    napad:toScale(myInside,dInside),
+    podaja:toScale(myPlay,dPlay),
+    skok:toScale(myReb,dReb),
+    obramba:toScale(myDef,dDef),
+    efekt:toScale(myImpact,dImpact)
+  };
+}
+// Badgi — značke za izstopajoče lastnosti (prag percentil)
+function computeBadges(merged,attrs){
+  const t=Math.max(merged[F.T],1);
+  const badges=[];
+  const fg3=pct(merged[F.fg3m],merged[F.fg3a]);
+  if(fg3!=null&&fg3>=37&&merged[F.fg3a]/t>=2)badges.push({i:'🎯',l:'Ostrostrelec'});
+  if(attrs.skok>=88)badges.push({i:'🪂',l:'Skakalec'});
+  if(attrs.podaja>=88)badges.push({i:'🧠',l:'Dirigent'});
+  if(attrs.obramba>=88)badges.push({i:'🔒',l:'Branilec'});
+  if(attrs.napad>=88)badges.push({i:'💪',l:'Rušilec'});
+  if((merged[F.toc]/t)>=18)badges.push({i:'🔥',l:'Strelska mašina'});
+  if(attrs.efekt>=92)badges.push({i:'⭐',l:'Zvezda'});
+  return badges.slice(0,4);
+}
+function ovrColor(ovr){
+  return ovr>=90?'#fbbf24':ovr>=82?'#34d399':ovr>=74?'#3b82f6':ovr>=66?'#a855f7':'#94a3b8';
+}
+
+function open2KCard(pIdx){
+  const p=P[pIdx];
+  if(!p)return;
+  let merged=[...p]; const teams=new Set([p[F.team]]);
+  P.forEach(x=>{ if(x!==p && x[F.pid]===p[F.pid]){
+    teams.add(x[F.team]);
+    [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>merged[fi]+=x[fi]);
+  }});
+  const teamLabel=[...teams].join(' / ');
+  const be=computeBElo().ratings[merged[F.pid]];
+  const ovr=bEloToOvr(be)||60;
+  const attrs=computePlayerAttributes(merged);
+  const badges=computeBadges(merged,attrs);
+  const t=Math.max(merged[F.T],1);
+  draw2KCard({
+    name:merged[F.name], team:teamLabel, born:merged[F.born], games:merged[F.T],
+    ovr, be, attrs, badges,
+    pts:merged[F.toc]/t, reb:(merged[F.nap]+merged[F.obr])/t, ast:merged[F.pod]/t,
+    color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
+    logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0]),
+    photoUrl:playerPhotoUrl(merged[F.pid]),
+    logoLocal:teamLogoLocal(teamLabel),
+    photoLocal:playerPhotoLocal(merged[F.pid])
+  });
+  _shareName=merged[F.name].replace(/\s+/g,'_')+'_2K';
+  document.getElementById('share-overlay').style.display='flex';document.body.style.overflow='hidden';
+}
+
+async function draw2KCard(d){
+  const cv=document.getElementById('share-canvas');
+  const x=cv.getContext('2d');
+  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+  const W=1080,H=1080;
+  const col=d.color, oc=ovrColor(d.ovr);
+
+  // Ozadje — temni gradient z barvo ekipe
+  const bg=x.createLinearGradient(0,0,W*0.6,H);
+  bg.addColorStop(0,_shade(col,-50));
+  bg.addColorStop(0.55,_shade(col,-75));
+  bg.addColorStop(1,'#05050c');
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  // teksturni žarki
+  x.save();x.globalAlpha=.06;x.fillStyle='#fff';
+  x.beginPath();x.moveTo(W,0);x.lineTo(W,H);x.lineTo(W*0.45,0);x.closePath();x.fill();x.restore();
+
+  // ── OVERALL blok zgoraj levo ──
+  x.fillStyle='#fff';
+  x.textAlign='left';
+  x.font='800 200px "Space Mono", monospace';
+  x.fillStyle=oc;
+  x.fillText(String(d.ovr), 56, 210);
+  x.fillStyle='rgba(255,255,255,.85)';
+  x.font='700 38px "Space Grotesk", sans-serif';
+  const ovrW=x.measureText(String(d.ovr)).width;
+  x.fillText('OVR', 56, 260);
+  // bElo pod OVR
+  x.fillStyle='rgba(255,255,255,.5)';
+  x.font='600 26px "Space Mono", monospace';
+  x.fillText('bElo '+(d.be||'—'), 150, 258);
+
+  // ── Foto igralca desno zgoraj ──
+  const photoSize=340, pcx=W-photoSize/2-70, pcy=photoSize/2+70;
+  const photoImg=await _loadImg(d.photoLocal||d.photoUrl,{w:700});
+  const logoImg=await _loadImg(d.logoLocal||d.logoUrl,{w:200});
+  if(photoImg){
+    x.save();
+    // žareč obroč v barvi OVR
+    x.beginPath();x.arc(pcx,pcy,photoSize/2+8,0,Math.PI*2);
+    x.fillStyle=oc;x.globalAlpha=.25;x.fill();x.globalAlpha=1;
+    x.beginPath();x.arc(pcx,pcy,photoSize/2,0,Math.PI*2);x.closePath();x.clip();
+    const iw=photoImg.naturalWidth,ih=photoImg.naturalHeight,side=Math.min(iw,ih);
+    x.drawImage(photoImg,(iw-side)/2,0,side,side,pcx-photoSize/2,pcy-photoSize/2,photoSize,photoSize);
+    x.restore();
+    x.beginPath();x.arc(pcx,pcy,photoSize/2,0,Math.PI*2);
+    x.strokeStyle=oc;x.lineWidth=5;x.stroke();
+  }
+  if(logoImg){
+    const ls=92,lx=pcx-photoSize/2-10,ly=pcy+photoSize/2-ls;
+    _roundRect(x,lx-8,ly-8,ls+16,ls+16,18);
+    x.fillStyle='rgba(8,8,16,.9)';x.fill();
+    x.strokeStyle='rgba(255,255,255,.2)';x.lineWidth=2;x.stroke();
+    try{x.drawImage(logoImg,lx,ly,ls,ls);}catch(e){}
+  }
+
+  // ── Ime igralca ──
+  x.fillStyle='#fff';
+  x.textAlign='left';
+  x.font='800 76px "Space Grotesk", sans-serif';
+  const name=d.name.toUpperCase();
+  const parts=name.split(' ');
+  let l1=name,l2='';
+  if(x.measureText(name).width>560 && parts.length>1){
+    const mid=Math.ceil(parts.length/2);
+    l1=parts.slice(0,mid).join(' ');l2=parts.slice(mid).join(' ');
+  }
+  let ny=430;
+  x.fillText(l1,56,ny);
+  if(l2){ny+=82;x.fillText(l2,56,ny);}
+  x.fillStyle=col;
+  x.font='700 36px "Space Grotesk", sans-serif';
+  x.fillText(d.team.split(' / ')[0],56,ny+56);
+  x.fillStyle='rgba(255,255,255,.4)';
+  x.font='400 26px "Space Mono", monospace';
+  x.fillText(`${d.born} · ${d.games} tekem`,56,ny+96);
+
+  // ── Atributni bari ──
+  const attrList=[
+    ['MET',d.attrs.met],['NAPAD',d.attrs.napad],['PODAJA',d.attrs.podaja],
+    ['SKOK',d.attrs.skok],['OBRAMBA',d.attrs.obramba],['EFEKT',d.attrs.efekt]
+  ];
+  let ay=ny+170;
+  const barX=56,barW=560,rowH=58;
+  x.font='700 28px "Space Grotesk", sans-serif';
+  attrList.forEach(([lbl,val])=>{
+    const c=ovrColor(val);
+    x.fillStyle='rgba(255,255,255,.7)';
+    x.textAlign='left';
+    x.fillText(lbl,barX,ay+8);
+    // vrednost
+    x.fillStyle=c;
+    x.textAlign='right';
+    x.font='800 34px "Space Mono", monospace';
+    x.fillText(String(val),barX+barW,ay+10);
+    x.font='700 28px "Space Grotesk", sans-serif';
+    // track
+    const trackY=ay+22,trackW=barW-220;
+    _roundRect(x,barX+150,trackY,trackW,10,5);x.fillStyle='rgba(255,255,255,.1)';x.fill();
+    _roundRect(x,barX+150,trackY,trackW*(val/99),10,5);x.fillStyle=c;x.fill();
+    ay+=rowH;
+  });
+
+  // ── Badgi (desno spodaj) ──
+  if(d.badges.length){
+    let by=ay-attrList.length*rowH+10, bx=barX+barW+70;
+    x.textAlign='left';
+    d.badges.forEach(bg=>{
+      x.font='400 40px sans-serif';
+      x.fillText(bg.i,bx,by+30);
+      x.fillStyle='rgba(255,255,255,.85)';
+      x.font='700 26px "Space Grotesk", sans-serif';
+      x.fillText(bg.l,bx+54,by+28);
+      by+=66;
+    });
+  }
+
+  // ── Footer ──
+  x.fillStyle='rgba(255,255,255,.35)';
+  x.textAlign='left';
+  x.font='600 24px "Space Mono", monospace';
+  x.fillText('SLOVENSKA KOŠARKA · 2025/26 · bElo OVERALL',56,H-44);
+  x.textAlign='right';
+  x.fillStyle=col;
+  x.fillText('by Blaž Erčulj',W-56,H-44);
+}
+
 function openShareCard(pIdx){
   const p=P[pIdx];
   if(!p)return;
@@ -5292,6 +5513,9 @@ function showPlayer(idx){
       <div class="pp-hero-share" onclick="openShareCard(${idx})">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
         Deli
+      </div>
+      <div class="pp-hero-share" onclick="open2KCard(${idx})" style="right:130px;background:rgba(251,191,36,.25);border-color:rgba(251,191,36,.5)">
+        🃏 2K kartica
       </div>
     </div>
     <div class="pp-body">
