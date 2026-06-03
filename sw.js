@@ -1,76 +1,56 @@
-// Service Worker — SKL Statistika PWA
-// Strategija: app shell (index.html) cache-first za hiter zagon + offline,
-// podatki (data/*.json) network-first z cache fallback (sveži, a delujejo offline).
+// ══════════════════════════════════════════════════════════
+// Service Worker — Slovenska košarka (Liga OTP banka)
+// Strategija: NETWORK-FIRST (vedno sveže). Predpomnilnik je le
+// zasilni padalo, če mreže res ni. Hard refresh NI več potreben.
+// ══════════════════════════════════════════════════════════
 
-const CACHE = 'skl-stats-v1';
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
-];
+const CACHE = 'skl-net-first-v1';
 
-// Namestitev — predpomni app shell
-self.addEventListener('install', e => {
+// Ob namestitvi: takoj prevzemi krmilo (ne čakaj na zaprtje zavihkov)
+self.addEventListener('install', (e) => {
+  self.skipWaiting();
+});
+
+// Ob aktivaciji: počisti VSE stare predpomnilnike in prevzemi vse odprte zavihke
+self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(APP_SHELL).catch(() => {})).then(() => self.skipWaiting())
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => (k === CACHE ? null : caches.delete(k))));
+      await self.clients.claim();
+    })()
   );
 });
 
-// Aktivacija — počisti stare cache
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
-});
+// Vsaka zahteva gre NAJPREJ na mrežo. Predpomnilnik samo, če mreže ni.
+self.addEventListener('fetch', (e) => {
+  const req = e.request;
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+  // Samo GET zahteve obravnavamo
+  if (req.method !== 'GET') return;
 
-  // Samo GET
-  if (e.request.method !== 'GET') return;
-
-  // Podatki (GitHub JSON) — network-first, fallback na cache
-  if (url.pathname.endsWith('.json') || url.hostname.includes('githubusercontent')) {
-    e.respondWith(
-      fetch(e.request).then(resp => {
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-        return resp;
-      }).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // KZS slike in proxyji — cache-first (slike se ne spreminjajo pogosto)
-  if (url.hostname.includes('kzs.si') || url.hostname.includes('wsrv.nl') ||
-      url.hostname.includes('weserv.nl') || url.pathname.includes('/images/')) {
-    e.respondWith(
-      caches.match(e.request).then(cached =>
-        cached || fetch(e.request).then(resp => {
-          const copy = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
-          return resp;
-        }).catch(() => cached)
-      )
-    );
-    return;
-  }
-
-  // App shell in ostalo — cache-first, fallback na mrežo
   e.respondWith(
-    caches.match(e.request).then(cached =>
-      cached || fetch(e.request).then(resp => {
-        // Predpomni iste-domene odgovore
-        if (url.origin === location.origin) {
-          const copy = resp.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
+    (async () => {
+      try {
+        // VEDNO poskusi svežo verzijo z mreže
+        const fresh = await fetch(req, { cache: 'no-store' });
+        // Shrani kopijo v predpomnilnik (samo za zasilni offline primer)
+        if (fresh && fresh.status === 200 && req.url.startsWith('http')) {
+          const cache = await caches.open(CACHE);
+          cache.put(req, fresh.clone());
         }
-        return resp;
-      }).catch(() => caches.match('./index.html'))
-    )
+        return fresh;
+      } catch (err) {
+        // Mreže ni → vrni zadnjo znano kopijo, če obstaja
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        throw err;
+      }
+    })()
   );
+});
+
+// Dovoli strani, da ročno sproži takojšnjo posodobitev
+self.addEventListener('message', (e) => {
+  if (e.data === 'SKIP_WAITING') self.skipWaiting();
 });
