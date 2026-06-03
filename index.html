@@ -145,13 +145,15 @@ select:focus{outline:none;border-color:var(--acc)}
 .filter-note{font-size:.72rem;color:var(--mut);font-family:var(--fm);padding:6px 0}
 /* STAT TOOLTIPS */
 .stat-tip{position:relative;cursor:help;border-bottom:1px dotted var(--mut)}
+.th-q{font-size:.55rem;margin-left:2px;color:var(--mut);opacity:0;transition:opacity .18s;vertical-align:super}
+th:hover .th-q{opacity:.7}
+@media(hover:none){.th-q{opacity:.45}}
 .stat-tip::after{
   content:attr(data-tip);
   display:none;
   position:absolute;
-  bottom:calc(100% + 6px);
-  left:50%;
-  transform:translateX(-50%);
+  top:calc(100% + 6px);
+  left:0;
   background:#1a1a2e;
   border:1px solid var(--border2);
   border-radius:8px;
@@ -161,7 +163,7 @@ select:focus{outline:none;border-color:var(--acc)}
   font-weight:400;
   color:var(--text);
   white-space:nowrap;
-  z-index:100;
+  z-index:1000;
   box-shadow:0 4px 20px rgba(0,0,0,.5);
   pointer-events:none;
   max-width:280px;
@@ -310,15 +312,18 @@ select:focus{outline:none;border-color:var(--acc)}
 .hero-title{font-family:var(--fh);font-size:clamp(3.2rem,12vw,6.5rem);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0 0 var(--sp-5);color:var(--text)}
 .hero-title span{background:linear-gradient(120deg,var(--acc),#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hero-sub{font-size:var(--t-md);color:var(--sub);margin:0 auto var(--sp-7);font-family:var(--fm);max-width:380px;line-height:1.5;font-weight:400}
-.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);border:none;border-radius:100px;padding:16px 36px;font-family:var(--fh);font-size:var(--t-base);font-weight:700;letter-spacing:.01em;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .2s;box-shadow:0 1px 0 rgba(255,255,255,.1)}
-.hero-cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 32px -8px rgba(255,255,255,.25)}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);border:none;border-radius:100px;padding:16px 36px;font-family:var(--fh);font-size:var(--t-base);font-weight:700;letter-spacing:.01em;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .2s;box-shadow:0 1px 0 rgba(255,255,255,.1);animation:ctaBreathe 3.4s ease-in-out infinite}
+@keyframes ctaBreathe{0%,100%{box-shadow:0 1px 0 rgba(255,255,255,.1),0 0 0 0 rgba(249,115,22,0)}50%{box-shadow:0 1px 0 rgba(255,255,255,.1),0 0 28px -2px rgba(249,115,22,.35)}}
+.hero-cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 32px -8px rgba(255,255,255,.25);animation:none}
 .hero-cta:active{transform:translateY(0) scale(1)}
 .hero-cta svg{transition:transform .3s}
 .hero-cta:hover svg{transform:translateX(3px)}
 .hero-leagues{display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-8);flex-wrap:wrap}
 .hero-lg{display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:transparent;border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);cursor:pointer;transition:border-color .2s,background .2s,transform .2s;min-width:120px}
-.hero-lg:hover{border-color:var(--border2);background:var(--card);transform:translateY(-2px)}
-.hero-lg-dot{width:8px;height:8px;border-radius:50%;margin-bottom:2px}
+.hero-lg:hover{border-color:var(--border2);background:var(--card);transform:translateY(-3px)}
+.hero-lg:active{transform:translateY(-1px)}
+.hero-lg-dot{width:8px;height:8px;border-radius:50%;margin-bottom:2px;transition:box-shadow .25s,transform .25s}
+.hero-lg:hover .hero-lg-dot{transform:scale(1.25);box-shadow:0 0 12px 2px currentColor}
 .hero-lg-name{font-family:var(--fh);font-weight:800;font-size:var(--t-base);color:var(--text)}
 .hero-lg-desc{font-family:var(--fm);font-size:var(--t-xs);color:var(--mut)}
 .hero-foot{position:absolute;bottom:var(--sp-5);left:0;right:0;text-align:center;font-family:var(--fm);font-size:var(--t-xs);color:var(--mut);z-index:1;letter-spacing:.02em}
@@ -1341,17 +1346,17 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
     <div class="hero-leagues">
       <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga1')">
-        <span class="hero-lg-dot" style="background:var(--acc)"></span>
+        <span class="hero-lg-dot" style="background:var(--acc);color:var(--acc)"></span>
         <span class="hero-lg-name">1. SKL</span>
         <span class="hero-lg-desc">Liga OTP banka</span>
       </button>
       <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga2')">
-        <span class="hero-lg-dot" style="background:var(--blue)"></span>
+        <span class="hero-lg-dot" style="background:var(--blue);color:var(--blue)"></span>
         <span class="hero-lg-name">2. SKL</span>
         <span class="hero-lg-desc">Druga liga</span>
       </button>
       <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga3')">
-        <span class="hero-lg-dot" style="background:var(--purple)"></span>
+        <span class="hero-lg-dot" style="background:var(--purple);color:var(--purple)"></span>
         <span class="hero-lg-name">3. SKL</span>
         <span class="hero-lg-desc">Tretja liga</span>
       </button>
@@ -2991,7 +2996,7 @@ function renderTeam(){
 
   const hdrGrpRow=GRPS.map(g=>`<th colspan="${g.span}" class="gr ${g.cls}">${g.lbl}</th>`).join('');
   const MOBILE_COLS=['name','T','toc','obr','pod','efe'];
-  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span style="font-size:.55rem;color:var(--mut);margin-left:2px">?</span>':''}</th>`;}).join('');
+  const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span class="th-q">?</span>':''}</th>`;}).join('');
 
   const rows=players.map(p=>{
     const pidx=P.indexOf(p);
@@ -3558,7 +3563,7 @@ function openShareCard(pIdx){
     photoLocal:playerPhotoLocal(merged[F.pid])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_');
-  document.getElementById('share-overlay').style.display='flex';
+  document.getElementById('share-overlay').style.display='flex';document.body.style.overflow='hidden';
 }
 
 async function drawShareCard(d){
@@ -3797,7 +3802,7 @@ function openRoundCard(mode){
     sel.innerHTML=rounds.map(r=>`<option value="${r}">Krog ${r}</option>`).join('');
     _rcRound=rounds[0];
   }
-  document.getElementById('roundcard-overlay').style.display='flex';
+  document.getElementById('roundcard-overlay').style.display='flex';document.body.style.overflow='hidden';
   renderRoundCard();
 }
 function closeRoundCard(){document.getElementById('roundcard-overlay').style.display='none';}
@@ -4449,6 +4454,47 @@ function cmdkPick(i){
 // Global keyboard shortcut
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();openCmdK();}
+});
+
+// ═══ GLOBALNO ZAPIRANJE MODALOV (Escape + klik na ozadje) ═══
+// Vsi modalni overlayi + njihova close funkcija. Centralizirano, da
+// Escape in klik-na-ozadje delujeta enako povsod.
+const _MODALS=[
+  {id:'player-overlay',  close:'closePlayer'},
+  {id:'team-overlay',    close:'closeTeamProfile'},
+  {id:'match-overlay',   close:'closeMatch'},
+  {id:'share-overlay',   close:'closeShare'},
+  {id:'roundcard-overlay',close:'closeRoundCard'},
+  {id:'cmdk-overlay',    close:'closeCmdK'}
+];
+function _topOpenModal(){
+  // Zadnji v DOM redu, ki je viden = "najvišji" odprti modal
+  for(let i=_MODALS.length-1;i>=0;i--){
+    const el=document.getElementById(_MODALS[i].id);
+    if(el){const d=getComputedStyle(el).display;if(d&&d!=='none')return _MODALS[i];}
+  }
+  // mobilni "Več" sheet
+  const more=document.getElementById('mobile-more');
+  if(more&&more.classList.contains('open'))return{id:'mobile-more',close:'closeMobileMore'};
+  return null;
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const m=_topOpenModal();
+  if(m&&typeof window[m.close]==='function'){e.preventDefault();window[m.close]();}
+});
+// Klik na temno ozadje (ne na vsebino modala) zapre modal
+_MODALS.forEach(({id,close})=>{
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.addEventListener('click',e=>{
+    if(e.target===el&&typeof window[close]==='function')window[close]();
+  });
+});
+// Dosleden scroll-lock tudi za share/roundcard (open nastavi, close počisti)
+['closeShare','closeRoundCard'].forEach(fn=>{
+  const orig=window[fn];
+  if(typeof orig==='function')window[fn]=function(){orig.apply(this,arguments);document.body.style.overflow='';};
 });
 
 // ═══ FEATURED / NEXT MATCH ═══
