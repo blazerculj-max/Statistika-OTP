@@ -5523,8 +5523,19 @@ function renderCmpSection(){
 // PLAYER PROFILE
 // ═══════════════════════════════════════════════════
 function showPlayer(idx){
-  const p=P[idx];if(!p)return;
-  const color=TEAM_COLORS[p[F.team]]||'#f97316';
+  const _raw=P[idx];if(!_raw)return;
+  // Združi vse vrstice istega igralca (prestop med sezono) v ENO sezonsko statistiko.
+  // Posamezne ekipe shranimo v _byTeam za razčlenitev v profilu.
+  const _rows=P.filter(x=>x[F.pid]===_raw[F.pid]);
+  let p;
+  if(_rows.length<=1){p=_raw;}
+  else{
+    p=[..._rows[0]];
+    p[F.team]=_rows.map(r=>r[F.team]).join(' / ');
+    [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>{p[fi]=_rows.reduce((s,r)=>s+r[fi],0);});
+  }
+  window._ppByTeam=_rows.length>1?_rows:null; // za razčlenitev po ekipah
+  const color=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||'#f97316';
   const overlay=document.getElementById('player-overlay');
   overlay.style.display='flex';document.body.style.overflow='hidden';
   const t=p[F.T];
@@ -5634,6 +5645,17 @@ function showPlayer(idx){
           <tr><td><span class="stat-tip" data-tip="PiP — Points in the Paint&#10;Točke dosežene z metom iz raketinega območja.">Točke v raketi</span></td><td>${p[F.pip]}</td><td>${fmt(p[F.pip]/t)}</td></tr>
           <tr><td><span class="stat-tip" data-tip="FB — Fast Break Points&#10;Točke dosežene v protinapadih po ukradeni žogi ali skoku.">Fast break</span></td><td>${p[F.fb]}</td><td>${fmt(p[F.fb]/t)}</td></tr>
         </table>
+        ${window._ppByTeam?`<div class="pp-section-title" style="margin-top:16px">PO EKIPAH (PRESTOP)</div>
+        <table class="pp-table">
+          <tr><th>EKIPA</th><th>TEKEM</th><th>TOČ/TM</th><th>SK/TM</th><th>AS/TM</th></tr>
+          ${window._ppByTeam.map(r=>{const rt=Math.max(r[F.T],1);const tc=TEAM_COLORS[r[F.team]]||'#888';return `<tr>
+            <td><span style="display:inline-flex;align-items:center;gap:6px">${teamLogoHtml(r[F.team],18)}${r[F.team]}</span></td>
+            <td>${r[F.T]}</td>
+            <td>${fmt(r[F.toc]/rt)}</td>
+            <td>${fmt((r[F.nap]+r[F.obr])/rt)}</td>
+            <td>${fmt(r[F.pod]/rt)}</td>
+          </tr>`;}).join('')}
+        </table>`:''}
         <div class="pp-section-title" style="margin-top:16px">PRIMERJAJ Z...</div>
         <input class="si" id="pp-srch" type="text" placeholder="Išči igralca..." oninput="ppSearch()" style="width:100%;margin-bottom:8px">
         <div id="pp-srch-results" style="max-height:180px;overflow-y:auto;border-radius:7px;border:1px solid var(--border)"></div>
@@ -7535,8 +7557,9 @@ function renderPregled(){
   const lgName=getLg().short||'1. SKL';
   const lgColor=getLg().id===579?'#f97316':getLg().id===581?'#3b82f6':'#a855f7';
 
-  // — Vodilni MVP —
-  const rdPlayers=P.filter(p=>p[F.T]>=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5)));
+  // — Vodilni MVP — (getLeaguePlayers = združeni totali tudi pri prestopih)
+  const _lp=getLeaguePlayers();
+  const rdPlayers=_lp.filter(p=>p[F.T]>=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5)));
   const mvp=rdPlayers.map(p=>({p,score:calcMvpScore(p)})).sort((a,b)=>b.score-a.score)[0];
 
   // — Power top 3 —
