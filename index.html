@@ -6924,13 +6924,17 @@ function computeElo(){
 _bEloRatings=null;
 function computeBElo(){
   if(_bEloRatings)return _bEloRatings;
-  const K=24, START=1500;
+  const START=1500;
   const elo=computeElo().ratings; // ekipni ELO za jakost nasprotnika
   const ratings={}, history={}, meta={};
 
-  // Kronološko vse tekme rednega dela
-  const finished=allMatches.filter(m=>m.status==='FINISHED'&&
-    m.competitions?.[0]?.competitionPhaseName==='Redni del')
+  // Kronološko VSE odigrane tekme (redni del + končnica).
+  // Končnica šteje z višjim K — playoff tekme so težje in bolj premaknejo moč.
+  const isPlayoff=m=>{
+    const ph=(m.competitions?.[0]?.competitionPhaseName||'').toLowerCase();
+    return ph.includes('končni')||ph.includes('finale')||ph.includes('polfinale')||ph.includes('četrtfinale')||ph.includes('za obstanek')||ph.includes('play');
+  };
+  const finished=allMatches.filter(m=>m.status==='FINISHED')
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
 
   finished.forEach(m=>{
@@ -6938,6 +6942,7 @@ function computeBElo(){
     const win1=m.firstTeamScore>m.secondTeamScore;
     const oppElo={[t1]:elo[t2]||1500,[t2]:elo[t1]||1500};
     const teamWon={[t1]:win1,[t2]:!win1};
+    const K=isPlayoff(m)?32:24; // končnica teža 32, redni del 24
 
     // Zberi statistike obeh ekip v tej tekmi
     const ms=matchStatsCache[m.id];
@@ -6945,6 +6950,7 @@ function computeBElo(){
     [ms.firstTeam,ms.secondTeam].forEach(side=>{
       if(!side?.playerStats)return;
       const team=normalizeTeamName(side.teamName);
+      const won=teamWon[team];
       // Povprečna EFE ekipe v tej tekmi (za normalizacijo prispevka)
       const effs=side.playerStats.filter(p=>p.played).map(p=>(p.efficiencyCustom||p.efficiency||0));
       const totEff=effs.reduce((s,e)=>s+Math.max(e,0),0)||1;
@@ -6959,14 +6965,16 @@ function computeBElo(){
         // Pričakovan izid glede na ekipni ELO igralca vs nasprotnik
         const myTeamElo=elo[team]||1500;
         const expected=1/(1+10**((oppElo[team]-myTeamElo)/400));
-        const actual=teamWon[team]?1:0;
+        const actual=won?1:0;
 
         // Delež prispevka igralca k ekipni efektivnosti (0..1, cap)
         const share=Math.max(0,efe)/totEff; // npr 0.15 = 15% ekipne efektivnosti
         // Multiplikator: kdor več prispeva, bolj čuti rezultat (0.3x do 2.5x)
         const contribMult=Math.min(2.5,Math.max(0.3,share*side.playerStats.filter(p=>p.played).length));
-        // Individualna kakovost: EFE vs liga povprečje (~10) blago doda/odvzame
-        const qualityAdj=(efe-10)*0.4;
+        // Individualna kakovost: EFE vs liga povprečje (~10), KAPIRANO ±6 (proti stat-paddingu).
+        // V porazu šteje le 60% — "30 točk v porazu" ne dvigne bElo kot zmaga.
+        let qualityAdj=Math.max(-6,Math.min(6,(efe-10)*0.4));
+        if(!won&&qualityAdj>0)qualityAdj*=0.6;
 
         const delta=K*(actual-expected)*contribMult + qualityAdj;
         ratings[pid]=Math.round(ratings[pid]+delta);
@@ -7008,7 +7016,7 @@ function renderBElo(){
 
   let html=`<div class="sec-head" style="--sh-c:#fbbf24">★ bElo — moč igralcev</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
-      <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono. Uporabno za napoved moči ekip.
+      <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono (vključno s končnico, ki šteje več). Uporabno za napoved moči ekip.
     </div>`;
 
   // Top players
