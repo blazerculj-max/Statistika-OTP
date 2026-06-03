@@ -1892,6 +1892,17 @@ const LEAGUES = {
 let currentLeague = 'liga1';
 function getLg() { return LEAGUES[currentLeague]; }
 
+// ─── 2K OVR ligaška sidra (NASTAVLJIVO za naslednjo sezono) ───
+// anchor = OVR povprečnega igralca lige (bElo 1500). 1. SKL referenca.
+// spread = koliko bElo = 1 OVR točka. Večji spread → bolj strnjeno (nižji strop).
+//   Nižje lige strnem, da zvezda 2.lige ne preseže vrha 1.lige.
+// Spremeni te vrednosti, če se nivo lig spremeni.
+const LEAGUE_OVR_CFG = {
+  liga1: { anchor: 75, spread: 13 },  // razpon ~58-96
+  liga2: { anchor: 66, spread: 20 },  // strnjeno, strop ~84
+  liga3: { anchor: 57, spread: 19 }   // razpon ~47-70
+};
+
 const TEAM_COLORS = {
   'GGD Šenčur':'#3b82f6','Krka':'#10b981','Kansai Helios':'#f59e0b',
   'Laško':'#ef4444','Rogaška':'#a855f7',
@@ -3579,9 +3590,10 @@ let _shareName='kartica';
 // bElo → 2K skala (0-99). bElo ~1500 = povprečje ligaš ≈ 75.
 function bEloToOvr(be){
   if(be==null)return null;
-  // 1400→65, 1500→75, 1650→88, 1750→97 (mehka linearna preslikava + cap)
-  const ovr=Math.round(75+(be-1500)/13);
-  return Math.max(55,Math.min(99,ovr));
+  const cfg=LEAGUE_OVR_CFG[currentLeague]||LEAGUE_OVR_CFG.liga1;
+  // Sidro = povprečen igralec lige. Spread = bElo na 1 OVR (nižja liga = bolj strnjeno).
+  const ovr=Math.round(cfg.anchor+(be-1500)/cfg.spread);
+  return Math.max(40,Math.min(99,ovr));
 }
 // Percentil igralčeve vrednosti proti ligi (0..1)
 function _pctlRank(value,allValues){
