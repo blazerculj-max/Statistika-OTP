@@ -288,36 +288,32 @@ select:focus{outline:none;border-color:var(--acc)}
 .att-trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--blue);opacity:.7;cursor:default;transition:opacity .15s}
 .att-trend-bar:hover{opacity:1}
 /* HERO PAGE */
-#hero-overlay{position:fixed;inset:0;z-index:3000;display:flex;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
-.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(249,115,22,.08) 0%,transparent 60%),radial-gradient(ellipse at 70% 50%,rgba(96,165,250,.06) 0%,transparent 60%);pointer-events:none;animation:heroBgDrift 14s ease-in-out infinite alternate}@keyframes heroBgDrift{0%{background-position:0% 0%,100% 0%}100%{background-position:20% 30%,80% 70%}}
-.hero-wrap{position:relative;z-index:1;text-align:center;padding:40px 24px;max-width:700px;width:100%}
-.hero-badge{display:inline-block;background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);color:var(--acc);padding:5px 16px;border-radius:20px;font-family:var(--fm);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:24px}
-.hero-title{font-family:var(--fh);font-size:clamp(2.8rem,8vw,5.5rem);font-weight:800;letter-spacing:-.04em;line-height:.92;margin-bottom:10px}
-.hero-title span{color:var(--acc)}
-.hero-sub{font-size:.9rem;color:var(--mut);margin-bottom:48px;font-family:var(--fm)}
-.hero-leagues{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px}
-@media(max-width:768px){.hero-leagues{grid-template-columns:1fr;gap:10px}}
-.hero-card{border-radius:12px;border:1px solid var(--border);background:transparent;padding:20px 18px;cursor:pointer;transition:all .25s;text-align:left;position:relative;overflow:hidden}
-.hero-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .25s}
-.hero-card:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
-.hero-card.liga1::before{background:linear-gradient(135deg,rgba(249,115,22,.12),transparent)}
-.hero-card.liga2::before{background:linear-gradient(135deg,rgba(96,165,250,.12),transparent)}
-.hero-card:hover::before{opacity:1}
-.hero-card:hover.liga1{border-color:rgba(249,115,22,.5)}
-.hero-card:hover.liga2{border-color:rgba(96,165,250,.5)}
-.hc-badge{font-size:.65rem;font-family:var(--fm);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;font-weight:600}
-.hc-name{font-family:var(--fh);font-size:1.6rem;letter-spacing:.04em;margin-bottom:6px;line-height:1}
-.hc-meta{font-size:.72rem;color:var(--mut);margin-bottom:16px}
-.hc-teams{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
-.hc-team-pill{font-size:.62rem;padding:2px 8px;border-radius:10px;border:1px solid var(--border2);color:var(--sub)}
-.hc-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:8px;font-family:var(--fh);font-size:.9rem;letter-spacing:.05em;cursor:pointer;border:none;transition:all .2s}
-.hc-btn.liga1{background:var(--acc);color:white}
-.hc-btn.liga2{background:var(--blue);color:white}
-.hc-btn.liga3{background:#a855f7;color:white}
-.hero-card.liga3::before{background:linear-gradient(135deg,rgba(168,85,247,.12),transparent)}
-.hero-card:hover.liga3{border-color:rgba(168,85,247,.5)}
-.hc-btn:hover{opacity:.9;transform:translateX(2px)}
-.hero-footer{font-size:.7rem;color:var(--mut);font-family:var(--fm)}
+#hero-overlay{position:fixed;inset:0;z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);overflow:hidden}
+#hero-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.5;pointer-events:none}
+#hero-overlay::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(249,115,22,.10),transparent 70%);pointer-events:none}
+.hero-wrap{position:relative;z-index:1;text-align:center;padding:var(--sp-5);max-width:640px;width:100%}
+.hero-eyebrow{font-family:var(--fm);font-size:var(--t-xs);letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-bottom:var(--sp-5)}
+.hero-title{font-family:var(--fh);font-size:clamp(3.2rem,12vw,6.5rem);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0 0 var(--sp-5);color:var(--text)}
+.hero-title span{background:linear-gradient(120deg,var(--acc),#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:var(--t-md);color:var(--sub);margin:0 auto var(--sp-7);font-family:var(--fm);max-width:380px;line-height:1.5;font-weight:400}
+.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);border:none;border-radius:100px;padding:16px 36px;font-family:var(--fh);font-size:var(--t-base);font-weight:700;letter-spacing:.01em;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .2s;box-shadow:0 1px 0 rgba(255,255,255,.1)}
+.hero-cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 32px -8px rgba(255,255,255,.25)}
+.hero-cta:active{transform:translateY(0) scale(1)}
+.hero-cta svg{transition:transform .3s}
+.hero-cta:hover svg{transform:translateX(3px)}
+.hero-leagues{display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-8);flex-wrap:wrap}
+.hero-lg{display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:transparent;border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);cursor:pointer;transition:border-color .2s,background .2s,transform .2s;min-width:120px}
+.hero-lg:hover{border-color:var(--border2);background:var(--card);transform:translateY(-2px)}
+.hero-lg-dot{width:8px;height:8px;border-radius:50%;margin-bottom:2px}
+.hero-lg-name{font-family:var(--fh);font-weight:800;font-size:var(--t-base);color:var(--text)}
+.hero-lg-desc{font-family:var(--fm);font-size:var(--t-xs);color:var(--mut)}
+.hero-foot{position:absolute;bottom:var(--sp-5);left:0;right:0;text-align:center;font-family:var(--fm);font-size:var(--t-xs);color:var(--mut);z-index:1;letter-spacing:.02em}
+@media(max-width:560px){
+  .hero-leagues{flex-direction:column;align-items:stretch}
+  .hero-lg{flex-direction:row;align-items:center;gap:var(--sp-3);min-width:0}
+  .hero-lg-dot{margin-bottom:0}
+  .hero-lg-desc{margin-left:auto}
+}
 /* STANDINGS */
 .standings-table{width:100%;border-collapse:collapse;font-size:.82rem}
 .standings-table tbody td{padding:4px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
@@ -666,12 +662,14 @@ body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22
 @keyframes liveGlow{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)}50%{box-shadow:0 0 0 6px rgba(239,68,68,0)}}
 .live-glow{animation:liveGlow 1.8s infinite}
 
-/* Hero entrance sequence */
-.hero-badge{animation:heroFade .6s .05s both}
-.hero-title{animation:heroFade .6s .15s both}
-.hero-sub{animation:heroFade .6s .25s both}
-.hero-leagues,.hero-cards{animation:heroFade .6s .35s both}
+/* Hero entrance — staggered (Apple-style) */
+.hero-eyebrow{animation:heroFade .7s .1s both}
+.hero-title{animation:heroFade .7s .2s both}
+.hero-sub{animation:heroFade .7s .32s both}
+.hero-cta{animation:heroFade .7s .44s both}
+.hero-leagues{animation:heroFade .7s .56s both}
 @keyframes heroFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.hero-eyebrow,.hero-title,.hero-sub,.hero-cta,.hero-leagues,.hero-wrap{animation:none}}
 
 /* Button press feedback */
 .nb,.tb,.hc-btn,.share-btn{transition:transform .12s,background .18s,color .18s,opacity .18s}
@@ -1121,28 +1119,7 @@ html{scroll-behavior:smooth}
 }
 
 /* ═══ HERO CTA — glavni vstop ═══ */
-.hero-cta{
-  display:inline-flex;align-items:center;gap:12px;
-  background:linear-gradient(135deg, var(--acc), #fb923c);
-  color:#fff;border:none;border-radius:16px;
-  padding:18px 36px;font-family:var(--fh);font-size:1.15rem;font-weight:800;
-  letter-spacing:.01em;cursor:pointer;margin:0 0 18px;
-  box-shadow:0 8px 32px -8px var(--acc), 0 2px 8px rgba(0,0,0,.3);
-  transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, filter .25s;
-  position:relative;overflow:hidden;
-}
-.hero-cta::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);
-  transform:translateX(-120%);transition:transform .6s;
-}
-.hero-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 14px 44px -8px var(--acc), 0 4px 12px rgba(0,0,0,.4);filter:brightness(1.05)}
-.hero-cta:hover::before{transform:translateX(120%)}
-.hero-cta:active{transform:translateY(-1px) scale(1)}
-.hero-cta svg{transition:transform .25s}
-.hero-cta:hover svg{transform:translateX(4px)}
-.hero-or{font-family:var(--fm);font-size:.72rem;color:var(--mut);letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px;position:relative;display:inline-block;padding:0 16px}
-.hero-or::before,.hero-or::after{content:'';position:absolute;top:50%;width:32px;height:1px;background:var(--border2)}
+
 .hero-or::before{right:100%}
 .hero-or::after{left:100%}
 
@@ -1269,67 +1246,35 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
 <!-- HERO PAGE -->
 <div id="hero-overlay">
-  <div class="hero-bg"></div>
-  <canvas id="hero-canvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:.4;pointer-events:none"></canvas>
+  <canvas id="hero-canvas"></canvas>
   <div class="hero-wrap">
-    <div class="hero-badge">🇸🇮 Sezona 2025/26</div>
-    <div class="hero-title">SLOVENSKA<br><span>KOŠARKA</span></div>
-    <div class="hero-sub">Napredna statistika · Live rezultati · MVP lestvice · Rekordi · ELO moč ekip</div>
-    <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:-24px 0 32px;font-family:var(--fm)">
-      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--acc)">3</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">LIGE</div></div>
-      <div style="width:1px;background:var(--border)"></div>
-      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--blue)">40+</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">EKIP</div></div>
-      <div style="width:1px;background:var(--border)"></div>
-      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:#a855f7">500+</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">IGRALCEV</div></div>
-      <div style="width:1px;background:var(--border)"></div>
-      <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--green)">LIVE</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">REZULTATI</div></div>
-    </div>
+    <div class="hero-eyebrow">Sezona 2025/26</div>
+    <h1 class="hero-title">Slovenska<br><span>košarka</span></h1>
+    <p class="hero-sub">Vsa statistika treh slovenskih lig na enem mestu.</p>
     <button class="hero-cta" onclick="enterApp()">
-      <span>Vstopi v statistiko</span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      Vstopi
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     </button>
-    <div class="hero-or">ali izberi ligo</div>
-    <div class="hero-leagues" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
-      <div class="hero-card liga1" onclick="selectLeague('liga1')">
-        <div class="hc-badge" style="color:var(--acc)">⭐ Prva liga</div>
-        <div class="hc-name">Liga OTP banka</div>
-        <div class="hc-meta">10 ekip · 27 krogov · Redni del zaključen</div>
-        <div class="hc-teams" id="hero-teams-liga1">
-          <div class="hc-team-pill">GGD Šenčur</div>
-          <div class="hc-team-pill">Krka</div>
-          <div class="hc-team-pill">Helios</div>
-          <div class="hc-team-pill">Ilirija</div>
-          <div class="hc-team-pill">+ 6 ekip</div>
-        </div>
-        <button class="hc-btn liga1">Odpri statistiko →</button>
-      </div>
-      <div class="hero-card liga2" onclick="selectLeague('liga2')">
-        <div class="hc-badge" style="color:var(--blue)">🏀 Druga liga</div>
-        <div class="hc-name">2. SKL</div>
-        <div class="hc-meta">12 ekip · Redni del + Končnica + Obstanek</div>
-        <div class="hc-teams" id="hero-teams-liga2">
-          <div class="hc-team-pill">Voga Grosuplje</div>
-          <div class="hc-team-pill">Ipros Vrhnika</div>
-          <div class="hc-team-pill">Celje</div>
-          <div class="hc-team-pill">+ 9 ekip</div>
-        </div>
-        <button class="hc-btn liga2">Odpri statistiko →</button>
-      </div>
-      <div class="hero-card liga3" onclick="selectLeague('liga3')" style="border-color:rgba(168,85,247,.3)">
-        <div class="hc-badge" style="color:#a855f7">🏀 Tretja liga</div>
-        <div class="hc-name">3. SKL</div>
-        <div class="hc-meta">20 ekip · Vzhod + Zahod · Končnica</div>
-        <div class="hc-teams" id="hero-teams-liga3">
-          <div class="hc-team-pill">Branik Maribor</div>
-          <div class="hc-team-pill">Konjice</div>
-          <div class="hc-team-pill">Hidria</div>
-          <div class="hc-team-pill">+ 17 ekip</div>
-        </div>
-        <button class="hc-btn liga3" style="background:#a855f7;color:white">Odpri statistiko →</button>
-      </div>
+
+    <div class="hero-leagues">
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga1')">
+        <span class="hero-lg-dot" style="background:var(--acc)"></span>
+        <span class="hero-lg-name">1. SKL</span>
+        <span class="hero-lg-desc">Liga OTP banka</span>
+      </button>
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga2')">
+        <span class="hero-lg-dot" style="background:var(--blue)"></span>
+        <span class="hero-lg-name">2. SKL</span>
+        <span class="hero-lg-desc">Druga liga</span>
+      </button>
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga3')">
+        <span class="hero-lg-dot" style="background:var(--purple)"></span>
+        <span class="hero-lg-name">3. SKL</span>
+        <span class="hero-lg-desc">Tretja liga</span>
+      </button>
     </div>
-    <div class="hero-footer">Podatki se samodejno osvežujejo · Vir: KZS API + FIBA LiveStats</div>
   </div>
+  <div class="hero-foot">Podatki: KZS · Posodobljeno samodejno</div>
 </div>
 
 <!-- LOADING -->
