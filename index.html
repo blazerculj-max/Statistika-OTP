@@ -9904,10 +9904,30 @@ function initHeroCanvas(){
 
 document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}try{initHeroParticles();}catch(e){}});
 
-// ═══ PWA — Service Worker registracija (offline + namestitev) ═══
+// ═══ PWA — Service Worker registracija (network-first, samoposodabljanje) ═══
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg=>{
+      // Preveri posodobitev ob vsakem zagonu
+      reg.update();
+      // Ko se najde nova verzija SW, jo takoj aktiviraj
+      reg.addEventListener('updatefound', ()=>{
+        const nw=reg.installing;
+        if(!nw)return;
+        nw.addEventListener('statechange', ()=>{
+          if(nw.state==='installed' && navigator.serviceWorker.controller){
+            // Nova verzija pripravljena → prevzemi takoj
+            nw.postMessage('SKIP_WAITING');
+          }
+        });
+      });
+    }).catch(()=>{});
+    // Ko nov SW prevzame krmilo, enkrat osveži stran (da dobiš svež index.html)
+    let _reloaded=false;
+    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+      if(_reloaded)return; _reloaded=true;
+      window.location.reload();
+    });
   });
 }
 // 'Namesti aplikacijo' poziv
