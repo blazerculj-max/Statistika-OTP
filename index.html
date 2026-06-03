@@ -30,7 +30,14 @@
 <title>Liga OTP banka – Statistika 2025/26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace}
+:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace;
+  /* Tipografska skala (modularna, ratio ~1.25) */
+  --t-xs:.7rem; --t-sm:.82rem; --t-base:.95rem; --t-md:1.1rem; --t-lg:1.4rem; --t-xl:1.85rem; --t-2xl:2.4rem; --t-3xl:3.2rem;
+  /* Razmiki (8px sistem) */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
+  /* Sence + radiji */
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px;
+  --sh-sm:0 1px 3px rgba(0,0,0,.2); --sh-md:0 4px 16px -4px rgba(0,0,0,.35); --sh-lg:0 12px 40px -12px rgba(0,0,0,.5)}
 :root[data-theme="light"]{--bg:#f4f5f8;--card:#ffffff;--card2:#eef0f4;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);--text:rgba(15,15,30,.92);--sub:rgba(15,15,30,.55);--mut:rgba(15,15,30,.4);--green:#059669;--acc:#ea580c}
 :root[data-theme="light"] body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22,.06),transparent 55%),radial-gradient(ellipse 1000px 700px at 100% 100%,rgba(59,130,246,.05),transparent 50%),var(--bg)}
 :root[data-theme="light"] .hdr{background:rgba(244,245,248,.95)}
@@ -47,8 +54,11 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 
 .nb{padding:7px 14px;border-radius:7px;border:none;background:transparent;color:var(--mut);font-family:var(--fm);font-size:.75rem;font-weight:500;cursor:pointer;transition:all .18s;letter-spacing:.01em;white-space:nowrap}
 .nb:hover{color:var(--text);background:var(--border)}.nb.active{background:var(--acc);color:#fff}
-.content{padding:20px 28px;max-width:1900px;margin:0 auto;min-height:calc(100vh - 120px)}
-.tab{display:none}.tab.active{display:block}
+.content{padding:var(--sp-6) var(--sp-5);max-width:1500px;margin:0 auto;min-height:calc(100vh - 120px)}
+.tab{display:none}
+.tab.active{display:block;animation:tabFadeUp .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes tabFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.tab.active{animation:none}}
 .ctrls{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
 select{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 34px 7px 12px;border-radius:7px;font-family:var(--fs);font-size:.82rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:20px}
 select:focus{outline:none;border-color:var(--acc)}
@@ -1110,6 +1120,148 @@ html{scroll-behavior:smooth}
   #st .mini-trend{display:none}
 }
 
+/* ═══ HERO CTA — glavni vstop ═══ */
+.hero-cta{
+  display:inline-flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg, var(--acc), #fb923c);
+  color:#fff;border:none;border-radius:16px;
+  padding:18px 36px;font-family:var(--fh);font-size:1.15rem;font-weight:800;
+  letter-spacing:.01em;cursor:pointer;margin:0 0 18px;
+  box-shadow:0 8px 32px -8px var(--acc), 0 2px 8px rgba(0,0,0,.3);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, filter .25s;
+  position:relative;overflow:hidden;
+}
+.hero-cta::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);
+  transform:translateX(-120%);transition:transform .6s;
+}
+.hero-cta:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 14px 44px -8px var(--acc), 0 4px 12px rgba(0,0,0,.4);filter:brightness(1.05)}
+.hero-cta:hover::before{transform:translateX(120%)}
+.hero-cta:active{transform:translateY(-1px) scale(1)}
+.hero-cta svg{transition:transform .25s}
+.hero-cta:hover svg{transform:translateX(4px)}
+.hero-or{font-family:var(--fm);font-size:.72rem;color:var(--mut);letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px;position:relative;display:inline-block;padding:0 16px}
+.hero-or::before,.hero-or::after{content:'';position:absolute;top:50%;width:32px;height:1px;background:var(--border2)}
+.hero-or::before{right:100%}
+.hero-or::after{left:100%}
+
+/* Hero league cards — bolj prefinjeni hover */
+.hero-card{transition:transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .3s !important}
+.hero-card:hover{transform:translateY(-6px) !important;box-shadow:0 20px 48px -16px rgba(0,0,0,.5) !important}
+
+/* ═══ MIKRO-INTERAKCIJE — celotna stran deluje bolj živo ═══ */
+/* Mehkejši prehodi na klikabilnih elementih */
+.std-team-name, .pname-link, .team-clickable{transition:color .15s, opacity .15s}
+.std-team-name:hover, .pname-link:hover{opacity:.75}
+/* Kartice v zavihkih dobijo subtilen dvig */
+.rec-card:hover, .mvp-card:hover{transform:translateY(-2px)}
+/* Gumbi v navigaciji */
+.nb{transition:background .15s, color .15s, transform .1s}
+.nb:active{transform:scale(.97)}
+
+/* ═══════════════════════════════════════════════════
+   TABELE — sticky header, boljši hover, premium občutek
+   ═══════════════════════════════════════════════════ */
+.standings-table thead th{position:sticky;top:0;z-index:5;backdrop-filter:blur(8px)}
+.standings-table tbody tr{transition:background .14s ease}
+.standings-table tbody tr:hover{background:var(--card2)}
+/* Subtilna leva poudarjena črta ob hover vrstice */
+.standings-table tbody tr{position:relative}
+.standings-table tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 var(--acc)}
+/* Glavna tabela igralcev — isto */
+#st thead th{position:sticky;top:0;z-index:5}
+#st tbody tr{transition:background .14s ease}
+
+/* ═══════════════════════════════════════════════════
+   KARTICE — sloji globine (depth) z mehkimi sencami
+   ═══════════════════════════════════════════════════ */
+.rec-card, .mvp-card, .hero-card{
+  box-shadow:var(--sh-md);
+  transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s, border-color .2s;
+}
+.rec-card:hover, .mvp-card:hover{box-shadow:var(--sh-lg)}
+
+/* Subtilen gradient overlay na vrhu kartic (premium light) */
+.mvp-card{position:relative;overflow:hidden}
+.mvp-card::after{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none}
+
+/* ═══════════════════════════════════════════════════
+   SCROLLBAR — tanjši, eleganten (desktop)
+   ═══════════════════════════════════════════════════ */
+@media(min-width:769px){
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--mut)}
+}
+
+/* ═══════════════════════════════════════════════════
+   FOKUS STANJA — dostopnost + polish
+   ═══════════════════════════════════════════════════ */
+button:focus-visible, select:focus-visible, input:focus-visible{
+  outline:2px solid var(--acc);outline-offset:2px;border-radius:var(--r-sm);
+}
+
+/* ═══════════════════════════════════════════════════
+   SKELETON LOADERS — občutek hitrosti med nalaganjem
+   ═══════════════════════════════════════════════════ */
+.skel{
+  background:linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
+  background-size:200% 100%;
+  animation:skelShimmer 1.4s ease-in-out infinite;
+  border-radius:var(--r-sm);
+}
+@keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-row{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) 0;border-bottom:1px solid var(--border)}
+.skel-circle{width:36px;height:36px;border-radius:50%;flex-shrink:0}
+.skel-line{height:12px;border-radius:6px}
+.skel-tab{padding:var(--sp-4)}
+
+/* ═══════════════════════════════════════════════════
+   TIPOGRAFSKA HIERARHIJA — dramatičen kontrast = premium
+   ═══════════════════════════════════════════════════ */
+/* Naslovi zavihkov dobijo več teže in zraka */
+.sec-head{
+  font-family:var(--fh);font-weight:800;
+  font-size:var(--t-lg);letter-spacing:-.02em;
+  margin-bottom:var(--sp-5);
+  display:flex;align-items:center;gap:var(--sp-3);
+}
+/* Velike številke (statistike) — tabularne, izrazite */
+.pp-hs-v, .ts-v, .stat-big{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+/* ═══════════════════════════════════════════════════
+   PRAZNI PROSTOR — več zraka = dražji občutek
+   ═══════════════════════════════════════════════════ */
+@media(min-width:769px){
+  .content{padding:var(--sp-7) var(--sp-6)}
+}
+/* Kartice dobijo več notranjega prostora */
+.rec-card, .mvp-card{padding:var(--sp-5)}
+/* Razmik med sekcijami */
+.tab > * + .sec-head{margin-top:var(--sp-7)}
+
+/* ═══════════════════════════════════════════════════
+   PODATKOVNE BARVE — zelena=dobro, rdeča=slabo, nevtralna
+   ═══════════════════════════════════════════════════ */
+.d-good{color:var(--green) !important}
+.d-bad{color:var(--red) !important}
+.d-neutral{color:var(--sub) !important}
+.d-hot{color:var(--acc) !important}
+/* Tabularne številke povsod kjer so podatki poravnani */
+td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
+
+/* ═══════════════════════════════════════════════════
+   PRAZNA STANJA — z osebnostjo
+   ═══════════════════════════════════════════════════ */
+.empty{
+  text-align:center;padding:var(--sp-8) var(--sp-5);
+  color:var(--mut);font-family:var(--fm);font-size:var(--t-sm);
+  display:flex;flex-direction:column;align-items:center;gap:var(--sp-3);
+}
+.empty::before{content:'📊';font-size:2.5rem;opacity:.4;filter:grayscale(.3)}
+
 /* Content tab fade - removed animation, was causing opacity:0 bug */
 </style>
 </head>
@@ -1132,6 +1284,11 @@ html{scroll-behavior:smooth}
       <div style="width:1px;background:var(--border)"></div>
       <div style="text-align:center"><div style="font-family:var(--fh);font-size:1.6rem;font-weight:800;color:var(--green)">LIVE</div><div style="font-size:.62rem;color:var(--mut);letter-spacing:.08em">REZULTATI</div></div>
     </div>
+    <button class="hero-cta" onclick="enterApp()">
+      <span>Vstopi v statistiko</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+    <div class="hero-or">ali izberi ligo</div>
     <div class="hero-leagues" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
       <div class="hero-card liga1" onclick="selectLeague('liga1')">
         <div class="hc-badge" style="color:var(--acc)">⭐ Prva liga</div>
@@ -1834,13 +1991,21 @@ function teamLogoUrl(teamName){
 }
 
 // Returns an <img> logo, or a colored dot fallback. size in px.
+function _logoFallback(img){
+  // Zamenja neuspeli logo z barvno piko (brez problematičnega ugnezdenja narekovajev)
+  const s=document.createElement('span');
+  s.style.cssText=img.dataset.fb||'';
+  img.parentNode&&img.parentNode.insertBefore(s,img.nextSibling);
+  img.remove();
+}
 function teamLogoHtml(teamName, size=24, extraStyle=''){
   const url=teamLogoUrl(teamName);
   const tc=TEAM_COLORS[(teamName||'').split(' / ')[0]]||'#888';
+  const fbStyle=`width:${size}px;height:${size}px;border-radius:50%;background:${tc};box-shadow:0 0 8px ${tc}66;flex-shrink:0;display:inline-block;${extraStyle}`;
   if(url){
-    return `<img src="${url}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;flex-shrink:0;${extraStyle}" onerror="this.outerHTML='<span style=\'width:${size}px;height:${size}px;border-radius:50%;background:${tc};box-shadow:0 0 8px ${tc}66;flex-shrink:0;display:inline-block\'></span>'">`;
+    return `<img src="${url}" alt="" loading="lazy" style="width:${size}px;height:${size}px;object-fit:contain;flex-shrink:0;${extraStyle}" data-fb="${fbStyle.replace(/"/g,'&quot;')}" onerror="_logoFallback(this)">`;
   }
-  return `<span style="width:${size}px;height:${size}px;border-radius:50%;background:${tc};box-shadow:0 0 8px ${tc}66;flex-shrink:0;display:inline-block;${extraStyle}"></span>`;
+  return `<span style="${fbStyle}"></span>`;
 }
 
 // ═══════════════════════════════════════════════════
@@ -1974,6 +2139,11 @@ async function selectCrossLeague(){
     if(lo)lo.style.display='none';
     alert('Napaka: '+e.message);
   }
+}
+
+function enterApp(){
+  // Glavni vstop — naloži 1. SKL, ostali dve se preloadata v ozadju
+  selectLeague('liga1');
 }
 
 function selectLeague(lg) {
@@ -2152,6 +2322,9 @@ async function loadAllData() {
   try {
     document.getElementById('loading-overlay').style.display = 'flex';
     setProgress(0, 'Pripravljam...');
+    // Skeleton v glavni tabeli (občutek hitrosti)
+    const stEl=document.getElementById('st');
+    if(stEl)stEl.innerHTML='<tbody>'+skeletonRows(10)+'</tbody>';
     // ── 1. Preveri localStorage cache ──
     const cached = cacheGet(seasonCacheKey(), TTL_STATS);
     if (cached) {
@@ -4022,6 +4195,22 @@ function initHeroParticles(){
   }
   tick();
   if(!window._heroResizeBound){window._heroResizeBound=true;window.addEventListener('resize',()=>{if(document.getElementById('hero-overlay')?.style.display!=='none'){resize();}});}
+}
+
+// ═══ SKELETON LOADER ═══
+function skeletonRows(n=8){
+  let h='<div class="skel-tab">';
+  for(let i=0;i<n;i++){
+    const w=55+Math.random()*35;
+    h+=`<div class="skel-row">
+      <div class="skel skel-circle"></div>
+      <div style="flex:1"><div class="skel skel-line" style="width:${w}%"></div></div>
+      <div class="skel skel-line" style="width:40px"></div>
+      <div class="skel skel-line" style="width:40px"></div>
+    </div>`;
+  }
+  h+='</div>';
+  return h;
 }
 
 // ═══ MOBILE 'VEČ' SHEET ═══
@@ -6077,27 +6266,45 @@ function setAttScope(s){
   renderAttendance();
 }
 // Zbere tekme iz VSEH lig (iz predpomnilnika) — za primerjavo obiska med ligami
-function getAllLeaguesMatches(){
+async function getAllLeaguesMatches(){
   const all=[];
-  Object.entries(LEAGUES).forEach(([key,lg])=>{
+  for(const [key,lg] of Object.entries(LEAGUES)){
     let matches=null;
-    if(key===currentLeague){matches=allMatches;}
-    else{
+    if(key===currentLeague && allMatches.length){
+      matches=allMatches;
+    } else {
+      // Poskusi cache; če ni, aktivno naloži (ne čakaj na preload)
       const cached=cacheGet(lg.cacheStats,TTL_STATS);
-      if(cached&&cached.allMatches)matches=cached.allMatches;
+      if(cached&&cached.allMatches){
+        matches=cached.allMatches;
+      } else {
+        try{
+          const resp=await fetch(lg.statsUrl+'?t='+Date.now());
+          if(resp.ok){
+            const data=await resp.json();
+            matches=data.allMatches||[];
+            // Predpomni za naprej
+            const msc={};
+            Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
+            cacheSet(lg.cacheStats,{allMatches:matches,matchStatsCache:msc});
+          }
+        }catch(e){}
+      }
     }
     if(matches){
       matches.forEach(m=>all.push({...m,_league:lg.short,_leagueColor:lg.color}));
     }
-  });
+  }
   return all;
 }
 
-function renderAttendance(){
+async function renderAttendance(){
   if(!allMatches.length)return;
 
   // Vir tekem: ta liga ali vse lige
-  const srcMatches = _attScope==='all' ? getAllLeaguesMatches() : allMatches;
+  const wrapEl=document.getElementById('obisk-wrap');
+  if(_attScope==='all'&&wrapEl){wrapEl.innerHTML='<div class="empty">Nalagam vse lige…</div>';}
+  const srcMatches = _attScope==='all' ? await getAllLeaguesMatches() : allMatches;
 
   const attTeamSel = document.getElementById('att-team-filter');
   // Pri 'vse lige' skrij team filter (ni smiseln), sicer napolni
@@ -6875,27 +7082,34 @@ function renderH2HTab(){
 
   // Comparison bars
   const cmpRow=(label,va,vb,suf='',dec=1)=>{
+    va=Number(va)||0; vb=Number(vb)||0;
     const max=Math.max(va,vb,0.01);
-    const pa=va/max*100,pb=vb/max*100;
-    const better=va>=vb;
-    return `<div style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:5px">
-        <span style="font-weight:700;color:${cA}">${va.toFixed(dec)}${suf}</span>
-        <span style="color:var(--mut);font-family:var(--fm);font-size:.7rem">${label}</span>
-        <span style="font-weight:700;color:${cB}">${vb.toFixed(dec)}${suf}</span>
+    const pa=Math.max(va/max*100,0), pb=Math.max(vb/max*100,0);
+    const aWins=va>vb, bWins=vb>va;
+    return `<div style="margin-bottom:var(--sp-4)">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:var(--t-sm);margin-bottom:6px">
+        <span style="font-weight:800;color:${cA};font-variant-numeric:tabular-nums">${va.toFixed(dec)}${suf}</span>
+        <span style="color:var(--mut);font-family:var(--fm);font-size:var(--t-xs);letter-spacing:.04em;text-transform:uppercase">${label}</span>
+        <span style="font-weight:800;color:${cB};font-variant-numeric:tabular-nums">${vb.toFixed(dec)}${suf}</span>
       </div>
-      <div style="display:flex;gap:4px;height:8px">
-        <div style="flex:1;display:flex;justify-content:flex-end"><div style="width:${pa}%;background:${cA};border-radius:4px 0 0 4px;opacity:${better?1:.5}"></div></div>
-        <div style="flex:1"><div style="width:${pb}%;background:${cB};border-radius:0 4px 4px 0;opacity:${!better?1:.5}"></div></div>
+      <div style="display:flex;gap:3px;height:10px">
+        <div style="flex:1;display:flex;justify-content:flex-end;background:var(--card2);border-radius:5px 0 0 5px;overflow:hidden">
+          <div style="width:${pa}%;background:${cA};border-radius:5px 0 0 5px;opacity:${aWins?1:.45};transition:width .5s cubic-bezier(.2,.8,.2,1)"></div>
+        </div>
+        <div style="flex:1;display:flex;justify-content:flex-start;background:var(--card2);border-radius:0 5px 5px 0;overflow:hidden">
+          <div style="width:${pb}%;background:${cB};border-radius:0 5px 5px 0;opacity:${bWins?1:.45};transition:width .5s cubic-bezier(.2,.8,.2,1)"></div>
+        </div>
       </div>
     </div>`;
   };
   html+='<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px">';
-  html+=cmpRow('Zmage (sezona)',sA.w,sB.w,'',0);
-  html+=cmpRow('Točk/tekmo',sA.ppg,sB.ppg);
-  html+=cmpRow('Prejetih/tekmo',sA.papg,sB.papg);
-  html+=cmpRow('ELO',sA.elo,sB.elo,'',0);
-  html+=cmpRow('bElo moč',sA.str,sB.str,'',0);
+  html+='<div style="font-size:var(--t-xs);color:var(--mut);font-family:var(--fm);text-align:center;margin-bottom:var(--sp-4);letter-spacing:.04em">PRIMERJAVA V REDNEM DELU SEZONE</div>';
+  html+=cmpRow('Zmag v rednem delu',sA.w,sB.w,'',0);
+  html+=cmpRow('Porazov',sA.l,sB.l,'',0);
+  html+=cmpRow('Točk na tekmo',sA.ppg,sB.ppg);
+  html+=cmpRow('Prejetih na tekmo',sA.papg,sB.papg);
+  html+=cmpRow('ELO rating',sA.elo,sB.elo,'',0);
+  html+=cmpRow('bElo moč ekipe',sA.str,sB.str,'',0);
   html+='</div>';
 
   // Match history
