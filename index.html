@@ -1335,6 +1335,32 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
 
 /* Content tab fade - removed animation, was causing opacity:0 bug */
+/* 3x3 Državc */
+.t3-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.t3-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;transition:border-color .2s,box-shadow .2s}
+.t3-card:hover{border-color:var(--border2);box-shadow:var(--sh-md)}
+.t3-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.t3-powbar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-bottom:14px}
+.t3-powbar>div{height:100%;border-radius:3px}
+.t3-players{display:flex;flex-direction:column;gap:8px}
+.t3-pl{display:flex;align-items:center;gap:10px}
+.t3-pl-img,.t3-pl-fb{width:34px;height:34px;border-radius:9px;flex-shrink:0;object-fit:cover}
+.t3-pl-fb{background:rgba(124,31,160,.18);color:#c084fc;display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:.72rem}
+@media(max-width:768px){.t3-grid{grid-template-columns:1fr}}
+/* 3x3 izbirnik turnirjev */
+.t3-tourbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.t3-tourbtn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-family:var(--fh);font-weight:600;font-size:.82rem;color:var(--sub);cursor:pointer;transition:all .15s}
+.t3-tourbtn:hover{border-color:var(--border2)}
+.t3-tourbtn.active{background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff;border-color:transparent}
+/* 3x3 podij */
+.t3-podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+.t3-pod-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 10px;text-align:center}
+/* 3x3 tekme */
+.t3-round-h{font-family:var(--fh);font-weight:700;font-size:.92rem;margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.t3-game{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;padding:8px 12px;border-radius:9px;font-family:var(--fm);font-size:.82rem}
+.t3-game:nth-child(odd){background:rgba(255,255,255,.02)}
+.t3-game-team{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t3-game-score{font-family:var(--fs);font-weight:700;font-size:.92rem;color:#a855f7;white-space:nowrap;padding:0 4px}
 /* pregled dashboard */
 .pregled-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .pregled-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
@@ -1466,6 +1492,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
       <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
       <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
       <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')">3. SKL</button>
+      <button class="tb" id="lg-btn-3x3" onclick="switchLeague('3x3')" style="background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff">3x3</button>
     </div>
     <select id="season-select" class="hdr-select" onchange="switchSeason(parseInt(this.value))" style="display:none"></select>
     <span id="live-badge" class="hdr-live" style="display:none">● LIVE</span>
@@ -1836,6 +1863,10 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
     <div id="pregled-wrap"></div>
   </div>
 
+  <div id="tab-3x3" class="tab">
+    <div id="t3x3-wrap"></div>
+  </div>
+
   <div id="tab-seznum" class="tab">
     <div id="seznum-wrap"></div>
   </div>
@@ -1877,6 +1908,173 @@ function seasonStatsUrl(leagueKey, seasonId){
   }
   return GITHUB_RAW+'/'+leagueKey+'_stats_s'+seasonId+'.json'; // arhiv
 }
+
+// ═══════════════════════════════════════════════════
+// 3x3 DRŽAVC — podatki (FIBA play). Kategorija Člani/open moški.
+// Vir: play.fiba3x3.com/api/v2/category/{categoryId}/teams
+// Posodobi z fetch skriptom za vsak turnir sezone.
+// ═══════════════════════════════════════════════════
+const DRZAVC_3X3 = {
+  season: '2026',
+  tournaments: [
+    {
+      name: 'Državc Škofja Loka',
+      eventId: 'e2bbe5b4-fcb3-4bc3-8341-c7a02208ee0e',
+      categoryId: '8512d4de-5194-4687-931d-09f82f5833f7',
+      date: '2026-05-30',
+      status: 'completed',
+      podium: ['dLuft Lj - Center','AŽ masažni studio','Rehab studio 3x3','3x3 Fridro Koroška'],
+      teams: [
+        {name:'3x3 FULLHAUS', players:[
+          {first:'David',last:'Strušnik',age:19,rank:1407,img:'https://assets.fiba3x3.com/images/Member/f/f/e/5/ffe57f69-36b3-49b0-b659-5764dcc537c0/profile.80x80.png'},
+          {first:'Žiga',last:'Pezdir',age:18,rank:1444,img:null},
+          {first:'Alen',last:'Džaferagić',age:18,rank:1045,img:null},
+          {first:'Val',last:'Svenšek',age:22,rank:85,img:null},
+          {first:'Lovro',last:'Pulević',age:19,rank:40,img:null}
+        ]},
+        {name:'3x3 Fridro Koroška', players:[
+          {first:'Jure',last:'Ličen',age:26,rank:6964,img:'https://assets.fiba3x3.com/images/Member/0/9/2/f/092f5ec1-2168-42fc-b553-c5aa48939388/profile.80x80.png'},
+          {first:'Milorad',last:'Sedlarević',age:32,rank:6769,img:'https://assets.fiba3x3.com/images/Member/5/a/0/c/5a0c1cd5-7cfe-4126-8306-4f794b3d3298/profile.80x80.png'},
+          {first:'Marko',last:'Vranjković',age:36,rank:1550,img:'https://assets.fiba3x3.com/images/Member/1/d/e/a/1deac944-d234-4010-9840-806a5f25fcba/profile.80x80.png'},
+          {first:'Adrian',last:'Hirschmann',age:26,rank:520,img:'https://assets.fiba3x3.com/images/Member/4/d/7/9/4d7926ed-8dcf-4227-ba32-a2fca408610a/profile.80x80.png'}
+        ]},
+        {name:'3x3 Škofja Loka', players:[
+          {first:'Matevž',last:'Bertoncelj',age:26,rank:200,img:'https://assets.fiba3x3.com/images/Member/c/f/0/f/cf0f9f5e-9474-4f77-bd70-76a0079dc415/profile.80x80.png'},
+          {first:'Tilen',last:'Malovcic',age:22,rank:200,img:null},
+          {first:'Luka',last:'Trojanšek',age:27,rank:90,img:null},
+          {first:'Urban',last:'Misson',age:21,rank:90,img:null}
+        ]},
+        {name:'Ali & prijatelji', players:[
+          {first:'Lev',last:'Sekulič',age:19,rank:581,img:null},
+          {first:'Tjaš',last:'Novak',age:19,rank:424,img:null},
+          {first:'Matija',last:'Sušin',age:21,rank:165,img:null},
+          {first:'Žiga',last:'Sušin',age:27,rank:35,img:null}
+        ]},
+        {name:'AŽ masažni studio', players:[
+          {first:'Matej',last:'Čibej',age:24,rank:73790,img:'https://assets.fiba3x3.com/images/Member/8/2/6/3/82636691-7c8a-4ab2-b0d7-50893c1f280e/profile.80x80.png'},
+          {first:'Domen',last:'Močnik',age:24,rank:70818,img:null},
+          {first:'Matija',last:'Kalan',age:24,rank:11305,img:null},
+          {first:'Alen',last:'Malovčič',age:23,rank:430,img:null}
+        ]},
+        {name:'Klančar Žerjavi', players:[
+          {first:'Enej',last:'Geržel',age:19,rank:681,img:null},
+          {first:'Aljaž',last:'Tavčar',age:24,rank:460,img:null},
+          {first:'Tilen',last:'Kogoj',age:20,rank:360,img:null},
+          {first:'Timon',last:'Bubnič',age:23,rank:340,img:'https://assets.fiba3x3.com/images/Member/6/b/3/2/6b328e95-a03c-449a-a170-d74e617fde8f/profile.80x80.png'}
+        ]},
+        {name:'Nomago', players:[
+          {first:'Mark',last:'Hudobivnik',age:36,rank:934,img:'https://assets.fiba3x3.com/images/Member/2/c/f/0/2cf013dd-080a-4276-b7a3-9c2546b999af/profile.80x80.png'},
+          {first:'Matic',last:'Hudobivnik',age:36,rank:783,img:'https://assets.fiba3x3.com/images/Member/3/7/e/e/37ee5050-5efe-4941-9d36-3c4cd4d130b0/profile.80x80.png'},
+          {first:'Tim',last:'Vrbančič',age:36,rank:725,img:null},
+          {first:'Luka',last:'Marković',age:25,rank:110,img:'https://assets.fiba3x3.com/images/Member/7/2/c/1/72c1fcd6-0216-4afa-be5b-264c49eb1a45/profile.80x80.png'}
+        ]},
+        {name:'Optika Sever', players:[
+          {first:'Žiga',last:'Ferjančič',age:23,rank:368,img:null},
+          {first:'Nejc',last:'Leben',age:26,rank:365,img:null},
+          {first:'Luka',last:'Ferjancic',age:26,rank:362,img:null},
+          {first:'Nal',last:'Jurak',age:24,rank:345,img:null}
+        ]},
+        {name:'RC SOBOTA 3X3', players:[
+          {first:'Aljaž',last:'Sovič',age:22,rank:1713,img:null},
+          {first:'Leon',last:'Zver',age:36,rank:1476,img:'https://assets.fiba3x3.com/images/Member/a/c/6/5/ac65308f-2598-4c80-86c8-e9c605c622ab/profile.80x80.png'},
+          {first:'Aljaž',last:'Škof',age:24,rank:1475,img:null},
+          {first:'Andraž',last:'Škof',age:24,rank:150,img:null}
+        ]},
+        {name:'Rehab studio 3x3', players:[
+          {first:'David',last:'Kopitar',age:26,rank:578,img:null},
+          {first:'Nejc',last:'Grajzar',age:25,rank:577,img:null},
+          {first:'Jan',last:'Gršič',age:27,rank:290,img:'https://assets.fiba3x3.com/images/Member/c/9/0/3/c9031a9e-aa92-482c-b979-82325cc45cc2/profile.80x80.png'},
+          {first:'Blaž',last:'Janežič',age:26,rank:180,img:'https://assets.fiba3x3.com/images/Member/d/9/7/0/d970afca-7cc6-4d41-9f94-2a1cbc2a05aa/profile.80x80.png'}
+        ]},
+        {name:'dLuft Lj - Center', players:[
+          {first:'Nemanja',last:'Scekic',age:25,rank:410,img:'https://assets.fiba3x3.com/images/Member/6/5/0/6/6506b10d-3dd9-4142-88d9-1108c47cd02d/profile.80x80.png'},
+          {first:'Gašper',last:'Jordan Rojko',age:30,rank:300,img:'https://assets.fiba3x3.com/images/Member/2/1/7/b/217b3227-a6e0-4094-901c-299f68fabd98/profile.80x80.png'},
+          {first:'Jernej',last:'Ledl',age:29,rank:300,img:'https://assets.fiba3x3.com/images/Member/1/7/4/9/17497c72-335a-4c67-b50b-b078c12db134/profile.80x80.png'},
+          {first:'Primož',last:'Škrlj',age:20,rank:300,img:null}
+        ]},
+      ],
+      games: [
+        {name:'Pool B game 1',round:'RR',group:'B',time:'15:40',home:'3x3 Fridro Koroška',hs:17,hw:true,away:'dLuft Lj - Center',as:13,aw:false},
+        {name:'Pool B game 2',round:'RR',group:'B',time:'15:40',home:'Nomago',hs:null,hw:true,away:'Ali & prijatelji',as:null,aw:false},
+        {name:'Pool A game 1',round:'RR',group:'A',time:'16:00',home:'AŽ masažni studio',hs:16,hw:false,away:'Klančar Žerjavi',as:17,aw:true},
+        {name:'Pool C game 1',round:'RR',group:'C',time:'16:00',home:'RC SOBOTA 3X3',hs:22,hw:true,away:'3x3 Škofja Loka',as:9,aw:false},
+        {name:'Pool C game 2',round:'RR',group:'C',time:'16:00',home:'3x3 FULLHAUS',hs:13,hw:false,away:'Rehab studio 3x3',as:14,aw:true},
+        {name:'Pool B game 3',round:'RR',group:'B',time:'16:40',home:'dLuft Lj - Center',hs:null,hw:true,away:'Ali & prijatelji',as:null,aw:false},
+        {name:'Pool B game 4',round:'RR',group:'B',time:'16:40',home:'3x3 Fridro Koroška',hs:21,hw:true,away:'Nomago',as:14,aw:false},
+        {name:'Pool A game 2',round:'RR',group:'A',time:'17:00',home:'Optika Sever',hs:13,hw:false,away:'Klančar Žerjavi',as:18,aw:true},
+        {name:'Pool C game 3',round:'RR',group:'C',time:'17:00',home:'3x3 Škofja Loka',hs:12,hw:false,away:'Rehab studio 3x3',as:18,aw:true},
+        {name:'Pool A game 3',round:'RR',group:'A',time:'17:40',home:'AŽ masažni studio',hs:21,hw:true,away:'Optika Sever',as:18,aw:false},
+        {name:'Pool C game 5',round:'RR',group:'C',time:'17:40',home:'3x3 FULLHAUS',hs:13,hw:false,away:'3x3 Škofja Loka',as:17,aw:true},
+        {name:'Pool C game 4',round:'RR',group:'C',time:'17:00',home:'RC SOBOTA 3X3',hs:19,hw:true,away:'3x3 FULLHAUS',as:16,aw:false},
+        {name:'Pool B game 5',round:'RR',group:'B',time:'17:20',home:'Nomago',hs:21,hw:true,away:'dLuft Lj - Center',as:9,aw:false},
+        {name:'Pool B game 6',round:'RR',group:'B',time:'17:40',home:'Ali & prijatelji',hs:null,hw:false,away:'3x3 Fridro Koroška',as:null,aw:true},
+        {name:'Pool C game 6',round:'RR',group:'C',time:'18:00',home:'Rehab studio 3x3',hs:15,hw:false,away:'RC SOBOTA 3X3',as:16,aw:true},
+        {name:'Quarter-Final game 1',round:'L8',group:'',time:'18:20',home:'Klančar Žerjavi',hs:16,hw:false,away:'dLuft Lj - Center',as:21,aw:true},
+        {name:'Quarter-Final game 2',round:'L8',group:'',time:'18:20',home:'Rehab studio 3x3',hs:21,hw:true,away:'Nomago',as:15,aw:false},
+        {name:'Quarter-Final game 3',round:'L8',group:'',time:'18:40',home:'3x3 Fridro Koroška',hs:21,hw:true,away:'3x3 Škofja Loka',as:10,aw:false},
+        {name:'Quarter-Final game 4',round:'L8',group:'',time:'18:40',home:'RC SOBOTA 3X3',hs:15,hw:false,away:'AŽ masažni studio',as:21,aw:true},
+        {name:'Semi-Final game 1',round:'SF',group:'',time:'19:00',home:'dLuft Lj - Center',hs:21,hw:true,away:'Rehab studio 3x3',as:16,aw:false},
+        {name:'Semi-Final game 2',round:'SF',group:'',time:'19:20',home:'3x3 Fridro Koroška',hs:18,hw:false,away:'AŽ masažni studio',as:20,aw:true},
+        {name:'Final',round:'F',group:'',time:'19:50',home:'dLuft Lj - Center',hs:21,hw:true,away:'AŽ masažni studio',as:16,aw:false},
+      ]
+    },
+    {
+      name: 'Državc Vrhnika',
+      eventId: '2683f287-8996-4d6b-b58c-176a29850250',
+      categoryId: '7d31d477-43c8-4f14-a49b-11ab541a3dfc',
+      date: null,           // razpored še ni objavljen
+      status: 'upcoming',
+      teams: [
+        {name:'AŽ masažni studio', players:[
+          {first:'Domen',last:'Močnik',age:24,rank:70818,img:null},
+          {first:'Matej',last:'Čibej',age:24,rank:73790,img:'https://assets.fiba3x3.com/images/Member/8/2/6/3/82636691-7c8a-4ab2-b0d7-50893c1f280e/profile.80x80.png?ck=637271236420000000'},
+          {first:'Matic',last:'Lamut',age:23,rank:640,img:null},
+          {first:'Matija',last:'Kalan',age:24,rank:11305,img:null}
+        ]},
+        {name:'SLO U23', players:[
+          {first:'Jan',last:'Rizman',age:31,rank:0,img:'https://assets.fiba3x3.com/images/Member/a/a/a/c/aaac5843-6a64-47bd-b5a4-34202307ac71/profile.80x80.png?ck=636681532970000000'},
+          {first:'Lon',last:'Ličan',age:21,rank:27950,img:null},
+          {first:'Tadej',last:'Colnarič',age:20,rank:8060,img:null},
+          {first:'Vito',last:'Bajazet',age:21,rank:19565,img:null}
+        ]},
+        {name:'Fullhaus', players:[
+          {first:'Alen',last:'Džaferagić',age:18,rank:1045,img:null},
+          {first:'David',last:'Strušnik',age:19,rank:1407,img:'https://assets.fiba3x3.com/images/Member/f/f/e/5/ffe57f69-36b3-49b0-b659-5764dcc537c0/profile.80x80.png?ck=638519817950000000'},
+          {first:'Val',last:'Svenšek',age:22,rank:85,img:null},
+          {first:'Žiga',last:'Pezdir',age:18,rank:1444,img:null}
+        ]},
+        {name:'Nomago', players:[
+          {first:'Mark',last:'Hudobivnik',age:36,rank:934,img:'https://assets.fiba3x3.com/images/Member/2/c/f/0/2cf013dd-080a-4276-b7a3-9c2546b999af/profile.80x80.png?ck=638990704590000000'},
+          {first:'Matic',last:'Hudobivnik',age:36,rank:783,img:'https://assets.fiba3x3.com/images/Member/3/7/e/e/37ee5050-5efe-4941-9d36-3c4cd4d130b0/profile.80x80.png?ck=638844463180000000'},
+          {first:'Tim',last:'Vrbančič',age:36,rank:725,img:null}
+        ]},
+        {name:'Ljubljana Jug 3x3', players:[
+          {first:'Luka',last:'Novak',age:36,rank:932,img:'https://assets.fiba3x3.com/images/Member/9/f/1/4/9f14c4a2-c80b-4c58-a60b-718fbcd63a02/profile.80x80.png?ck=638271665510000000'},
+          {first:'Martin',last:'Mežan',age:32,rank:0,img:'https://assets.fiba3x3.com/images/Member/5/1/2/2/51225e7e-a6aa-4f24-b415-74173e5baa0b/profile.80x80.png?ck=636155030710000000'},
+          {first:'Nik',last:'Urbanija',age:21,rank:162,img:null},
+          {first:'Žiga',last:'Fifolt',age:32,rank:827,img:'https://assets.fiba3x3.com/images/Member/c/9/8/7/c987becb-0cde-4cf2-a16b-5da8cd787ac4/profile.80x80.png?ck=636155142700000000'}
+        ]},
+        {name:'3×3 Weclean Koroška', players:[
+          {first:'Anej',last:'Lampret',age:19,rank:0,img:null},
+          {first:'Gašper',last:'Popič',age:18,rank:461,img:'https://assets.fiba3x3.com/images/Member/c/3/2/1/c321d69f-ee2e-452d-a837-ec89e9f81644/profile.80x80.png?ck=638842313670000000'},
+          {first:'Miha',last:'Zabev',age:18,rank:562,img:null},
+          {first:'Nik',last:'Geč',age:19,rank:462,img:null}
+        ]},
+        {name:'Rehab studio 3x3', players:[
+          {first:'Blaž',last:'Janežič',age:26,rank:180,img:'https://assets.fiba3x3.com/images/Member/d/9/7/0/d970afca-7cc6-4d41-9f94-2a1cbc2a05aa/profile.80x80.png?ck=638218153830000000'},
+          {first:'David',last:'Kopitar',age:26,rank:578,img:null},
+          {first:'Jan',last:'Gršič',age:27,rank:290,img:'https://assets.fiba3x3.com/images/Member/c/9/0/3/c9031a9e-aa92-482c-b979-82325cc45cc2/profile.80x80.png?ck=636155142220000000'},
+          {first:'Nejc',last:'Grajzar',age:25,rank:577,img:null}
+        ]},
+        {name:'dLuft Lj - Center', players:[
+          {first:'Gašper',last:'Jordan Rojko',age:30,rank:300,img:'https://assets.fiba3x3.com/images/Member/2/1/7/b/217b3227-a6e0-4094-901c-299f68fabd98/profile.80x80.png?ck=638007415360000000'},
+          {first:'Leon',last:'Santelj',age:31,rank:0,img:null},
+          {first:'Primož',last:'Škrlj',age:20,rank:300,img:null}
+        ]}
+      ]
+    }
+  ]
+};
 
 const LEAGUES = {
   'liga1': {
@@ -2381,6 +2579,17 @@ async function switchSeason(seasonId){
 
 async function switchLeague(lg) {
   if (currentLeague === lg) return;
+  // ── 3x3 je arhitekturno drugačen: lasten pogled, ne 5-na-5 nalaganje ──
+  if (lg === '3x3') {
+    currentLeague = '3x3';
+    document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+    document.getElementById('lg-btn-3x3')?.classList.add('active');
+    show3x3();
+    return;
+  }
+  // Če preklapljamo IZ 3x3 nazaj na ligo, obnovi 5-na-5 navigacijo
+  const from3x3 = (currentLeague === '3x3');
+  if(from3x3){const nav=document.querySelector('nav.nav');if(nav)nav.style.display='';}
   currentLeague = lg;
   const l = getLg();
   // Update UI
@@ -7769,6 +7978,157 @@ function drawTeamEloChart(topTeams){
     <div style="font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:12px;font-weight:700">📈 Moč (ELO) skozi sezono — top ekipe</div>
     ${svg}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;justify-content:center">${leg}</div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// 3x3 DRŽAVC — lasten pogled (NE kalup 5-na-5)
+// ═══════════════════════════════════════════════════
+function show3x3(){
+  // skrij vse 5-na-5 tabe, pokaži 3x3
+  document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
+  const t=document.getElementById('tab-3x3');
+  if(t)t.classList.add('active');
+  // skrij 5-na-5 navigacijo (tabi niso relevantni za 3x3)
+  const nav=document.querySelector('nav.nav');
+  if(nav)nav.style.display='none';
+  render3x3();
+}
+
+// moč ekipe = vsota FIBA ranking točk članov
+function _t3TeamPower(team){return team.players.reduce((s,p)=>s+(p.rank||0),0);}
+function _t3Fmt(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);}
+
+let _t3TourIdx=0;
+function select3x3Tour(i){_t3TourIdx=i;render3x3();}
+
+function render3x3(){
+  const wrap=document.getElementById('t3x3-wrap');
+  if(!wrap)return;
+  const tours=DRZAVC_3X3.tournaments;
+  const tour=tours[_t3TourIdx]||tours[0];
+  const completed=tour.status==='completed';
+  const teams=[...tour.teams].sort((a,b)=>_t3TeamPower(b)-_t3TeamPower(a));
+  const maxPow=_t3TeamPower(teams[0])||1;
+
+  let html=`<div style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-family:var(--fh);font-weight:800;font-size:1.8rem;letter-spacing:-.01em">🏀 3x3 Državc</div>
+      <span style="background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff;font-family:var(--fm);font-size:.62rem;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.05em">DRŽAVNO PRVENSTVO · ČLANI</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-top:4px">Serija turnirjev · sezona ${DRZAVC_3X3.season}</div>
+  </div>`;
+
+  // izbirnik turnirjev
+  html+='<div class="t3-tourbar">';
+  tours.forEach((t,i)=>{
+    const act=i===_t3TourIdx?'active':'';
+    const dot=t.status==='completed'?'✓':'•';
+    html+=`<button class="t3-tourbtn ${act}" onclick="select3x3Tour(${i})">${t.name.replace('Državc ','')} <span style="opacity:.6">${dot}</span></button>`;
+  });
+  html+='</div>';
+
+  if(completed){
+    // ── ODIGRAN TURNIR: podij + tekme ──
+    const podium=tour.podium||[];
+    if(podium.length>=3){
+      const medal=['🥇','🥈','🥉'];
+      html+=`<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:6px 0 12px">Končni vrstni red · ${tour.name.replace('Državc ','')}</div>`;
+      html+='<div class="t3-podium">';
+      podium.slice(0,3).forEach((tn,i)=>{
+        const col=['#fbbf24','#cbd5e1','#d8915b'][i];
+        html+=`<div class="t3-pod-card" style="border-color:${col}44">
+          <div style="font-size:1.6rem">${medal[i]}</div>
+          <div style="font-family:var(--fh);font-weight:700;font-size:.9rem;margin-top:4px;color:${col}">${tn}</div>
+        </div>`;
+      });
+      html+='</div>';
+    }
+    // tekme po fazah
+    html+=render3x3Games(tour);
+  } else {
+    // ── PRIHAJAJOČI TURNIR: info + ekipe ──
+    html+=`<div style="background:rgba(124,31,160,.08);border:1px solid rgba(124,31,160,.25);border-radius:14px;padding:14px 16px;margin:14px 0 20px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:1.4rem">🗓️</span>
+      <div><div style="font-family:var(--fh);font-weight:700;font-size:.92rem">Razpored — kmalu</div>
+      <div style="font-size:.74rem;color:var(--mut);font-family:var(--fm);margin-top:2px">Tekme in rezultati se prikažejo, ko FIBA objavi razpored.</div></div>
+    </div>`;
+  }
+
+  // ekipe — kartice s sestavami (vedno)
+  html+='<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:20px 0 12px">Ekipe in postave</div>';
+  html+='<div class="t3-grid">';
+  teams.forEach((team,i)=>{
+    const pow=_t3TeamPower(team);
+    const powPct=Math.max(6,Math.round(pow/maxPow*100));
+    const players=[...team.players].sort((a,b)=>(b.rank||0)-(a.rank||0));
+    const rankCol=i===0?'#fbbf24':i===1?'#cbd5e1':i===2?'#d8915b':'var(--mut)';
+    html+=`<div class="t3-card">
+      <div class="t3-card-head">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <span style="font-family:var(--fh);font-weight:800;font-size:1.1rem;color:${rankCol};min-width:22px">${i+1}</span>
+          <span style="font-family:var(--fh);font-weight:700;font-size:1rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${team.name}</span>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:var(--fs);font-weight:800;font-size:1rem;color:#a855f7">${_t3Fmt(pow)}</div>
+          <div style="font-size:.52rem;color:var(--mut);font-family:var(--fm);letter-spacing:.04em">FIBA MOČ</div>
+        </div>
+      </div>
+      <div class="t3-powbar"><div style="width:${powPct}%;background:linear-gradient(90deg,#510861,#a855f7)"></div></div>
+      <div class="t3-players">`;
+    players.forEach(p=>{
+      const ini=(p.first[0]||'')+(p.last[0]||'');
+      const av=p.img?`<img src="${p.img}" class="t3-pl-img" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'t3-pl-fb',textContent:'${ini}'}))">`:`<div class="t3-pl-fb">${ini}</div>`;
+      html+=`<div class="t3-pl">
+        ${av}
+        <div style="min-width:0;flex:1">
+          <div style="font-family:var(--fh);font-weight:600;font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.first} ${p.last}</div>
+          <div style="font-size:.62rem;color:var(--mut);font-family:var(--fm)">${p.age} let${p.rank>0?` · ${_t3Fmt(p.rank)} FIBA`:''}</div>
+        </div>
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
+// Render tekem odigranega turnirja, grupiran po fazah
+function render3x3Games(tour){
+  const games=tour.games||[];
+  if(!games.length)return '';
+  const ROUND_NAMES={RR:'Skupinski del',L8:'Četrtfinale',SF:'Polfinale',F:'Finale',MSF:'Za 3. mesto'};
+  const ROUND_ORDER=['F','SF','L8','MSF','RR'];
+  // grupiraj
+  const byRound={};
+  games.forEach(g=>{(byRound[g.round]=byRound[g.round]||[]).push(g);});
+  let html='<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:22px 0 12px">Rezultati tekem</div>';
+  ROUND_ORDER.forEach(rc=>{
+    const gs=byRound[rc]; if(!gs)return;
+    html+=`<div class="t3-round-h">${ROUND_NAMES[rc]||rc}</div>`;
+    // za skupine grupiraj po group
+    if(rc==='RR'){
+      const byGrp={};
+      gs.forEach(g=>{(byGrp[g.group]=byGrp[g.group]||[]).push(g);});
+      Object.keys(byGrp).sort().forEach(grp=>{
+        html+=`<div style="font-size:.66rem;color:var(--mut);font-family:var(--fm);margin:8px 0 4px;font-weight:600">Skupina ${grp}</div>`;
+        byGrp[grp].forEach(g=>{html+=_t3GameRow(g);});
+      });
+    } else {
+      gs.forEach(g=>{html+=_t3GameRow(g);});
+    }
+  });
+  return html;
+}
+
+function _t3GameRow(g){
+  const hasScore=g.hs!=null&&g.as!=null;
+  const hw=g.hw, aw=g.aw;
+  const sc=hasScore?`${g.hs} : ${g.as}`:'—';
+  return `<div class="t3-game">
+    <div class="t3-game-team" style="text-align:right;${hw?'font-weight:700':'opacity:.7'}">${g.home}</div>
+    <div class="t3-game-score">${sc}</div>
+    <div class="t3-game-team" style="${aw?'font-weight:700':'opacity:.7'}">${g.away}</div>
   </div>`;
 }
 
