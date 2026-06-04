@@ -7984,7 +7984,8 @@ function drawTeamEloChart(topTeams){
 // ═══════════════════════════════════════════════════
 // 3x3 DRŽAVC — lasten pogled (NE kalup 5-na-5)
 // ═══════════════════════════════════════════════════
-function show3x3(){
+let _t3Loaded=false;
+async function show3x3(){
   // skrij vse 5-na-5 tabe, pokaži 3x3
   document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
   const t=document.getElementById('tab-3x3');
@@ -7992,7 +7993,22 @@ function show3x3(){
   // skrij 5-na-5 navigacijo (tabi niso relevantni za 3x3)
   const nav=document.querySelector('nav.nav');
   if(nav)nav.style.display='none';
-  render3x3();
+  render3x3();  // takoj pokaži (vgrajeni podatki kot rezerva)
+  // poskusi naložiti žive podatke (posodobljene prek GitHub Action)
+  if(!_t3Loaded){
+    _t3Loaded=true;
+    try{
+      const r=await fetch(GITHUB_RAW+'/drzavc_3x3.json',{cache:'no-cache'});
+      if(r.ok){
+        const live=await r.json();
+        if(live&&live.tournaments&&live.tournaments.length){
+          DRZAVC_3X3.season=live.season||DRZAVC_3X3.season;
+          DRZAVC_3X3.tournaments=live.tournaments;
+          render3x3();  // ponovno z živimi podatki
+        }
+      }
+    }catch(e){/* offline ali datoteka še ne obstaja — obdrži vgrajene */}
+  }
 }
 
 // moč ekipe = vsota FIBA ranking točk članov
