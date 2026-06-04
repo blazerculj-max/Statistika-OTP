@@ -3670,6 +3670,8 @@ function computePlayerAttributes(merged){
   //   Tako strelec trojk (npr. 2.4 trojke/tekmo @ dober %) dobi zaslužen MET.
   const _shoot3=(m)=>{const tm=Math.max(m[F.T],1);const made3=m[F.fg3m]/tm;const att3=m[F.fg3a]/tm;const acc=att3>0?m[F.fg3m]/(att3*tm):(m[F.fg3a]>0?pct(m[F.fg3m],m[F.fg3a])/100:0);return made3*(0.5+acc);}; // zadete 3 × (osnova+natančnost)
   const qShoot =(tsOf(merged)||0)+_shoot3(merged)*4;   // 3T grožnja prispeva k MET
+  // RAKETA (igra pod košem): točke v raketi + natančnost metov za 2. Ni cel napad —
+  //   zunanji met je v MET. Skupaj sestavljata ofenzivni prispevek.
   const qInside=(merged[F.pip]/t)+(pct(merged[F.fg2m],merged[F.fg2a])||0)*0.15;
   const qPlay  =(merged[F.pod]/t)+(merged[F.izg]>0?merged[F.pod]/merged[F.izg]:merged[F.pod]/t);
   const qReb   =((merged[F.nap]+merged[F.obr])/t);
@@ -3851,7 +3853,7 @@ async function draw2KCard(d){
 
   // ── Atributni bari (poravnana mreža: label | bar | vrednost) ──
   const attrList=[
-    ['MET',d.attrs.met],['NAPAD',d.attrs.napad],['PODAJA',d.attrs.podaja],
+    ['MET',d.attrs.met],['RAKETA',d.attrs.napad],['PODAJA',d.attrs.podaja],
     ['SKOK',d.attrs.skok],['OBRAMBA',d.attrs.obramba],['EFEKT',d.attrs.efekt]
   ];
   let ay=ny+170;
