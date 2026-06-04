@@ -1368,6 +1368,31 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .pregled-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:var(--sh-md)}
 .pregled-card-h{font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:14px;font-weight:700}
 @media(max-width:768px){.pregled-grid{grid-template-columns:1fr}}
+/* Pregled — sekcijski naslovi */
+.pregled-sec-h{font-family:var(--fh);font-weight:800;font-size:1.05rem;margin:28px 0 14px;letter-spacing:-.01em}
+/* Pregled — statistični poudarki */
+.pregled-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pregled-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s}
+.pregled-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pc)}
+.pregled-stat:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:var(--sh-md)}
+.pstat-top{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.pstat-ic{font-size:.9rem}
+.pstat-lab{font-family:var(--fm);font-size:.6rem;letter-spacing:.04em;color:var(--mut);text-transform:uppercase;font-weight:700}
+.pstat-val{font-family:var(--fs);font-weight:800;font-size:1.7rem;line-height:1}
+.pstat-pl{display:flex;align-items:center;gap:8px;margin-top:10px}
+.pstat-img,.pstat-fb{width:30px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0}
+.pstat-fb{display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.7rem}
+.pstat-name{font-family:var(--fh);font-weight:600;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Pregled — zadnji rezultati */
+.pregled-res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.pregled-res{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 15px;cursor:pointer;transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s}
+.pregled-res:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:var(--sh-md)}
+.pres-date{font-family:var(--fm);font-size:.6rem;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;font-weight:700}
+.pres-row{display:flex;align-items:center;gap:8px;padding:3px 0}
+.pres-tn{flex:1;font-family:var(--fh);font-size:.84rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pres-sc{font-family:var(--fs);font-weight:800;font-size:.95rem}
+@media(max-width:900px){.pregled-stat-grid{grid-template-columns:repeat(2,1fr)}.pregled-res-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.pregled-res-grid{grid-template-columns:1fr}}
 /* napoved kartice */
 .napoved-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
 .napoved-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
@@ -7934,11 +7959,62 @@ function renderPregled(){
     </div>`;
   }
 
-  html+='</div>';
+  html+='</div>';  // konec pregled-grid
+
+  // ── Statistični poudarki: top trojkar / skokar / asistent (na tekmo) ──
+  const minT=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5));
+  const elig=_lp.filter(p=>p[F.T]>=minT);
+  function topBy(fn){return elig.map(p=>({p,v:fn(p)})).sort((a,b)=>b.v-a.v)[0];}
+  const leaders=[
+    {ic:'🎯',lab:'Trojke / tekmo',get:topBy(p=>p[F.fg3m]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#a855f7'},
+    {ic:'💪',lab:'Skoki / tekmo',get:topBy(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#10b981'},
+    {ic:'🎩',lab:'Asistence / tekmo',get:topBy(p=>p[F.pod]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#3b82f6'},
+    {ic:'🔥',lab:'Točke / tekmo',get:topBy(p=>p[F.toc]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:lgColor},
+  ].filter(x=>x.get);
+  if(leaders.length){
+    html+=`<div class="pregled-sec-h">Statistični poudarki</div>`;
+    html+='<div class="pregled-stat-grid">';
+    leaders.forEach(L=>{
+      const p=L.get.p, pIdx=P.findIndex(z=>z[F.pid]===p[F.pid]);
+      const ini=(p[F.name]||'').split(' ').map(w=>w[0]).join('').slice(0,2);
+      const ph=playerPhotoUrl(p[F.pid]);
+      const tc=TEAM_COLORS[p[F.team]]||L.col;
+      const av=ph?`<img src="${ph}" class="pstat-img" onerror="_ppPhotoErr(this,'${ini}',38)">`:`<div class="pstat-fb" style="background:${tc}33;color:${tc}">${ini}</div>`;
+      html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
+        <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span></div>
+        <div class="pstat-val" style="color:${L.col}">${L.fmt(L.get.v)}</div>
+        <div class="pstat-pl">${av}<span class="pstat-name">${p[F.name]}</span></div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+
+  // ── Zadnji rezultati (zadnjih 6 odigranih) ──
+  const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.firstTeamName&&m.secondTeamName)
+    .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).slice(0,6);
+  if(finished.length){
+    html+=`<div class="pregled-sec-h">Zadnji rezultati</div>`;
+    html+='<div class="pregled-res-grid">';
+    finished.forEach(m=>{
+      const s1=m.firstTeamScore??0, s2=m.secondTeamScore??0;
+      const t1=normalizeTeamName(m.firstTeamName), t2=normalizeTeamName(m.secondTeamName);
+      const w1=s1>s2;
+      const dstr=new Date(m.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
+      html+=`<div class="pregled-res" onclick="openMatch(${m.id})">
+        <div class="pres-date">${dstr}</div>
+        <div class="pres-row" style="${w1?'font-weight:700':'opacity:.65'}">
+          ${teamLogoHtml(m.firstTeamName,20)}<span class="pres-tn">${TEAM_SHORT[t1]||t1}</span><span class="pres-sc">${s1}</span>
+        </div>
+        <div class="pres-row" style="${!w1?'font-weight:700':'opacity:.65'}">
+          ${teamLogoHtml(m.secondTeamName,20)}<span class="pres-tn">${TEAM_SHORT[t2]||t2}</span><span class="pres-sc">${s2}</span>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  }
+
   wrap.innerHTML=html;
 }
-
-// Multi-line ELO razvoj top ekip skozi sezono
 function drawTeamEloChart(topTeams){
   const e=computeElo();
   const series=topTeams.map(t=>({team:t.team,color:TEAM_COLORS[t.team]||'#10b981',hist:(e.history[t.team]||[])})).filter(s=>s.hist.length>=2);
