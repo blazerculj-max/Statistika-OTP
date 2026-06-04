@@ -36,7 +36,7 @@ TOURNAMENTS = [
         "name": "Državc Vrhnika",
         "eventId": "2683f287-8996-4d6b-b58c-176a29850250",
         "openCategoryId": "7d31d477-43c8-4f14-a49b-11ab541a3dfc",
-        "date": None,  # nastavi, ko bo znan
+        "date": "2026-06-06",  # sobota
     },
 ]
 
