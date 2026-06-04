@@ -14,10 +14,9 @@ name: Update 3x3 Državc
 on:
   workflow_dispatch:        # ročni zagon kadarkoli
   schedule:
-    # Državc Škofja Loka — 30. maj 2026
-    - cron: '*/10 6-20 30 5 *'
-    # Državc Vrhnika — DODAJ datum, ko bo znan (npr. '*/10 6-20 21 6 *')
-    # - cron: '*/10 6-20 21 6 *'
+    # Državc Vrhnika — sobota, 6. junij 2026 (06:00–20:00 UTC = 08:00–22:00 CEST)
+    - cron: '*/10 6-20 6 6 *'
+    # Naslednji turnir — DODAJ cron z datumom, ko bo znan (npr. '*/10 6-20 21 6 *')
 
 permissions:
   contents: write
