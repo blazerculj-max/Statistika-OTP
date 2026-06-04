@@ -7713,6 +7713,49 @@ function renderPregled(){
   wrap.innerHTML=html;
 }
 
+// Multi-line ELO razvoj top ekip skozi sezono
+function drawTeamEloChart(topTeams){
+  const e=computeElo();
+  const series=topTeams.map(t=>({team:t.team,color:TEAM_COLORS[t.team]||'#10b981',hist:(e.history[t.team]||[])})).filter(s=>s.hist.length>=2);
+  if(series.length<2)return '';
+  const W=720,H=260,padL=44,padR=16,padT=16,padB=42;
+  const cw=W-padL-padR,ch=H-padT-padB;
+  const maxN=Math.max(...series.map(s=>s.hist.length));
+  const allVals=series.flatMap(s=>s.hist.map(h=>h.elo));
+  const lo=Math.min(1500,...allVals)-15, hi=Math.max(1500,...allVals)+15;
+  const xAt=i=>padL+(maxN===1?cw/2:i/(maxN-1)*cw);
+  const yAt=v=>padT+ch-((v-lo)/(hi-lo||1))*ch;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible">`;
+  // gridlines
+  [0,0.25,0.5,0.75,1].forEach(f=>{
+    const y=padT+ch-f*ch, v=Math.round(lo+(hi-lo)*f);
+    svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/>`;
+    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+  });
+  // sidro 1500
+  if(1500>=lo&&1500<=hi){const y=yAt(1500);svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--mut)" stroke-dasharray="5,4" opacity=".4"/>`;}
+  // linije
+  series.forEach(s=>{
+    const pts=s.hist.map((h,i)=>`${xAt(i)},${yAt(h.elo)}`).join(' ');
+    svg+=`<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;
+    // končna pika
+    const last=s.hist[s.hist.length-1];
+    svg+=`<circle cx="${xAt(s.hist.length-1)}" cy="${yAt(last.elo)}" r="3.5" fill="${s.color}"/>`;
+  });
+  // x os oznake (krogi)
+  [0,Math.floor((maxN-1)/2),maxN-1].forEach(i=>{
+    svg+=`<text x="${xAt(i)}" y="${H-padB+18}" font-size="9" fill="var(--mut)" text-anchor="middle" font-family="Space Mono,monospace">K${i+1}</text>`;
+  });
+  svg+='</svg>';
+  // legenda
+  const leg=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-family:var(--fm);color:var(--sub)"><span style="width:10px;height:10px;border-radius:3px;background:${s.color}"></span>${TEAM_SHORT[s.team]||s.team}</span>`).join('');
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:18px">
+    <div style="font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:12px;font-weight:700">📈 Moč (ELO) skozi sezono — top ekipe</div>
+    ${svg}
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;justify-content:center">${leg}</div>
+  </div>`;
+}
+
 function renderPowerRanking(){
   const wrap=document.getElementById('power-wrap');
   if(!wrap)return;
@@ -7725,6 +7768,7 @@ function renderPowerRanking(){
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
       Moč ekip: <strong>65% jakost postave</strong> (bElo igralcev + doprinos) in <strong>35% dejanski rezultati</strong> (ELO). Združi kakovost kadra in to, kdo zares zmaguje.
     </div>`;
+  html+=drawTeamEloChart(teams.slice(0,5));
 
   const maxPow=teams[0].power, minPow=teams[teams.length-1].power;
   const powPct=p=>Math.max(8,Math.min(100,(p-minPow+2)/(maxPow-minPow+2)*100));
