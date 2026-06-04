@@ -3692,7 +3692,9 @@ function computePlayerAttributes(merged){
   const blend=(qv,qd,sv,sd,wQ)=>{
     const pQ=_pctlRank(qv,qd), pS=_pctlRank(sv,sd);
     const mix=wQ*pQ+(1-wQ)*pS;
-    return Math.round(45+mix*54);
+    // Krivulja: strop 92 (ne 99) + eksponent 1.4 → le res izjemni dosežejo 90+,
+    // povprečje pade nižje. Atributi se zbližajo z OVR (manj "74 OVR a 99 obramba").
+    return Math.round(45+Math.pow(mix,1.4)*47);
   };
   const _attrs={
     met:    blend(qShoot, dqShoot, sShoot, dsShoot, 0.78),
@@ -3713,12 +3715,12 @@ function computeBadges(merged,attrs){
   const badges=[];
   const fg3=pct(merged[F.fg3m],merged[F.fg3a]);
   if(attrs.met>=99||(fg3!=null&&fg3>=37&&merged[F.fg3a]/t>=2))badges.push({i:'🎯',l:'Ostrostrelec'});
-  if(attrs.skok>=88)badges.push({i:'🪂',l:'Skakalec'});
-  if(attrs.podaja>=88)badges.push({i:'🧠',l:'Dirigent'});
-  if(attrs.obramba>=88)badges.push({i:'🔒',l:'Branilec'});
-  if(attrs.napad>=88)badges.push({i:'💪',l:'Rušilec'});
+  if(attrs.skok>=84)badges.push({i:'🪂',l:'Skakalec'});
+  if(attrs.podaja>=84)badges.push({i:'🧠',l:'Dirigent'});
+  if(attrs.obramba>=84)badges.push({i:'🔒',l:'Branilec'});
+  if(attrs.napad>=84)badges.push({i:'💪',l:'Rušilec'});
   if((merged[F.toc]/t)>=18)badges.push({i:'🔥',l:'Strelska mašina'});
-  if(attrs.efekt>=92)badges.push({i:'⭐',l:'Zvezda'});
+  if(attrs.efekt>=88)badges.push({i:'⭐',l:'Zvezda'});
   return badges.slice(0,4);
 }
 // ─── ENOTEN BARVNI JEZIK MOČI (uporabljen v 2K, bElo, power, dashboard) ───
