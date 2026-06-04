@@ -1347,6 +1347,16 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .napoved-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
 .power-card{transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
 .power-card:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:var(--sh-md)}
+/* bElo "kako deluje" razširljiva sekcija */
+.belo-how{margin-bottom:20px;border:1px solid var(--border);border-radius:12px;background:rgba(251,191,36,.04);overflow:hidden}
+.belo-how summary{cursor:pointer;padding:12px 16px;font-family:var(--fh);font-weight:600;font-size:.82rem;color:#fbbf24;list-style:none;user-select:none;transition:background .15s}
+.belo-how summary::-webkit-details-marker{display:none}
+.belo-how summary:hover{background:rgba(251,191,36,.08)}
+.belo-how[open] summary{border-bottom:1px solid var(--border)}
+.belo-how-body{padding:14px 16px;font-size:.8rem;line-height:1.6;color:var(--sub);font-family:var(--fm)}
+.belo-how-body p{margin:0 0 10px}
+.belo-how-body p:last-child{margin-bottom:0}
+.belo-how-body b,.belo-how-body strong{color:var(--text)}
 /* bElo podij + bari */
 .belo-podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;margin-bottom:28px}
 .belo-pod-card{position:relative;border-radius:16px;padding:18px 14px 16px;text-align:center;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;overflow:hidden}
@@ -7851,9 +7861,21 @@ function renderBElo(){
   const teamStr=teams.map(t=>({team:t,str:predictTeamStrength(t)})).filter(x=>x.str).sort((a,b)=>b.str-a.str);
 
   let html=`<div class="sec-head" style="--sh-c:#fbbf24">★ bElo — moč igralcev</div>
-    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
+    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:14px;line-height:1.5">
       <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono (vključno s končnico, ki šteje več). Uporabno za napoved moči ekip.
-    </div>`;
+    </div>
+    <details class="belo-how">
+      <summary>Kako se bElo računa? &nbsp;›</summary>
+      <div class="belo-how-body">
+        <p><strong>Izhodišče.</strong> Vsak igralec začne pri <b>1500</b> (povprečje lige). Po vsaki odigrani tekmi se ocena posodobi — gor ali dol — glede na dva dejavnika.</p>
+        <p><strong>1 · Ekipni izid, utežen z osebnim prispevkom.</strong> Če ekipa zmaga, dobi največ <b>nosilec</b> (igralec z velikim deležem ekipne učinkovitosti), <b>potnik</b> (malo minut/učinka) malo. Ob porazu je obratno — nosilec je bolj kaznovan, potnik manj, ker ni bil glavni krivec. Tako en zvezdnik ne »potuje« gor zgolj zato, ker ima dobre soigralce.</p>
+        <p><strong>2 · Jakost nasprotnika.</strong> Zmaga proti močnejši ekipi (višji ekipni ELO) prinese več kot zmaga proti šibkejši. Pričakovan izid se računa po klasični ELO formuli iz razlike v moči ekip.</p>
+        <p><strong>3 · Individualna kakovost.</strong> Poleg izida šteje, <i>kako dobro</i> je igralec igral — meri se po EFE (KZS učinkovitost) v primerjavi z ligaškim povprečjem. Nadpovprečna predstava doda točke, podpovprečna jih odvzame (kapica ±12, da se prepreči »nabijanje« statistike).</p>
+        <p><strong>Končnica šteje več.</strong> Tekme rednega dela imajo težo K=24, končnica K=32 — pomembne tekme bolj premaknejo oceno.</p>
+        <p><strong>Lige brez polne statistike (3. SKL).</strong> Kjer ni EFE, se kot merilo kakovosti uporabijo <b>točke</b> namesto EFE.</p>
+        <p style="color:var(--mut)">Skala (groba): pod 1490 = pod povprečjem · 1490–1550 dober · 1550–1620 odličen · 1620–1700 zelo dober · nad 1700 elita.</p>
+      </div>
+    </details>`;
 
   // Tier sidro (pomaga uporabniku brati vrednost)
   const tierOf=(be)=> be>=1700?{l:'ELITA',c:TIER_COLORS.elita}:be>=1620?{l:'ODLIČEN',c:TIER_COLORS.odlicen}:be>=1550?{l:'DOBER',c:TIER_COLORS.dober}:be>=1490?{l:'POVPREČEN',c:TIER_COLORS.povprecen}:{l:'POD POVP.',c:TIER_COLORS.pod};
