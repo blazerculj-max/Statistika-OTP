@@ -1365,7 +1365,15 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .belo-bar-track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:3px}
 .belo-bar-fill{height:100%;border-radius:3px}
 .belo-tier{display:inline-block;font-size:.56rem;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:5px;font-family:var(--fm);vertical-align:middle}
-@media(max-width:560px){.belo-podium{grid-template-columns:1fr;gap:8px}.belo-pod-card{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px}.belo-pod-photo,.belo-pod-photo-fb{margin:0;width:48px;height:54px}.belo-pod-card.gold .belo-pod-val,.belo-pod-card .belo-pod-val{font-size:1.4rem;margin-left:auto}.belo-pod-name{margin-bottom:2px}.belo-pod-team{margin-bottom:0}}
+@media(max-width:560px){.belo-podium{grid-template-columns:1fr;gap:8px}.belo-pod-card{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px}.belo-pod-photo,.belo-pod-photo-fb{margin:0;width:48px;height:54px}.belo-pod-card.gold .belo-pod-val,.belo-pod-card .belo-pod-val{font-size:1.4rem;margin-left:auto}.belo-pod-name{margin-bottom:2px}.belo-pod-team{margin-bottom:0}
+/* Power podij ostane 3 kompaktne vertikalne kartice v vrsti */
+.power-podium{grid-template-columns:1fr 1.1fr 1fr;gap:6px}
+.power-podium .belo-pod-card{display:block;text-align:center;padding:12px 6px 10px}
+.power-podium .belo-pod-val{font-size:1.4rem!important;margin-left:0!important}
+.power-podium .belo-pod-card.gold .belo-pod-val{font-size:1.6rem!important}
+.power-podium .belo-pod-name{font-size:.74rem;margin-bottom:2px}
+.power-podium .belo-pod-rank{font-size:.6rem}
+.power-podium .belo-pod-team{justify-content:center;margin-bottom:6px;font-size:.6rem}}
 </style>
 </head>
 <body>
@@ -7734,7 +7742,7 @@ function renderPowerRanking(){
   // ─── Podij top 3 ekip ───
   const podOrder=[teams[1],teams[0],teams[2]];
   const podMeta=[{r:'2.',c:'#cbd5e1',cls:''},{r:'1.',c:'#fbbf24',cls:'gold'},{r:'3.',c:'#d8915b',cls:''}];
-  html+='<div class="belo-podium">';
+  html+='<div class="belo-podium power-podium">';
   podOrder.forEach((t,k)=>{
     if(!t)return;
     const tc=TEAM_COLORS[t.team]||'#10b981';
