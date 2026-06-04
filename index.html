@@ -3694,7 +3694,7 @@ function computePlayerAttributes(merged){
     const mix=wQ*pQ+(1-wQ)*pS;
     return Math.round(45+mix*54);
   };
-  return {
+  const _attrs={
     met:    blend(qShoot, dqShoot, sShoot, dsShoot, 0.78),
     napad:  blend(qInside,dqInside,sInside,dsInside,0.65),
     podaja: blend(qPlay,  dqPlay,  sPlay,  dsPlay,  0.65),
@@ -3702,13 +3702,17 @@ function computePlayerAttributes(merged){
     obramba:blend(qDef,   dqDef,   sDef,   dsDef,   0.65),
     efekt:  blend(qImpact,dqImpact,sImpact,dsImpact,0.6)
   };
+  // 🥚 Easter egg: Mark (52122) in Matic (52121) Hudobivnik — MET vedno 99.
+  // Edini hard-code; OVR in ostali atributi ostanejo realni.
+  if(merged[F.pid]===52122||merged[F.pid]===52121)_attrs.met=99;
+  return _attrs;
 }
 // Badgi — značke za izstopajoče lastnosti (prag percentil)
 function computeBadges(merged,attrs){
   const t=Math.max(merged[F.T],1);
   const badges=[];
   const fg3=pct(merged[F.fg3m],merged[F.fg3a]);
-  if(fg3!=null&&fg3>=37&&merged[F.fg3a]/t>=2)badges.push({i:'🎯',l:'Ostrostrelec'});
+  if(attrs.met>=99||(fg3!=null&&fg3>=37&&merged[F.fg3a]/t>=2))badges.push({i:'🎯',l:'Ostrostrelec'});
   if(attrs.skok>=88)badges.push({i:'🪂',l:'Skakalec'});
   if(attrs.podaja>=88)badges.push({i:'🧠',l:'Dirigent'});
   if(attrs.obramba>=88)badges.push({i:'🔒',l:'Branilec'});
