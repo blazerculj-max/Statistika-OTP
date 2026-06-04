@@ -3666,33 +3666,37 @@ function computePlayerAttributes(merged){
   const tt=p=>Math.max(p[F.T],1);
 
   // ── PER-GAME kakovost (kako dober na tekmo) ──
-  const qShoot =(tsOf(merged)||0);
+  // MET: strelska učinkovitost (TS%) + grožnja od trojke (volumen×natančnost).
+  //   Tako strelec trojk (npr. 2.4 trojke/tekmo @ dober %) dobi zaslužen MET.
+  const _shoot3=(m)=>{const tm=Math.max(m[F.T],1);const made3=m[F.fg3m]/tm;const att3=m[F.fg3a]/tm;const acc=att3>0?m[F.fg3m]/(att3*tm):(m[F.fg3a]>0?pct(m[F.fg3m],m[F.fg3a])/100:0);return made3*(0.5+acc);}; // zadete 3 × (osnova+natančnost)
+  const qShoot =(tsOf(merged)||0)+_shoot3(merged)*4;   // 3T grožnja prispeva k MET
   const qInside=(merged[F.pip]/t)+(pct(merged[F.fg2m],merged[F.fg2a])||0)*0.15;
   const qPlay  =(merged[F.pod]/t)+(merged[F.izg]>0?merged[F.pod]/merged[F.izg]:merged[F.pod]/t);
   const qReb   =((merged[F.nap]+merged[F.obr])/t);
-  const qDef   =((merged[F.sto]+merged[F.blk])/t);
+  // OBRAMBA: blokade so močnejši signal prave obrambe kot kraje (kraje = pogosto špekulacija).
+  const qDef   =((merged[F.sto]*0.6+merged[F.blk]*1.4)/t);
   const qImpact=(merged[F.efe]/t);
   // ── SKUPNI doprinos (koliko je ekipi dal čez sezono) ──
   const sInside=merged[F.pip]+merged[F.fg2m]*0.5;
   const sPlay  =merged[F.pod];
   const sReb   =merged[F.nap]+merged[F.obr];
-  const sDef   =merged[F.sto]+merged[F.blk];
+  const sDef   =merged[F.sto]*0.6+merged[F.blk]*1.4;
   const sImpact=merged[F.efe];
-  const sShoot =merged[F.toc]; // skupne točke kot volumen strelca
+  const sShoot =merged[F.toc]+merged[F.fg3m]*1.5; // točke + bonus za zadete trojke
 
-  // ligaške porazdelitve (kakovost)
-  const dqShoot =per(p=>tsOf(p)||0);
+  // ligaške porazdelitve (kakovost) — iste formule kot zgoraj
+  const dqShoot =per(p=>(tsOf(p)||0)+_shoot3(p)*4);
   const dqInside=per(p=>(p[F.pip]/tt(p))+(pct(p[F.fg2m],p[F.fg2a])||0)*0.15);
   const dqPlay  =per(p=>(p[F.pod]/tt(p))+(p[F.izg]>0?p[F.pod]/p[F.izg]:p[F.pod]/tt(p)));
   const dqReb   =per(p=>(p[F.nap]+p[F.obr])/tt(p));
-  const dqDef   =per(p=>(p[F.sto]+p[F.blk])/tt(p));
+  const dqDef   =per(p=>(p[F.sto]*0.6+p[F.blk]*1.4)/tt(p));
   const dqImpact=per(p=>p[F.efe]/tt(p));
   // ligaške porazdelitve (skupni doprinos)
-  const dsShoot =per(p=>p[F.toc]);
+  const dsShoot =per(p=>p[F.toc]+p[F.fg3m]*1.5);
   const dsInside=per(p=>p[F.pip]+p[F.fg2m]*0.5);
   const dsPlay  =per(p=>p[F.pod]);
   const dsReb   =per(p=>p[F.nap]+p[F.obr]);
-  const dsDef   =per(p=>p[F.sto]+p[F.blk]);
+  const dsDef   =per(p=>p[F.sto]*0.6+p[F.blk]*1.4);
   const dsImpact=per(p=>p[F.efe]);
 
   // Blend percentilov: kakovost W_Q + skupni doprinos W_S, → 45..99
