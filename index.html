@@ -2557,6 +2557,7 @@ async function tryFastPregled(lg){
     ]);
     allMatches=d.matches||[];
     playerGameLog=d.gamelog||{};
+    window._fastMvpPid=d.mvpPid||null;
     Object.keys(playerGameLog).forEach(pid=>playerGameLog[pid].sort((a,b)=>a.round-b.round));
     _leaguePlayers=null; _tmAgg={}; _eloRatings=null; _bEloRatings=null;
     // Prikaži Pregled takoj
@@ -7941,16 +7942,29 @@ function renderPregled(){
 
   // — Vodilni MVP — (getLeaguePlayers = združeni totali tudi pri prestopih)
   const _lp=getLeaguePlayers();
-  const rdPlayers=_lp.filter(p=>p[F.T]>=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5)));
-  const mvp=rdPlayers.map(p=>({p,score:calcMvpScore(p)})).sort((a,b)=>b.score-a.score)[0];
+  const _hasFull0=Object.keys(matchStatsCache).length>0;
+  let mvp;
+  if(!_hasFull0 && window._fastMvpPid){
+    // hitri pregled: uporabi že-izračunan MVP pid (zagotovo isti kot polni)
+    const mp=_lp.find(p=>p[F.pid]===window._fastMvpPid);
+    mvp=mp?{p:mp,score:calcMvpScore(mp)}:null;
+  }
+  if(!mvp){
+    const rdPlayers=_lp.filter(p=>p[F.T]>=Math.max(1,Math.round(allMatches.filter(m=>m.status==='FINISHED').length*0.3/5)));
+    mvp=rdPlayers.map(p=>({p,score:calcMvpScore(p)})).sort((a,b)=>b.score-a.score)[0];
+  }
 
-  // — Power top 3 —
-  let power=[]; try{power=computeTeamPower().slice(0,3);}catch(e){}
+  // — Power top 3 — (rabi matchStatsCache; med hitrim pregledom še ni)
+  const _hasFull=Object.keys(matchStatsCache).length>0;
+  let power=[]; if(_hasFull){try{power=computeTeamPower().slice(0,3);}catch(e){}}
 
-  // — bElo top 3 —
-  const {ratings,meta}=computeBElo();
-  const beTop=Object.entries(ratings).map(([pid,be])=>({pid:parseInt(pid),be,...meta[pid]}))
-    .filter(x=>x.games>=3).sort((a,b)=>b.be-a.be).slice(0,3);
+  // — bElo top 3 — (rabi matchStatsCache)
+  let beTop=[], ratings={}, meta={};
+  if(_hasFull){
+    const r=computeBElo(); ratings=r.ratings; meta=r.meta;
+    beTop=Object.entries(ratings).map(([pid,be])=>({pid:parseInt(pid),be,...meta[pid]}))
+      .filter(x=>x.games>=3).sort((a,b)=>b.be-a.be).slice(0,3);
+  }
 
   // — Naslednja tekma —
   const now=new Date();
@@ -8028,6 +8042,11 @@ function renderPregled(){
     html+=`<div class="pregled-card" onclick="showTab('power')" style="--pc:#10b981">
       <div class="pregled-card-h">⚡ Najmočnejše ekipe</div>${rows}
     </div>`;
+  } else if(!_hasFull){
+    html+=`<div class="pregled-card" style="--pc:#10b981">
+      <div class="pregled-card-h">⚡ Najmočnejše ekipe</div>
+      ${[0,1,2].map(()=>'<div class="skeleton" style="height:20px;border-radius:6px;margin:8px 0"></div>').join('')}
+    </div>`;
   }
 
   // ── Kartica: bElo top 3 ──
@@ -8043,6 +8062,11 @@ function renderPregled(){
     }).join('');
     html+=`<div class="pregled-card" onclick="showTab('belo')" style="--pc:#fbbf24">
       <div class="pregled-card-h">★ Najmočnejši igralci (bElo)</div>${rows}
+    </div>`;
+  } else if(!_hasFull){
+    html+=`<div class="pregled-card" style="--pc:#fbbf24">
+      <div class="pregled-card-h">★ Najmočnejši igralci (bElo)</div>
+      ${[0,1,2].map(()=>'<div class="skeleton" style="height:20px;border-radius:6px;margin:8px 0"></div>').join('')}
     </div>`;
   }
 
