@@ -3219,7 +3219,9 @@ function showTab(t){
   if(t!=='race'&&_racePlayTimer){clearInterval(_racePlayTimer);_racePlayTimer=null;const rb=document.getElementById('race-play');if(rb){rb.textContent='▶';rb.classList.remove('playing');}}
   document.querySelectorAll('.tab').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(e=>e.classList.remove('active'));
-  document.getElementById('tab-'+t).classList.add('active');
+  const tabEl=document.getElementById('tab-'+t);
+  if(!tabEl){console.warn('showTab: ni elementa tab-'+t);return;}
+  tabEl.classList.add('active');
   window.scrollTo({top:0,behavior:'instant'});
   // Mark active nav button safely (works both from click and programmatic call)
   document.querySelectorAll('.nb').forEach(b=>{
