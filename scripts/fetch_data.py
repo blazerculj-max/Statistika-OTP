@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
 KZS Data Fetcher — Incremental, brez PBP (PBP je ločen job).
+
+NOVO: generira tudi data/{key}_pregled.json — majhen JSON (~200-400 KB) z
+že-agregiranimi igralci (totali) + tekmami + game logom. Aplikacija ga
+naloži PRVEGA → Pregled se izriše takoj, veliki _stats.json pa se naloži
+v ozadju. bElo/power/MVP še vedno računa brskalnik (iz teh totalov), zato
+ni podvajanja logike.
 """
 
 import json, time, urllib.request, os, sys
@@ -202,6 +208,89 @@ def fetch_pbp_incremental(matches, existing_pbp):
         time.sleep(0.4)
     return pbp
 
+# ════════════════════════════════════════════════════════════
+# PREGLED JSON — agregirani igralci (totali) za hitro nalaganje
+# Zrcali aggregatePlayers() v HTML. Brez surovih matchStats.
+# Aplikacija iz tega izračuna bElo/power/MVP (ista logika kot prej).
+# ════════════════════════════════════════════════════════════
+def normalize_team(name):
+    # zrcali normalizeTeamName v HTML (osnovna verzija — trim).
+    # Če imaš v HTML posebne preslikave imen, jih dodaj sem.
+    return (name or '').strip()
+
+def build_pregled(matches, stats):
+    """Vrne kompakten dict: tekme (minimalno) + agregirani igralci (totali) + game log."""
+    valid_ids = set(m['id'] for m in matches)
+    round_by_id = {m['id']: m.get('round', 0) for m in matches}
+
+    byKey = {}      # pid_team → totali
+    gamelog = {}    # pid → [{round,matchId,team,pts,reb,ast,efe,min}]
+
+    for md in stats.values():
+        if not md: continue
+        mid = md.get('matchId')
+        if mid not in valid_ids: continue
+        rnd = round_by_id.get(mid, 0)
+        for teamData in (md.get('firstTeam'), md.get('secondTeam')):
+            if not teamData or not teamData.get('playerStats'): continue
+            team = normalize_team(teamData.get('teamName'))
+            for ps in teamData['playerStats']:
+                has_stats = (ps.get('points',0)>0 or ps.get('twoPM',0)>0 or
+                             ps.get('threePM',0)>0 or ps.get('fTM',0)>0)
+                if not ps.get('played') or (not has_stats and ps.get('minutes',0)==0):
+                    continue
+                pid = ps.get('playerId')
+                key = f"{pid}_{team}"
+                if key not in byKey:
+                    byKey[key] = {
+                        'name': (ps.get('matchTeamPlayerFirstname','').strip()+' '+
+                                 ps.get('matchTeamPlayerLastname','').strip()).strip(),
+                        'team': team,
+                        'born': int(ps.get('matchTeamPlayerYearOfBirth') or 0),
+                        'pid': pid,
+                        'T':0,'MIN':0,'fg2m':0,'fg2a':0,'fg3m':0,'fg3a':0,'ftm':0,'fta':0,
+                        'toc':0,'nap':0,'obr':0,'pod':0,'sto':0,'izs':0,'izg':0,'pz':0,
+                        'blk':0,'pre':0,'pm':0,'efe':0,'pip':0,'fb':0,'sc':0
+                    }
+                p = byKey[key]
+                p['T']+=1; p['MIN']+=ps.get('minutes',0)
+                p['fg2m']+=ps.get('twoPM',0); p['fg2a']+=ps.get('twoPA',0)
+                p['fg3m']+=ps.get('threePM',0); p['fg3a']+=ps.get('threePA',0)
+                p['ftm']+=ps.get('fTM',0); p['fta']+=ps.get('fTA',0)
+                p['toc']+=ps.get('points',0)
+                p['nap']+=ps.get('offensiveRebounds',0); p['obr']+=ps.get('defensiveRebounds',0)
+                p['pod']+=ps.get('assists',0); p['sto']+=ps.get('steals',0)
+                p['izg']+=ps.get('turnovers',0); p['pz']+=ps.get('foulCommited',0)
+                p['blk']+=ps.get('blocksInFavor',0); p['pre']+=ps.get('blocksAgainst',0)
+                p['pm']+=ps.get('plusMinus',0)
+                p['efe']+=(ps.get('efficiencyCustom') or ps.get('efficiency') or 0)
+                p['pip']+=ps.get('pointsInThePaint',0)
+                p['fb']+=ps.get('pointsFastBreak',0)
+                p['sc']+=ps.get('pointsSecondChance',0)
+                p['izs']+=ps.get('foulReceived',0)
+                # game log (za trend / MVP po krogih)
+                gl = gamelog.setdefault(pid, [])
+                if not any(g['matchId']==mid for g in gl):
+                    gl.append({
+                        'round':rnd,'matchId':mid,'team':team,
+                        'pts':ps.get('points',0),
+                        'reb':ps.get('offensiveRebounds',0)+ps.get('defensiveRebounds',0),
+                        'ast':ps.get('assists',0),
+                        'efe':ps.get('efficiencyCustom') or ps.get('efficiency') or 0,
+                        'min':ps.get('minutes',0)
+                    })
+
+    # tekme — samo polja, ki jih Pregled rabi (rezultati, imena, datum, faza)
+    slim_matches = [{
+        'id':m['id'],'round':m.get('round',0),'status':m['status'],
+        'dateTime':m.get('dateTime',''),
+        'firstTeamName':m['firstTeamName'],'secondTeamName':m['secondTeamName'],
+        'firstTeamScore':m.get('firstTeamScore'),'secondTeamScore':m.get('secondTeamScore'),
+        'firstTeamLogoUuid':m.get('firstTeamLogoUuid'),'secondTeamLogoUuid':m.get('secondTeamLogoUuid'),
+    } for m in matches]
+
+    return {'players':list(byKey.values()), 'matches':slim_matches, 'gamelog':gamelog}
+
 def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
     existing = load_existing_stats(key)
@@ -222,6 +311,18 @@ def process_league(key, lg):
     with open(stats_file, 'w') as f:
         json.dump(payload, f, ensure_ascii=False, separators=(',',':'))
     print(f"  ✅ {stats_file} ({os.path.getsize(stats_file)//1024} KB)")
+
+    # ── PREGLED JSON (majhen, za hitro prvo nalaganje) ──
+    try:
+        pregled = build_pregled(matches, stats)
+        pregled['updatedAt'] = now
+        pregled['league'] = lg['name']
+        pregled_file = f"data/{key}_pregled.json"
+        with open(pregled_file, 'w') as f:
+            json.dump(pregled, f, ensure_ascii=False, separators=(',',':'))
+        print(f"  ⚡ {pregled_file} ({os.path.getsize(pregled_file)//1024} KB, {len(pregled['players'])} igralcev)")
+    except Exception as e:
+        print(f"  ! pregled.json: {e}")
 
     # Verzionirana kopija sezone (za arhiv + medsezonsko primerjavo)
     season_file = f"data/{key}_stats_s{SEASON_ID}.json"
