@@ -2528,8 +2528,46 @@ function selectLeague(lg) {
   document.getElementById('load-title').innerHTML = loadHtml;
   // Update header
   updateHeader();
+  // ⚡ Hitri Pregled: naloži majhen pregled.json in prikaži dashboard takoj.
+  // Polni _stats.json (z matchStats) se naloži v loadAllData() v ozadju.
+  tryFastPregled(lg);
   loadAllData();
   initSeasonSelector();
+}
+
+// ⚡ Naloži data/{lg}_pregled.json (majhen, agregirani igralci) → izriše Pregled v <1s.
+// Če ne uspe (datoteka še ne obstaja / offline), tiho preskoči — loadAllData prevzame.
+let _fastPregledDone=false;
+async function tryFastPregled(lg){
+  if(_fastPregledDone)return;
+  if(_currentSeason!==SEASON_ID)return; // samo aktualna sezona
+  if(P.length)return;                   // podatki že tu (cache) — ni potrebe
+  try{
+    const r=await fetch(GITHUB_RAW+'/'+lg+'_pregled.json',{cache:'no-cache'});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(!d.players||!d.players.length)return;
+    if(P.length)return; // medtem se je naložil polni dataset — ne prepiši
+    // Napolni globale v ISTEM formatu kot aggregatePlayers()
+    P=d.players.map(p=>[
+      p.name,p.team,p.born,p.pid,p.T,Math.round(p.MIN*10)/10,
+      p.fg2m,p.fg2a,p.fg3m,p.fg3a,p.ftm,p.fta,
+      p.toc,p.nap,p.obr,p.pod,p.sto,p.izs,p.izg,p.pz,
+      p.blk,p.pre,p.pm,p.efe,p.pip,p.fb,p.sc
+    ]);
+    allMatches=d.matches||[];
+    playerGameLog=d.gamelog||{};
+    Object.keys(playerGameLog).forEach(pid=>playerGameLog[pid].sort((a,b)=>a.round-b.round));
+    _leaguePlayers=null; _tmAgg={}; _eloRatings=null; _bEloRatings=null;
+    // Prikaži Pregled takoj
+    _fastPregledDone=true;
+    if(document.getElementById('tab-pregled')?.classList.contains('active')||!document.querySelector('.tab.active')){
+      renderPregled();
+    }
+    // skrij loading overlay (Pregled je viden; ostalo se dograjuje v ozadju)
+    const lo=document.getElementById('loading-overlay');
+    if(lo)lo.style.display='none';
+  }catch(e){/* tiho — loadAllData prevzame */}
 }
 
 function updateHeader() {
