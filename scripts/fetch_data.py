@@ -289,7 +289,29 @@ def build_pregled(matches, stats):
         'firstTeamLogoUuid':m.get('firstTeamLogoUuid'),'secondTeamLogoUuid':m.get('secondTeamLogoUuid'),
     } for m in matches]
 
-    return {'players':list(byKey.values()), 'matches':slim_matches, 'gamelog':gamelog}
+    players = list(byKey.values())
+
+    # MVP — že-izračunan (zrcali calcMvpScore + getLeaguePlayers v HTML),
+    # da je junak na Pregledu ZAGOTOVO isti kot pri polnih podatkih.
+    n_finished = sum(1 for m in matches if m['status']=='FINISHED')
+    min_t = max(1, round(n_finished*0.3/5))
+    grouped = {}
+    for p in players:
+        k = f"{p['name']}_{p['born']}"
+        if k not in grouped:
+            grouped[k] = dict(p)
+        else:
+            for fld in ('T','MIN','fg2m','fg2a','fg3m','fg3a','ftm','fta','toc','nap','obr',
+                        'pod','sto','izs','izg','pz','blk','pre','pm','efe','pip','fb','sc'):
+                grouped[k][fld] += p[fld]
+    def mvp_score(p):
+        t = max(p['T'],1)
+        return (p['toc']/t)*1.0+((p['nap']+p['obr'])/t)*0.7+(p['pod']/t)*0.8+ \
+               (p['sto']/t)*1.5+(p['blk']/t)*1.5-(p['izg']/t)*0.8+(p['efe']/t)*0.3
+    elig = [p for p in grouped.values() if p['T']>=min_t]
+    mvp_pid = max(elig, key=mvp_score)['pid'] if elig else None
+
+    return {'players':players, 'matches':slim_matches, 'gamelog':gamelog, 'mvpPid':mvp_pid}
 
 def process_league(key, lg):
     print(f"\n--- {lg['name']} ---")
