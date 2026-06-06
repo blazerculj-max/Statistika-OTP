@@ -1042,11 +1042,11 @@
      "group": "C",
      "time": "17:15",
      "home": "Fullhaus",
-     "hs": null,
+     "hs": 19,
      "hw": false,
      "away": "Nomago",
-     "as": null,
-     "aw": false
+     "as": 21,
+     "aw": true
     },
     {
      "name": "Pool B game 2",
@@ -1054,10 +1054,10 @@
      "group": "B",
      "time": "17:55",
      "home": "Ljubljana Jug 3x3",
-     "hs": null,
-     "hw": false,
+     "hs": 19,
+     "hw": true,
      "away": "Rehab studio 3x3",
-     "as": null,
+     "as": 12,
      "aw": false
     },
     {
@@ -1066,10 +1066,10 @@
      "group": "A",
      "time": "17:55",
      "home": "Klančar Žerjavi",
-     "hs": null,
-     "hw": false,
+     "hs": 21,
+     "hw": true,
      "away": "3×3 Weclean Koroška",
-     "as": null,
+     "as": 10,
      "aw": false
     },
     {
@@ -1078,10 +1078,10 @@
      "group": "C",
      "time": "18:15",
      "home": "Fullhaus",
-     "hs": null,
-     "hw": false,
+     "hs": 22,
+     "hw": true,
      "away": "3x3 Škofja Loka",
-     "as": null,
+     "as": 17,
      "aw": false
     },
     {
@@ -1090,11 +1090,11 @@
      "group": "C",
      "time": "18:15",
      "home": "Nomago",
-     "hs": null,
+     "hs": 10,
      "hw": false,
      "away": "dLuft Lj - Center",
-     "as": null,
-     "aw": false
+     "as": 21,
+     "aw": true
     },
     {
      "name": "Pool B game 3",
@@ -1125,7 +1125,7 @@
      "round": "L8",
      "group": "",
      "time": "19:00",
-     "home": "",
+     "home": "Nomago",
      "hs": null,
      "hw": false,
      "away": "",
@@ -1140,7 +1140,7 @@
      "home": "",
      "hs": null,
      "hw": false,
-     "away": "",
+     "away": "dLuft Lj - Center",
      "as": null,
      "aw": false
     },
