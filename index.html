@@ -1361,6 +1361,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .t3-game:nth-child(odd){background:rgba(255,255,255,.02)}
 .t3-game-team{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .t3-game-score{font-family:var(--fs);font-weight:700;font-size:.92rem;color:#a855f7;white-space:nowrap;padding:0 4px}
+.t3-game-time{color:var(--mut);font-size:.78rem;font-weight:600}
 /* pregled dashboard */
 /* Pregled — JUNAK (hero) */
 .hero-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:0;margin-bottom:14px;cursor:pointer;overflow:hidden;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s}
@@ -8211,6 +8212,7 @@ function render3x3(){
   const tours=DRZAVC_3X3.tournaments;
   const tour=tours[_t3TourIdx]||tours[0];
   const completed=tour.status==='completed';
+  const hasGames=(tour.games||[]).length>0;
   const teams=[...tour.teams].sort((a,b)=>_t3TeamPower(b)-_t3TeamPower(a));
   const maxPow=_t3TeamPower(teams[0])||1;
 
@@ -8248,6 +8250,15 @@ function render3x3(){
       html+='</div>';
     }
     // tekme po fazah
+    html+=render3x3Games(tour);
+  } else if(hasGames){
+    // ── TURNIR Z RAZPOREDOM (še ni rezultatov): datum + razpored tekem ──
+    const dateStr=tour.date?new Date(tour.date+'T00:00').toLocaleDateString('sl-SI',{weekday:'long',day:'numeric',month:'long'}):null;
+    html+=`<div style="background:rgba(124,31,160,.08);border:1px solid rgba(124,31,160,.25);border-radius:14px;padding:14px 16px;margin:14px 0 20px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:1.4rem">🗓️</span>
+      <div><div style="font-family:var(--fh);font-weight:700;font-size:.92rem">${dateStr?dateStr.charAt(0).toUpperCase()+dateStr.slice(1):'Razpored'}</div>
+      <div style="font-size:.74rem;color:var(--mut);font-family:var(--fm);margin-top:2px">Razpored objavljen · rezultati v živo med turnirjem.</div></div>
+    </div>`;
     html+=render3x3Games(tour);
   } else {
     // ── PRIHAJAJOČI TURNIR: info + ekipe ──
@@ -8306,7 +8317,8 @@ function render3x3Games(tour){
   // grupiraj
   const byRound={};
   games.forEach(g=>{(byRound[g.round]=byRound[g.round]||[]).push(g);});
-  let html='<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:22px 0 12px">Rezultati tekem</div>';
+  const anyScore=games.some(g=>g.hs!=null&&g.as!=null);
+  let html=`<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:22px 0 12px">${anyScore?'Rezultati tekem':'Razpored tekem'}</div>`;
   ROUND_ORDER.forEach(rc=>{
     const gs=byRound[rc]; if(!gs)return;
     html+=`<div class="t3-round-h">${ROUND_NAMES[rc]||rc}</div>`;
@@ -8328,11 +8340,13 @@ function render3x3Games(tour){
 function _t3GameRow(g){
   const hasScore=g.hs!=null&&g.as!=null;
   const hw=g.hw, aw=g.aw;
-  const sc=hasScore?`${g.hs} : ${g.as}`:'—';
+  const sc=hasScore?`${g.hs} : ${g.as}`:(g.time||'—');
+  const scCls=hasScore?'t3-game-score':'t3-game-score t3-game-time';
+  const home=g.home||'—', away=g.away||'—';
   return `<div class="t3-game">
-    <div class="t3-game-team" style="text-align:right;${hw?'font-weight:700':'opacity:.7'}">${g.home}</div>
-    <div class="t3-game-score">${sc}</div>
-    <div class="t3-game-team" style="${aw?'font-weight:700':'opacity:.7'}">${g.away}</div>
+    <div class="t3-game-team" style="text-align:right;${hw?'font-weight:700':'opacity:.7'}">${home}</div>
+    <div class="${scCls}">${sc}</div>
+    <div class="t3-game-team" style="${aw?'font-weight:700':'opacity:.7'}">${away}</div>
   </div>`;
 }
 
