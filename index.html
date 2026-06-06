@@ -87,6 +87,11 @@ select:focus{outline:none;border-color:var(--acc)}
   .tname{font-size:1.15rem;line-height:1.15}
   .tstats{margin-left:0;width:100%;gap:0;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px}
   .tstats .ts{flex:1;text-align:center}
+  /* Tekme na mobilnem: osnovni vertikalni layout je že OK, le manjše mere */
+  .live-teams{gap:8px;padding:13px 10px}
+  .live-team-name{font-size:.82rem;line-height:1.18}
+  .live-team-name img,.live-team-name .live-team-logo,.live-team-name .logo-fallback{width:28px!important;height:28px!important}
+  .live-score{font-size:1.75rem;min-width:56px;align-self:center}
 }
 .ts{text-align:center}.tsv{font-family:var(--fh);font-size:1.4rem}
 .tsl{font-size:.62rem;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
@@ -272,15 +277,12 @@ th:hover .th-q{opacity:.7}
 .live-pulse{display:inline-flex;align-items:center;gap:4px;color:#ef4444;font-weight:700}
 .live-pulse::before{content:'';width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s ease infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-.live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:14px 16px;gap:10px}
-.live-team-name{font-family:var(--fh);font-size:1rem;font-weight:700;letter-spacing:.01em;line-height:1.2;display:flex;align-items:center;gap:8px;min-width:0}
-.live-team-name.home{justify-content:flex-end;text-align:right}
-.live-team-name.away{justify-content:flex-start;text-align:left}
-.live-team-name .tn-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.live-team-logo{width:30px;height:30px;object-fit:contain;flex-shrink:0}
-.live-team-name.home{text-align:left}
-.live-team-name.away{text-align:right}
-.live-score{font-family:var(--fs);font-size:2.3rem;font-weight:800;letter-spacing:-.02em;text-align:center;min-width:90px;color:var(--text)}
+.live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:16px;gap:12px}
+.live-team-name{font-family:var(--fh);font-size:.92rem;font-weight:700;letter-spacing:.01em;line-height:1.2;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;text-align:center}
+.live-team-name.home,.live-team-name.away{justify-content:flex-start;text-align:center}
+.live-team-name .tn-txt{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
+.live-team-logo{width:34px;height:34px;object-fit:contain;flex-shrink:0}
+.live-score{font-family:var(--fs);font-size:2.3rem;font-weight:800;letter-spacing:-.02em;text-align:center;min-width:90px;color:var(--text);align-self:center}
 .live-score.upcoming{font-size:1rem;color:var(--mut)}
 .live-footer{padding:6px 14px 10px;display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-family:var(--fm);color:var(--mut)}
 .live-quarter{background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700;font-size:.68rem}
@@ -1146,6 +1148,16 @@ html{scroll-behavior:smooth}
   #st .pname-link{font-size:.88rem;font-weight:600}
   /* Mini-trend in born badge skrij na mobilnem (preveč gneče) */
   #st .mini-trend{display:none}
+  /* Scroll-namig: senca na desnem robu drsečih kontejnerjev, da je jasno,
+     da je vodoravno še vsebina (tabela ekip ipd.) */
+  .tw, [style*="overflow-x"]{
+    background-image:linear-gradient(to right, transparent, transparent),
+      linear-gradient(to right, rgba(0,0,0,.45), transparent 80%);
+    background-position:right center;
+    background-repeat:no-repeat;
+    background-size:32px 100%;
+    background-attachment:local;
+  }
 }
 
 /* ═══ HERO CTA — glavni vstop ═══ */
@@ -6708,7 +6720,8 @@ function buildLiveCard(m, lgKey) {
   // Winner emphasis for finished games
   let w1=false,w2=false;
   if(isFinished){const s1=m.firstTeamScore??0,s2=m.secondTeamScore??0;w1=s1>s2;w2=s2>s1;}
-  const accentBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,${c1},${c2})"></div>`;
+  const _barCol = isFinished ? (w1?c1:(w2?c2:'var(--border2)')) : 'var(--border2)';
+  const accentBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${_barCol};opacity:${isFinished?.7:.35}"></div>`;
   return `<div class="live-card ${isLive?'is-live':''} ${isUpcoming&&new Date(m.dateTime).toDateString()===new Date().toDateString()?'is-today':''}"
     onclick="openMatch(${m.id})">
     ${accentBar}
