@@ -648,7 +648,7 @@
    "eventId": "2683f287-8996-4d6b-b58c-176a29850250",
    "categoryId": "7d31d477-43c8-4f14-a49b-11ab541a3dfc",
    "date": "2026-06-06",
-   "status": "upcoming",
+   "status": "completed",
    "podium": [],
    "teams": [
     {
@@ -982,10 +982,10 @@
      "group": "C",
      "time": "16:15",
      "home": "Nomago",
-     "hs": null,
-     "hw": false,
+     "hs": 21,
+     "hw": true,
      "away": "3x3 Škofja Loka",
-     "as": null,
+     "as": 16,
      "aw": false
     },
     {
@@ -994,10 +994,10 @@
      "group": "C",
      "time": "16:15",
      "home": "dLuft Lj - Center",
-     "hs": null,
-     "hw": false,
+     "hs": 21,
+     "hw": true,
      "away": "Fullhaus",
-     "as": null,
+     "as": 6,
      "aw": false
     },
     {
@@ -1006,10 +1006,10 @@
      "group": "B",
      "time": "16:55",
      "home": "SLO U23",
-     "hs": null,
-     "hw": false,
+     "hs": 15,
+     "hw": true,
      "away": "Rehab studio 3x3",
-     "as": null,
+     "as": 13,
      "aw": false
     },
     {
@@ -1018,10 +1018,10 @@
      "group": "A",
      "time": "16:55",
      "home": "AŽ masažni studio",
-     "hs": null,
-     "hw": false,
+     "hs": 21,
+     "hw": true,
      "away": "3×3 Weclean Koroška",
-     "as": null,
+     "as": 7,
      "aw": false
     },
     {
@@ -1030,11 +1030,11 @@
      "group": "C",
      "time": "17:15",
      "home": "3x3 Škofja Loka",
-     "hs": null,
+     "hs": 10,
      "hw": false,
      "away": "dLuft Lj - Center",
-     "as": null,
-     "aw": false
+     "as": 21,
+     "aw": true
     },
     {
      "name": "Pool C game 4",
