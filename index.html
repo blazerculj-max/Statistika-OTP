@@ -1063,7 +1063,14 @@ html{scroll-behavior:smooth}
   .std-team-name{font-size:.82rem}
 
   /* Section headings malo manjši */
-  .sec-head{font-size:.92rem}
+  .sec-head{font-size:1rem!important;margin:14px 0 10px!important;letter-spacing:.02em}
+  .sec-head::before{height:15px}
+
+  /* Kontrole/filtri kompaktnejši: selekti fluidni, ne 200px fiksno */
+  .ctrls{gap:8px;margin-bottom:14px}
+  .ctrls select{width:auto!important;flex:1 1 140px;min-width:0;font-size:.82rem}
+  #tab-lestvica .ctrls #standings-sort{flex:1 1 100%}
+  #tab-lestvica .ctrls span{flex:0 0 auto}
 
   /* Profil/kartice: polno širino, manj paddinga */
   .pp-hero{padding:18px 16px}
@@ -1143,11 +1150,29 @@ html{scroll-behavior:smooth}
   .col-mob-hide{display:none !important}
   .grp-hdr-row{display:none !important}
   /* Glavna tabela igralcev — brez horizontalnega scrolla, polepša */
-  #st{font-size:.86rem;width:100%}
-  #st th, #st td{padding:9px 6px}
-  #st .pname-link{font-size:.88rem;font-weight:600}
+  #st{font-size:.8rem;width:100%}
+  #st th, #st td{padding:8px 3px}
+  #st .pname-link{font-size:.82rem;font-weight:600}
+  /* prva celica (ime+letnica+graf) naj ne bo preširoka */
+  #st td:first-child, #st th:first-child{padding-left:8px}
+  #st .pl-born{display:none}
   /* Mini-trend in born badge skrij na mobilnem (preveč gneče) */
   #st .mini-trend{display:none}
+  /* Lestvica na mobilnem: pokaži samo bistvene stolpce (M, ekipa, T, Z, P, TČ).
+     Sekundarne (GB, Z%, TOČ+/-, dom/gost, forma) skrij — ime ekipe ni več odrezano. */
+  .standings-table .col-sec, .standings-table .col-form{display:none}
+  .standings-table{font-size:.8rem;width:100%;table-layout:fixed}
+  .standings-table .std-team-name{white-space:normal;overflow:visible;text-overflow:clip;font-size:.78rem;line-height:1.15}
+  .standings-table th, .standings-table td{padding:9px 2px;text-align:center}
+  /* širine: M ozek, EKIPA dobi preostanek, T/Z/P/TČ ozki */
+  .standings-table th:nth-child(1), .standings-table td:nth-child(1){width:34px}
+  .standings-table th:nth-child(2), .standings-table td:nth-child(2){width:auto;text-align:left;padding-left:6px}
+  .standings-table th:nth-child(3), .standings-table td:nth-child(3),
+  .standings-table th:nth-child(4), .standings-table td:nth-child(4),
+  .standings-table th:nth-child(5), .standings-table td:nth-child(5),
+  .standings-table th:nth-child(6), .standings-table td:nth-child(6){width:30px}
+  .standings-table .std-team-cell{gap:6px}
+  .standings-table .std-team-cell img,.standings-table .std-team-cell .logo-fallback{width:22px!important;height:22px!important;flex-shrink:0}
   /* Scroll-namig: senca na desnem robu drsečih kontejnerjev, da je jasno,
      da je vodoravno še vsebina (tabela ekip ipd.) */
   .tw, [style*="overflow-x"]{
@@ -3432,7 +3457,7 @@ function renderTeam(){
       if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';
       return `<td class="${cls}" style="${hs}">${val}</td>`;
     }).join('');
-    const bornBadge=`<span style="font-size:.62rem;color:var(--mut);margin-left:6px;font-family:var(--fm)">${p[F.born]}</span>`;
+    const bornBadge=`<span class="pl-born" style="font-size:.62rem;color:var(--mut);margin-left:6px;font-family:var(--fm)">${p[F.born]}</span>`;
     const trendHtml=renderMiniTrend(p[F.pid]);
     cells=cells.replace(`>${p[F.name]}<`,`><span class="pname-link" onclick="showPlayer(${pidx})">${p[F.name]}</span>${bornBadge}${trendHtml}<`);
     return `<tr>${cells}</tr>`;
@@ -10984,13 +11009,13 @@ function buildStandingsTable(data, sort, title, color){
       <td style="color:#22c55e;font-weight:700">${t.W}</td>
       <td style="color:#ef4444">${t.L}</td>
       <td style="font-weight:800;font-size:.95rem">${euPts}</td>
-      <td style="color:var(--mut)">${gb}</td>
-      <td style="color:${winPct>=50?'#22c55e':'#ef4444'};font-weight:600">${winPct}%</td>
-      <td>${pA}</td><td style="color:var(--mut)">${pAga}</td>
-      <td style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:700">${diff>=0?'+':''}${diff}</td>
-      <td style="font-size:.75rem">${t.homeW||0}-${t.homeL||0}</td>
-      <td style="font-size:.75rem">${t.awayW||0}-${t.awayL||0}</td>
-      <td><div style="display:flex;gap:3px;justify-content:center">${form}</div></td></tr>`;
+      <td class="col-sec" style="color:var(--mut)">${gb}</td>
+      <td class="col-sec" style="color:${winPct>=50?'#22c55e':'#ef4444'};font-weight:600">${winPct}%</td>
+      <td class="col-sec">${pA}</td><td class="col-sec" style="color:var(--mut)">${pAga}</td>
+      <td class="col-sec" style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:700">${diff>=0?'+':''}${diff}</td>
+      <td class="col-sec" style="font-size:.75rem">${t.homeW||0}-${t.homeL||0}</td>
+      <td class="col-sec" style="font-size:.75rem">${t.awayW||0}-${t.awayL||0}</td>
+      <td class="col-form"><div style="display:flex;gap:3px;justify-content:center">${form}</div></td></tr>`;
   }).join('');
   const legend = (clCount<N) ? `<div class="std-legend">
     <span><i style="background:#22c55e"></i>Napreduje / Končnica</span>
@@ -10999,8 +11024,8 @@ function buildStandingsTable(data, sort, title, color){
   return `<div class="sec-head" style="--sh-c:${color}">${title}</div>
     ${legend}
     <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr>
-      <th>M</th><th style="text-align:left;padding-left:30px">EKIPA</th><th>T</th><th>Z</th><th>P</th><th>TČ</th><th>GB</th>
-      <th>Z%</th><th>TOČ+</th><th>TOČ-</th><th>+/-</th><th>DOM.</th><th>GOST.</th><th>FORMA</th>
+      <th>M</th><th style="text-align:left;padding-left:30px">EKIPA</th><th>T</th><th>Z</th><th>P</th><th>TČ</th><th class="col-sec">GB</th>
+      <th class="col-sec">Z%</th><th class="col-sec">TOČ+</th><th class="col-sec">TOČ-</th><th class="col-sec">+/-</th><th class="col-sec">DOM.</th><th class="col-sec">GOST.</th><th class="col-form">FORMA</th>
     </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
