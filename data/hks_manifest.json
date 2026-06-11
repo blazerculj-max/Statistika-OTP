@@ -1,0 +1,27 @@
+{
+ "generated": "2026-06-11T20:53:40.161Z",
+ "source": "HKS",
+ "season": "2025-26",
+ "ages": {
+  "u13": {
+   "label": "Prvenstvo Hrvatske za dječake (U13)",
+   "file": "hks_u13.json",
+   "players": 192
+  },
+  "u15": {
+   "label": "Prvenstvo Hrvatske za pretkadete (U15)",
+   "file": "hks_u15.json",
+   "players": 51
+  },
+  "u17": {
+   "label": "Prvenstvo Hrvatske za kadete (U17)",
+   "file": "hks_u17.json",
+   "players": 151
+  },
+  "u19": {
+   "label": "Prvenstvo Hrvatske za juniore (U19)",
+   "file": "hks_u19.json",
+   "players": 189
+  }
+ }
+}
