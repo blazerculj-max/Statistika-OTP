@@ -1515,6 +1515,8 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .ml-cat-seg{padding:4px}
 .ml-cat-seg button{font-size:.9rem;font-weight:700;padding:9px 22px;font-family:var(--fh)}
 .ml-cat-seg button.active{background:linear-gradient(135deg,var(--teal),var(--teal2))}
+.ml-rank-seg button{font-size:.74rem;padding:6px 14px}
+.ml-rank-seg button.active{background:var(--border2);color:var(--teal2)}
 .ml-section-title{font-family:var(--fh);font-size:1.05rem;font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:8px;color:var(--text)}
 .ml-section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
 .ml-note{color:var(--mut);font-size:.72rem;margin:-6px 0 14px;line-height:1.4}
@@ -11422,30 +11424,62 @@ function renderBracketHTML(byPhase,phaseColors){
 }
 
 /* ===================== MLADI (scouting) ===================== */
-let _ML_DATA = null;          // surovi mladi.json
-let _ML_STATE = { cat:'u18', segment:'regular', born:'all', team:'all', sort:'ppg' };
+let _ML_MANIFEST = null;       // mladi_manifest.json
+let _ML_AGES = {};             // naložene starosti: {u18: {...}, ...}
+let _ML_STATE = { age:'u18', rank:'1.A', segment:'regular', born:'all', team:'all', sort:'ppg' };
 const ML_MIN_GP = 4;          // pod toliko tekem => zvezdica (majhen vzorec)
 
 async function renderMladi(){
   const wrap = document.getElementById('ml-wrap');
   if(!wrap) return;
-  if(!_ML_DATA){
+  // 1) naloži manifest (enkrat)
+  if(!_ML_MANIFEST){
     wrap.innerHTML = `<div class="ml-empty">Nalagam mladinske podatke…</div>`;
     try{
-      const r = await fetch(GITHUB_RAW+'/mladi.json',{cache:'no-cache'});
+      const r = await fetch(GITHUB_RAW+'/mladi_manifest.json',{cache:'no-cache'});
       if(!r.ok) throw new Error('HTTP '+r.status);
-      _ML_DATA = await r.json();
+      _ML_MANIFEST = await r.json();
     }catch(e){
-      wrap.innerHTML = `<div class="ml-empty">Mladinski podatki še niso naloženi v repo.<br><span style="font-size:.72rem;color:var(--mut)">Naloži <code>mladi.json</code> v <code>data/</code>. (${e.message})</span></div>`;
+      wrap.innerHTML = `<div class="ml-empty">Mladinski podatki še niso naloženi v repo.<br><span style="font-size:.72rem;color:var(--mut)">Naloži <code>mladi_manifest.json</code> + <code>mladi_u18/u16/u14.json</code> v <code>data/</code>. (${e.message})</span></div>`;
       return;
     }
+    // privzeta starost = prva v manifestu
+    const ages = Object.keys(_ML_MANIFEST.ages);
+    if(!ages.includes(_ML_STATE.age)) _ML_STATE.age = ages[0];
   }
+  // 2) naloži izbrano starost (na zahtevo)
+  await mlEnsureAge(_ML_STATE.age);
   drawMladi();
 }
 
-function mlCat(){ return _ML_DATA.categories[_ML_STATE.cat]; }
+async function mlEnsureAge(age){
+  if(_ML_AGES[age]) return true;
+  const wrap = document.getElementById('ml-wrap');
+  const meta = _ML_MANIFEST.ages[age];
+  if(!meta) return false;
+  if(wrap) wrap.innerHTML = `<div class="ml-empty">Nalagam ${meta.label}…</div>`;
+  try{
+    const r = await fetch(GITHUB_RAW+'/'+meta.file,{cache:'no-cache'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    _ML_AGES[age] = await r.json();
+    // poskrbi, da je izbrani rang veljaven za to starost
+    const ranks = Object.keys(_ML_AGES[age].ranks);
+    if(!ranks.includes(_ML_STATE.rank)) _ML_STATE.rank = ranks[0];
+    return true;
+  }catch(e){
+    if(wrap) wrap.innerHTML = `<div class="ml-empty">Napaka pri nalaganju ${meta.label}. (${e.message})</div>`;
+    return false;
+  }
+}
+
+function mlCat(){
+  const age = _ML_AGES[_ML_STATE.age];
+  if(!age) return null;
+  return age.ranks[_ML_STATE.rank] || age.ranks[Object.keys(age.ranks)[0]];
+}
 function mlRows(){
   const c = mlCat();
+  if(!c) return [];
   return (_ML_STATE.segment==='finals' ? c.finals : c.regular) || [];
 }
 
@@ -11460,6 +11494,7 @@ function mlStats(vals){
 function drawMladi(){
   const wrap = document.getElementById('ml-wrap');
   const c = mlCat();
+  if(!c){ wrap.innerHTML = `<div class="ml-empty">Ni podatkov.</div>`; return; }
   const allRows = mlRows();
   // qualified = dovolj tekem za stabilno primerjavo (za z-score baze)
   const qual = allRows.filter(r=>r.gp>=ML_MIN_GP);
@@ -11519,8 +11554,10 @@ function drawMladi(){
   }
 
   const segFin = _ML_STATE.segment==='finals';
-  const catKeys = Object.keys(_ML_DATA.categories);
-  const catLabel = {u18:'U18', u16:'U16', u14:'U14', u20:'U20', u12:'U12'};
+  const ageKeys = Object.keys(_ML_MANIFEST.ages);
+  const curAge = _ML_AGES[_ML_STATE.age];
+  const rankKeys = curAge ? Object.keys(curAge.ranks) : [];
+  const hasFinals = (c.finals||[]).length>0;
 
   wrap.innerHTML = `
     <div class="ml-hero">
@@ -11528,17 +11565,24 @@ function drawMladi(){
       <p>Kdo izstopa med mladimi. Skozi celo sezono se beležijo predvsem <b>točke</b>, zato so te glavna mera; poln boxscore (skoki, asistence, met) obstaja le na zaključnem turnirju.</p>
     </div>
 
-    ${catKeys.length>1 ? `
+    ${ageKeys.length>1 ? `
     <div class="ml-ctrls">
       <div class="ml-seg ml-cat-seg">
-        ${catKeys.map(k=>`<button class="${_ML_STATE.cat===k?'active':''}" onclick="mlSetCat('${k}')">${catLabel[k]||k.toUpperCase()}</button>`).join('')}
+        ${ageKeys.map(k=>`<button class="${_ML_STATE.age===k?'active':''}" onclick="mlSetAge('${k}')">${_ML_MANIFEST.ages[k].label}</button>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${rankKeys.length>1 ? `
+    <div class="ml-ctrls">
+      <div class="ml-seg ml-rank-seg">
+        ${rankKeys.map(rk=>`<button class="${_ML_STATE.rank===rk?'active':''}" onclick="mlSetRank('${rk}')">${rk==='2.'?'2. SKL':rk+' SKL'}</button>`).join('')}
       </div>
     </div>` : ''}
 
     <div class="ml-ctrls">
       <div class="ml-seg">
         <button class="${!segFin?'active':''}" onclick="mlSet('segment','regular')">Redni del</button>
-        <button class="${segFin?'active':''}" onclick="mlSet('segment','finals')">Zaključni turnir</button>
+        <button class="${segFin?'active':''}" onclick="mlSet('segment','finals')"${hasFinals?'':' disabled style="opacity:.4;cursor:not-allowed"'}>Zaključni turnir</button>
       </div>
     </div>
     <div class="ml-ctrls">
@@ -11615,12 +11659,27 @@ function mlSet(key,val){
   drawMladi();
 }
 
-function mlSetCat(cat){
-  if(_ML_STATE.cat===cat) return;
-  _ML_STATE.cat = cat;
-  // ob menjavi kategorije ponastavi filtre (letniki/ekipe so drugačni)
+async function mlSetAge(age){
+  if(_ML_STATE.age===age) return;
+  _ML_STATE.age = age;
+  // ob menjavi starosti ponastavi rang + filtre
+  _ML_STATE.rank = '1.A';
   _ML_STATE.born = 'all';
   _ML_STATE.team = 'all';
+  _ML_STATE.segment = 'regular';
+  const ok = await mlEnsureAge(age);
+  if(ok) drawMladi();
+}
+
+function mlSetRank(rank){
+  if(_ML_STATE.rank===rank) return;
+  _ML_STATE.rank = rank;
+  // ob menjavi ranga ponastavi filtre (ekipe/letniki drugačni)
+  _ML_STATE.born = 'all';
+  _ML_STATE.team = 'all';
+  // če nov rang nima finals, preklopi na regular
+  const c = mlCat();
+  if(_ML_STATE.segment==='finals' && (!c || !(c.finals||[]).length)) _ML_STATE.segment='regular';
   drawMladi();
 }
 
