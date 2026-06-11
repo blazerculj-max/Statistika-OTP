@@ -6,22 +6,26 @@
   "u13": {
    "label": "Prvenstvo Hrvatske za dječake (U13)",
    "file": "hks_u13.json",
-   "players": 192
+   "players": 192,
+   "kind": "završni turnir"
   },
   "u15": {
    "label": "Prvenstvo Hrvatske za pretkadete (U15)",
    "file": "hks_u15.json",
-   "players": 51
+   "players": 51,
+   "kind": "završni turnir"
   },
   "u17": {
    "label": "Prvenstvo Hrvatske za kadete (U17)",
    "file": "hks_u17.json",
-   "players": 151
+   "players": 151,
+   "kind": "redni del (Jedinstvena kadetska liga)"
   },
   "u19": {
    "label": "Prvenstvo Hrvatske za juniore (U19)",
    "file": "hks_u19.json",
-   "players": 189
+   "players": 189,
+   "kind": "završni turnir"
   }
  }
 }
