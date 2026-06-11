@@ -1,0 +1,13 @@
+{
+ "generated": "2026-06-11T21:53:34.349Z",
+ "source": "KSS",
+ "season": "2025-26",
+ "ages": {
+  "u17": {
+   "label": "Triglav KLS — kadeti (U17)",
+   "file": "srb_u17.json",
+   "players": 218,
+   "kind": "redni del (22 kol)"
+  }
+ }
+}
