@@ -1512,6 +1512,9 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .ml-seg{display:inline-flex;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:3px;gap:2px}
 .ml-seg button{background:none;border:none;color:var(--sub);font-family:var(--fm);font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:9px;cursor:pointer;transition:all .15s}
 .ml-seg button.active{background:var(--teal);color:#04201d}
+.ml-cat-seg{padding:4px}
+.ml-cat-seg button{font-size:.9rem;font-weight:700;padding:9px 22px;font-family:var(--fh)}
+.ml-cat-seg button.active{background:linear-gradient(135deg,var(--teal),var(--teal2))}
 .ml-section-title{font-family:var(--fh);font-size:1.05rem;font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:8px;color:var(--text)}
 .ml-section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
 .ml-note{color:var(--mut);font-size:.72rem;margin:-6px 0 14px;line-height:1.4}
@@ -11516,12 +11519,21 @@ function drawMladi(){
   }
 
   const segFin = _ML_STATE.segment==='finals';
+  const catKeys = Object.keys(_ML_DATA.categories);
+  const catLabel = {u18:'U18', u16:'U16', u14:'U14', u20:'U20', u12:'U12'};
 
   wrap.innerHTML = `
     <div class="ml-hero">
       <h2>🌱 Mladi — ${c.label}</h2>
       <p>Kdo izstopa med mladimi. Skozi celo sezono se beležijo predvsem <b>točke</b>, zato so te glavna mera; poln boxscore (skoki, asistence, met) obstaja le na zaključnem turnirju.</p>
     </div>
+
+    ${catKeys.length>1 ? `
+    <div class="ml-ctrls">
+      <div class="ml-seg ml-cat-seg">
+        ${catKeys.map(k=>`<button class="${_ML_STATE.cat===k?'active':''}" onclick="mlSetCat('${k}')">${catLabel[k]||k.toUpperCase()}</button>`).join('')}
+      </div>
+    </div>` : ''}
 
     <div class="ml-ctrls">
       <div class="ml-seg">
@@ -11600,6 +11612,15 @@ function mlZBadge(z){
 
 function mlSet(key,val){
   _ML_STATE[key]=val;
+  drawMladi();
+}
+
+function mlSetCat(cat){
+  if(_ML_STATE.cat===cat) return;
+  _ML_STATE.cat = cat;
+  // ob menjavi kategorije ponastavi filtre (letniki/ekipe so drugačni)
+  _ML_STATE.born = 'all';
+  _ML_STATE.team = 'all';
   drawMladi();
 }
 
