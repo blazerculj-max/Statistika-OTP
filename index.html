@@ -1571,17 +1571,22 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 .ml-cmp-bar{flex:1;height:8px;background:var(--card2);border-radius:4px;overflow:hidden}
 .ml-cmp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
 .ml-cmp-row .ml-cmp-val{font-family:var(--fs);font-size:.78rem;color:var(--text);width:64px;text-align:right;flex-shrink:0}
-.ml-opp-list{display:flex;flex-direction:column;gap:5px;margin-top:4px}
-.ml-opp-row{display:flex;align-items:center;gap:8px;font-size:.78rem}
-.ml-opp-name{width:120px;flex-shrink:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ml-opp-n{width:24px;flex-shrink:0;color:var(--mut);font-family:var(--fs);font-size:.7rem;text-align:right}
-.ml-opp-bar{flex:1;height:7px;background:var(--card2);border-radius:4px;overflow:hidden;min-width:30px}
-.ml-opp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
-.ml-opp-avg{width:38px;flex-shrink:0;text-align:right;font-family:var(--fs);font-weight:700;color:var(--teal2)}
-.ml-opp-detail{flex-basis:100%;padding-left:128px;color:var(--mut);font-family:var(--fs);font-size:.66rem;margin-top:-2px}
+.ml-games{display:flex;flex-direction:column;margin-top:4px;border:1px solid var(--border);border-radius:var(--r-md);overflow:hidden}
+.ml-game-row{display:flex;align-items:center;gap:8px;font-size:.8rem;padding:8px 10px;border-top:1px solid var(--border)}
+.ml-game-row:first-child{border-top:none}
+.ml-game-row:nth-child(even){background:rgba(255,255,255,.018)}
+.ml-game-date{width:46px;flex-shrink:0;color:var(--mut);font-family:var(--fs);font-size:.72rem}
+.ml-game-wl{width:16px;flex-shrink:0;text-align:center;font-family:var(--fs);font-weight:700;font-size:.75rem;color:var(--mut)}
+.ml-game-wl.w{color:var(--green)}
+.ml-game-wl.l{color:var(--red)}
+.ml-game-opp{flex:1;min-width:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ml-game-score{flex-shrink:0;font-family:var(--fs);color:var(--sub);font-size:.74rem;width:56px;text-align:right}
+.ml-game-pts{flex-shrink:0;font-family:var(--fs);font-weight:700;color:var(--teal2);width:38px;text-align:right}
+.ml-game-pts small{font-size:.6rem;color:var(--mut);font-weight:400;margin-left:1px}
 @media(max-width:768px){
-  .ml-opp-name{width:90px}
-  .ml-opp-detail{padding-left:0;flex-basis:auto;margin-left:auto}
+  .ml-game-row{font-size:.76rem;padding:7px 8px;gap:6px}
+  .ml-game-date{width:40px;font-size:.68rem}
+  .ml-game-score{width:48px}
 }
 .ml-box-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.8rem;margin-top:6px}
 .ml-box-table td{padding:6px 4px;border-top:1px solid var(--border)}
@@ -11715,34 +11720,34 @@ function mlProfile(pid){
   const trend = (r.trend||[]).slice();
   const trendSvg = mlTrendSvg(trend);
 
-  // razčlenitev po nasprotnikih: skupina po opp -> {tekme, povprečje, max, vse točke}
-  const byOpp = {};
-  trend.forEach(t=>{
-    const o = t.opp || '—';
-    (byOpp[o] = byOpp[o] || {opp:o, games:[], pts:[]});
-    byOpp[o].pts.push(t.pts);
-    byOpp[o].games.push(t);
+  // dnevnik tekem: kronološko (po datumu), z rezultatom in zmago/porazom
+  const games = trend.slice().sort((a,b)=>{
+    const da = a.d||'', db = b.d||'';
+    if(da && db) return da.localeCompare(db);
+    return (a.r||0)-(b.r||0);
   });
-  const oppRows = Object.values(byOpp).map(x=>({
-    opp: x.opp,
-    n: x.pts.length,
-    avg: x.pts.reduce((a,b)=>a+b,0)/x.pts.length,
-    max: Math.max(...x.pts),
-    pts: x.pts,
-  })).sort((a,b)=>b.avg-a.avg);
-  const maxOppAvg = oppRows.length ? Math.max(...oppRows.map(o=>o.avg)) : 1;
-  const oppHtml = oppRows.length ? `
-    <div class="ml-section-title" style="font-size:.95rem"><span class="dot"></span>Proti nasprotnikom</div>
-    <div class="ml-note" style="margin-top:-6px">Povprečje točk proti vsaki ekipi (število tekem v oklepaju). Razvrščeno od najboljšega.</div>
-    <div class="ml-opp-list">
-      ${oppRows.map(o=>`
-        <div class="ml-opp-row">
-          <span class="ml-opp-name">${o.opp}</span>
-          <span class="ml-opp-n">${o.n}×</span>
-          <div class="ml-opp-bar"><i style="width:${Math.round(o.avg/maxOppAvg*100)}%"></i></div>
-          <span class="ml-opp-avg">${o.avg.toFixed(1)}</span>
-          ${o.n>1?`<span class="ml-opp-detail" title="${o.pts.join(', ')} t.">${o.pts.join('·')}</span>`:''}
-        </div>`).join('')}
+  const fmtDate = d => {
+    if(!d) return '—';
+    const p = d.split('-'); // YYYY-MM-DD
+    return p.length===3 ? `${p[2]}.${p[1]}.` : d;
+  };
+  const oppHtml = games.length ? `
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot"></span>Tekme</div>
+    <div class="ml-note" style="margin-top:-6px">Vse tekme po vrsti: datum, rezultat, in točke igralca.</div>
+    <div class="ml-games">
+      ${games.map(g=>{
+        const hasRes = g.ts!=null && g.os!=null;
+        const win = g.w===true, loss = g.w===false;
+        const wl = win?'Z':(loss?'P':'');
+        const score = hasRes ? `${g.ts}:${g.os}` : '—';
+        return `<div class="ml-game-row">
+          <span class="ml-game-date">${fmtDate(g.d)}</span>
+          <span class="ml-game-wl ${win?'w':(loss?'l':'')}">${wl||'·'}</span>
+          <span class="ml-game-opp">${g.home?'':'@ '}${g.opp}</span>
+          <span class="ml-game-score">${score}</span>
+          <span class="ml-game-pts">${g.pts}<small>t</small></span>
+        </div>`;
+      }).join('')}
     </div>` : '';
 
   const small = r.gp<ML_MIN_GP;
