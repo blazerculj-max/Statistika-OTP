@@ -11461,15 +11461,19 @@ let _ML_MANIFEST = null;       // mladi_manifest.json (SI)
 let _ML_AGES = {};             // naložene SI starosti
 let _ML_STATE = { country:'si', age:'u18', rank:'1.A', segment:'regular', born:'all', team:'all', sort:'ppg' };
 const ML_MIN_GP = 4;          // pod toliko tekem => zvezdica (majhen vzorec)
-// Hrvaška (HKS)
+// Hrvaška (HKS) + Srbija (KSS) — obe poln boxscore
 let _HR_MANIFEST = null;
 let _HR_AGES = {};
 let _HR_STATE = { age:'u17', team:'all', sort:'indexpg', metric:'indexpg' };
+let _SRB_MANIFEST = null;
+let _SRB_AGES = {};
+let _SRB_STATE = { age:'u17', team:'all', sort:'indexpg', metric:'indexpg' };
 
 async function renderMladi(){
   const wrap = document.getElementById('ml-wrap');
   if(!wrap) return;
-  if(_ML_STATE.country==='hr'){ await renderMladiHR(); return; }
+  if(_ML_STATE.country==='hr'){ await renderMladiBox('hr'); return; }
+  if(_ML_STATE.country==='srb'){ await renderMladiBox('srb'); return; }
   // === SLOVENIJA ===
   if(!_ML_MANIFEST){
     wrap.innerHTML = `<div class="ml-empty">Nalagam mladinske podatke…</div>`;
@@ -11527,11 +11531,12 @@ function mlStats(vals){
   return {mu,sd};
 }
 
-// Skupni preklopnik države (SI / HR)
+// Skupni preklopnik države (SI / HR / SRB)
 function mlCountrySeg(){
   return `<div class="ml-ctrls"><div class="ml-seg ml-country-seg">
     <button class="${_ML_STATE.country==='si'?'active':''}" onclick="mlSetCountry('si')">🇸🇮 Slovenija</button>
     <button class="${_ML_STATE.country==='hr'?'active':''}" onclick="mlSetCountry('hr')">🇭🇷 Hrvaška</button>
+    <button class="${_ML_STATE.country==='srb'?'active':''}" onclick="mlSetCountry('srb')">🇷🇸 Srbija</button>
   </div></div>`;
 }
 async function mlSetCountry(c){
@@ -11540,45 +11545,62 @@ async function mlSetCountry(c){
   renderMladi();
 }
 
-/* ===================== HRVAŠKA (HKS, poln boxscore) ===================== */
-const HR_METRICS = [
+/* =========== BOXSCORE DRŽAVE (HR Hrvaška, SRB Srbija) — poln boxscore =========== */
+const BOX_METRICS = [
   {k:'indexpg', label:'Indeks', desc:'učinkovitost (PIR)'},
   {k:'aa',      label:'All-around', desc:'točke+skoki+asist.'},
   {k:'ppg',     label:'Točke', desc:'na tekmo'},
   {k:'rpg',     label:'Skoki', desc:'na tekmo'},
   {k:'apg',     label:'Asist.', desc:'na tekmo'},
 ];
-const HR_MIN_GP = 4;
+const BOX_MIN_GP = 4;
+// konfiguracija po državi
+const BOX_CFG = {
+  hr:  { flag:'🇭🇷', c1:'#e11d2a', c2:'#ff6b6b', manifest:'hks_manifest.json',
+         get M(){return _HR_MANIFEST;}, set M(v){_HR_MANIFEST=v;},
+         A:_HR_AGES, S:_HR_STATE,
+         intro:'Hrvaške mladinske lige imajo <b>poln boxscore</b> za vsako tekmo — zato iščemo dragulje po učinkovitosti (indeks, all-around, met), ne le po točkah.',
+         labelClean:s=>s.replace(/Prvenstvo Hrvatske za /,'').replace(/ \(.*\)/,''),
+         miss:'Naloži <code>hks_manifest.json</code> + <code>hks_u13/u15/u17/u19.json</code> v <code>data/</code>.' },
+  srb: { flag:'🇷🇸', c1:'#c6363c', c2:'#e8636a', manifest:'srb_manifest.json',
+         get M(){return _SRB_MANIFEST;}, set M(v){_SRB_MANIFEST=v;},
+         A:_SRB_AGES, S:_SRB_STATE,
+         intro:'Srbska kadetska liga (Triglav KLS) ima <b>poln boxscore</b> za vsako tekmo — iščemo dragulje po učinkovitosti (indeks, all-around, met).',
+         labelClean:s=>s.replace(/Triglav KLS — /,'').replace(/ \(.*\)/,''),
+         miss:'Naloži <code>srb_manifest.json</code> + <code>srb_u17.json</code> v <code>data/</code>.' },
+};
 
-async function renderMladiHR(){
+async function renderMladiBox(country){
+  const cfg = BOX_CFG[country];
   const wrap = document.getElementById('ml-wrap');
-  if(!_HR_MANIFEST){
-    wrap.innerHTML = `<div class="ml-empty">${mlCountrySeg()}Nalagam hrvaške podatke…</div>`;
+  if(!cfg.M){
+    wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Nalagam podatke…</div>`;
     try{
-      const r = await fetch(GITHUB_RAW+'/hks_manifest.json',{cache:'no-cache'});
+      const r = await fetch(GITHUB_RAW+'/'+cfg.manifest,{cache:'no-cache'});
       if(!r.ok) throw new Error('HTTP '+r.status);
-      _HR_MANIFEST = await r.json();
+      cfg.M = await r.json();
     }catch(e){
-      wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Hrvaški podatki še niso v repo.<br><span style="font-size:.72rem;color:var(--mut)">Naloži <code>hks_manifest.json</code> + <code>hks_u13/u15/u17/u19.json</code> v <code>data/</code>. (${e.message})</span></div>`;
+      wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Podatki še niso v repo.<br><span style="font-size:.72rem;color:var(--mut)">${cfg.miss} (${e.message})</span></div>`;
       return;
     }
-    const ages = Object.keys(_HR_MANIFEST.ages);
-    if(!ages.includes(_HR_STATE.age)) _HR_STATE.age = ages[0];
+    const ages = Object.keys(cfg.M.ages);
+    if(!ages.includes(cfg.S.age)) cfg.S.age = ages[0];
   }
-  await hrEnsureAge(_HR_STATE.age);
-  drawMladiHR();
+  await boxEnsureAge(country, cfg.S.age);
+  drawMladiBox(country);
 }
 
-async function hrEnsureAge(age){
-  if(_HR_AGES[age]) return true;
+async function boxEnsureAge(country, age){
+  const cfg = BOX_CFG[country];
+  if(cfg.A[age]) return true;
   const wrap = document.getElementById('ml-wrap');
-  const meta = _HR_MANIFEST.ages[age];
+  const meta = cfg.M.ages[age];
   if(!meta) return false;
   if(wrap) wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Nalagam ${meta.label}…</div>`;
   try{
     const r = await fetch(GITHUB_RAW+'/'+meta.file,{cache:'no-cache'});
     if(!r.ok) throw new Error('HTTP '+r.status);
-    _HR_AGES[age] = await r.json();
+    cfg.A[age] = await r.json();
     return true;
   }catch(e){
     if(wrap) wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Napaka pri nalaganju ${meta.label}. (${e.message})</div>`;
@@ -11586,75 +11608,69 @@ async function hrEnsureAge(age){
   }
 }
 
-function hrAge(){ return _HR_AGES[_HR_STATE.age]; }
-
-function drawMladiHR(){
+function drawMladiBox(country){
+  const cfg = BOX_CFG[country];
+  const S = cfg.S;
   const wrap = document.getElementById('ml-wrap');
-  const a = hrAge();
+  const a = cfg.A[S.age];
   if(!a){ wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Ni podatkov.</div>`; return; }
   const all = a.players;
-  const qual = all.filter(p=>p.gp>=HR_MIN_GP);
-  const metric = _HR_STATE.metric;
-
-  // z-score baza za izbrano metriko
+  const qual = all.filter(p=>p.gp>=BOX_MIN_GP);
+  const metric = S.metric;
   const z = mlStats(qual.map(p=>p[metric]));
   all.forEach(p=>{ p._z = z.sd ? (p[metric]-z.mu)/z.sd : 0; });
-
-  // ekipe za filter
-  const teams = [...new Set(all.map(p=>p.team))].sort((x,y)=>x.localeCompare(y,'hr'));
-
-  // filtriraj + sortiraj
+  const teams = [...new Set(all.map(p=>p.team))].sort((x,y)=>x.localeCompare(y));
   let rows = all.slice();
-  if(_HR_STATE.team!=='all') rows = rows.filter(p=>p.team===_HR_STATE.team);
-  rows.sort((x,y)=> (y[_HR_STATE.sort]||0) - (x[_HR_STATE.sort]||0));
-
-  // prospekti = top po izbrani metriki (dragulji)
+  if(S.team!=='all') rows = rows.filter(p=>p.team===S.team);
+  rows.sort((x,y)=> (y[S.sort]||0) - (x[S.sort]||0));
   const prospects = qual.slice().sort((x,y)=>y[metric]-x[metric]).slice(0,6);
-  const ageKeys = Object.keys(_HR_MANIFEST.ages);
-  const mlabel = (HR_METRICS.find(m=>m.k===metric)||{}).label || metric;
+  const ageKeys = Object.keys(cfg.M.ages);
+  const mlabel = (BOX_METRICS.find(m=>m.k===metric)||{}).label || metric;
+  const isFinals = a.kind && a.kind.includes('završni');
 
   wrap.innerHTML = `
     ${mlCountrySeg()}
     <div class="ml-hero">
-      <h2 style="background:linear-gradient(135deg,#e11d2a,#ff6b6b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">🇭🇷 ${a.label}</h2>
-      <p>${a.kind ? `<span class="ml-hr-kind">${a.kind}</span><br>` : ''}Hrvaške mladinske lige imajo <b>poln boxscore</b> za vsako tekmo — zato iščemo dragulje po učinkovitosti (indeks, all-around, met), ne le po točkah.${a.kind&&a.kind.includes('završni') ? ' <b>Manjši vzorec</b> (le državni zaključni turnir).' : ''}</p>
+      <h2 style="background:linear-gradient(135deg,${cfg.c1},${cfg.c2});-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">${cfg.flag} ${a.label}</h2>
+      <p>${a.kind ? `<span class="ml-hr-kind" style="background:${cfg.c1}26;color:${cfg.c2}">${a.kind}</span><br>` : ''}${cfg.intro}${isFinals ? ' <b>Manjši vzorec</b> (le državni zaključni turnir).' : ''}</p>
     </div>
 
+    ${ageKeys.length>1 ? `
     <div class="ml-ctrls">
       <div class="ml-seg ml-cat-seg ml-hr-seg">
-        ${ageKeys.map(k=>`<button class="${_HR_STATE.age===k?'active':''}" onclick="hrSetAge('${k}')">${_HR_MANIFEST.ages[k].label.replace(/Prvenstvo Hrvatske za /,'').replace(/ \(.*\)/,'')}</button>`).join('')}
+        ${ageKeys.map(k=>`<button class="${S.age===k?'active':''}" onclick="boxSetAge('${country}','${k}')">${cfg.labelClean(cfg.M.ages[k].label)}</button>`).join('')}
       </div>
-    </div>
+    </div>` : ''}
 
     <div class="ml-ctrls">
       <div class="ml-seg ml-rank-seg ml-metric-seg">
-        ${HR_METRICS.map(m=>`<button class="${metric===m.k?'active':''}" onclick="hrSetMetric('${m.k}')">${m.label}</button>`).join('')}
+        ${BOX_METRICS.map(m=>`<button class="${metric===m.k?'active':''}" onclick="boxSetMetric('${country}','${m.k}')">${m.label}</button>`).join('')}
       </div>
     </div>
 
     <div class="ml-ctrls">
-      <select onchange="hrSet('team',this.value)">
-        <option value="all"${_HR_STATE.team==='all'?' selected':''}>Vse ekipe</option>
-        ${teams.map(t=>`<option value="${t.replace(/"/g,'&quot;')}"${_HR_STATE.team===t?' selected':''}>${t}</option>`).join('')}
+      <select onchange="boxSet('${country}','team',this.value)">
+        <option value="all"${S.team==='all'?' selected':''}>Vse ekipe</option>
+        ${teams.map(t=>`<option value="${t.replace(/"/g,'&quot;')}"${S.team===t?' selected':''}>${t}</option>`).join('')}
       </select>
     </div>
 
-    ${prospects.length && _HR_STATE.team==='all' ? `
-      <div class="ml-section-title"><span class="dot" style="background:#e11d2a"></span>Dragulji — ${mlabel}</div>
-      <div class="ml-note">Igralci, ki najbolj izstopajo po izbrani metriki (min ${HR_MIN_GP} tekem).</div>
+    ${prospects.length && S.team==='all' ? `
+      <div class="ml-section-title"><span class="dot" style="background:${cfg.c1}"></span>Dragulji — ${mlabel}</div>
+      <div class="ml-note">Igralci, ki najbolj izstopajo po izbrani metriki (min ${BOX_MIN_GP} tekem).</div>
       <div class="ml-prospect-grid">
         ${prospects.map(p=>`
-          <div class="ml-prospect ml-hr-prospect" onclick="hrProfile('${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}')">
-            <span class="ml-born-badge ml-hr-badge">${p.gp}T</span>
+          <div class="ml-prospect ml-hr-prospect" style="--pc:${cfg.c1}" onclick="boxProfile('${country}','${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}')">
+            <span class="ml-born-badge ml-hr-badge" style="background:${cfg.c1}">${p.gp}T</span>
             <div class="ml-pname">${p.name}</div>
             <div class="ml-pteam">${p.team}</div>
-            <div class="ml-pstat"><b>${(p[metric]||0).toFixed(1)}</b><span>${mlabel}</span></div>
-            <div class="ml-pz" style="color:#ff6b6b">${p.ppg.toFixed(1)}p · ${p.rpg.toFixed(1)}r · ${p.apg.toFixed(1)}a</div>
+            <div class="ml-pstat"><b style="color:${cfg.c2}">${(p[metric]||0).toFixed(1)}</b><span>${mlabel}</span></div>
+            <div class="ml-pz" style="color:${cfg.c2}">${p.ppg.toFixed(1)}p · ${p.rpg.toFixed(1)}r · ${p.apg.toFixed(1)}a</div>
           </div>`).join('')}
       </div>` : ''}
 
-    <div class="ml-section-title"><span class="dot" style="background:#e11d2a"></span>Lestvica</div>
-    <div class="ml-note"><span class="ml-star">*</span> = manj kot ${HR_MIN_GP} tekem. σ = koliko nad povprečjem lige po metriki <b>${mlabel}</b>.</div>
+    <div class="ml-section-title"><span class="dot" style="background:${cfg.c1}"></span>Lestvica</div>
+    <div class="ml-note"><span class="ml-star">*</span> = manj kot ${BOX_MIN_GP} tekem. σ = koliko nad povprečjem lige po metriki <b>${mlabel}</b>.</div>
     ${rows.length ? `
     <div class="ml-table-wrap">
       <table class="ml-table">
@@ -11664,12 +11680,12 @@ function drawMladiHR(){
         </tr></thead>
         <tbody>
           ${rows.map((p,i)=>{
-            const small = p.gp<HR_MIN_GP;
-            return `<tr onclick="hrProfile('${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}')">
+            const small = p.gp<BOX_MIN_GP;
+            return `<tr onclick="boxProfile('${country}','${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}')">
               <td class="ml-rank">${i+1}</td>
               <td><div class="ml-pl-cell"><div><div class="ml-pl-name">${p.name}${small?'<span class="ml-star">*</span>':''}</div><div class="ml-pl-team">${p.team}</div></div></div></td>
               <td>${p.gp}</td>
-              <td class="ml-ppg">${(p[metric]||0).toFixed(1)}</td>
+              <td class="ml-ppg" style="color:${cfg.c2}">${(p[metric]||0).toFixed(1)}</td>
               <td class="ml-c-z">${p.ppg.toFixed(1)}</td>
               <td class="ml-c-z">${p.indexpg.toFixed(1)}</td>
               <td>${mlZBadge(p._z)}</td>
@@ -11681,22 +11697,23 @@ function drawMladiHR(){
   `;
 }
 
-function hrSet(key,val){ _HR_STATE[key]=val; drawMladiHR(); }
-function hrSetMetric(m){ _HR_STATE.metric=m; _HR_STATE.sort=m; drawMladiHR(); }
-async function hrSetAge(age){
-  if(_HR_STATE.age===age) return;
-  _HR_STATE.age=age; _HR_STATE.team='all';
-  const ok = await hrEnsureAge(age);
-  if(ok) drawMladiHR();
+function boxSet(country,key,val){ BOX_CFG[country].S[key]=val; drawMladiBox(country); }
+function boxSetMetric(country,m){ const S=BOX_CFG[country].S; S.metric=m; S.sort=m; drawMladiBox(country); }
+async function boxSetAge(country,age){
+  const S=BOX_CFG[country].S;
+  if(S.age===age) return;
+  S.age=age; S.team='all';
+  const ok = await boxEnsureAge(country,age);
+  if(ok) drawMladiBox(country);
 }
 
-function hrProfile(name, team){
-  const a = hrAge();
+function boxProfile(country, name, team){
+  const cfg = BOX_CFG[country];
+  const a = cfg.A[cfg.S.age];
   const p = a.players.find(x=>x.name===name && x.team===team);
   if(!p) return;
-  // dnevnik tekem
   const games = (p.trend||[]).slice().sort((x,y)=>(x.d||'').localeCompare(y.d||''));
-  const fmtDate = d => { if(!d) return '—'; const m=d.match(/(\w+) (\d+), (\d+)/); return m?`${m[2]}. ${m[1].slice(0,3)}`:d; };
+  const fmtDate = d => { if(!d) return '—'; let m=d.match(/(\w+) (\d+), (\d+)/); if(m) return `${m[2]}. ${m[1].slice(0,3)}`; m=d.match(/(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}.${m[2]}.`:d; };
   const gamesHtml = games.map(g=>{
     const win=g.w===true, loss=g.w===false;
     const score = (g.ts!=null&&g.os!=null)?`${g.ts}:${g.os}`:'—';
@@ -11708,7 +11725,6 @@ function hrProfile(name, team){
       <span class="ml-game-pts">${g.pts}<small>t</small></span>
     </div>`;
   }).join('');
-
   document.getElementById('ml-modal-body').innerHTML = `
     <div class="ml-prof-head">
       <div>
@@ -11726,8 +11742,7 @@ function hrProfile(name, team){
       <div class="ml-prof-stat"><b>${p.spg.toFixed(1)}</b><span>ukraden.</span></div>
       <div class="ml-prof-stat"><b>${p.bpg.toFixed(1)}</b><span>blokad</span></div>
     </div>
-
-    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:#e11d2a"></span>Met</div>
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:${cfg.c1}"></span>Met</div>
     <table class="ml-box-table">
       <tr><td>Za 2 točki</td><td>${p.fg2}%</td></tr>
       <tr><td>Za 3 točke</td><td>${p.fg3}% (${p.fg3a_total} poskusov)</td></tr>
@@ -11735,8 +11750,7 @@ function hrProfile(name, team){
       <tr><td>Minute / tekmo</td><td>${p.mpg}</td></tr>
       <tr><td>Največ točk v tekmi</td><td>${p.ptsMax}</td></tr>
     </table>
-
-    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:#e11d2a"></span>Tekme</div>
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:${cfg.c1}"></span>Tekme</div>
     <div class="ml-note" style="margin-top:-6px">Vse tekme po vrsti: datum, rezultat, točke.</div>
     <div class="ml-games">${gamesHtml}</div>
   `;
