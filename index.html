@@ -1523,6 +1523,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .ml-hr-prospect:hover{border-color:#e11d2a!important}
 .ml-hr-prospect .ml-pstat b{color:#ff6b6b!important}
 .ml-hr-badge{background:#e11d2a!important;color:#fff!important}
+.ml-hr-kind{display:inline-block;background:rgba(225,29,42,.15);color:#ff6b6b;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:6px}
 .ml-hr-seg,.ml-metric-seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
 .ml-hr-seg button,.ml-metric-seg button{white-space:nowrap;flex-shrink:0}
 @media(max-width:768px){
@@ -11616,7 +11617,7 @@ function drawMladiHR(){
     ${mlCountrySeg()}
     <div class="ml-hero">
       <h2 style="background:linear-gradient(135deg,#e11d2a,#ff6b6b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">🇭🇷 ${a.label}</h2>
-      <p>Hrvaške mladinske lige imajo <b>poln boxscore</b> za vsako tekmo — zato iščemo dragulje po učinkovitosti (indeks, all-around, met), ne le po točkah.</p>
+      <p>${a.kind ? `<span class="ml-hr-kind">${a.kind}</span><br>` : ''}Hrvaške mladinske lige imajo <b>poln boxscore</b> za vsako tekmo — zato iščemo dragulje po učinkovitosti (indeks, all-around, met), ne le po točkah.${a.kind&&a.kind.includes('završni') ? ' <b>Manjši vzorec</b> (le državni zaključni turnir).' : ''}</p>
     </div>
 
     <div class="ml-ctrls">
