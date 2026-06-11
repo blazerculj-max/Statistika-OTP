@@ -1571,6 +1571,18 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 .ml-cmp-bar{flex:1;height:8px;background:var(--card2);border-radius:4px;overflow:hidden}
 .ml-cmp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
 .ml-cmp-row .ml-cmp-val{font-family:var(--fs);font-size:.78rem;color:var(--text);width:64px;text-align:right;flex-shrink:0}
+.ml-opp-list{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.ml-opp-row{display:flex;align-items:center;gap:8px;font-size:.78rem}
+.ml-opp-name{width:120px;flex-shrink:0;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ml-opp-n{width:24px;flex-shrink:0;color:var(--mut);font-family:var(--fs);font-size:.7rem;text-align:right}
+.ml-opp-bar{flex:1;height:7px;background:var(--card2);border-radius:4px;overflow:hidden;min-width:30px}
+.ml-opp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.ml-opp-avg{width:38px;flex-shrink:0;text-align:right;font-family:var(--fs);font-weight:700;color:var(--teal2)}
+.ml-opp-detail{flex-basis:100%;padding-left:128px;color:var(--mut);font-family:var(--fs);font-size:.66rem;margin-top:-2px}
+@media(max-width:768px){
+  .ml-opp-name{width:90px}
+  .ml-opp-detail{padding-left:0;flex-basis:auto;margin-left:auto}
+}
 .ml-box-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.8rem;margin-top:6px}
 .ml-box-table td{padding:6px 4px;border-top:1px solid var(--border)}
 .ml-box-table td:first-child{color:var(--sub)}
@@ -11703,6 +11715,36 @@ function mlProfile(pid){
   const trend = (r.trend||[]).slice();
   const trendSvg = mlTrendSvg(trend);
 
+  // razčlenitev po nasprotnikih: skupina po opp -> {tekme, povprečje, max, vse točke}
+  const byOpp = {};
+  trend.forEach(t=>{
+    const o = t.opp || '—';
+    (byOpp[o] = byOpp[o] || {opp:o, games:[], pts:[]});
+    byOpp[o].pts.push(t.pts);
+    byOpp[o].games.push(t);
+  });
+  const oppRows = Object.values(byOpp).map(x=>({
+    opp: x.opp,
+    n: x.pts.length,
+    avg: x.pts.reduce((a,b)=>a+b,0)/x.pts.length,
+    max: Math.max(...x.pts),
+    pts: x.pts,
+  })).sort((a,b)=>b.avg-a.avg);
+  const maxOppAvg = oppRows.length ? Math.max(...oppRows.map(o=>o.avg)) : 1;
+  const oppHtml = oppRows.length ? `
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot"></span>Proti nasprotnikom</div>
+    <div class="ml-note" style="margin-top:-6px">Povprečje točk proti vsaki ekipi (število tekem v oklepaju). Razvrščeno od najboljšega.</div>
+    <div class="ml-opp-list">
+      ${oppRows.map(o=>`
+        <div class="ml-opp-row">
+          <span class="ml-opp-name">${o.opp}</span>
+          <span class="ml-opp-n">${o.n}×</span>
+          <div class="ml-opp-bar"><i style="width:${Math.round(o.avg/maxOppAvg*100)}%"></i></div>
+          <span class="ml-opp-avg">${o.avg.toFixed(1)}</span>
+          ${o.n>1?`<span class="ml-opp-detail" title="${o.pts.join(', ')} t.">${o.pts.join('·')}</span>`:''}
+        </div>`).join('')}
+    </div>` : '';
+
   const small = r.gp<ML_MIN_GP;
   let boxHtml = '';
   if(r.hasBox && r.box){
@@ -11746,6 +11788,8 @@ function mlProfile(pid){
     <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad ligo</span><div class="ml-cmp-bar"><i style="width:${pctVsLiga}%"></i></div><span class="ml-cmp-val">${mlZBadge(ligaZ.sd?(r.ppg-ligaZ.mu)/ligaZ.sd:0)}</span></div>
     <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad ekipo</span><div class="ml-cmp-bar"><i style="width:${pctVsTeam}%"></i></div><span class="ml-cmp-val">${mlZBadge(teamZ.sd?(r.ppg-teamZ.mu)/teamZ.sd:0)}</span></div>
     <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad letnikom</span><div class="ml-cmp-bar"><i style="width:${pctVsYear}%"></i></div><span class="ml-cmp-val">${mlZBadge(yearZ.sd?(r.ppg-yearZ.mu)/yearZ.sd:0)}</span></div>
+
+    ${oppHtml}
 
     ${boxHtml}
   `;
