@@ -30,7 +30,7 @@
 <title>Liga OTP banka – Statistika 2025/26</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace;
+:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--teal2:#2dd4bf;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace;
   /* Tipografska skala (modularna, ratio ~1.25) */
   --t-xs:.7rem; --t-sm:.82rem; --t-base:.95rem; --t-md:1.1rem; --t-lg:1.4rem; --t-xl:1.85rem; --t-2xl:2.4rem; --t-3xl:3.2rem;
   /* Razmiki (8px sistem) */
@@ -1501,6 +1501,97 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .power-podium .belo-pod-name{font-size:.74rem;margin-bottom:2px}
 .power-podium .belo-pod-rank{font-size:.6rem}
 .power-podium .belo-pod-team{justify-content:center;margin-bottom:6px;font-size:.6rem}}
+
+/* ===== MLADI (scouting) ===== */
+#tab-mladi{padding:20px}
+.ml-hero{text-align:center;margin-bottom:24px}
+.ml-hero h2{font-family:var(--fh);font-size:1.8rem;font-weight:700;margin:0 0 6px;background:linear-gradient(135deg,var(--teal),var(--teal2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.ml-hero p{color:var(--sub);font-size:.85rem;margin:0;max-width:560px;margin-inline:auto;line-height:1.5}
+.ml-ctrls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px}
+.ml-ctrls select{background:var(--card2);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;font-family:var(--fm);font-size:.82rem;cursor:pointer;flex:1 1 140px;max-width:220px}
+.ml-seg{display:inline-flex;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:3px;gap:2px}
+.ml-seg button{background:none;border:none;color:var(--sub);font-family:var(--fm);font-size:.78rem;font-weight:600;padding:7px 16px;border-radius:9px;cursor:pointer;transition:all .15s}
+.ml-seg button.active{background:var(--teal);color:#04201d}
+.ml-section-title{font-family:var(--fh);font-size:1.05rem;font-weight:700;margin:26px 0 12px;display:flex;align-items:center;gap:8px;color:var(--text)}
+.ml-section-title .dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.ml-note{color:var(--mut);font-size:.72rem;margin:-6px 0 14px;line-height:1.4}
+/* scouting kartice — mladi nad kategorijo */
+.ml-prospect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:8px}
+.ml-prospect{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:var(--r-lg);padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s}
+.ml-prospect:hover{transform:translateY(-2px);border-color:var(--teal)}
+.ml-prospect::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.ml-prospect .ml-born-badge{position:absolute;top:14px;right:14px;background:var(--teal);color:#04201d;font-family:var(--fm);font-weight:700;font-size:.7rem;padding:3px 9px;border-radius:20px}
+.ml-prospect .ml-pname{font-family:var(--fh);font-size:1.05rem;font-weight:700;margin:0 0 2px;padding-right:50px}
+.ml-prospect .ml-pteam{color:var(--sub);font-size:.78rem;margin-bottom:12px}
+.ml-prospect .ml-pstat{display:flex;gap:14px;align-items:baseline}
+.ml-prospect .ml-pstat b{font-family:var(--fs);font-size:1.7rem;font-weight:700;color:var(--teal2);line-height:1}
+.ml-prospect .ml-pstat span{color:var(--mut);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em}
+.ml-prospect .ml-pz{margin-top:10px;font-size:.72rem;color:var(--green);font-family:var(--fm)}
+/* tabela izstopajočih */
+.ml-table-wrap{overflow-x:auto;border-radius:var(--r-md);border:1px solid var(--border)}
+table.ml-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.82rem}
+table.ml-table th{background:var(--card2);color:var(--sub);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.03em;padding:10px 8px;text-align:right;white-space:nowrap;position:sticky;top:0}
+table.ml-table th:nth-child(2){text-align:left}
+table.ml-table td{padding:9px 8px;text-align:right;border-top:1px solid var(--border);white-space:nowrap}
+table.ml-table td:nth-child(2){text-align:left}
+table.ml-table tbody tr{cursor:pointer;transition:background .12s}
+table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
+.ml-rank{color:var(--mut);font-family:var(--fs);width:28px}
+.ml-pl-cell{display:flex;align-items:center;gap:8px}
+.ml-pl-name{font-weight:600;color:var(--text)}
+.ml-pl-team{color:var(--sub);font-size:.7rem}
+.ml-yr{font-family:var(--fs);font-size:.68rem;padding:1px 6px;border-radius:5px;background:var(--border);color:var(--sub)}
+.ml-yr.young{background:rgba(20,184,166,.18);color:var(--teal2);font-weight:700}
+.ml-ppg{font-family:var(--fs);font-weight:700;color:var(--text);font-size:.95rem}
+.ml-zbadge{font-family:var(--fs);font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:6px}
+.ml-zbadge.hi{background:rgba(16,185,129,.16);color:#34d399}
+.ml-zbadge.mid{background:rgba(59,130,246,.14);color:#60a5fa}
+.ml-zbadge.lo{color:var(--mut)}
+.ml-star{color:var(--acc);font-weight:700;cursor:help}
+/* profil modal */
+#ml-modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+#ml-modal .ml-modal-inner{background:var(--card);border:1px solid var(--border2);border-radius:var(--r-xl);max-width:560px;width:100%;padding:24px;position:relative}
+#ml-modal .ml-close{position:absolute;top:16px;right:16px;background:var(--card2);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1.1rem;line-height:1}
+.ml-prof-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-right:40px}
+.ml-prof-head .ml-prof-name{font-family:var(--fh);font-size:1.4rem;font-weight:700;margin:0}
+.ml-prof-head .ml-prof-meta{color:var(--sub);font-size:.82rem;margin-top:2px}
+.ml-prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.ml-prof-stat{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;text-align:center}
+.ml-prof-stat b{display:block;font-family:var(--fs);font-size:1.5rem;font-weight:700;color:var(--teal2)}
+.ml-prof-stat span{color:var(--mut);font-size:.66rem;text-transform:uppercase;letter-spacing:.04em}
+.ml-trend{margin-bottom:16px}
+.ml-trend svg{width:100%;height:120px;display:block}
+.ml-cmp-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:.8rem}
+.ml-cmp-row .ml-cmp-lbl{width:110px;color:var(--sub);flex-shrink:0}
+.ml-cmp-bar{flex:1;height:8px;background:var(--card2);border-radius:4px;overflow:hidden}
+.ml-cmp-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--teal2))}
+.ml-cmp-row .ml-cmp-val{font-family:var(--fs);font-size:.78rem;color:var(--text);width:64px;text-align:right;flex-shrink:0}
+.ml-box-table{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.8rem;margin-top:6px}
+.ml-box-table td{padding:6px 4px;border-top:1px solid var(--border)}
+.ml-box-table td:first-child{color:var(--sub)}
+.ml-box-table td:last-child{text-align:right;font-family:var(--fs);color:var(--text)}
+.ml-empty{text-align:center;color:var(--mut);padding:40px 20px;font-size:.85rem}
+@media(max-width:768px){
+  #tab-mladi{padding:14px}
+  .ml-hero h2{font-size:1.4rem}
+  .ml-section-title{font-size:.95rem}
+  table.ml-table{font-size:.74rem;table-layout:fixed;width:100%;box-sizing:border-box}
+  table.ml-table th,table.ml-table td{padding:8px 3px;box-sizing:border-box}
+  .ml-table-wrap{max-width:100%}
+  .ml-pl-name{font-size:.78rem}
+  table.ml-table td:nth-child(2){overflow:hidden;text-overflow:ellipsis}
+  .ml-pl-team{display:none}
+  .ml-c-gp,.ml-c-z{display:none}
+  table.ml-table th:nth-child(1),table.ml-table td:nth-child(1){width:22px}
+  table.ml-table th:nth-child(2),table.ml-table td:nth-child(2){width:140px}
+  table.ml-table th:nth-child(3),table.ml-table td:nth-child(3){width:42px}
+  table.ml-table th:nth-child(5),table.ml-table td:nth-child(5){width:42px}
+  table.ml-table th:nth-child(6),table.ml-table td:nth-child(6){width:56px}
+  .ml-yr{font-size:.62rem;padding:1px 4px}
+  .ml-ppg{font-size:.88rem}
+  .ml-prof-stats{gap:6px}
+  .ml-prof-stat b{font-size:1.2rem}
+}
 </style>
 </head>
 <body>
@@ -1616,6 +1707,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
     <button class="nb" onclick="showTab('mvp')">MVP</button>
     <button class="nb" onclick="showTab('race')">Sezona</button>
     <button class="nb" onclick="showTab('social')">📸 Social</button>
+    <button class="nb" id="mladi-nav-btn" onclick="showTab('mladi')" style="color:var(--teal2)">🌱 Mladi</button>
     <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
         style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
         Analitika
@@ -1956,6 +2048,17 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 
   <div id="tab-3x3" class="tab">
     <div id="t3x3-wrap"></div>
+  </div>
+
+  <div id="tab-mladi" class="tab">
+    <div id="ml-wrap"></div>
+  </div>
+
+  <div id="ml-modal" onclick="if(event.target===this)closeMlModal()">
+    <div class="ml-modal-inner">
+      <button class="ml-close" onclick="closeMlModal()">×</button>
+      <div id="ml-modal-body"></div>
+    </div>
   </div>
 
   <div id="tab-seznum" class="tab">
@@ -3317,6 +3420,7 @@ function showTab(t){
   if(t==='sodniki')renderSodniki();
   if(t==='teamstats')renderTeamStats();
   if(t==='rekordi')renderRekordi();
+  if(t==='mladi')renderMladi();
   // Update mobile bottom nav — main tabs highlight directly, others highlight 'Več'
   const mainMobileTabs=['live','lestvica','tekme','liga'];
   document.querySelectorAll('.mbn-btn').forEach(b => {
@@ -5195,7 +5299,8 @@ const _MODALS=[
   {id:'match-overlay',   close:'closeMatch'},
   {id:'share-overlay',   close:'closeShare'},
   {id:'roundcard-overlay',close:'closeRoundCard'},
-  {id:'cmdk-overlay',    close:'closeCmdK'}
+  {id:'cmdk-overlay',    close:'closeCmdK'},
+  {id:'ml-modal',        close:'closeMlModal'}
 ];
 function _topOpenModal(){
   // Zadnji v DOM redu, ki je viden = "najvišji" odprti modal
@@ -11311,6 +11416,288 @@ function renderBracketHTML(byPhase,phaseColors){
     </div>`;
   }
   return `<div class="pbracket"><div class="pbracket-inner">${cols}${champCol}</div></div>`;
+}
+
+/* ===================== MLADI (scouting) ===================== */
+let _ML_DATA = null;          // surovi mladi.json
+let _ML_STATE = { cat:'u18', segment:'regular', born:'all', team:'all', sort:'ppg' };
+const ML_MIN_GP = 4;          // pod toliko tekem => zvezdica (majhen vzorec)
+
+async function renderMladi(){
+  const wrap = document.getElementById('ml-wrap');
+  if(!wrap) return;
+  if(!_ML_DATA){
+    wrap.innerHTML = `<div class="ml-empty">Nalagam mladinske podatke…</div>`;
+    try{
+      const r = await fetch(GITHUB_RAW+'/mladi.json',{cache:'no-cache'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      _ML_DATA = await r.json();
+    }catch(e){
+      wrap.innerHTML = `<div class="ml-empty">Mladinski podatki še niso naloženi v repo.<br><span style="font-size:.72rem;color:var(--mut)">Naloži <code>mladi.json</code> v <code>data/</code>. (${e.message})</span></div>`;
+      return;
+    }
+  }
+  drawMladi();
+}
+
+function mlCat(){ return _ML_DATA.categories[_ML_STATE.cat]; }
+function mlRows(){
+  const c = mlCat();
+  return (_ML_STATE.segment==='finals' ? c.finals : c.regular) || [];
+}
+
+// z-score helper: vrne {mu,sd} za dano skupino vrednosti
+function mlStats(vals){
+  const n = vals.length; if(!n) return {mu:0,sd:0};
+  const mu = vals.reduce((a,b)=>a+b,0)/n;
+  const sd = Math.sqrt(vals.reduce((a,b)=>a+(b-mu)**2,0)/n) || 1;
+  return {mu,sd};
+}
+
+function drawMladi(){
+  const wrap = document.getElementById('ml-wrap');
+  const c = mlCat();
+  const allRows = mlRows();
+  // qualified = dovolj tekem za stabilno primerjavo (za z-score baze)
+  const qual = allRows.filter(r=>r.gp>=ML_MIN_GP);
+
+  // baze za z-score
+  const ligaZ = mlStats(qual.map(r=>r.ppg));
+  // po ekipi
+  const byTeam = {}; qual.forEach(r=>{(byTeam[r.teamId]=byTeam[r.teamId]||[]).push(r.ppg);});
+  const teamZ = {}; Object.entries(byTeam).forEach(([t,v])=>teamZ[t]=mlStats(v));
+  // po letniku
+  const byYear = {}; qual.forEach(r=>{(byYear[r.born]=byYear[r.born]||[]).push(r.ppg);});
+  const yearZ = {}; Object.entries(byYear).forEach(([y,v])=>yearZ[y]=mlStats(v));
+
+  // izračunaj z-score na vsako vrstico
+  allRows.forEach(r=>{
+    r._zLiga = ligaZ.sd ? (r.ppg-ligaZ.mu)/ligaZ.sd : 0;
+    const tz = teamZ[r.teamId]; r._zTeam = tz&&tz.sd ? (r.ppg-tz.mu)/tz.sd : 0;
+    const yz = yearZ[r.born];   r._zYear = yz&&yz.sd ? (r.ppg-yz.mu)/yz.sd : 0;
+  });
+
+  // letnik options
+  const years = [...new Set(allRows.map(r=>r.born).filter(Boolean))].sort();
+  const youngestYear = years.length ? Math.max(...years.map(Number)) : null;
+  // ekipa options
+  const teams = Object.entries(c.teams).map(([id,t])=>({id,name:t.name})).sort((a,b)=>a.name.localeCompare(b.name,'sl'));
+
+  // filtriraj prikaz
+  let rows = allRows.slice();
+  if(_ML_STATE.born!=='all') rows = rows.filter(r=>r.born===_ML_STATE.born);
+  if(_ML_STATE.team!=='all') rows = rows.filter(r=>String(r.teamId)===_ML_STATE.team);
+
+  const sortKey = _ML_STATE.sort;
+  rows.sort((a,b)=>{
+    if(sortKey==='ppg') return b.ppg-a.ppg;
+    if(sortKey==='zLiga') return b._zLiga-a._zLiga;
+    if(sortKey==='zTeam') return b._zTeam-a._zTeam;
+    if(sortKey==='zYear') return b._zYear-a._zYear;
+    if(sortKey==='gp') return b.gp-a.gp;
+    return b.ppg-a.ppg;
+  });
+
+  // === prospekti: mladi nad kategorijo (najmlajši letniki, dovolj tekem) ===
+  let prospects = [];
+  if(years.length>=2){
+    const youngThreshold = Math.min(...years.map(Number)); // najmlajši
+    // vzemi vse, ki so mlajši od najstarejšega letnika, z >=ML_MIN_GP tekem
+    const oldestYear = Math.min(...years.map(Number)); // numerično najmanjši = najstarejši rojeni? ne
+    // letnik 2008 = najstarejši (U18), 2010/2011 = mlajši -> večja številka = mlajši
+    const maxY = Math.max(...years.map(Number));
+    prospects = qual.filter(r=>Number(r.born) >= maxY-0 && Number(r.born) > (Number(years[0])))
+      .sort((a,b)=>b._zYear-a._zYear);
+    // bolje: mladi = letnik strogo večji od mediane letnikov v ligi
+    const allYearsNum = qual.map(r=>Number(r.born)).sort((a,b)=>a-b);
+    const medianY = allYearsNum[Math.floor(allYearsNum.length/2)];
+    prospects = qual.filter(r=>Number(r.born) > medianY)
+      .sort((a,b)=>b.ppg-a.ppg).slice(0,6);
+  }
+
+  const segFin = _ML_STATE.segment==='finals';
+
+  wrap.innerHTML = `
+    <div class="ml-hero">
+      <h2>🌱 Mladi — ${c.label}</h2>
+      <p>Kdo izstopa med mladimi. Skozi celo sezono se beležijo predvsem <b>točke</b>, zato so te glavna mera; poln boxscore (skoki, asistence, met) obstaja le na zaključnem turnirju.</p>
+    </div>
+
+    <div class="ml-ctrls">
+      <div class="ml-seg">
+        <button class="${!segFin?'active':''}" onclick="mlSet('segment','regular')">Redni del</button>
+        <button class="${segFin?'active':''}" onclick="mlSet('segment','finals')">Zaključni turnir</button>
+      </div>
+    </div>
+    <div class="ml-ctrls">
+      <select onchange="mlSet('born',this.value)">
+        <option value="all"${_ML_STATE.born==='all'?' selected':''}>Vsi letniki</option>
+        ${years.map(y=>`<option value="${y}"${_ML_STATE.born===y?' selected':''}>Letnik ${y}${Number(y)===youngestYear?' (najmlajši)':''}</option>`).join('')}
+      </select>
+      <select onchange="mlSet('team',this.value)">
+        <option value="all"${_ML_STATE.team==='all'?' selected':''}>Vse ekipe</option>
+        ${teams.map(t=>`<option value="${t.id}"${_ML_STATE.team===t.id?' selected':''}>${t.name}</option>`).join('')}
+      </select>
+      <select onchange="mlSet('sort',this.value)">
+        <option value="ppg"${sortKey==='ppg'?' selected':''}>Sortiraj: točke/tekmo</option>
+        <option value="zLiga"${sortKey==='zLiga'?' selected':''}>Sortiraj: nad ligo</option>
+        <option value="zTeam"${sortKey==='zTeam'?' selected':''}>Sortiraj: nad ekipo</option>
+        <option value="zYear"${sortKey==='zYear'?' selected':''}>Sortiraj: nad letnikom</option>
+        <option value="gp"${sortKey==='gp'?' selected':''}>Sortiraj: št. tekem</option>
+      </select>
+    </div>
+
+    ${prospects.length && _ML_STATE.born==='all' && _ML_STATE.team==='all' ? `
+      <div class="ml-section-title"><span class="dot"></span>Mladi nad kategorijo</div>
+      <div class="ml-note">Igralci iz mlajših letnikov, ki redno produkirajo med starejšimi — najbolj zanimivi za spremljanje.</div>
+      <div class="ml-prospect-grid">
+        ${prospects.map(r=>`
+          <div class="ml-prospect" onclick="mlProfile(${r.pid})">
+            <span class="ml-born-badge">${r.born}</span>
+            <div class="ml-pname">${r.name}</div>
+            <div class="ml-pteam">${r.team}</div>
+            <div class="ml-pstat"><b>${r.ppg.toFixed(1)}</b><span>točk / tekmo</span></div>
+            <div class="ml-pz">+${r._zYear.toFixed(1)}σ nad svojim letnikom · ${r.gp} tekem</div>
+          </div>`).join('')}
+      </div>` : ''}
+
+    <div class="ml-section-title"><span class="dot"></span>Lestvica izstopajočih${_ML_STATE.born!=='all'?` — letnik ${_ML_STATE.born}`:''}</div>
+    <div class="ml-note"><span class="ml-star">*</span> = majhen vzorec (manj kot ${ML_MIN_GP} tekem), z-score jemlji z rezervo. σ = standardni odklon nad povprečjem.</div>
+    ${rows.length ? `
+    <div class="ml-table-wrap">
+      <table class="ml-table">
+        <thead><tr>
+          <th>#</th><th>Igralec</th><th>Let.</th><th class="ml-c-gp">T</th><th>TČ</th>
+          <th>nad ligo</th><th class="ml-c-z">nad ekipo</th><th class="ml-c-z">nad letn.</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map((r,i)=>{
+            const small = r.gp<ML_MIN_GP;
+            const young = Number(r.born)===youngestYear;
+            return `<tr onclick="mlProfile(${r.pid})">
+              <td class="ml-rank">${i+1}</td>
+              <td><div class="ml-pl-cell"><div><div class="ml-pl-name">${r.name}${small?'<span class="ml-star" title="majhen vzorec">*</span>':''}</div><div class="ml-pl-team">${r.team}</div></div></div></td>
+              <td><span class="ml-yr${young?' young':''}">${r.born||'—'}</span></td>
+              <td class="ml-c-gp">${r.gp}</td>
+              <td class="ml-ppg">${r.ppg.toFixed(1)}</td>
+              <td>${mlZBadge(r._zLiga)}</td>
+              <td class="ml-c-z">${mlZBadge(r._zTeam)}</td>
+              <td class="ml-c-z">${mlZBadge(r._zYear)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : `<div class="ml-empty">Ni igralcev za izbrane filtre.</div>`}
+  `;
+}
+
+function mlZBadge(z){
+  if(z==null||isNaN(z)) return '<span class="ml-zbadge lo">—</span>';
+  const cls = z>=1.5?'hi':(z>=0.6?'mid':'lo');
+  const sign = z>=0?'+':'';
+  return `<span class="ml-zbadge ${cls}">${sign}${z.toFixed(1)}σ</span>`;
+}
+
+function mlSet(key,val){
+  _ML_STATE[key]=val;
+  drawMladi();
+}
+
+function mlProfile(pid){
+  const rows = mlRows();
+  const r = rows.find(x=>x.pid===pid);
+  if(!r) return;
+  // baze za primerjavo
+  const qual = rows.filter(x=>x.gp>=ML_MIN_GP);
+  const ligaZ = mlStats(qual.map(x=>x.ppg));
+  const teamMates = qual.filter(x=>x.teamId===r.teamId).map(x=>x.ppg);
+  const teamZ = mlStats(teamMates);
+  const yearMates = qual.filter(x=>x.born===r.born).map(x=>x.ppg);
+  const yearZ = mlStats(yearMates);
+
+  const pctVsLiga = ligaZ.mu? Math.min(100,Math.round(r.ppg/ (ligaZ.mu*2) *100)) : 50;
+  const pctVsTeam = teamZ.mu? Math.min(100,Math.round(r.ppg/ (teamZ.mu*2) *100)) : 50;
+  const pctVsYear = yearZ.mu? Math.min(100,Math.round(r.ppg/ (yearZ.mu*2) *100)) : 50;
+
+  // trend graf (točke po krogih)
+  const trend = (r.trend||[]).slice();
+  const trendSvg = mlTrendSvg(trend);
+
+  const small = r.gp<ML_MIN_GP;
+  let boxHtml = '';
+  if(r.hasBox && r.box){
+    const b=r.box;
+    const fg2 = b.fg2a? Math.round(b.fg2m/b.fg2a*100):0;
+    const fg3 = b.fg3a? Math.round(b.fg3m/b.fg3a*100):0;
+    const ft  = b.fta?  Math.round(b.ftm/b.fta*100):0;
+    boxHtml = `
+      <div class="ml-section-title" style="font-size:.95rem;margin-top:18px"><span class="dot"></span>Poln boxscore (turnir, ${b.g} tekem)</div>
+      <table class="ml-box-table">
+        <tr><td>Minute / tekmo</td><td>${b.mpg}</td></tr>
+        <tr><td>Skoki / tekmo</td><td>${b.rpg}</td></tr>
+        <tr><td>Asistence / tekmo</td><td>${b.apg}</td></tr>
+        <tr><td>Ukradene / tekmo</td><td>${b.spg}</td></tr>
+        <tr><td>Bloki / tekmo</td><td>${b.bpg}</td></tr>
+        <tr><td>Izgubljene / tekmo</td><td>${b.topg}</td></tr>
+        <tr><td>PIR / tekmo</td><td>${b.pir}</td></tr>
+        <tr><td>Met za 2 / 3 / PM</td><td>${fg2}% / ${fg3}% / ${ft}%</td></tr>
+      </table>`;
+  } else {
+    boxHtml = `<div class="ml-note" style="margin-top:16px">Poln boxscore za tega igralca ni na voljo (igral le v rednem delu, kjer se beležijo samo točke).</div>`;
+  }
+
+  document.getElementById('ml-modal-body').innerHTML = `
+    <div class="ml-prof-head">
+      <div>
+        <h3 class="ml-prof-name">${r.name}${small?'<span class="ml-star">*</span>':''}</h3>
+        <div class="ml-prof-meta">${r.team} · letnik ${r.born||'—'} · ${r.gp} tekem (${_ML_STATE.segment==='finals'?'turnir':'redni del'})</div>
+      </div>
+    </div>
+    <div class="ml-prof-stats">
+      <div class="ml-prof-stat"><b>${r.ppg.toFixed(1)}</b><span>točk / tekmo</span></div>
+      <div class="ml-prof-stat"><b>${r.ptsMax}</b><span>največ v tekmi</span></div>
+      <div class="ml-prof-stat"><b>${r.ptsTotal}</b><span>skupaj točk</span></div>
+    </div>
+
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot"></span>Točke skozi sezono</div>
+    <div class="ml-trend">${trendSvg}</div>
+
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot"></span>Kako izstopa</div>
+    <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad ligo</span><div class="ml-cmp-bar"><i style="width:${pctVsLiga}%"></i></div><span class="ml-cmp-val">${mlZBadge(ligaZ.sd?(r.ppg-ligaZ.mu)/ligaZ.sd:0)}</span></div>
+    <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad ekipo</span><div class="ml-cmp-bar"><i style="width:${pctVsTeam}%"></i></div><span class="ml-cmp-val">${mlZBadge(teamZ.sd?(r.ppg-teamZ.mu)/teamZ.sd:0)}</span></div>
+    <div class="ml-cmp-row"><span class="ml-cmp-lbl">Nad letnikom</span><div class="ml-cmp-bar"><i style="width:${pctVsYear}%"></i></div><span class="ml-cmp-val">${mlZBadge(yearZ.sd?(r.ppg-yearZ.mu)/yearZ.sd:0)}</span></div>
+
+    ${boxHtml}
+  `;
+  document.getElementById('ml-modal').style.display='flex';
+}
+
+function mlTrendSvg(trend){
+  if(!trend.length) return '<div class="ml-note">Ni podatkov za trend.</div>';
+  const W=520,H=120,pad=18;
+  const pts = trend.map(t=>t.pts);
+  const maxP = Math.max(...pts,1);
+  const n = trend.length;
+  const x = i => pad + (n<=1?0:(i/(n-1))*(W-2*pad));
+  const y = v => H-pad - (v/maxP)*(H-2*pad);
+  let path='', dots='';
+  trend.forEach((t,i)=>{
+    path += (i===0?'M':'L')+x(i).toFixed(1)+' '+y(t.pts).toFixed(1)+' ';
+    dots += `<circle cx="${x(i).toFixed(1)}" cy="${y(t.pts).toFixed(1)}" r="3" fill="var(--teal2)"><title>${t.d||('krog '+t.r)}: ${t.pts} t. vs ${t.opp||''}</title></circle>`;
+  });
+  // povprečje črta
+  const avg = pts.reduce((a,b)=>a+b,0)/n;
+  const avgY = y(avg).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <line x1="${pad}" y1="${avgY}" x2="${W-pad}" y2="${avgY}" stroke="var(--border2)" stroke-dasharray="4 4"/>
+    <text x="${W-pad}" y="${avgY-4}" text-anchor="end" font-size="9" fill="var(--mut)" font-family="var(--fs)">⌀ ${avg.toFixed(1)}</text>
+    <path d="${path}" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
+}
+
+function closeMlModal(){
+  document.getElementById('ml-modal').style.display='none';
 }
 
 </script>
