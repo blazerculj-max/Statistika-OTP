@@ -1,0 +1,25 @@
+{
+ "generated": "2026-06-12T13:23:26.019Z",
+ "source": "BFB",
+ "season": "2025-26",
+ "ages": {
+  "u19": {
+   "label": "Юноши U19 (BFB)",
+   "file": "bg_u19.json",
+   "players": 130,
+   "kind": "sezona 2025/26"
+  },
+  "u16": {
+   "label": "Юноши U16 (BFB)",
+   "file": "bg_u16.json",
+   "players": 156,
+   "kind": "sezona 2025/26"
+  },
+  "u15": {
+   "label": "Юноши U15 (BFB)",
+   "file": "bg_u15.json",
+   "players": 97,
+   "kind": "sezona 2025/26"
+  }
+ }
+}
