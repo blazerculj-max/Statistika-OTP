@@ -1638,6 +1638,8 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .tr-pb-btn{margin-left:auto;text-decoration:none;font-size:.95rem;opacity:.55;transition:opacity .15s;cursor:pointer;flex-shrink:0}
 .tr-pb-btn:hover,.tr-pb-btn:active{opacity:1}
 .tr-pline .tr-pb-btn{margin-left:6px}
+.tr-new-badge{display:inline-block;margin-left:5px;background:#ef4444;color:#fff;font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:8px;vertical-align:top}
+.tr-new-intro{padding:10px 16px;font-size:.86rem;color:var(--sub);line-height:1.5}
 .ml-hr-seg,.ml-metric-seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
 .ml-hr-seg button,.ml-metric-seg button{white-space:nowrap;flex-shrink:0}
 @media(max-width:768px){
@@ -11633,6 +11635,7 @@ function drawTransferji(){
       <button class="${S.view==='search'?'active':''}" onclick="trSetView('search')">🔍 Iskalnik</button>
       <button class="${S.view==='leagues'?'active':''}" onclick="trSetView('leagues')">🏆 Po ligah</button>
       <button class="${S.view==='moves'?'active':''}" onclick="trSetView('moves')">✈️ Transferji</button>
+      <button class="${S.view==='new'?'active':''}" onclick="trSetView('new')">🆕 Novo${m.newMoves?`<span class="tr-new-badge">${m.newMoves}</span>`:''}</button>
     </div>
 
     <div id="tr-content"></div>
@@ -11641,6 +11644,7 @@ function drawTransferji(){
   if(S.view==='search') trDrawSearch();
   else if(S.view==='leagues') trDrawLeagues();
   else if(S.view==='moves') trDrawMoves();
+  else if(S.view==='new') trDrawNew();
 }
 
 // ---------- ISKALNIK ----------
@@ -11831,6 +11835,67 @@ function trPlayerLine(p, moved){
     <a class="tr-pb-btn" href="${trProballersUrl(p)}" target="_blank" rel="noopener" title="Poišči na Proballers" onclick="event.stopPropagation()">📊</a>
     ${moved&&p.to?`<span class="tr-pl-to">→ ${p.to}${p.tl?` (${p.tl})`:''}</span>`:''}
   </div>`;
+}
+
+// ---------- NOVO (od zadnjega zajema) ----------
+let _TR_NEW = null;
+async function trDrawNew(){
+  const c = document.getElementById('tr-content');
+  if(!_TR_NEW){
+    c.innerHTML = `<div class="tr-loading">Nalagam novosti…</div>`;
+    try{ _TR_NEW = await fetch(`${TR_BASE}/tr_new.json`).then(r=>r.json()); }
+    catch(e){ c.innerHTML = `<div class="tr-hint">Ni podatkov o novostih.<br><span style="font-size:.8rem;color:var(--mut)">Po prvem ponovnem zajemu se tukaj pokaže, kaj se je spremenilo.</span></div>`; return; }
+  }
+  const nm = _TR_NEW.newMoves||[];
+  const np = _TR_NEW.newPlayers||[];
+  const upd = _TR_NEW.generated ? new Date(_TR_NEW.generated).toLocaleString('sl-SI') : '';
+
+  if(!nm.length && !np.length){
+    c.innerHTML = `<div class="tr-hint">Ni novih sprememb od zadnjega zajema.${upd?`<br><span style="font-size:.8rem;color:var(--mut)">Zadnji zajem: ${upd}</span>`:''}</div>`;
+    return;
+  }
+
+  c.innerHTML = `
+    <div class="tr-new-intro">Spremembe od prejšnjega zajema${upd?` (${upd})`:''}: <b>${nm.length}</b> novih prestopov, <b>${np.length}</b> novih igralcev.</div>
+    ${nm.length?`
+      <div class="tr-section-lbl">✈️ Novi prestopi</div>
+      <div class="tr-list">
+        ${nm.map(p=>`
+          <div class="tr-row tr-row-moved">
+            <div class="tr-row-main">
+              ${p.nat?`<span class="tr-nat-tag">${p.nat}</span>`:''}
+              <span class="tr-name">${p.n}</span>
+              ${p.p?`<span class="tr-pos-badge">${p.p}</span>`:''}
+              ${p.y?`<span class="tr-year">${p.y}</span>`:''}
+              <a class="tr-pb-btn" href="${trProballersUrl(p)}" target="_blank" rel="noopener" title="Proballers" onclick="event.stopPropagation()">📊</a>
+            </div>
+            <div class="tr-row-sub">
+              <span class="tr-club-from">${p.c||'—'}</span> <span class="tr-arrow">→</span> <span class="tr-club-to">${p.to}${p.tl?` <span class="tr-league-tag">${p.tl}</span>`:''}</span>
+              <span class="tr-country-tag">${p.coD}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `:''}
+    ${np.length?`
+      <div class="tr-section-lbl">🆕 Novi igralci v bazi (${np.length})</div>
+      <div class="tr-list">
+        ${np.slice(0,100).map(p=>`
+          <div class="tr-row">
+            <div class="tr-row-main">
+              ${p.nat?`<span class="tr-nat-tag">${p.nat}</span>`:''}
+              <span class="tr-name">${p.n}</span>
+              ${p.p?`<span class="tr-pos-badge">${p.p}</span>`:''}
+              ${p.y?`<span class="tr-year">${p.y}</span>`:''}
+              <a class="tr-pb-btn" href="${trProballersUrl(p)}" target="_blank" rel="noopener" title="Proballers" onclick="event.stopPropagation()">📊</a>
+            </div>
+            <div class="tr-row-sub"><span class="tr-club">${p.c||'—'}</span> <span class="tr-country-tag">${p.coD}</span></div>
+          </div>
+        `).join('')}
+        ${np.length>100?`<div class="tr-count">…in še ${np.length-100} drugih</div>`:''}
+      </div>
+    `:''}
+  `;
 }
 
 // ---------- TRANSFERJI (odhodi) ----------
