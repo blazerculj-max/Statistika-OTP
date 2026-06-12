@@ -1635,6 +1635,9 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .tr-nat-sm{font-size:.64rem}
 .tr-h{font-size:.76rem;color:var(--mut)}
 .tr-sec-left{color:#c084fc}
+.tr-pb-btn{margin-left:auto;text-decoration:none;font-size:.95rem;opacity:.55;transition:opacity .15s;cursor:pointer;flex-shrink:0}
+.tr-pb-btn:hover,.tr-pb-btn:active{opacity:1}
+.tr-pline .tr-pb-btn{margin-left:6px}
 .ml-hr-seg,.ml-metric-seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
 .ml-hr-seg button,.ml-metric-seg button{white-space:nowrap;flex-shrink:0}
 @media(max-width:768px){
@@ -11699,6 +11702,17 @@ function trUpdateClearBtn(){
   if(row){ let a=row.querySelector('.tr-clear'); if(has&&!a){ a=document.createElement('a'); a.className='tr-clear'; a.textContent='počisti vse'; a.onclick=trClearFilters; row.appendChild(a);} else if(!has&&a){ a.remove(); } }
 }
 
+// zgradi Google iskanje ciljano na Proballers profil (ime + letnik + klub za točnost)
+function trProballersUrl(p){
+  const parts = [p.n];
+  if(p.y) parts.push(p.y);
+  // klub pomaga ločiti soimenjake (4. faktor)
+  const club = p.c || p.to || '';
+  if(club) parts.push(club.replace(/[^\w\s]/g,'').trim());
+  const q = encodeURIComponent(parts.join(' ') + ' site:proballers.com');
+  return `https://www.google.com/search?q=${q}`;
+}
+
 function trRenderResults(){
   const box = document.getElementById('tr-results');
   if(!box) return;
@@ -11739,6 +11753,7 @@ function trRenderResults(){
             ${p.p?`<span class="tr-pos-badge">${p.p}</span>`:''}
             ${p.h?`<span class="tr-h">${p.h}cm</span>`:''}
             ${p.y?`<span class="tr-year">${p.y}</span>`:''}
+            <a class="tr-pb-btn" href="${trProballersUrl(p)}" target="_blank" rel="noopener" title="Poišči na Proballers" onclick="event.stopPropagation()">📊</a>
           </div>
           <div class="tr-row-sub">
             ${p.to
@@ -11816,6 +11831,7 @@ function trPlayerLine(p, moved){
     ${p.nat?`<span class="tr-nat-tag tr-nat-sm">${p.nat}</span>`:''}
     <span class="tr-pl-name">${p.n}</span>
     <span class="tr-pl-meta">${p.p||''} ${p.y||''} ${p.h?`· ${p.h}cm`:''}</span>
+    <a class="tr-pb-btn" href="${trProballersUrl(p)}" target="_blank" rel="noopener" title="Poišči na Proballers" onclick="event.stopPropagation()">📊</a>
     ${moved&&p.to?`<span class="tr-pl-to">→ ${p.to}${p.tl?` (${p.tl})`:''}</span>`:''}
   </div>`;
 }
