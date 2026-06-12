@@ -1524,6 +1524,53 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .ml-hr-prospect .ml-pstat b{color:#ff6b6b!important}
 .ml-hr-badge{background:#e11d2a!important;color:#fff!important}
 .ml-hr-kind{display:inline-block;background:rgba(225,29,42,.15);color:#ff6b6b;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:6px}
+.ml-trend-wrap{margin:4px 0 8px;padding:10px 12px;background:var(--card2);border-radius:var(--r-md);border:1px solid var(--border)}
+.ml-trend-svg{width:100%;height:90px;display:block}
+.ml-trend-lbl{display:flex;justify-content:space-between;font-size:.68rem;color:var(--mut);font-family:var(--fs);margin-top:4px}
+.ml-radar-wrap{display:flex;justify-content:center;margin:4px 0 10px;padding:8px;background:var(--card2);border-radius:var(--r-md);border:1px solid var(--border)}
+.ml-radar-svg{width:220px;height:200px;max-width:100%}
+.ml-filter-row{display:flex;gap:8px;align-items:center}
+.ml-search{flex:1;min-width:0;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:9px 12px;color:var(--fg);font-size:.85rem;font-family:var(--ff)}
+.ml-search:focus{outline:none;border-color:var(--mut)}
+.ml-filter-row select{flex:0 0 auto;max-width:46%}
+.ml-mingp-row{display:flex;gap:10px;align-items:center}
+.ml-mingp-lbl{font-size:.78rem;color:var(--sub);white-space:nowrap;font-family:var(--fs)}
+.ml-mingp-lbl b{color:var(--fg)}
+.ml-mingp-slider{flex:1;height:4px;cursor:pointer}
+.ml-filter-info{margin-top:-2px}
+.ml-star-btn{background:none;border:none;font-size:1.6rem;color:var(--mut);cursor:pointer;padding:0 4px;line-height:1;transition:color .15s,transform .15s}
+.ml-star-btn.on{color:#f5c518}
+.ml-star-btn:active{transform:scale(1.2)}
+.ml-prof-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ml-sl-tab-btn{position:relative;display:inline-flex;align-items:center;gap:3px}
+.ml-sl-count{background:#f5c518;color:#1a1a1a;font-size:.62rem;font-weight:800;border-radius:10px;padding:1px 5px;min-width:14px;text-align:center}
+.ml-sl-bar{display:flex;gap:8px;align-items:center;margin:4px 0 8px;flex-wrap:wrap}
+.ml-sl-tab{background:var(--card2);border:1px solid var(--border);color:var(--fg);font-weight:700;padding:7px 14px;border-radius:var(--r-md);font-size:.82rem}
+.ml-sl-tab.active{border-color:#f5c518;color:#f5c518}
+.ml-sl-compare-btn{background:var(--card2);border:1px solid var(--border);color:var(--fg);font-weight:700;padding:7px 14px;border-radius:var(--r-md);cursor:pointer;font-size:.82rem;font-family:var(--ff)}
+.ml-sl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ml-sl-card{position:relative;background:var(--card2);border:1px solid var(--border);border-left:3px solid var(--pc,#888);border-radius:var(--r-md);padding:12px;cursor:pointer;transition:transform .12s}
+.ml-sl-card:active{transform:scale(.98)}
+.ml-sl-missing{opacity:.5;border-left-color:var(--mut)}
+.ml-sl-flag{font-size:.68rem;color:var(--sub);font-weight:700;margin-bottom:3px;font-family:var(--fs)}
+.ml-sl-x{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--mut);font-size:.85rem;cursor:pointer;padding:2px 5px;border-radius:6px}
+.ml-sl-x:hover{color:#ff6b6b;background:rgba(255,107,107,.1)}
+.ml-sl-stats{display:flex;gap:8px;margin-top:6px;font-size:.72rem;color:var(--sub);flex-wrap:wrap;font-family:var(--fs)}
+.ml-cmp-pickers{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ml-cmp-pick{width:100%;font-size:.78rem;padding:7px 8px}
+.ml-cmp-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.ml-cmp-player{flex:1;min-width:0;border-bottom:2px solid var(--pc);padding-bottom:6px}
+.ml-cmp-pname{font-weight:800;font-size:.92rem;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ml-cmp-pteam{font-size:.68rem;color:var(--sub);font-family:var(--fs)}
+.ml-cmp-vs{font-size:.7rem;font-weight:800;color:var(--mut);flex:0 0 auto}
+.ml-cmp-table{width:100%;border-collapse:collapse}
+.ml-cmp-table td{padding:8px 6px;border-bottom:1px solid var(--border);font-size:.88rem}
+.ml-cmp-a{text-align:left;width:32%;color:var(--sub);font-weight:600;font-family:var(--fs)}
+.ml-cmp-b{text-align:right;width:32%;color:var(--sub);font-weight:600;font-family:var(--fs)}
+.ml-cmp-lbl{text-align:center;font-size:.72rem;color:var(--mut)}
+.ml-cmp-a.win,.ml-cmp-b.win{color:var(--fg);font-weight:800}
+.ml-cmp-a.win{color:#3bd6c6}
+.ml-cmp-b.win{color:#3bd6c6}
 .ml-hr-seg,.ml-metric-seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
 .ml-hr-seg button,.ml-metric-seg button{white-space:nowrap;flex-shrink:0}
 @media(max-width:768px){
@@ -11472,6 +11519,7 @@ let _SRB_STATE = { age:'u17', team:'all', sort:'indexpg', metric:'indexpg' };
 async function renderMladi(){
   const wrap = document.getElementById('ml-wrap');
   if(!wrap) return;
+  if(_ML_STATE.view==='shortlist'){ await mlRenderShortlist(); return; }
   if(_ML_STATE.country==='hr'){ await renderMladiBox('hr'); return; }
   if(_ML_STATE.country==='srb'){ await renderMladiBox('srb'); return; }
   // === SLOVENIJA ===
@@ -11531,18 +11579,25 @@ function mlStats(vals){
   return {mu,sd};
 }
 
-// Skupni preklopnik države (SI / HR / SRB)
+// Skupni preklopnik države (SI / HR / SRB / ★)
 function mlCountrySeg(){
+  const slN = (typeof mlGetShortlist==='function')?mlGetShortlist().length:0;
   return `<div class="ml-ctrls"><div class="ml-seg ml-country-seg">
-    <button class="${_ML_STATE.country==='si'?'active':''}" onclick="mlSetCountry('si')">🇸🇮 Slovenija</button>
-    <button class="${_ML_STATE.country==='hr'?'active':''}" onclick="mlSetCountry('hr')">🇭🇷 Hrvaška</button>
-    <button class="${_ML_STATE.country==='srb'?'active':''}" onclick="mlSetCountry('srb')">🇷🇸 Srbija</button>
+    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='si'?'active':''}" onclick="mlSetCountry('si')">🇸🇮 Slovenija</button>
+    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='hr'?'active':''}" onclick="mlSetCountry('hr')">🇭🇷 Hrvaška</button>
+    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='srb'?'active':''}" onclick="mlSetCountry('srb')">🇷🇸 Srbija</button>
+    <button class="ml-sl-tab-btn ${_ML_STATE.view==='shortlist'?'active':''}" onclick="mlShowShortlist()">★<span class="ml-sl-count" style="${slN?'':'display:none'}">${slN}</span></button>
   </div></div>`;
 }
 async function mlSetCountry(c){
-  if(_ML_STATE.country===c) return;
+  _ML_STATE.view = 'country';
+  if(_ML_STATE.country===c){ renderMladi(); return; }
   _ML_STATE.country = c;
   renderMladi();
+}
+function mlShowShortlist(){
+  _ML_STATE.view = 'shortlist';
+  mlRenderShortlist();
 }
 
 /* =========== BOXSCORE DRŽAVE (HR Hrvaška, SRB Srbija) — poln boxscore =========== */
@@ -11620,13 +11675,18 @@ function drawMladiBox(country){
   const z = mlStats(qual.map(p=>p[metric]));
   all.forEach(p=>{ p._z = z.sd ? (p[metric]-z.mu)/z.sd : 0; });
   const teams = [...new Set(all.map(p=>p.team))].sort((x,y)=>x.localeCompare(y));
+  const minGp = S.minGp||0;
+  const query = (S.q||'').toLowerCase().trim();
   let rows = all.slice();
   if(S.team!=='all') rows = rows.filter(p=>p.team===S.team);
+  if(minGp>0) rows = rows.filter(p=>p.gp>=minGp);
+  if(query) rows = rows.filter(p=>p.name.toLowerCase().includes(query) || p.team.toLowerCase().includes(query));
   rows.sort((x,y)=> (y[S.sort]||0) - (x[S.sort]||0));
   const prospects = qual.slice().sort((x,y)=>y[metric]-x[metric]).slice(0,6);
   const ageKeys = Object.keys(cfg.M.ages);
   const mlabel = (BOX_METRICS.find(m=>m.k===metric)||{}).label || metric;
   const isFinals = a.kind && a.kind.includes('završni');
+  const maxGp = Math.max(...all.map(p=>p.gp), 1);
 
   wrap.innerHTML = `
     ${mlCountrySeg()}
@@ -11648,12 +11708,22 @@ function drawMladiBox(country){
       </div>
     </div>
 
-    <div class="ml-ctrls">
+    <div class="ml-ctrls ml-filter-row">
+      <input type="text" class="ml-search" placeholder="🔍 Išči igralca ali ekipo…" value="${(S.q||'').replace(/"/g,'&quot;')}"
+        oninput="boxSearch('${country}',this.value)">
       <select onchange="boxSet('${country}','team',this.value)">
         <option value="all"${S.team==='all'?' selected':''}>Vse ekipe</option>
         ${teams.map(t=>`<option value="${t.replace(/"/g,'&quot;')}"${S.team===t?' selected':''}>${t}</option>`).join('')}
       </select>
     </div>
+
+    <div class="ml-ctrls ml-mingp-row">
+      <label class="ml-mingp-lbl">Najmanj tekem: <b>${minGp||'vse'}</b></label>
+      <input type="range" class="ml-mingp-slider" min="0" max="${maxGp}" step="1" value="${minGp}"
+        oninput="boxMinGp('${country}',this.value)" style="accent-color:${cfg.c1}">
+    </div>
+
+    ${(query||minGp>0) ? `<div class="ml-note ml-filter-info">Prikazanih ${rows.length} igralcev${query?` za "${query}"`:''}${minGp>0?`, min ${minGp} tekem`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a></div>` : ''}
 
     ${prospects.length && S.team==='all' ? `
       <div class="ml-section-title"><span class="dot" style="background:${cfg.c1}"></span>Dragulji — ${mlabel}</div>
@@ -11699,6 +11769,59 @@ function drawMladiBox(country){
 
 function boxSet(country,key,val){ BOX_CFG[country].S[key]=val; drawMladiBox(country); }
 function boxSetMetric(country,m){ const S=BOX_CFG[country].S; S.metric=m; S.sort=m; drawMladiBox(country); }
+// iskanje: preriši le rezultate (ne celega bloka), da iskalnik obdrži fokus
+let _boxSearchT=null;
+function boxSearch(country,val){
+  BOX_CFG[country].S.q = val;
+  clearTimeout(_boxSearchT);
+  _boxSearchT = setTimeout(()=>boxRedrawResults(country), 120);
+}
+function boxMinGp(country,val){
+  BOX_CFG[country].S.minGp = +val;
+  // posodobi oznako takoj
+  const lbl = document.querySelector('.ml-mingp-lbl b');
+  if(lbl) lbl.textContent = +val||'vse';
+  clearTimeout(_boxSearchT);
+  _boxSearchT = setTimeout(()=>boxRedrawResults(country), 80);
+}
+function boxClearFilter(country){
+  const S=BOX_CFG[country].S; S.q=''; S.minGp=0; drawMladiBox(country);
+}
+// preriši samo del z dragulji+lestvico (ohrani kontrole/fokus)
+function boxRedrawResults(country){
+  const cfg=BOX_CFG[country], S=cfg.S, a=cfg.A[S.age];
+  if(!a) return;
+  const all=a.players, metric=S.metric;
+  const minGp=S.minGp||0, query=(S.q||'').toLowerCase().trim();
+  let rows=all.slice();
+  if(S.team!=='all') rows=rows.filter(p=>p.team===S.team);
+  if(minGp>0) rows=rows.filter(p=>p.gp>=minGp);
+  if(query) rows=rows.filter(p=>p.name.toLowerCase().includes(query)||p.team.toLowerCase().includes(query));
+  rows.sort((x,y)=>(y[S.sort]||0)-(x[S.sort]||0));
+  const mlabel=(BOX_METRICS.find(m=>m.k===metric)||{}).label||metric;
+  // info vrstica
+  const info=document.querySelector('.ml-filter-info');
+  if(info){
+    if(query||minGp>0){ info.style.display=''; info.innerHTML=`Prikazanih ${rows.length} igralcev${query?` za "${query}"`:''}${minGp>0?`, min ${minGp} tekem`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a>`; }
+    else info.style.display='none';
+  }
+  // tabela
+  const tbody=document.querySelector('.ml-table tbody');
+  if(tbody){
+    tbody.innerHTML = rows.map((p,i)=>{
+      const small=p.gp<BOX_MIN_GP;
+      return `<tr onclick="boxProfile('${country}','${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}')">
+        <td class="ml-rank">${i+1}</td>
+        <td><div class="ml-pl-cell"><div><div class="ml-pl-name">${p.name}${small?'<span class="ml-star">*</span>':''}</div><div class="ml-pl-team">${p.team}</div></div></div></td>
+        <td>${p.gp}</td>
+        <td class="ml-ppg" style="color:${cfg.c2}">${(p[metric]||0).toFixed(1)}</td>
+        <td class="ml-c-z">${p.ppg.toFixed(1)}</td>
+        <td class="ml-c-z">${p.indexpg.toFixed(1)}</td>
+        <td>${mlZBadge(p._z)}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--mut)">Ni zadetkov.</td></tr>`;
+  }
+}
 async function boxSetAge(country,age){
   const S=BOX_CFG[country].S;
   if(S.age===age) return;
@@ -11731,6 +11854,7 @@ function boxProfile(country, name, team){
         <h3 class="ml-prof-name">${p.name}</h3>
         <div class="ml-prof-meta">${p.team} · #${p.no} · ${p.gp} tekem</div>
       </div>
+      <button class="ml-star-btn ${mlInShortlist(country,p.name,p.team)?'on':''}" onclick="mlToggleShortlist('${country}','${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}','${cfg.S.age}',this)" title="Dodaj na shortlist">${mlInShortlist(country,p.name,p.team)?'★':'☆'}</button>
     </div>
     <div class="ml-prof-stats">
       <div class="ml-prof-stat"><b>${p.ppg.toFixed(1)}</b><span>točk</span></div>
@@ -11742,6 +11866,10 @@ function boxProfile(country, name, team){
       <div class="ml-prof-stat"><b>${p.spg.toFixed(1)}</b><span>ukraden.</span></div>
       <div class="ml-prof-stat"><b>${p.bpg.toFixed(1)}</b><span>blokad</span></div>
     </div>
+
+    ${boxTrendChart(games, cfg)}
+    ${boxRadar(p, a.players, cfg)}
+
     <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:${cfg.c1}"></span>Met</div>
     <table class="ml-box-table">
       <tr><td>Za 2 točki</td><td>${p.fg2}%</td></tr>
@@ -11755,6 +11883,271 @@ function boxProfile(country, name, team){
     <div class="ml-games">${gamesHtml}</div>
   `;
   document.getElementById('ml-modal').style.display='flex';
+}
+
+/* ===== SHORTLIST (priljubljeni, localStorage) ===== */
+const ML_SL_KEY = 'mladi_shortlist_v1';
+function mlGetShortlist(){
+  try{ return JSON.parse(localStorage.getItem(ML_SL_KEY)||'[]'); }catch(e){ return []; }
+}
+function mlSaveShortlist(list){
+  try{ localStorage.setItem(ML_SL_KEY, JSON.stringify(list)); }catch(e){}
+}
+function mlInShortlist(country,name,team){
+  return mlGetShortlist().some(x=>x.country===country&&x.name===name&&x.team===team);
+}
+function mlToggleShortlist(country,name,team,age,btn){
+  let list = mlGetShortlist();
+  const i = list.findIndex(x=>x.country===country&&x.name===name&&x.team===team);
+  if(i>=0){ list.splice(i,1); if(btn){btn.classList.remove('on');btn.textContent='☆';} }
+  else { list.push({country,name,team,age,added:Date.now()}); if(btn){btn.classList.add('on');btn.textContent='★';} }
+  mlSaveShortlist(list);
+  mlUpdateShortlistBadge();
+}
+function mlUpdateShortlistBadge(){
+  const n = mlGetShortlist().length;
+  const badges = document.querySelectorAll('.ml-sl-count');
+  badges.forEach(b=>{ b.textContent = n; b.style.display = n?'':'none'; });
+}
+
+// Pridobi igralca iz naložene lige (za shortlist/primerjavo)
+function mlFindPlayer(country, name, team, age){
+  const cfg = BOX_CFG[country];
+  if(!cfg) return null;
+  const a = cfg.A[age];
+  if(!a) return null;
+  return a.players.find(x=>x.name===name && x.team===team) || null;
+}
+
+// Shortlist pogled — render
+async function mlRenderShortlist(){
+  const wrap = document.getElementById('ml-wrap');
+  const list = mlGetShortlist();
+  if(!list.length){
+    wrap.innerHTML = `${mlCountrySeg()}
+      <div class="ml-sl-bar"><button class="ml-sl-tab active">★ Shortlist</button></div>
+      <div class="ml-empty">Tvoj shortlist je prazen.<br><span style="font-size:.72rem;color:var(--mut)">Odpri igralca in klikni ★, da ga dodaš sem.</span></div>`;
+    return;
+  }
+  // poskrbi, da so potrebne lige naložene
+  for(const it of list){
+    const cfg = BOX_CFG[it.country];
+    if(cfg && !cfg.A[it.age]){
+      try{
+        if(!cfg.M){ const r=await fetch(GITHUB_RAW+'/'+cfg.manifest,{cache:'no-cache'}); cfg.M=await r.json(); }
+        const meta=cfg.M.ages[it.age];
+        if(meta){ const r=await fetch(GITHUB_RAW+'/'+meta.file,{cache:'no-cache'}); cfg.A[it.age]=await r.json(); }
+      }catch(e){}
+    }
+  }
+  const rows = list.map(it=>{
+    const p = mlFindPlayer(it.country, it.name, it.team, it.age);
+    return {it, p};
+  });
+  const flagOf = c => BOX_CFG[c]?.flag || (c==='si'?'🇸🇮':'');
+  const colorOf = c => BOX_CFG[c]?.c1 || '#3bd6c6';
+
+  wrap.innerHTML = `${mlCountrySeg()}
+    <div class="ml-sl-bar"><button class="ml-sl-tab active">★ Shortlist (${list.length})</button>
+      ${list.length>=2?`<button class="ml-sl-compare-btn" onclick="mlOpenCompare()">⇄ Primerjaj</button>`:''}
+    </div>
+    <div class="ml-note">Tvoji označeni igralci. Klikni za profil, ali primerjaj dva.</div>
+    <div class="ml-sl-grid">
+      ${rows.map(({it,p})=>{
+        if(!p) return `<div class="ml-sl-card ml-sl-missing">
+          <div class="ml-pname">${it.name}</div><div class="ml-pteam">${it.team}</div>
+          <div class="ml-note" style="margin:4px 0 0">${flagOf(it.country)} ${it.age.toUpperCase()} — ni naloženo</div>
+          <button class="ml-sl-x" onclick="mlRemoveFromShortlist('${it.country}','${it.name.replace(/'/g,"\\'")}','${it.team.replace(/'/g,"\\'")}')">✕</button></div>`;
+        const c = colorOf(it.country);
+        return `<div class="ml-sl-card" style="--pc:${c}" onclick="mlShortlistProfile('${it.country}','${it.name.replace(/'/g,"\\'")}','${it.team.replace(/'/g,"\\'")}','${it.age}')">
+          <button class="ml-sl-x" onclick="event.stopPropagation();mlRemoveFromShortlist('${it.country}','${it.name.replace(/'/g,"\\'")}','${it.team.replace(/'/g,"\\'")}')">✕</button>
+          <div class="ml-sl-flag">${flagOf(it.country)} ${it.age.toUpperCase()}</div>
+          <div class="ml-pname">${p.name}</div>
+          <div class="ml-pteam">${p.team}</div>
+          <div class="ml-sl-stats">
+            <span><b style="color:${c}">${p.ppg.toFixed(1)}</b> t</span>
+            <span><b style="color:${c}">${p.rpg.toFixed(1)}</b> s</span>
+            <span><b style="color:${c}">${p.apg.toFixed(1)}</b> a</span>
+            <span><b style="color:${c}">${p.indexpg.toFixed(1)}</b> idx</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+function mlRemoveFromShortlist(country,name,team){
+  let list = mlGetShortlist().filter(x=>!(x.country===country&&x.name===name&&x.team===team));
+  mlSaveShortlist(list);
+  mlRenderShortlist();
+  mlUpdateShortlistBadge();
+}
+function mlShortlistProfile(country,name,team,age){
+  // poskrbi pravi age v state, da profil najde igralca
+  if(BOX_CFG[country]){ BOX_CFG[country].S.age = age; }
+  boxProfile(country,name,team);
+}
+
+/* ===== PRIMERJAVA dveh igralcev ===== */
+let _ML_COMPARE = [];
+function mlOpenCompare(){
+  const list = mlGetShortlist();
+  // privzeto prva dva
+  _ML_COMPARE = list.slice(0,2).map(it=>({...it}));
+  mlRenderCompare();
+}
+function mlRenderCompare(){
+  const list = mlGetShortlist();
+  const players = _ML_COMPARE.map(it=>({it, p: mlFindPlayer(it.country,it.name,it.team,it.age)})).filter(x=>x.p);
+  const flagOf = c => BOX_CFG[c]?.flag || (c==='si'?'🇸🇮':'');
+  const colorOf = c => BOX_CFG[c]?.c1 || '#3bd6c6';
+  const body = document.getElementById('ml-modal-body');
+  // izbirnik igralcev
+  const picker = (slot)=>`<select class="ml-cmp-pick" onchange="mlCmpPick(${slot},this.value)">
+    ${list.map((it,i)=>`<option value="${i}"${_ML_COMPARE[slot]&&_ML_COMPARE[slot].name===it.name&&_ML_COMPARE[slot].team===it.team?' selected':''}>${flagOf(it.country)} ${it.name} (${it.team})</option>`).join('')}
+  </select>`;
+
+  let inner;
+  if(players.length<2){
+    inner = `<div class="ml-empty">Za primerjavo izberi dva igralca s shortlista.</div>`;
+  } else {
+    const [A,B] = players;
+    const c1=colorOf(A.it.country), c2=colorOf(B.it.country);
+    const stat = (label,key,dec=1)=>{
+      const va=A.p[key]||0, vb=B.p[key]||0;
+      const aWin=va>vb, bWin=vb>va;
+      return `<tr>
+        <td class="ml-cmp-a ${aWin?'win':''}">${va.toFixed(dec)}</td>
+        <td class="ml-cmp-lbl">${label}</td>
+        <td class="ml-cmp-b ${bWin?'win':''}">${vb.toFixed(dec)}</td>
+      </tr>`;
+    };
+    const pct = (label,key)=>{
+      const va=A.p[key]||0, vb=B.p[key]||0, aWin=va>vb, bWin=vb>va;
+      return `<tr>
+        <td class="ml-cmp-a ${aWin?'win':''}">${va}%</td>
+        <td class="ml-cmp-lbl">${label}</td>
+        <td class="ml-cmp-b ${bWin?'win':''}">${vb}%</td></tr>`;
+    };
+    inner = `
+      <div class="ml-cmp-head">
+        <div class="ml-cmp-player" style="--pc:${c1}">
+          <div class="ml-cmp-pname">${A.p.name}</div>
+          <div class="ml-cmp-pteam">${flagOf(A.it.country)} ${A.p.team} · ${A.it.age.toUpperCase()}</div>
+        </div>
+        <div class="ml-cmp-vs">VS</div>
+        <div class="ml-cmp-player" style="--pc:${c2};text-align:right">
+          <div class="ml-cmp-pname">${B.p.name}</div>
+          <div class="ml-cmp-pteam">${flagOf(B.it.country)} ${B.p.team} · ${B.it.age.toUpperCase()}</div>
+        </div>
+      </div>
+      <table class="ml-cmp-table">
+        ${stat('Točke','ppg')}
+        ${stat('Skoki','rpg')}
+        ${stat('Asistence','apg')}
+        ${stat('Indeks','indexpg')}
+        ${stat('Ukradene','spg')}
+        ${stat('Blokade','bpg')}
+        ${stat('Minute','mpg')}
+        ${pct('Met za 2','fg2')}
+        ${pct('Met za 3','fg3')}
+        ${pct('Prosti meti','ft')}
+        ${stat('Tekem','gp',0)}
+        ${stat('Max točk','ptsMax',0)}
+      </table>
+      <div class="ml-note" style="text-align:center;margin-top:8px">Obarvano = boljši v tej kategoriji. Različne lige niso neposredno primerljive (raven se razlikuje).</div>
+    `;
+  }
+
+  body.innerHTML = `
+    <div class="ml-prof-head"><div><h3 class="ml-prof-name">Primerjava</h3>
+      <div class="ml-prof-meta">Izberi dva igralca</div></div></div>
+    <div class="ml-cmp-pickers">
+      <div>${picker(0)}</div>
+      <div>${picker(1)}</div>
+    </div>
+    ${inner}
+  `;
+  document.getElementById('ml-modal').style.display='flex';
+}
+function mlCmpPick(slot, idx){
+  const list = mlGetShortlist();
+  _ML_COMPARE[slot] = {...list[+idx]};
+  mlRenderCompare();
+}
+
+// Trend graf točk skozi sezono (SVG)
+function boxTrendChart(games, cfg){
+  const pts = games.map(g=>g.pts);
+  if(pts.length<3) return '';
+  const W=300, H=90, pad=8;
+  const max = Math.max(...pts, 1);
+  const avg = pts.reduce((a,b)=>a+b,0)/pts.length;
+  const stepX = (W-2*pad)/(pts.length-1);
+  const y = v => H-pad - (v/max)*(H-2*pad);
+  const pathD = pts.map((v,i)=>`${i===0?'M':'L'}${(pad+i*stepX).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const dots = pts.map((v,i)=>`<circle cx="${(pad+i*stepX).toFixed(1)}" cy="${y(v).toFixed(1)}" r="2.5" fill="${cfg.c2}"/>`).join('');
+  const avgY = y(avg).toFixed(1);
+  return `
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:${cfg.c1}"></span>Točke skozi sezono</div>
+    <div class="ml-trend-wrap">
+      <svg viewBox="0 0 ${W} ${H}" class="ml-trend-svg" preserveAspectRatio="none">
+        <line x1="${pad}" y1="${avgY}" x2="${W-pad}" y2="${avgY}" stroke="var(--mut)" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+        <path d="${pathD}" fill="none" stroke="${cfg.c2}" stroke-width="2"/>
+        ${dots}
+      </svg>
+      <div class="ml-trend-lbl"><span>povpr. ${avg.toFixed(1)}</span><span>max ${max}</span></div>
+    </div>`;
+}
+
+// Radar profil — igralec vs povprečje lige (5 osi)
+function boxRadar(p, allPlayers, cfg){
+  // primerjava z ligo: percentil po vsaki metriki
+  const qual = allPlayers.filter(x=>x.gp>=4);
+  const pct = (val, key) => {
+    const vals = qual.map(x=>x[key]).sort((a,b)=>a-b);
+    const below = vals.filter(v=>v<val).length;
+    return vals.length? below/vals.length : 0.5;
+  };
+  const axes = [
+    {k:'ppg', label:'Točke'},
+    {k:'rpg', label:'Skoki'},
+    {k:'apg', label:'Asist.'},
+    {k:'indexpg', label:'Indeks'},
+    {k:'spg', label:'Obramba'},  // ukradene kot proxy za obrambo
+  ];
+  const vals = axes.map(ax=>Math.max(0.05, pct(p[ax.k], ax.k)));
+  const cx=110, cy=100, R=72;
+  const n=axes.length;
+  const pt = (i, r) => {
+    const ang = -Math.PI/2 + (2*Math.PI*i/n);
+    return [cx + Math.cos(ang)*R*r, cy + Math.sin(ang)*R*r];
+  };
+  // mreža (3 obroči)
+  let grid='';
+  [0.33,0.66,1].forEach(r=>{
+    const poly = axes.map((_,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
+    grid += `<polygon points="${poly}" fill="none" stroke="var(--border)" stroke-width="1"/>`;
+  });
+  // osi + oznake
+  let spokes='', labels='';
+  axes.forEach((ax,i)=>{
+    const [x,y]=pt(i,1);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`;
+    const [lx,ly]=pt(i,1.18);
+    labels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" font-size="9" fill="var(--sub)" text-anchor="middle" dominant-baseline="middle">${ax.label}</text>`;
+  });
+  // igralčev poligon
+  const poly = vals.map((r,i)=>pt(i,r).map(v=>v.toFixed(1)).join(',')).join(' ');
+  const dots = vals.map((r,i)=>{const[x,y]=pt(i,r);return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${cfg.c1}"/>`;}).join('');
+  return `
+    <div class="ml-section-title" style="font-size:.95rem"><span class="dot" style="background:${cfg.c1}"></span>Profil (percentil v ligi)</div>
+    <div class="ml-note" style="margin-top:-6px">Kako izstopa po vsaki kategoriji glede na ligo. Bližje robu = boljši.</div>
+    <div class="ml-radar-wrap">
+      <svg viewBox="0 0 220 200" class="ml-radar-svg">
+        ${grid}${spokes}${labels}
+        <polygon points="${poly}" fill="${cfg.c1}" fill-opacity="0.25" stroke="${cfg.c1}" stroke-width="2"/>
+        ${dots}
+      </svg>
+    </div>`;
 }
 
 function drawMladi(){
