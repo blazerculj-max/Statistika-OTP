@@ -1621,6 +1621,20 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .tr-move{padding:7px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:2px}
 .tr-move-name{font-weight:600;font-size:.88rem}
 .tr-move-flow{font-size:.8rem;color:var(--sub);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tr-filters{display:flex;gap:8px;padding:0 16px 8px;flex-wrap:wrap;align-items:center}
+.tr-filters select{flex:1;min-width:120px;padding:9px 8px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--fg);font-size:.85rem}
+.tr-filters-range{gap:6px}
+.tr-frange-lbl{font-size:.78rem;color:var(--mut);font-weight:600}
+.tr-rng{width:56px;padding:8px 6px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--fg);font-size:.82rem;text-align:center}
+.tr-rng::-webkit-outer-spin-button,.tr-rng::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.tr-filters-toggle{justify-content:space-between}
+.tr-chk{font-size:.82rem;color:var(--sub);display:flex;align-items:center;gap:6px;cursor:pointer}
+.tr-chk input{accent-color:#a855f7}
+.tr-clear{color:#c084fc;font-size:.82rem;cursor:pointer;font-weight:600}
+.tr-nat-tag{font-size:.68rem;padding:1px 6px;border-radius:5px;background:rgba(99,102,241,.15);color:#a5b4fc;font-weight:700;white-space:nowrap}
+.tr-nat-sm{font-size:.64rem}
+.tr-h{font-size:.76rem;color:var(--mut)}
+.tr-sec-left{color:#c084fc}
 .ml-hr-seg,.ml-metric-seg{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch}
 .ml-hr-seg button,.ml-metric-seg button{white-space:nowrap;flex-shrink:0}
 @media(max-width:768px){
@@ -11581,7 +11595,7 @@ let _TR_MANIFEST = null;
 let _TR_MOVES = null;
 let _TR_INDEX = null;
 let _TR_COUNTRY_CACHE = {};
-let _TR_STATE = { view:'search', q:'', pos:'all', league:'all', country:null, sort:'name' };
+let _TR_STATE = { view:'search', q:'', pos:'all', nat:'all', yMin:'', yMax:'', hMin:'', hMax:'', onlyMoved:false, league:'all', country:null, sort:'name' };
 
 async function renderTransferji(){
   const wrap = document.getElementById('tr-wrap');
@@ -11637,14 +11651,33 @@ async function trDrawSearch(){
   }
   const players = _TR_INDEX.players;
   const positions = [...new Set(players.map(p=>p.p).filter(Boolean))].sort();
+  const nats = (_TR_MANIFEST.nats||[...new Set(players.map(p=>p.nat).filter(Boolean))].sort());
 
   c.innerHTML = `
     <div class="tr-ctrls">
       <input type="text" class="tr-search" placeholder="🔍 Išči igralca, klub ali ligo…" value="${(S.q||'').replace(/"/g,'&quot;')}" oninput="trSearch(this.value)">
-      <select class="tr-pos" onchange="trSetPos(this.value)">
+    </div>
+    <div class="tr-filters">
+      <select onchange="trSetFilter('nat',this.value)">
+        <option value="all"${S.nat==='all'?' selected':''}>🌍 Vse države</option>
+        ${nats.map(n=>`<option value="${n}"${S.nat===n?' selected':''}>${n}</option>`).join('')}
+      </select>
+      <select onchange="trSetFilter('pos',this.value)">
         <option value="all"${S.pos==='all'?' selected':''}>Vse pozicije</option>
         ${positions.map(p=>`<option value="${p}"${S.pos===p?' selected':''}>${p}</option>`).join('')}
       </select>
+    </div>
+    <div class="tr-filters tr-filters-range">
+      <span class="tr-frange-lbl">Letnik:</span>
+      <input type="number" class="tr-rng" placeholder="od" value="${S.yMin}" oninput="trSetFilter('yMin',this.value)">
+      <input type="number" class="tr-rng" placeholder="do" value="${S.yMax}" oninput="trSetFilter('yMax',this.value)">
+      <span class="tr-frange-lbl">Višina:</span>
+      <input type="number" class="tr-rng" placeholder="od" value="${S.hMin}" oninput="trSetFilter('hMin',this.value)">
+      <input type="number" class="tr-rng" placeholder="do" value="${S.hMax}" oninput="trSetFilter('hMax',this.value)">
+    </div>
+    <div class="tr-filters tr-filters-toggle">
+      <label class="tr-chk"><input type="checkbox" ${S.onlyMoved?'checked':''} onchange="trSetFilter('onlyMoved',this.checked)"> Samo prestopi (z destinacijo)</label>
+      ${(S.q||S.nat!=='all'||S.pos!=='all'||S.yMin||S.yMax||S.hMin||S.hMax||S.onlyMoved)?`<a class="tr-clear" onclick="trClearFilters()">počisti vse</a>`:''}
     </div>
     <div id="tr-results"></div>
   `;
@@ -11657,27 +11690,38 @@ function trSearch(v){
   clearTimeout(_trSearchT);
   _trSearchT = setTimeout(()=>{ trRenderResults(); const i=document.querySelector('.tr-search'); if(i){i.focus();const n=i.value.length;i.setSelectionRange(n,n);} }, 180);
 }
-function trSetPos(v){ _TR_STATE.pos=v; trRenderResults(); }
+function trSetFilter(k,v){ _TR_STATE[k]=v; trRenderResults(); trUpdateClearBtn(); }
+function trClearFilters(){ Object.assign(_TR_STATE,{q:'',pos:'all',nat:'all',yMin:'',yMax:'',hMin:'',hMax:'',onlyMoved:false}); trDrawSearch(); }
+function trUpdateClearBtn(){
+  const S=_TR_STATE;
+  const has=(S.q||S.nat!=='all'||S.pos!=='all'||S.yMin||S.yMax||S.hMin||S.hMax||S.onlyMoved);
+  const row=document.querySelector('.tr-filters-toggle');
+  if(row){ let a=row.querySelector('.tr-clear'); if(has&&!a){ a=document.createElement('a'); a.className='tr-clear'; a.textContent='počisti vse'; a.onclick=trClearFilters; row.appendChild(a);} else if(!has&&a){ a.remove(); } }
+}
 
 function trRenderResults(){
   const box = document.getElementById('tr-results');
   if(!box) return;
   const S = _TR_STATE;
   const q = (S.q||'').toLowerCase().trim();
+  const yMin=+S.yMin||0, yMax=+S.yMax||9999, hMin=+S.hMin||0, hMax=+S.hMax||999;
   let rows = _TR_INDEX.players;
   if(S.pos!=='all') rows = rows.filter(p=>p.p===S.pos);
+  if(S.nat!=='all') rows = rows.filter(p=>p.nat===S.nat);
+  if(S.onlyMoved) rows = rows.filter(p=>p.to);
+  if(S.yMin||S.yMax) rows = rows.filter(p=>p.y&&p.y>=yMin&&p.y<=yMax);
+  if(S.hMin||S.hMax) rows = rows.filter(p=>p.h&&p.h>=hMin&&p.h<=hMax);
   if(q) rows = rows.filter(p=>
     p.n.toLowerCase().includes(q) ||
     (p.c&&p.c.toLowerCase().includes(q)) ||
     (p.co&&p.co.toLowerCase().includes(q)) ||
     (p.to&&p.to.toLowerCase().includes(q))
   );
-  // če ni iskanja, ne prikaži vseh 11k — pokaži poziv
-  if(!q && S.pos==='all'){
-    box.innerHTML = `<div class="tr-hint">Vpiši ime igralca, klub ali ligo za iskanje med ${_TR_INDEX.players.length.toLocaleString('sl-SI')} igralci.</div>`;
+  const anyFilter = q||S.nat!=='all'||S.pos!=='all'||S.yMin||S.yMax||S.hMin||S.hMax||S.onlyMoved;
+  if(!anyFilter){
+    box.innerHTML = `<div class="tr-hint">Vpiši ime ali uporabi filtre za iskanje med ${_TR_INDEX.players.length.toLocaleString('sl-SI')} igralci.<br><span style="font-size:.8rem;color:var(--mut)">Primer: izberi 🌍 Slovenija, da vidiš vse slovenske igralce po Evropi.</span></div>`;
     return;
   }
-  // dedup (isti igralec v več ligah) — po imenu+klubu
   const seen = new Set(); const uniq = [];
   for(const p of rows){ const k=p.n+'|'+p.c; if(!seen.has(k)){ seen.add(k); uniq.push(p);} }
   uniq.sort((a,b)=>a.n.localeCompare(b.n));
@@ -11690,8 +11734,10 @@ function trRenderResults(){
       ${show.map(p=>`
         <div class="tr-row${p.to?' tr-row-moved':''}">
           <div class="tr-row-main">
+            ${p.nat?`<span class="tr-nat-tag">${p.nat}</span>`:''}
             <span class="tr-name">${p.n}</span>
             ${p.p?`<span class="tr-pos-badge">${p.p}</span>`:''}
+            ${p.h?`<span class="tr-h">${p.h}cm</span>`:''}
             ${p.y?`<span class="tr-year">${p.y}</span>`:''}
           </div>
           <div class="tr-row-sub">
@@ -11759,14 +11805,15 @@ async function trDrawCountryDetail(co){
       return `
         <div class="tr-club-block">
           <div class="tr-club-head">${club}</div>
-          ${left.length?`<div class="tr-club-sec">Odšli</div>${left.map(p=>trPlayerLine(p,true)).join('')}`:''}
-          ${roster.length?`<div class="tr-club-sec">Sestav</div>${roster.map(p=>trPlayerLine(p,false)).join('')}`:''}
+          ${left.length?`<div class="tr-club-sec tr-sec-left">Odšli (potrjeno)</div>${left.map(p=>trPlayerLine(p,true)).join('')}`:''}
+          ${roster.length?`<div class="tr-club-sec">Brez potrjene pogodbe za novo sezono</div>${roster.map(p=>trPlayerLine(p,false)).join('')}`:''}
         </div>`;
     }).join('')}
   `;
 }
 function trPlayerLine(p, moved){
   return `<div class="tr-pline">
+    ${p.nat?`<span class="tr-nat-tag tr-nat-sm">${p.nat}</span>`:''}
     <span class="tr-pl-name">${p.n}</span>
     <span class="tr-pl-meta">${p.p||''} ${p.y||''} ${p.h?`· ${p.h}cm`:''}</span>
     ${moved&&p.to?`<span class="tr-pl-to">→ ${p.to}${p.tl?` (${p.tl})`:''}</span>`:''}
