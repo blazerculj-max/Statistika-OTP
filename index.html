@@ -11633,7 +11633,7 @@ const BOX_CFG = {
          get M(){return _BG_MANIFEST;}, set M(v){_BG_MANIFEST=v;},
          A:_BG_AGES, S:_BG_STATE,
          intro:'Bolgarske mladinske lige (BFB) imajo <b>poln boxscore IN letnike</b> — edina poleg Slovenije z obojim. Iščemo po učinkovitosti in starosti (mlajši, ki že dominirajo).',
-         labelClean:s=>s.replace(/Юноши /,'').replace(/ \(BFB\)/,'').replace(/ \(.*\)/,''),
+         labelClean:s=>s.replace(/Fantje /,'').replace(/Юноши /,'').replace(/ \(BFB\)/,'').replace(/ \(.*\)/,''),
          miss:'Naloži <code>bg_manifest.json</code> + <code>bg_u19/u16/u15.json</code> v <code>data/</code>.' },
 };
 
