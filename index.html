@@ -11566,7 +11566,7 @@ const BOX_CFG = {
          get M(){return _SRB_MANIFEST;}, set M(v){_SRB_MANIFEST=v;},
          A:_SRB_AGES, S:_SRB_STATE,
          intro:'Srbska kadetska liga (Triglav KLS) ima <b>poln boxscore</b> za vsako tekmo — iščemo dragulje po učinkovitosti (indeks, all-around, met).',
-         labelClean:s=>s.replace(/Triglav KLS — /,'').replace(/ \(.*\)/,''),
+         labelClean:s=>s.replace(/Triglav KLS — /,'').replace(/ARDU JLS — /,'').replace(/ \(.*\)/,''),
          miss:'Naloži <code>srb_manifest.json</code> + <code>srb_u17.json</code> v <code>data/</code>.' },
 };
 
