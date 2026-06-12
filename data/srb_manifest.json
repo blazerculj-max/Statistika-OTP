@@ -8,6 +8,12 @@
    "file": "srb_u17.json",
    "players": 218,
    "kind": "redni del (22 kol)"
+  },
+  "u19": {
+   "label": "ARDU JLS — juniori (U19)",
+   "file": "srb_u19.json",
+   "players": 225,
+   "kind": "redni del (22 kol)"
   }
  }
 }
