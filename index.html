@@ -11702,13 +11702,10 @@ function trUpdateClearBtn(){
   if(row){ let a=row.querySelector('.tr-clear'); if(has&&!a){ a=document.createElement('a'); a.className='tr-clear'; a.textContent='počisti vse'; a.onclick=trClearFilters; row.appendChild(a);} else if(!has&&a){ a.remove(); } }
 }
 
-// zgradi Google iskanje ciljano na Proballers profil (ime + letnik + klub za točnost)
+// zgradi Google iskanje ciljano na Proballers profil (ime + letnik za točnost, brez kluba — ta se na Proballers zapiše drugače)
 function trProballersUrl(p){
   const parts = [p.n];
   if(p.y) parts.push(p.y);
-  // klub pomaga ločiti soimenjake (4. faktor)
-  const club = p.c || p.to || '';
-  if(club) parts.push(club.replace(/[^\w\s]/g,'').trim());
   const q = encodeURIComponent(parts.join(' ') + ' site:proballers.com');
   return `https://www.google.com/search?q=${q}`;
 }
