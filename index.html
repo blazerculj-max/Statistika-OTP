@@ -2271,6 +2271,87 @@ const DRZAVC_3X3 = {
   season: '2026',
   tournaments: [
     {
+      name: 'Državc Portorož',
+      eventId: '4fe284ac-9856-4ed7-8f23-7e5465048fee',
+      categoryId: '486acd00-51c0-4b30-bfd1-0309dd605f67',
+      date: '2026-06-13',
+      status: 'live',
+      podium: [],
+      teams: [
+        {name:"3x3 Weclean Koroška", players:[
+          {first:"Gašper",last:"Popič",age:18,rank:null,img:null},
+          {first:"Mark",last:"Molicnik",age:18,rank:null,img:null},
+          {first:"Nik",last:"Geč",age:19,rank:null,img:null}
+        ]},
+        {name:"AŽ masažni studio", players:[
+          {first:"Domen",last:"Močnik",age:24,rank:null,img:null},
+          {first:"Maks",last:"Mrgole",age:25,rank:null,img:null},
+          {first:"Matic",last:"Lamut",age:23,rank:null,img:null},
+          {first:"Matija",last:"Kalan",age:24,rank:null,img:null}
+        ]},
+        {name:"Fullhaus", players:[
+          {first:"Alen",last:"Džaferagić",age:18,rank:null,img:null},
+          {first:"David",last:"Strušnik",age:19,rank:null,img:null},
+          {first:"Val",last:"Svenšek",age:22,rank:null,img:null},
+          {first:"Žiga",last:"Pezdir",age:18,rank:null,img:null}
+        ]},
+        {name:"Klančar Žerjavi", players:[
+          {first:"Aljaž",last:"Tavčar",age:24,rank:null,img:null},
+          {first:"Enej",last:"Geržel",age:19,rank:null,img:null},
+          {first:"Tilen",last:"Kogoj",age:20,rank:null,img:null},
+          {first:"Timon",last:"Bubnič",age:23,rank:null,img:null}
+        ]},
+        {name:"Nomago", players:[
+          {first:"Jakob",last:"Jesih",age:30,rank:null,img:null},
+          {first:"Mark",last:"Hudobivnik",age:36,rank:null,img:null},
+          {first:"Matic",last:"Hudobivnik",age:36,rank:null,img:null},
+          {first:"Tim",last:"Vrbančič",age:36,rank:null,img:null}
+        ]},
+        {name:"Optika Sever", players:[
+          {first:"Luka",last:"Ferjancic",age:26,rank:null,img:null},
+          {first:"Nejc",last:"Leben",age:26,rank:null,img:null},
+          {first:"Vid",last:"Rener",age:24,rank:null,img:null},
+          {first:"Žiga",last:"Ferjančič",age:23,rank:null,img:null}
+        ]},
+        {name:"Quadass", players:[
+          {first:"Jan",last:"Barbarič",age:30,rank:null,img:null},
+          {first:"Marko",last:"Jovanovic",age:31,rank:null,img:null},
+          {first:"Miha",last:"Stanovnik",age:17,rank:null,img:null},
+          {first:"Nejc",last:"Zupan",age:30,rank:null,img:null}
+        ]},
+        {name:"RC Sobota 3x3", players:[
+          {first:"Aljaž",last:"Sovič",age:22,rank:null,img:null},
+          {first:"Aljaž",last:"Škof",age:24,rank:null,img:null},
+          {first:"Leon",last:"Zver",age:36,rank:null,img:null},
+          {first:"Niko",last:"Bačvić",age:28,rank:null,img:null}
+        ]},
+        {name:"Rehab studio 3x3", players:[
+          {first:"Blaž",last:"Janežič",age:26,rank:null,img:null},
+          {first:"David",last:"Kopitar",age:26,rank:null,img:null},
+          {first:"Luka",last:"Lampret",age:22,rank:null,img:null},
+          {first:"Nejc",last:"Grajzar",age:25,rank:null,img:null}
+        ]},
+        {name:"SLO U23", players:[
+          {first:"Lon",last:"Ličan",age:21,rank:null,img:null},
+          {first:"Tadej",last:"Colnarič",age:20,rank:null,img:null},
+          {first:"Vito",last:"Bajazet",age:21,rank:null,img:null},
+          {first:"Mark Filip",last:"Ivankovič",age:23,rank:null,img:null}
+        ]},
+        {name:"Zphone", players:[
+          {first:"Luka",last:"Grum",age:34,rank:null,img:null},
+          {first:"Matjaž",last:"Korez",age:25,rank:null,img:null},
+          {first:"Tomaz",last:"Jereb",age:34,rank:null,img:null},
+          {first:"Žiga",last:"Klančnik",age:31,rank:null,img:null}
+        ]},
+        {name:"dLuft Lj - Center", players:[
+          {first:"Gašper",last:"Jordan Rojko",age:30,rank:null,img:null},
+          {first:"Nemanja",last:"Scekic",age:25,rank:null,img:null},
+          {first:"Vito",last:"Smojver",age:24,rank:null,img:null},
+          {first:"Žiga",last:"Habat",age:28,rank:null,img:null}
+        ]}
+      ]
+    },
+    {
       name: 'Državc Škofja Loka',
       eventId: 'e2bbe5b4-fcb3-4bc3-8341-c7a02208ee0e',
       categoryId: '8512d4de-5194-4687-931d-09f82f5833f7',
@@ -8515,6 +8596,7 @@ function render3x3(){
   const tours=DRZAVC_3X3.tournaments;
   const tour=tours[_t3TourIdx]||tours[0];
   const completed=tour.status==='completed';
+  const isLive=tour.status==='live';
   const hasGames=(tour.games||[]).length>0;
   const teams=[...tour.teams].sort((a,b)=>_t3TeamPower(b)-_t3TeamPower(a));
   const maxPow=_t3TeamPower(teams[0])||1;
@@ -8531,12 +8613,21 @@ function render3x3(){
   html+='<div class="t3-tourbar">';
   tours.forEach((t,i)=>{
     const act=i===_t3TourIdx?'active':'';
-    const dot=t.status==='completed'?'✓':'•';
+    const dot=t.status==='completed'?'✓':(t.status==='live'?'🔴':'•');
     html+=`<button class="t3-tourbtn ${act}" onclick="select3x3Tour(${i})">${t.name.replace('Državc ','')} <span style="opacity:.6">${dot}</span></button>`;
   });
   html+='</div>';
 
-  if(completed){
+  if(isLive){
+    // ── TURNIR V TEKU: živ banner + tekme (v živo iz FIBA) ──
+    const dateStr=tour.date?new Date(tour.date+'T00:00').toLocaleDateString('sl-SI',{weekday:'long',day:'numeric',month:'long'}):null;
+    html+=`<div style="background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.35);border-radius:14px;padding:14px 16px;margin:14px 0 20px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:1.1rem;display:inline-flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;animation:livePulse 1.4s infinite"></span></span>
+      <div><div style="font-family:var(--fh);font-weight:700;font-size:.92rem;color:#f87171">Turnir poteka v živo${dateStr?` · ${dateStr.charAt(0).toUpperCase()+dateStr.slice(1)}`:''}</div>
+      <div style="font-size:.74rem;color:var(--mut);font-family:var(--fm);margin-top:2px">Rezultati se osvežujejo med turnirjem. Končni vrstni red bo viden po zaključku.</div></div>
+    </div>`;
+    html+=render3x3Games(tour);
+  } else if(completed){
     // ── ODIGRAN TURNIR: podij + tekme ──
     const podium=tour.podium||[];
     if(podium.length>=3){
