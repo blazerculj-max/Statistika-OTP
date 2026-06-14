@@ -1602,5 +1602,76 @@
         }
       ]
     }
-  ]
+  ],
+  "seriesStandings": {
+    "progress": "2/5",
+    "updated": "Po Škofja Loka + Vrhnika",
+    "standings": [
+      {
+        "rank": 1,
+        "team": "dLuft Ljubljana - Center",
+        "pts": 180
+      },
+      {
+        "rank": 2,
+        "team": "AŽ Masažni studio",
+        "pts": 180
+      },
+      {
+        "rank": 3,
+        "team": "Klančar Žerjavi",
+        "pts": 90
+      },
+      {
+        "rank": 4,
+        "team": "Nomago",
+        "pts": 90
+      },
+      {
+        "rank": 5,
+        "team": "Rehab studio 3x3",
+        "pts": 80
+      },
+      {
+        "rank": 6,
+        "team": "3x3 Fridro Koroška",
+        "pts": 70
+      },
+      {
+        "rank": 7,
+        "team": "3x3 Škofja Loka",
+        "pts": 70
+      },
+      {
+        "rank": 8,
+        "team": "SLO U23",
+        "pts": 70
+      },
+      {
+        "rank": 9,
+        "team": "Ljubljana - Jug",
+        "pts": 60
+      },
+      {
+        "rank": 10,
+        "team": "3x3 Fullhaus",
+        "pts": 58
+      },
+      {
+        "rank": 11,
+        "team": "RC Sobota 3x3",
+        "pts": 50
+      },
+      {
+        "rank": 12,
+        "team": "Optika Sever",
+        "pts": 20
+      },
+      {
+        "rank": 13,
+        "team": "Weclean Koroška",
+        "pts": 18
+      }
+    ]
+  }
 }
