@@ -2,417 +2,6 @@
   "season": "2026",
   "tournaments": [
     {
-      "name": "Državc Portorož",
-      "eventId": "4fe284ac-9856-4ed7-8f23-7e5465048fee",
-      "categoryId": "486acd00-51c0-4b30-bfd1-0309dd605f67",
-      "date": "2026-06-13",
-      "status": "completed",
-      "podium": [
-        "AŽ masažni studio",
-        "SLO U23",
-        "Optika Sever",
-        "dLuft Lj - Center"
-      ],
-      "teams": [
-        {
-          "name": "3x3 Weclean Koroška",
-          "players": [
-            {
-              "first": "Gašper",
-              "last": "Popič",
-              "age": 18,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Mark",
-              "last": "Molicnik",
-              "age": 18,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nejc",
-              "last": "Trup",
-              "age": 21,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nik",
-              "last": "Geč",
-              "age": 19,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "AŽ masažni studio",
-          "players": [
-            {
-              "first": "Domen",
-              "last": "Močnik",
-              "age": 24,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Maks",
-              "last": "Mrgole",
-              "age": 25,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Matic",
-              "last": "Lamut",
-              "age": 23,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Matija",
-              "last": "Kalan",
-              "age": 24,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Fullhaus",
-          "players": [
-            {
-              "first": "Alen",
-              "last": "Džaferagić",
-              "age": 18,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "David",
-              "last": "Strušnik",
-              "age": 19,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Val",
-              "last": "Svenšek",
-              "age": 22,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Žiga",
-              "last": "Pezdir",
-              "age": 18,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Klančar Žerjavi",
-          "players": [
-            {
-              "first": "Aljaž",
-              "last": "Tavčar",
-              "age": 24,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Enej",
-              "last": "Geržel",
-              "age": 19,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Tilen",
-              "last": "Kogoj",
-              "age": 20,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Timon",
-              "last": "Bubnič",
-              "age": 23,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Nomago",
-          "players": [
-            {
-              "first": "Jakob",
-              "last": "Jesih",
-              "age": 30,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Mark",
-              "last": "Hudobivnik",
-              "age": 36,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Matic",
-              "last": "Hudobivnik",
-              "age": 36,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Tim",
-              "last": "Vrbančič",
-              "age": 36,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Optika Sever",
-          "players": [
-            {
-              "first": "Luka",
-              "last": "Ferjancic",
-              "age": 26,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nejc",
-              "last": "Leben",
-              "age": 26,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Vid",
-              "last": "Rener",
-              "age": 24,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Žiga",
-              "last": "Ferjančič",
-              "age": 23,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Quadass",
-          "players": [
-            {
-              "first": "Jan",
-              "last": "Barbarič",
-              "age": 30,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Miha",
-              "last": "Stanovnik",
-              "age": 17,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nejc",
-              "last": "Zupan",
-              "age": 30,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Isa",
-              "last": "Haliti",
-              "age": 19,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "RC Sobota 3x3",
-          "players": [
-            {
-              "first": "Aljaž",
-              "last": "Sovič",
-              "age": 22,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Aljaž",
-              "last": "Škof",
-              "age": 24,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Filip",
-              "last": "Razdevšek",
-              "age": 20,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Leon",
-              "last": "Zver",
-              "age": 36,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Rehab studio 3x3",
-          "players": [
-            {
-              "first": "Blaž",
-              "last": "Janežič",
-              "age": 26,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "David",
-              "last": "Kopitar",
-              "age": 26,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Luka",
-              "last": "Lampret",
-              "age": 22,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nejc",
-              "last": "Grajzar",
-              "age": 25,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "SLO U23",
-          "players": [
-            {
-              "first": "Lon",
-              "last": "Ličan",
-              "age": 21,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Tadej",
-              "last": "Colnarič",
-              "age": 20,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Vito",
-              "last": "Bajazet",
-              "age": 21,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Mark Filip",
-              "last": "Ivankovič",
-              "age": 23,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "Zphone",
-          "players": [
-            {
-              "first": "Luka",
-              "last": "Grum",
-              "age": 34,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Matjaž",
-              "last": "Korez",
-              "age": 25,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Tomaz",
-              "last": "Jereb",
-              "age": 34,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Žiga",
-              "last": "Klančnik",
-              "age": 31,
-              "rank": null,
-              "img": null
-            }
-          ]
-        },
-        {
-          "name": "dLuft Lj - Center",
-          "players": [
-            {
-              "first": "Gašper",
-              "last": "Jordan Rojko",
-              "age": 30,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Nemanja",
-              "last": "Scekic",
-              "age": 25,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Vito",
-              "last": "Smojver",
-              "age": 24,
-              "rank": null,
-              "img": null
-            },
-            {
-              "first": "Žiga",
-              "last": "Habat",
-              "age": 28,
-              "rank": null,
-              "img": null
-            }
-          ]
-        }
-      ]
-    },
-    {
       "name": "Državc Škofja Loka",
       "eventId": "e2bbe5b4-fcb3-4bc3-8341-c7a02208ee0e",
       "categoryId": "8512d4de-5194-4687-931d-09f82f5833f7",
@@ -1069,10 +658,7 @@
       "categoryId": "7d31d477-43c8-4f14-a49b-11ab541a3dfc",
       "date": "2026-06-06",
       "status": "completed",
-      "podium": [
-        "AŽ masažni studio",
-        "dLuft Lj - Center"
-      ],
+      "podium": [],
       "teams": [
         {
           "name": "3x3 Škofja Loka",
@@ -1602,6 +1188,417 @@
           "away": "dLuft Lj - Center",
           "as": 13,
           "aw": false
+        }
+      ]
+    },
+    {
+      "name": "Državc Portorož",
+      "eventId": "4fe284ac-9856-4ed7-8f23-7e5465048fee",
+      "categoryId": "486acd00-51c0-4b30-bfd1-0309dd605f67",
+      "date": "2026-06-13",
+      "status": "completed",
+      "podium": [
+        "AŽ masažni studio",
+        "SLO U23",
+        "Optika Sever",
+        "dLuft Lj - Center"
+      ],
+      "teams": [
+        {
+          "name": "3x3 Weclean Koroška",
+          "players": [
+            {
+              "first": "Gašper",
+              "last": "Popič",
+              "age": 18,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Mark",
+              "last": "Molicnik",
+              "age": 18,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nejc",
+              "last": "Trup",
+              "age": 21,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nik",
+              "last": "Geč",
+              "age": 19,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "AŽ masažni studio",
+          "players": [
+            {
+              "first": "Domen",
+              "last": "Močnik",
+              "age": 24,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Maks",
+              "last": "Mrgole",
+              "age": 25,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Matic",
+              "last": "Lamut",
+              "age": 23,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Matija",
+              "last": "Kalan",
+              "age": 24,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Fullhaus",
+          "players": [
+            {
+              "first": "Alen",
+              "last": "Džaferagić",
+              "age": 18,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "David",
+              "last": "Strušnik",
+              "age": 19,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Val",
+              "last": "Svenšek",
+              "age": 22,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Žiga",
+              "last": "Pezdir",
+              "age": 18,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Klančar Žerjavi",
+          "players": [
+            {
+              "first": "Aljaž",
+              "last": "Tavčar",
+              "age": 24,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Enej",
+              "last": "Geržel",
+              "age": 19,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Tilen",
+              "last": "Kogoj",
+              "age": 20,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Timon",
+              "last": "Bubnič",
+              "age": 23,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Nomago",
+          "players": [
+            {
+              "first": "Jakob",
+              "last": "Jesih",
+              "age": 30,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Mark",
+              "last": "Hudobivnik",
+              "age": 36,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Matic",
+              "last": "Hudobivnik",
+              "age": 36,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Tim",
+              "last": "Vrbančič",
+              "age": 36,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Optika Sever",
+          "players": [
+            {
+              "first": "Luka",
+              "last": "Ferjancic",
+              "age": 26,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nejc",
+              "last": "Leben",
+              "age": 26,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Vid",
+              "last": "Rener",
+              "age": 24,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Žiga",
+              "last": "Ferjančič",
+              "age": 23,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Quadass",
+          "players": [
+            {
+              "first": "Jan",
+              "last": "Barbarič",
+              "age": 30,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Miha",
+              "last": "Stanovnik",
+              "age": 17,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nejc",
+              "last": "Zupan",
+              "age": 30,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Isa",
+              "last": "Haliti",
+              "age": 19,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "RC Sobota 3x3",
+          "players": [
+            {
+              "first": "Aljaž",
+              "last": "Sovič",
+              "age": 22,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Aljaž",
+              "last": "Škof",
+              "age": 24,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Filip",
+              "last": "Razdevšek",
+              "age": 20,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Leon",
+              "last": "Zver",
+              "age": 36,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Rehab studio 3x3",
+          "players": [
+            {
+              "first": "Blaž",
+              "last": "Janežič",
+              "age": 26,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "David",
+              "last": "Kopitar",
+              "age": 26,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Luka",
+              "last": "Lampret",
+              "age": 22,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nejc",
+              "last": "Grajzar",
+              "age": 25,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "SLO U23",
+          "players": [
+            {
+              "first": "Lon",
+              "last": "Ličan",
+              "age": 21,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Tadej",
+              "last": "Colnarič",
+              "age": 20,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Vito",
+              "last": "Bajazet",
+              "age": 21,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Mark Filip",
+              "last": "Ivankovič",
+              "age": 23,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "Zphone",
+          "players": [
+            {
+              "first": "Luka",
+              "last": "Grum",
+              "age": 34,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Matjaž",
+              "last": "Korez",
+              "age": 25,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Tomaz",
+              "last": "Jereb",
+              "age": 34,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Žiga",
+              "last": "Klančnik",
+              "age": 31,
+              "rank": null,
+              "img": null
+            }
+          ]
+        },
+        {
+          "name": "dLuft Lj - Center",
+          "players": [
+            {
+              "first": "Gašper",
+              "last": "Jordan Rojko",
+              "age": 30,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Nemanja",
+              "last": "Scekic",
+              "age": 25,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Vito",
+              "last": "Smojver",
+              "age": 24,
+              "rank": null,
+              "img": null
+            },
+            {
+              "first": "Žiga",
+              "last": "Habat",
+              "age": 28,
+              "rank": null,
+              "img": null
+            }
+          ]
         }
       ]
     }
