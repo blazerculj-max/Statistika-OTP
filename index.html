@@ -1386,6 +1386,17 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 @media(max-width:768px){.t3-grid{grid-template-columns:1fr}}
 /* 3x3 izbirnik turnirjev */
 .t3-tourbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.t3-modebar{display:flex;gap:6px;margin-bottom:16px;background:var(--card2);padding:4px;border-radius:12px;width:fit-content}
+.t3-modebtn{background:transparent;border:none;border-radius:9px;padding:7px 16px;font-family:var(--fh);font-weight:600;font-size:.82rem;color:var(--sub);cursor:pointer;transition:all .15s}
+.t3-modebtn.active{background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff}
+.t3-series{display:flex;flex-direction:column;gap:4px}
+.t3-srow{display:flex;align-items:center;gap:12px;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px}
+.t3-srank{width:28px;text-align:center;font-family:var(--fh);font-weight:800;font-size:.95rem;color:var(--sub);flex-shrink:0}
+.t3-sbody{flex:1;min-width:0}
+.t3-sname{font-family:var(--fh);font-weight:600;font-size:.9rem;margin-bottom:5px}
+.t3-sbar{height:5px;background:var(--card2);border-radius:3px;overflow:hidden}
+.t3-sbar-fill{height:100%;background:linear-gradient(90deg,#7c1fa0,#c084fc);border-radius:3px}
+.t3-spts{font-family:var(--fm);font-weight:700;font-size:1rem;color:#c084fc;flex-shrink:0;min-width:38px;text-align:right}
 .t3-tourbtn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-family:var(--fh);font-weight:600;font-size:.82rem;color:var(--sub);cursor:pointer;transition:all .15s}
 .t3-tourbtn:hover{border-color:var(--border2)}
 .t3-tourbtn.active{background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff;border-color:transparent}
@@ -8577,6 +8588,7 @@ async function show3x3(){
         if(live&&live.tournaments&&live.tournaments.length){
           DRZAVC_3X3.season=live.season||DRZAVC_3X3.season;
           DRZAVC_3X3.tournaments=live.tournaments;
+          if(live.seriesStandings) DRZAVC_3X3.seriesStandings=live.seriesStandings;
           render3x3();  // ponovno z živimi podatki
         }
       }
@@ -8589,18 +8601,15 @@ function _t3TeamPower(team){return team.players.reduce((s,p)=>s+(p.rank||0),0);}
 function _t3Fmt(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1)+'k':String(n);}
 
 let _t3TourIdx=0;
+let _t3Mode='tours';
+function set3x3Mode(m){_t3Mode=m;render3x3();}
 function select3x3Tour(i){_t3TourIdx=i;render3x3();}
 
 function render3x3(){
   const wrap=document.getElementById('t3x3-wrap');
   if(!wrap)return;
   const tours=DRZAVC_3X3.tournaments;
-  const tour=tours[_t3TourIdx]||tours[0];
-  const completed=tour.status==='completed';
-  const isLive=tour.status==='live';
-  const hasGames=(tour.games||[]).length>0;
-  const teams=[...tour.teams].sort((a,b)=>_t3TeamPower(b)-_t3TeamPower(a));
-  const maxPow=_t3TeamPower(teams[0])||1;
+  const series=DRZAVC_3X3.seriesStandings;
 
   let html=`<div style="margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -8609,6 +8618,45 @@ function render3x3(){
     </div>
     <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-top:4px">Serija turnirjev · sezona ${DRZAVC_3X3.season}</div>
   </div>`;
+
+  // preklopnik Turnirji / Skupno (samo če obstaja skupna lestvica)
+  if(series&&series.standings&&series.standings.length){
+    html+=`<div class="t3-modebar">
+      <button class="t3-modebtn ${_t3Mode==='tours'?'active':''}" onclick="set3x3Mode('tours')">Turnirji</button>
+      <button class="t3-modebtn ${_t3Mode==='series'?'active':''}" onclick="set3x3Mode('series')">Skupna lestvica${series.progress?` · ${series.progress}`:''}</button>
+    </div>`;
+  }
+
+  if(_t3Mode==='series' && series && series.standings){
+    // ── SKUPNA LESTVICA SERIJE ──
+    html+=`<div style="font-family:var(--fm);font-size:.7rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;font-weight:700;margin:6px 0 4px">Skupna razvrstitev${series.progress?` · ${series.progress} turnirjev`:''}</div>`;
+    if(series.updated) html+=`<div style="font-size:.74rem;color:var(--mut);margin-bottom:12px">${series.updated}</div>`;
+    html+='<div class="t3-series">';
+    const maxPts=series.standings[0]?.pts||1;
+    series.standings.forEach(s=>{
+      const medal=s.rank===1?'🥇':s.rank===2?'🥈':s.rank===3?'🥉':'';
+      const barW=Math.round((s.pts/maxPts)*100);
+      html+=`<div class="t3-srow">
+        <div class="t3-srank">${medal||s.rank}</div>
+        <div class="t3-sbody">
+          <div class="t3-sname">${s.team}</div>
+          <div class="t3-sbar"><div class="t3-sbar-fill" style="width:${barW}%"></div></div>
+        </div>
+        <div class="t3-spts">${s.pts}</div>
+      </div>`;
+    });
+    html+='</div>';
+    wrap.innerHTML=html;
+    return;
+  }
+
+  // ── POGLED PO TURNIRJIH ──
+  const tour=tours[_t3TourIdx]||tours[0];
+  const completed=tour.status==='completed';
+  const isLive=tour.status==='live';
+  const hasGames=(tour.games||[]).length>0;
+  const teams=[...tour.teams].sort((a,b)=>_t3TeamPower(b)-_t3TeamPower(a));
+  const maxPow=_t3TeamPower(teams[0])||1;
 
   // izbirnik turnirjev
   html+='<div class="t3-tourbar">';
