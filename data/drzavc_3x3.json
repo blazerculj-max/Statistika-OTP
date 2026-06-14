@@ -1211,14 +1211,14 @@
               "first": "Gašper",
               "last": "Popič",
               "age": 18,
-              "rank": null,
-              "img": null
+              "rank": 428,
+              "img": "https://assets.fiba3x3.com/images/Member/c/3/2/1/c321d69f-ee2e-452d-a837-ec89e9f81644/profile.80x80.png"
             },
             {
               "first": "Mark",
               "last": "Molicnik",
               "age": 18,
-              "rank": null,
+              "rank": 100,
               "img": null
             },
             {
@@ -1232,7 +1232,7 @@
               "first": "Nik",
               "last": "Geč",
               "age": 19,
-              "rank": null,
+              "rank": 429,
               "img": null
             }
           ]
@@ -1244,7 +1244,7 @@
               "first": "Domen",
               "last": "Močnik",
               "age": 24,
-              "rank": null,
+              "rank": 70728,
               "img": null
             },
             {
@@ -1252,20 +1252,20 @@
               "last": "Mrgole",
               "age": 25,
               "rank": null,
-              "img": null
+              "img": "https://assets.fiba3x3.com/images/Member/7/b/1/1/7b111441-1bba-4ac1-a66f-20cfedd39dc2/profile.80x80.png"
             },
             {
               "first": "Matic",
               "last": "Lamut",
               "age": 23,
-              "rank": null,
+              "rank": 550,
               "img": null
             },
             {
               "first": "Matija",
               "last": "Kalan",
               "age": 24,
-              "rank": null,
+              "rank": 11472,
               "img": null
             }
           ]
@@ -1277,28 +1277,28 @@
               "first": "Alen",
               "last": "Džaferagić",
               "age": 18,
-              "rank": null,
+              "rank": 1185,
               "img": null
             },
             {
               "first": "David",
               "last": "Strušnik",
               "age": 19,
-              "rank": null,
-              "img": null
+              "rank": 1387,
+              "img": "https://assets.fiba3x3.com/images/Member/f/f/e/5/ffe57f69-36b3-49b0-b659-5764dcc537c0/profile.80x80.png"
             },
             {
               "first": "Val",
               "last": "Svenšek",
               "age": 22,
-              "rank": null,
+              "rank": 195,
               "img": null
             },
             {
               "first": "Žiga",
               "last": "Pezdir",
               "age": 18,
-              "rank": null,
+              "rank": 1424,
               "img": null
             }
           ]
@@ -1310,29 +1310,29 @@
               "first": "Aljaž",
               "last": "Tavčar",
               "age": 24,
-              "rank": null,
+              "rank": 500,
               "img": null
             },
             {
               "first": "Enej",
               "last": "Geržel",
               "age": 19,
-              "rank": null,
+              "rank": 721,
               "img": null
             },
             {
               "first": "Tilen",
               "last": "Kogoj",
               "age": 20,
-              "rank": null,
+              "rank": 400,
               "img": null
             },
             {
               "first": "Timon",
               "last": "Bubnič",
               "age": 23,
-              "rank": null,
-              "img": null
+              "rank": 470,
+              "img": "https://assets.fiba3x3.com/images/Member/6/b/3/2/6b328e95-a03c-449a-a170-d74e617fde8f/profile.80x80.png"
             }
           ]
         },
@@ -1343,28 +1343,28 @@
               "first": "Jakob",
               "last": "Jesih",
               "age": 30,
-              "rank": null,
-              "img": null
+              "rank": 436,
+              "img": "https://assets.fiba3x3.com/images/Member/0/f/5/5/0f5544dc-8910-404a-ae40-fa2785973db8/profile.80x80.png"
             },
             {
               "first": "Mark",
               "last": "Hudobivnik",
               "age": 36,
-              "rank": null,
-              "img": null
+              "rank": 934,
+              "img": "https://assets.fiba3x3.com/images/Member/2/c/f/0/2cf013dd-080a-4276-b7a3-9c2546b999af/profile.80x80.png"
             },
             {
               "first": "Matic",
               "last": "Hudobivnik",
               "age": 36,
-              "rank": null,
-              "img": null
+              "rank": 933,
+              "img": "https://assets.fiba3x3.com/images/Member/3/7/e/e/37ee5050-5efe-4941-9d36-3c4cd4d130b0/profile.80x80.png"
             },
             {
               "first": "Tim",
               "last": "Vrbančič",
               "age": 36,
-              "rank": null,
+              "rank": 725,
               "img": null
             }
           ]
@@ -1376,28 +1376,28 @@
               "first": "Luka",
               "last": "Ferjancic",
               "age": 26,
-              "rank": null,
+              "rank": 232,
               "img": null
             },
             {
               "first": "Nejc",
               "last": "Leben",
               "age": 26,
-              "rank": null,
+              "rank": 235,
               "img": null
             },
             {
               "first": "Vid",
               "last": "Rener",
               "age": 24,
-              "rank": null,
+              "rank": 186,
               "img": null
             },
             {
               "first": "Žiga",
               "last": "Ferjančič",
               "age": 23,
-              "rank": null,
+              "rank": 238,
               "img": null
             }
           ]
@@ -1442,29 +1442,29 @@
               "first": "Aljaž",
               "last": "Sovič",
               "age": 22,
-              "rank": null,
+              "rank": 1503,
               "img": null
             },
             {
               "first": "Aljaž",
               "last": "Škof",
               "age": 24,
-              "rank": null,
+              "rank": 1265,
               "img": null
             },
             {
               "first": "Filip",
               "last": "Razdevšek",
               "age": 20,
-              "rank": null,
+              "rank": 300,
               "img": null
             },
             {
               "first": "Leon",
               "last": "Zver",
               "age": 36,
-              "rank": null,
-              "img": null
+              "rank": 1266,
+              "img": "https://assets.fiba3x3.com/images/Member/a/c/6/5/ac65308f-2598-4c80-86c8-e9c605c622ab/profile.80x80.png"
             }
           ]
         },
@@ -1475,28 +1475,28 @@
               "first": "Blaž",
               "last": "Janežič",
               "age": 26,
-              "rank": null,
-              "img": null
+              "rank": 225,
+              "img": "https://assets.fiba3x3.com/images/Member/d/9/7/0/d970afca-7cc6-4d41-9f94-2a1cbc2a05aa/profile.80x80.png"
             },
             {
               "first": "David",
               "last": "Kopitar",
               "age": 26,
-              "rank": null,
+              "rank": 443,
               "img": null
             },
             {
               "first": "Luka",
               "last": "Lampret",
               "age": 22,
-              "rank": null,
+              "rank": 62999,
               "img": null
             },
             {
               "first": "Nejc",
               "last": "Grajzar",
               "age": 25,
-              "rank": null,
+              "rank": 442,
               "img": null
             }
           ]
@@ -1508,28 +1508,28 @@
               "first": "Lon",
               "last": "Ličan",
               "age": 21,
-              "rank": null,
+              "rank": 28160,
               "img": null
             },
             {
               "first": "Tadej",
               "last": "Colnarič",
               "age": 20,
-              "rank": null,
+              "rank": 8270,
               "img": null
             },
             {
               "first": "Vito",
               "last": "Bajazet",
               "age": 21,
-              "rank": null,
+              "rank": 19775,
               "img": null
             },
             {
               "first": "Mark Filip",
               "last": "Ivankovič",
               "age": 23,
-              "rank": null,
+              "rank": 28275,
               "img": null
             }
           ]
@@ -1541,29 +1541,29 @@
               "first": "Luka",
               "last": "Grum",
               "age": 34,
-              "rank": null,
-              "img": null
+              "rank": 266,
+              "img": "https://assets.fiba3x3.com/images/Member/9/2/3/9/9239e2d0-dd6b-4843-9103-97975a3e848e/profile.80x80.png"
             },
             {
               "first": "Matjaž",
               "last": "Korez",
               "age": 25,
-              "rank": null,
+              "rank": 473,
               "img": null
             },
             {
               "first": "Tomaz",
               "last": "Jereb",
               "age": 34,
-              "rank": null,
+              "rank": 480,
               "img": null
             },
             {
               "first": "Žiga",
               "last": "Klančnik",
               "age": 31,
-              "rank": null,
-              "img": null
+              "rank": 474,
+              "img": "https://assets.fiba3x3.com/images/Member/5/7/e/3/57e3c54f-cd69-4ea4-891f-cbf01bd1c10c/profile.80x80.png"
             }
           ]
         },
@@ -1574,31 +1574,261 @@
               "first": "Gašper",
               "last": "Jordan Rojko",
               "age": 30,
-              "rank": null,
-              "img": null
+              "rank": 540,
+              "img": "https://assets.fiba3x3.com/images/Member/2/1/7/b/217b3227-a6e0-4094-901c-299f68fabd98/profile.80x80.png"
             },
             {
               "first": "Nemanja",
               "last": "Scekic",
               "age": 25,
-              "rank": null,
-              "img": null
+              "rank": 300,
+              "img": "https://assets.fiba3x3.com/images/Member/6/5/0/6/6506b10d-3dd9-4142-88d9-1108c47cd02d/profile.80x80.png"
             },
             {
               "first": "Vito",
               "last": "Smojver",
               "age": 24,
               "rank": null,
-              "img": null
+              "img": "https://assets.fiba3x3.com/images/Member/2/6/8/8/26885e02-3182-40dd-847a-5f89a6969844/profile.80x80.png"
             },
             {
               "first": "Žiga",
               "last": "Habat",
               "age": 28,
               "rank": null,
-              "img": null
+              "img": "https://assets.fiba3x3.com/images/Member/3/1/1/c/311ce260-4fff-4bca-86f8-35cb1ca03594/profile.80x80.png"
             }
           ]
+        }
+      ],
+      "games": [
+        {
+          "name": "Pool A game 1",
+          "round": "RR",
+          "group": "A",
+          "time": "14:40",
+          "home": "AŽ masažni studio",
+          "hs": 21,
+          "hw": true,
+          "away": "3x3 Weclean Koroška",
+          "as": 14,
+          "aw": false
+        },
+        {
+          "name": "Pool B game 1",
+          "round": "RR",
+          "group": "B",
+          "time": "15:00",
+          "home": "SLO U23",
+          "hs": 20,
+          "hw": true,
+          "away": "dLuft Lj - Center",
+          "as": 17,
+          "aw": false
+        },
+        {
+          "name": "Pool C game 1",
+          "round": "RR",
+          "group": "C",
+          "time": "15:00",
+          "home": "Rehab studio 3x3",
+          "hs": 14,
+          "hw": false,
+          "away": "Optika Sever",
+          "as": 21,
+          "aw": true
+        },
+        {
+          "name": "Pool D game 1",
+          "round": "RR",
+          "group": "D",
+          "time": "15:00",
+          "home": "RC Sobota 3x3",
+          "hs": 21,
+          "hw": true,
+          "away": "Quadass",
+          "as": 12,
+          "aw": false
+        },
+        {
+          "name": "Pool A game 2",
+          "round": "RR",
+          "group": "A",
+          "time": "15:40",
+          "home": "Zphone",
+          "hs": 21,
+          "hw": true,
+          "away": "3x3 Weclean Koroška",
+          "as": 8,
+          "aw": false
+        },
+        {
+          "name": "Pool D game 2",
+          "round": "RR",
+          "group": "D",
+          "time": "16:00",
+          "home": "Fullhaus",
+          "hs": 12,
+          "hw": false,
+          "away": "Quadass",
+          "as": 16,
+          "aw": true
+        },
+        {
+          "name": "Pool B game 2",
+          "round": "RR",
+          "group": "B",
+          "time": "16:00",
+          "home": "Klančar Žerjavi",
+          "hs": 15,
+          "hw": false,
+          "away": "dLuft Lj - Center",
+          "as": 19,
+          "aw": true
+        },
+        {
+          "name": "Pool C game 2",
+          "round": "RR",
+          "group": "C",
+          "time": "16:00",
+          "home": "Nomago",
+          "hs": 12,
+          "hw": false,
+          "away": "Optika Sever",
+          "as": 20,
+          "aw": true
+        },
+        {
+          "name": "Pool D game 3",
+          "round": "RR",
+          "group": "D",
+          "time": "16:40",
+          "home": "RC Sobota 3x3",
+          "hs": 18,
+          "hw": true,
+          "away": "Fullhaus",
+          "as": 15,
+          "aw": false
+        },
+        {
+          "name": "Pool B game 3",
+          "round": "RR",
+          "group": "B",
+          "time": "17:00",
+          "home": "SLO U23",
+          "hs": 22,
+          "hw": true,
+          "away": "Klančar Žerjavi",
+          "as": 18,
+          "aw": false
+        },
+        {
+          "name": "Pool A game 3",
+          "round": "RR",
+          "group": "A",
+          "time": "17:00",
+          "home": "AŽ masažni studio",
+          "hs": 20,
+          "hw": true,
+          "away": "Zphone",
+          "as": 13,
+          "aw": false
+        },
+        {
+          "name": "Pool C game 3",
+          "round": "RR",
+          "group": "C",
+          "time": "17:00",
+          "home": "Rehab studio 3x3",
+          "hs": 21,
+          "hw": true,
+          "away": "Nomago",
+          "as": 15,
+          "aw": false
+        },
+        {
+          "name": "Quarter-Final game 1",
+          "round": "L8",
+          "group": "",
+          "time": "17:40",
+          "home": "AŽ masažni studio",
+          "hs": 21,
+          "hw": true,
+          "away": "Rehab studio 3x3",
+          "as": 17,
+          "aw": false
+        },
+        {
+          "name": "Quarter-Final game 2",
+          "round": "L8",
+          "group": "",
+          "time": "17:40",
+          "home": "RC Sobota 3x3",
+          "hs": 19,
+          "hw": false,
+          "away": "dLuft Lj - Center",
+          "as": 20,
+          "aw": true
+        },
+        {
+          "name": "Quarter-Final game 3",
+          "round": "L8",
+          "group": "",
+          "time": "18:00",
+          "home": "SLO U23",
+          "hs": 21,
+          "hw": true,
+          "away": "Quadass",
+          "as": 13,
+          "aw": false
+        },
+        {
+          "name": "Quarter-Final game 4",
+          "round": "L8",
+          "group": "",
+          "time": "18:00",
+          "home": "Optika Sever",
+          "hs": 21,
+          "hw": true,
+          "away": "Zphone",
+          "as": 10,
+          "aw": false
+        },
+        {
+          "name": "Semi-Final game 1",
+          "round": "SF",
+          "group": "",
+          "time": "18:40",
+          "home": "AŽ masažni studio",
+          "hs": 21,
+          "hw": true,
+          "away": "dLuft Lj - Center",
+          "as": 16,
+          "aw": false
+        },
+        {
+          "name": "Semi-Final game 2",
+          "round": "SF",
+          "group": "",
+          "time": "18:40",
+          "home": "SLO U23",
+          "hs": 20,
+          "hw": true,
+          "away": "Optika Sever",
+          "as": 13,
+          "aw": false
+        },
+        {
+          "name": "Final",
+          "round": "F",
+          "group": "",
+          "time": "19:40",
+          "home": "AŽ masažni studio",
+          "hs": 21,
+          "hw": true,
+          "away": "SLO U23",
+          "as": 13,
+          "aw": false
         }
       ]
     }
