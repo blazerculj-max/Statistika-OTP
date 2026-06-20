@@ -2955,9 +2955,9 @@ async function tryFastPregled(lg){
     _leaguePlayers=null; _tmAgg={}; _eloRatings=null; _bEloRatings=null;
     // Prikaži Pregled takoj
     _fastPregledDone=true;
-    if(document.getElementById('tab-pregled')?.classList.contains('active')||!document.querySelector('.tab.active')){
-      renderPregled();
-    }
+    // aktiviraj pregled tab IN izriši (ne le če je slučajno že aktiven)
+    window._firstTabShown=true;
+    try{ showTabDirect('pregled'); }catch(e){ renderPregled(); }
     // skrij loading overlay (Pregled je viden; ostalo se dograjuje v ozadju)
     const lo=document.getElementById('loading-overlay');
     if(lo)lo.style.display='none';
