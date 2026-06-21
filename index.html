@@ -2955,9 +2955,13 @@ async function tryFastPregled(lg){
     _leaguePlayers=null; _tmAgg={}; _eloRatings=null; _bEloRatings=null;
     // Prikaži Pregled takoj
     _fastPregledDone=true;
-    // aktiviraj pregled tab IN izriši (ne le če je slučajno že aktiven)
-    window._firstTabShown=true;
-    try{ showTabDirect('pregled'); }catch(e){ renderPregled(); }
+    // Pregled je privzeti vstopni tab — aktiviraj ga, če uporabnik še ni nikamor kliknil
+    if(!window._firstTabShown){
+      window._firstTabShown=true;
+      try{ showTabDirect('pregled'); }catch(e){ renderPregled(); }
+    } else if(document.getElementById('tab-pregled')?.classList.contains('active')){
+      renderPregled();
+    }
     // skrij loading overlay (Pregled je viden; ostalo se dograjuje v ozadju)
     const lo=document.getElementById('loading-overlay');
     if(lo)lo.style.display='none';
@@ -3509,6 +3513,9 @@ function initUI() {
   if(!window._firstTabShown){
     window._firstTabShown=true;
     try{showTabDirect('pregled');}catch(e){}
+  } else if(document.getElementById('tab-pregled')?.classList.contains('active')){
+    // polni podatki so tu → osveži Pregled, da se dopolnijo kartice (MVP slika ipd.)
+    try{renderPregled();}catch(e){}
   }
 
   // Populate H2H selects — teams already declared above
