@@ -911,6 +911,9 @@ html{scroll-behavior:smooth}
 #analytics-dropdown .nb{color:var(--text) !important;border-bottom:1px solid var(--border) !important}
 #analytics-dropdown .nb:last-child{border-bottom:none !important}
 #analytics-dropdown .nb:hover{background:var(--card2) !important;color:var(--acc) !important}
+.adg-title{font-family:var(--fm);font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);padding:10px 14px 4px;margin-top:2px}
+.adg-title:first-child{margin-top:0}
+.adg-item{width:100%;text-align:left;padding:9px 14px;border-radius:6px;font-size:.82rem;display:block}
 
 /* ═══ SCROLL REVEAL ═══ */
 .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s cubic-bezier(.2,.8,.2,1),transform .6s cubic-bezier(.2,.8,.2,1)}
@@ -1800,11 +1803,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     <button class="nb" onclick="showTab('lestvica')">Lestvica</button>
     <button class="nb" onclick="showTab('tekme')">Tekme</button>
     <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
-    <button class="nb" onclick="showTab('rekordi')">🏅 Rekordi</button>
-    <button class="nb" onclick="showTab('compare')">Primerjava</button>
     <button class="nb" onclick="showTab('mvp')">MVP</button>
-    <button class="nb" onclick="showTab('race')">Sezona</button>
-    <button class="nb" onclick="showTab('social')">📸 Social</button>
     <button class="nb" id="mladi-nav-btn" onclick="showTab('mladi')" style="color:var(--teal2)">🌱 Mladi</button>
     <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
         style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
@@ -12693,22 +12692,29 @@ function closeMlModal(){
 </div>
 
 <div id="analytics-dropdown"
-  style="display:none;position:fixed;min-width:200px;
+  style="display:none;position:fixed;min-width:220px;max-height:80vh;overflow-y:auto;
     background:var(--card);
     border:1px solid var(--border2);
     border-radius:10px;padding:6px;
     z-index:9999;box-shadow:0 20px 48px rgba(0,0,0,.5)">
-  <button class="nb" onclick="showTab('liga');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Liga</button>
-  <button class="nb" onclick="showTab('teamstats');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Ekipna statistika</button>
-  <button class="nb" onclick="showTab('nerd');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Nerd stats</button>
-  <button class="nb" onclick="showTab('sodniki');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Sodniki</button>
-  <button class="nb" onclick="showTab('starost');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">Starost</button>
-  <button class="nb" onclick="showTab('h2h');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">⚔️ H2H</button>
-  <button class="nb" onclick="showTab('power');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">⚡ Power Ranking</button>
-  <button class="nb" onclick="showTab('napovedi');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">🔮 Napovedi</button>
-  <button class="nb" onclick="showTab('belo');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block;border-bottom:1px solid rgba(255,255,255,.06)">★ bElo</button>
-  <button class="nb" onclick="showTab('seznum');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block">📅 Sezona v številkah</button>
-  <button class="nb" onclick="showTab('obisk');closeAnalyticsMenu()" style="width:100%;text-align:left;padding:10px 14px;border-radius:6px;font-size:.82rem;display:block">Obisk</button>
+  <div class="adg-title">Statistika</div>
+  <button class="nb adg-item" onclick="showTab('rekordi');closeAnalyticsMenu()">🏅 Rekordi</button>
+  <button class="nb adg-item" onclick="showTab('compare');closeAnalyticsMenu()">Primerjava igralcev</button>
+  <button class="nb adg-item" onclick="showTab('race');closeAnalyticsMenu()">Sezona (lestvica MVP)</button>
+  <button class="nb adg-item" onclick="showTab('teamstats');closeAnalyticsMenu()">Ekipna statistika</button>
+  <button class="nb adg-item" onclick="showTab('nerd');closeAnalyticsMenu()">Nerd stats</button>
+  <button class="nb adg-item" onclick="showTab('starost');closeAnalyticsMenu()">Starost</button>
+  <div class="adg-title">Napredna analitika</div>
+  <button class="nb adg-item" onclick="showTab('power');closeAnalyticsMenu()">⚡ Power Ranking</button>
+  <button class="nb adg-item" onclick="showTab('napovedi');closeAnalyticsMenu()">🔮 Napovedi</button>
+  <button class="nb adg-item" onclick="showTab('belo');closeAnalyticsMenu()">★ bElo</button>
+  <button class="nb adg-item" onclick="showTab('h2h');closeAnalyticsMenu()">⚔️ H2H</button>
+  <button class="nb adg-item" onclick="showTab('seznum');closeAnalyticsMenu()">📅 Sezona v številkah</button>
+  <div class="adg-title">Drugo</div>
+  <button class="nb adg-item" onclick="showTab('liga');closeAnalyticsMenu()">Liga</button>
+  <button class="nb adg-item" onclick="showTab('sodniki');closeAnalyticsMenu()">Sodniki</button>
+  <button class="nb adg-item" onclick="showTab('social');closeAnalyticsMenu()">📸 Social</button>
+  <button class="nb adg-item" onclick="showTab('obisk');closeAnalyticsMenu()">Obisk tekem</button>
 </div>
 
 <div id="share-overlay" onclick="if(event.target===this)closeShare()">
