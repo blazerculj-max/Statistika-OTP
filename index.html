@@ -2636,21 +2636,18 @@ const TEAM_SHORT = {
   'Tera Tolmin':'TOL',
 };
 
-const LIGA3_VZHOD = new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška','Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
-const LIGA3_ZAHOD = new Set(['Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper','Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin']);
-const LIGA2_TEAMS = new Set(['Plama Pur Ilirska Bistrica','Gorica','Portorož','Voga Grosuplje','Ipros Vrhnika','LTH Castings','Celje','Slovan','Postojna','Hidria','Ljubljana','Ježica']);
 
 const COMP_NAMES = {
   // 1. SKL
-  579:'Liga OTP banka', 524:'Liga OTP banka', 478:'Liga OTP banka',
+  608:'Liga OTP banka', 579:'Liga OTP banka', 524:'Liga OTP banka', 478:'Liga OTP banka',
   443:'Liga OTP banka', 410:'Liga OTP banka', 375:'Liga OTP banka',
   // 2. SKL
-  581:'2. SKL', 522:'2. SKL', 480:'2. SKL',
+  609:'2. SKL', 581:'2. SKL', 522:'2. SKL', 480:'2. SKL',
   445:'2. SKL', 412:'2. SKL', 377:'2. SKL',
   // 3. SKL
-  582:'3. SKL', 523:'3. SKL', 481:'3. SKL', 446:'3. SKL',
+  610:'3. SKL', 582:'3. SKL', 523:'3. SKL', 481:'3. SKL', 446:'3. SKL',
   // Pokal SLO
-  584:'Pokal SLO', 527:'Pokal SLO', 484:'Pokal SLO', 449:'Pokal SLO',
+  613:'Pokal SLO', 584:'Pokal SLO', 527:'Pokal SLO', 484:'Pokal SLO', 449:'Pokal SLO',
 };
 
 const SEASON_NAMES = {
@@ -2997,8 +2994,8 @@ function updateHeader() {
   const l = getLg();
   const title = document.getElementById('hdr-title');
   if (title) {
-    if(l.id === 579) title.innerHTML = 'LIGA <span>OTP BANKA</span>';
-    else if(l.id === 581) title.innerHTML = '2. <span>SKL</span>';
+    if(currentLeague === 'liga1') title.innerHTML = 'LIGA <span>OTP BANKA</span>';
+    else if(currentLeague === 'liga2') title.innerHTML = '2. <span>SKL</span>';
     else title.innerHTML = '3. <span>SKL</span>';
   }
   const badge = document.getElementById('league-badge');
@@ -3235,28 +3232,24 @@ async function loadAllData() {
     const lgId = api.id;
     let allItems = [];
 
-    // Za vsako fazo (in njene skupine, npr. 3. SKL Vzhod/Zahod) posebej.
-    const units = [];
-    api.phases.forEach(p => {
-      if(p.groups.length) p.groups.forEach(g => units.push({pid:p.id, gid:g}));
-      else units.push({pid:p.id, gid:null});
-    });
-    if(!units.length) units.push({pid:null, gid:null});  // faz (še) ni
-
+    // Po fazah. POZOR: KZS ignorira &page (vsaka stran vrne isti sveženj) —
+    // delujoč parameter je &offset; &limit sprejme tudi vrednosti nad 200.
+    // Skupine (3. SKL Vzhod/Zahod) beremo iz podatkov tekme, ne iz filtra,
+    // ker je &competitionPhaseGroupId ponekod tiho ignoriran.
+    const LIM = 1000;
+    const units = api.phases.length ? api.phases.map(p=>p.id) : [null];
     for(let i=0; i<units.length; i++){
-      const {pid, gid} = units[i];
-      let page = 1;
-      while(page <= 20){
-        let u = `${API}/matches/?competitionId=${lgId}&seasonId=${_currentSeason}&limit=200`;
+      const pid = units[i];
+      let offset = 0;
+      for(let guard=0; guard<50; guard++){
+        let u = `${API}/matches/?competitionId=${lgId}&seasonId=${_currentSeason}&limit=${LIM}&offset=${offset}`;
         if(pid) u += `&competitionPhaseId=${pid}`;
-        if(gid) u += `&competitionPhaseGroupId=${gid}`;
-        if(page > 1) u += `&page=${page}`;
         const data = await (await fetch(u)).json();
         const items = data.data?.items || [];
         if(!items.length) break;
         allItems = allItems.concat(items);
-        if(items.length < 200) break;
-        page++;
+        if(items.length < LIM) break;
+        offset += LIM;
       }
       setProgress(16 + Math.round((i+1)/units.length*10), `Nalagam tekme... faza ${i+1}/${units.length}`);
     }
@@ -11566,15 +11559,19 @@ function renderStandings(){
   });
   const sort=document.getElementById('standings-sort')?.value||'pts';
   const lg=getLg();
-  const VZHOD=new Set(['Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška','Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje']);
   let html='';
-  if(lg.id===582){
+  if(currentLeague==='liga3'){
+    // Vzhod/Zahod vzamemo iz podatkov (competitionPhaseGroupName), ne iz
+    // trdo kodiranega seznama ekip — ta bi bil naslednjo sezono napačen.
     const rdM=allMatches.filter(m=>m.competitions?.[0]?.competitionPhaseName==='Redni del');
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>VZHOD.has(m.firstTeamName)||VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!VZHOD.has(m.firstTeamName)&&!VZHOD.has(m.secondTeamName)),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
+    const grpOf=m=>m.competitions?.[0]?.competitionPhaseGroupName||'';
+    const VZHOD=new Set(rdM.filter(m=>/vzhod/i.test(grpOf(m)))
+                           .flatMap(m=>[m.firstTeamName,m.secondTeamName]));
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
   } else {
     html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
-    if(lg.id===581){
+    if(currentLeague==='liga2'){
       // Liga za obstanek: carry over H2H from redni del + new obstanek games
       const obstMatches = allMatches.filter(m=>m.status==='FINISHED'&&
         m.competitions?.[0]?.competitionPhaseName==='Liga za obstanek');

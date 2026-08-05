@@ -111,19 +111,21 @@ def phases(comp_id):
     return out
 
 
-def fetch_matches(comp_id, season_id, phase_id=None, group_id=None, limit=200):
-    out, page = [], 1
-    while page <= 20:
-        u = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={season_id}&limit={limit}"
+# POZOR: KZS API ignorira &page (vsaka stran vrne isti sveženj) — delujoč
+# parameter je &offset. Prav tako je &competitionPhaseGroupId pri večjih
+# mladinskih tekmovanjih tiho ignoriran, zato pobiramo po FAZAH.
+def fetch_matches(comp_id, season_id, phase_id=None, limit=1000):
+    out, offset = [], 0
+    for _ in range(50):
+        u = (f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={season_id}"
+             f"&limit={limit}&offset={offset}")
         if phase_id: u += f"&competitionPhaseId={phase_id}"
-        if group_id: u += f"&competitionPhaseGroupId={group_id}"
-        if page > 1: u += f"&page={page}"
         d = fetch_json(u)
         items = (d or {}).get('data', {}).get('items', [])
         if not items: break
         out.extend(items)
         if len(items) < limit: break
-        page += 1
+        offset += limit
         time.sleep(0.1)
     return out
 
@@ -253,10 +255,8 @@ def process_rank(comps, age, rank_key, season_id):
 
     reg_matches, fin_matches = [], []
     for p in ph:
-        units = [(p['id'], g) for g in p['groups']] or [(p['id'], None)]
-        for pid, gid in units:
-            ms = fetch_matches(c['id'], season_id, pid, gid)
-            (fin_matches if p['finals'] else reg_matches).extend(ms)
+        ms = fetch_matches(c['id'], season_id, p['id'])
+        (fin_matches if p['finals'] else reg_matches).extend(ms)
 
     def dedup(ms):
         seen = set()

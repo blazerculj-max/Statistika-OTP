@@ -123,39 +123,37 @@ def resolve_season():
 
     raise SystemExit("Ne najdem sezone z objavljenim koledarjem. Podaj ročno: --season N")
 
-PAGE_LIMIT = 200   # tekem na stran; večja stran = manj klicev
+# POZOR: KZS API IGNORIRA parameter &page — vsaka "stran" vrne isti prvi sveženj.
+# Delujoč način strani je &offset (in &limit sprejme tudi vrednosti nad 200).
+# Prav tako je &competitionPhaseGroupId pri nekaterih tekmovanjih tiho ignoriran,
+# zato pobiramo po FAZAH, skupino pa preberemo iz podatkov same tekme.
+PAGE_LIMIT = 1000
 
-def fetch_phase(comp_id, phase_id=None, group_id=None, limit=PAGE_LIMIT, max_pages=99):
+def fetch_phase(comp_id, phase_id=None, limit=PAGE_LIMIT, max_pages=50):
     all_items = []
-    page = 1
-    while page <= max_pages:
-        url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
+    offset = 0
+    for _ in range(max_pages):
+        url = (f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
+               f"&limit={limit}&offset={offset}")
         if phase_id: url += f"&competitionPhaseId={phase_id}"
-        if group_id: url += f"&competitionPhaseGroupId={group_id}"
-        url += f"&limit={limit}"
-        if page > 1:  url += f"&page={page}"
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items: break
         all_items.extend(items)
         if len(items) < limit: break
-        page += 1
+        offset += limit
         time.sleep(0.1)
     return all_items
 
 def fetch_all_matches(key, lg):
     """
-    Pobere vse tekme lige: za vsako odkrito fazo (in njene skupine, npr. 3. SKL
-    Vzhod/Zahod) posebej, nato odstrani dvojnike in tekme drugih tekmovanj.
-    Filter po competitionId nadomešča nekdanje sezonske sezname ekip.
+    Pobere vse tekme lige: za vsako odkrito fazo posebej, nato odstrani dvojnike
+    in tekme drugih tekmovanj. Filter po competitionId nadomešča nekdanje
+    sezonske sezname ekip.
     """
     all_items = []
     for ph in lg['phases']:
-        if ph['groups']:
-            for gid in ph['groups']:
-                all_items.extend(fetch_phase(lg['id'], ph['id'], gid))
-        else:
-            all_items.extend(fetch_phase(lg['id'], ph['id']))
+        all_items.extend(fetch_phase(lg['id'], ph['id']))
     if not lg['phases']:   # faz (še) ni — poberi celo tekmovanje naenkrat
         all_items = fetch_phase(lg['id'])
 
