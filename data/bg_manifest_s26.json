@@ -1,0 +1,27 @@
+{
+  "generated": "2026-06-12T13:52:37.111Z",
+  "source": "BFB",
+  "season": "2025-26",
+  "ages": {
+    "u19": {
+      "label": "Fantje U19 (BFB)",
+      "file": "bg_u19_s26.json",
+      "players": 130,
+      "kind": "sezona 2025/26"
+    },
+    "u16": {
+      "label": "Fantje U16 (BFB)",
+      "file": "bg_u16_s26.json",
+      "players": 156,
+      "kind": "sezona 2025/26"
+    },
+    "u15": {
+      "label": "Fantje U15 (BFB)",
+      "file": "bg_u15_s26.json",
+      "players": 96,
+      "kind": "sezona 2025/26"
+    }
+  },
+  "archivedFrom": "bg_manifest.json",
+  "seasonId": 26
+}

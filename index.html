@@ -2190,10 +2190,13 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 const API = 'https://api.kzs.si/api/v1/public';
 const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
 const GITHUB_MAX_AGE = 6 * 3600 * 1000;
-const SEASON_ID = 26; // trenutna (privzeta) sezona
+// Privzeta trenutna sezona. Prava vrednost pride iz seasons.json ("current"),
+// ki ga vzdržuje fetcher — ob novi sezoni ni treba nič ročno spreminjati.
+let SEASON_ID = 26;
 let _currentSeason = SEASON_ID; // izbrana sezona v aplikaciji (lahko arhivska)
-let _availableSeasons = null; // napolni se iz seasons.json
-// Naloži manifest sezon (katere arhivske sezone obstajajo)
+let _seasonSwitched = false;    // je uporabnik ročno izbral sezono?
+let _availableSeasons = null;   // napolni se iz seasons.json
+// Naloži manifest sezon (katere arhivske sezone obstajajo + katera je trenutna)
 async function loadSeasonsManifest(){
   if(_availableSeasons)return _availableSeasons;
   try{
@@ -2201,6 +2204,11 @@ async function loadSeasonsManifest(){
     if(resp.ok){
       const data=await resp.json();
       _availableSeasons=data.seasons||{};
+      const cur=parseInt(data.current);
+      if(Number.isFinite(cur)&&cur!==SEASON_ID){
+        SEASON_ID=cur;
+        if(!_seasonSwitched)_currentSeason=cur; // uporabnik še ni izbral arhiva
+      }
     }
   }catch(e){_availableSeasons={};}
   return _availableSeasons||{};
@@ -2212,12 +2220,63 @@ function seasonCacheKey(){
   return _currentSeason===SEASON_ID ? base : base+'_s'+_currentSeason;
 }
 
+// URL do katerekoli podatkovne datoteke za dano sezono.
+// Trenutna sezona → živa datoteka (npr. liga1_pregled.json),
+// arhivska        → ista datoteka s pripono _s{ID} (liga1_pregled_s26.json).
+// Arhiv ustvari scripts/archive_season.py po isti konvenciji.
+function seasonFileUrl(base, seasonId){
+  const sid = (seasonId===undefined||seasonId===null) ? _currentSeason : seasonId;
+  return GITHUB_RAW+'/'+base+(sid===SEASON_ID ? '' : '_s'+sid)+'.json';
+}
+
 // URL do stats datoteke za dano ligo + sezono
 function seasonStatsUrl(leagueKey, seasonId){
-  if(seasonId===SEASON_ID || !seasonId){
-    return GITHUB_RAW+'/'+leagueKey+'_stats.json'; // trenutna
-  }
-  return GITHUB_RAW+'/'+leagueKey+'_stats_s'+seasonId+'.json'; // arhiv
+  return seasonFileUrl(leagueKey+'_stats', seasonId);
+}
+
+// Ime sezone za prikaz ("2025/26"). Brez argumenta = trenutno izbrana sezona.
+function seasonLabel(seasonId){
+  const sid = (seasonId===undefined||seasonId===null) ? _currentSeason : seasonId;
+  return (typeof SEASON_NAMES!=='undefined' && SEASON_NAMES[sid]) || ('Sezona '+sid);
+}
+
+// Osveži napise sezone v naslovu strani in v junaku (po nalaganju seasons.json).
+function refreshSeasonLabels(){
+  const lbl = seasonLabel();
+  try{ document.title = document.title.replace(/\d{4}\/\d{2}/, lbl); }catch(e){}
+  const eb = document.querySelector('.hero-eyebrow');
+  if(eb) eb.textContent = 'Sezona ' + lbl;
+}
+
+// ─── Odkrivanje competitionId + faz iz KZS API (za rezervno pot brez GitHuba) ───
+// Tekmovanja poiščemo po imenu + spolu + rangu, ker se ID vsako sezono spremeni.
+// Faze (vključno s končnico, ki jo KZS doda med sezono) beremo iz /competitions/{id}.
+const LEAGUE_API_SPEC = {
+  liga1: {name:'Liga OTP banka', gender:'MALE', rank:'FIRST'},
+  liga2: {name:'2. SKL',         gender:'MALE', rank:'SECOND'},
+  liga3: {name:'3. SKL',         gender:'MALE', rank:'THIRD'},
+};
+const _leagueApiCache = {};
+async function resolveLeagueApi(leagueKey, seasonId){
+  const sid = (seasonId===undefined||seasonId===null) ? _currentSeason : seasonId;
+  const ck = leagueKey+'_'+sid;
+  if(_leagueApiCache[ck]) return _leagueApiCache[ck];
+  const spec = LEAGUE_API_SPEC[leagueKey];
+  if(!spec) return null;
+  try{
+    const cs = await (await fetch(`${API}/competitions/?seasonId=${sid}`)).json();
+    const c = (cs.data?.items||[]).find(x =>
+      x.name===spec.name && x.gender===spec.gender && x.rank===spec.rank);
+    if(!c) return null;
+    const det = await (await fetch(`${API}/competitions/${c.id}`)).json();
+    const phases = (det.data?.phases||[]).map(p => ({
+      id: p.id, name: p.name||'',
+      groups: (p.groups||[]).map(g=>g.id).filter(Boolean)
+    }));
+    const out = {id: c.id, name: c.name, phases};
+    _leagueApiCache[ck] = out;
+    return out;
+  }catch(e){ return null; }
 }
 
 // ═══════════════════════════════════════════════════
@@ -2469,46 +2528,36 @@ const DRZAVC_3X3 = {
   ]
 };
 
+// Statične lastnosti lig. competitionId in faze se NE navajajo tukaj —
+// odkrije jih resolveLeagueApi() iz KZS API za izbrano sezono, zato ob novi
+// sezoni tu ni ničesar za posodabljati. 'teams' je le rezerva za prazen zaslon,
+// preden se naložijo podatki (initUI ekipe sicer izpelje iz tekem).
 const LEAGUES = {
   'liga1': {
-    id: 579,
     name: 'Liga OTP banka',
     short: '1. SKL',
     color: '#f97316',
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
-    pbpUrl:   GITHUB_RAW + '/liga1_pbp.json',
     cacheStats: 'liga1_stats_v3',
     cachePbp:   'liga1_pbp_v3',
-    phaseIds: null,
     teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj'],
   },
   'liga2': {
-    id: 581,
     name: '2. SKL',
     short: '2. SKL',
     color: '#60a5fa',
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
-    pbpUrl:   GITHUB_RAW + '/liga2_pbp.json',
     cacheStats: 'liga2_stats_v3',
     cachePbp:   'liga2_pbp_v3',
-    // Phase IDs so točni za 2. SKL — polfinale(5880) ima 2 strani
-    phaseIds: [5813, 5873, 5874, 5880, 5885], // 5885 = Finale
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
   'liga3': {
-    id: 582,
     name: '3. SKL',
     short: '3. SKL',
     color: '#a855f7',
     statsUrl: GITHUB_RAW + '/liga3_stats.json',
-    pbpUrl:   GITHUB_RAW + '/liga3_pbp.json',
     cacheStats: 'liga3_stats_v1',
     cachePbp:   'liga3_pbp_v1',
-    // Redni del — brez group filtra (paginacija ne dela z group filtrom)
-    // Client-side delimo v Vzhod/Zahod po znanih ekipah
-    // Playoff 3. SKL še ni v API-ju
-    phaseIds: [5814, 5868, 5869, 5878, 5884],
-    groups: {}, // brez group filtra — client-side split
     teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
             'Janče ECP Tactical','Kolpa','Konjice','Koper','Kovinarstvo Bučar Miklavž',
@@ -2909,10 +2958,10 @@ function selectLeague(lg) {
 let _fastPregledDone=false;
 async function tryFastPregled(lg){
   if(_fastPregledDone)return;
-  if(_currentSeason!==SEASON_ID)return; // samo aktualna sezona
   if(P.length)return;                   // podatki že tu (cache) — ni potrebe
   try{
-    const r=await fetch(GITHUB_RAW+'/'+lg+'_pregled.json',{cache:'no-cache'});
+    // Arhivske sezone imajo svoj pregled (…_pregled_s26.json); če ga ni, tiho odnehamo.
+    const r=await fetch(seasonFileUrl(lg+'_pregled'),{cache:'no-cache'});
     if(!r.ok)return;
     const d=await r.json();
     if(!d.players||!d.players.length)return;
@@ -2966,6 +3015,7 @@ function updateHeader() {
 // ═══ SEZONE — arhiv + preklop ═══
 async function initSeasonSelector(){
   const seasons=await loadSeasonsManifest();
+  refreshSeasonLabels();   // manifest lahko premakne trenutno sezono naprej
   const ids=Object.keys(seasons).map(Number);
   // Vedno vključi trenutno sezono
   if(!ids.includes(SEASON_ID))ids.push(SEASON_ID);
@@ -3028,14 +3078,26 @@ function aggregatePlayerInSeason(seasonData, playerName){
 async function switchSeason(seasonId){
   if(seasonId===_currentSeason)return;
   _currentSeason=seasonId;
+  _seasonSwitched=true;
   // Reset stanje (kot pri switchLeague)
   P=[];allMatches=[];matchStatsCache={};pbpData={};
   pbpLoaded=false;nerdStats=null;_leaguePlayers=null;_tmAgg={};
   _eloRatings=null;_bEloRatings=null;playerGameLog={};_leagueFullStats=null;
   sortCol=-1;
+  // Moduli z lastnim predpomnilnikom — zavrzi, da se naložijo za izbrano sezono.
+  // POZOR: _*_AGES praznimo NA MESTU — BOX_CFG hrani referenco nanje (A:_HR_AGES),
+  // zato bi jih zamenjava novega objekta pustila kazati na stare podatke.
+  const _clear=o=>{Object.keys(o).forEach(k=>delete o[k]);};
+  _fastPregledDone=false;
+  _ML_MANIFEST=null;_clear(_ML_AGES);
+  _HR_MANIFEST=null;_clear(_HR_AGES);
+  _SRB_MANIFEST=null;_clear(_SRB_AGES);
+  _BG_MANIFEST=null;_clear(_BG_AGES);
+  _t3Loaded=false;
   document.getElementById('loading-overlay').style.display='flex';
   document.getElementById('load-bar').style.width='0%';
-  const sname=SEASON_NAMES[seasonId]||('Sezona '+seasonId);
+  const sname=seasonLabel(seasonId);
+  refreshSeasonLabels();
   document.getElementById('load-detail').textContent='Nalagam sezono '+sname+'...';
   await loadAllData();
   showTabDirect('ekipe');
@@ -3166,61 +3228,45 @@ async function loadAllData() {
     setProgress(15, 'Nalagam iz API...');
     // Fetch matches
     setProgress(16, 'Nalagam tekme...');
-    const phaseIds = getLg().phaseIds;
-    const lgId = getLg().id;
-    const isLiga3 = lgId === 582;
-    const isLiga2 = lgId === 581;
+    // competitionId in faze odkrijemo iz API-ja za IZBRANO sezono — brez trdo
+    // kodiranih ID-jev, ki bi jih bilo treba vsako sezono ročno menjati.
+    const api = await resolveLeagueApi(currentLeague, _currentSeason);
+    if(!api) throw new Error('Ne najdem tekmovanja '+getLg().name+' za sezono '+_currentSeason);
+    const lgId = api.id;
     let allItems = [];
 
-    if(phaseIds) {
-      // Liga1 + Liga2: use phase filter (works correctly)
-      // Phase 5880 (Polfinale 2.SKL) needs page 2 as well
-      for(let i=0; i<phaseIds.length; i++) {
-        const pid = phaseIds[i];
-        // Fetch page 1
-        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}`);
-        const data = await res.json();
-        const items1 = data.data?.items || [];
-        allItems = allItems.concat(items1);
-        // If 150 items, fetch page 2 (polfinale has overflow)
-        if(items1.length >= 150) {
-          const res2 = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&competitionPhaseId=${pid}&page=2`);
-          const data2 = await res2.json();
-          allItems = allItems.concat(data2.data?.items || []);
-        }
-        setProgress(16 + Math.round((i+1)/phaseIds.length*10), `Nalagam tekme... faza ${i+1}/${phaseIds.length}`);
-      }
-    } else {
-      // Liga2 + Liga3: phase filter pokvarjen — fetchamo po straneh
-      const knownTeams = isLiga2 ? LIGA2_TEAMS : new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
+    // Za vsako fazo (in njene skupine, npr. 3. SKL Vzhod/Zahod) posebej.
+    const units = [];
+    api.phases.forEach(p => {
+      if(p.groups.length) p.groups.forEach(g => units.push({pid:p.id, gid:g}));
+      else units.push({pid:p.id, gid:null});
+    });
+    if(!units.length) units.push({pid:null, gid:null});  // faz (še) ni
+
+    for(let i=0; i<units.length; i++){
+      const {pid, gid} = units[i];
       let page = 1;
-      const maxPages = isLiga2 ? 2 : 2; // API returns duplicates on page 3+
-      while(page <= maxPages) {
-        const res = await fetch(`${API}/matches/?competitionId=${lgId}&seasonId=${SEASON_ID}&page=${page}`);
-        const data = await res.json();
+      while(page <= 20){
+        let u = `${API}/matches/?competitionId=${lgId}&seasonId=${_currentSeason}&limit=200`;
+        if(pid) u += `&competitionPhaseId=${pid}`;
+        if(gid) u += `&competitionPhaseGroupId=${gid}`;
+        if(page > 1) u += `&page=${page}`;
+        const data = await (await fetch(u)).json();
         const items = data.data?.items || [];
         if(!items.length) break;
         allItems = allItems.concat(items);
-        setProgress(17 + page*4, `Nalagam tekme... stran ${page} (${allItems.length})`);
-        if(items.length < 150) break;
-        // Stop if no known teams on this page
-        if(!items.some(m => knownTeams.has(m.firstTeamName))) break;
+        if(items.length < 200) break;
         page++;
       }
+      setProgress(16 + Math.round((i+1)/units.length*10), `Nalagam tekme... faza ${i+1}/${units.length}`);
     }
 
-    // Filter by known teams (liga2 + liga3)
-    if(isLiga3) {
-      const liga3Teams = new Set([...LIGA3_VZHOD, ...LIGA3_ZAHOD]);
-      allItems = allItems.filter(m =>
-        liga3Teams.has(m.firstTeamName) && liga3Teams.has(m.secondTeamName)
-      );
-    }
-
-    // Deduplicate by match ID (API returns duplicates on later pages)
+    // Deduplicate by match ID + odstrani tekme drugih tekmovanj.
+    // Filter po competitionId nadomešča nekdanje sezname ekip po ligah.
     const seen = new Set();
-    allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; });
-    allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime));
+    allItems = allItems.filter(m => { if(seen.has(m.id)) return false; seen.add(m.id); return true; })
+                       .filter(m => (m.competitions||[]).some(c => c.competitionId === lgId));
+    allMatches = allItems.sort((a,b) => a.round - b.round || new Date(a.dateTime) - new Date(b.dateTime) || a.id - b.id);
     console.log(`${getLg().name}: ${allMatches.length} tekem naloženih`);
 
     const finished = allMatches.filter(m => m.status === 'FINISHED');
@@ -3416,12 +3462,19 @@ function subscribeToLiveMatches() {
 function initUI() {
   buildTeamLogoMap();
   buildPlayerPhotoMap();
-  // Use league team list if available, otherwise derive from data
-  const lgTeams = getLg().teams;
-  // Vključi VSE ekipe iz LEAGUES.teams (tudi Cedevita ki nima rednega dela)
-  const teams = lgTeams && lgTeams.length
-    ? [...lgTeams].sort()
-    : [...new Set(P.map(p => p[F.team]))].sort();
+  // Ekipe izpeljemo iz DEJANSKIH tekem (in igralcev), ne iz trdo kodiranega
+  // seznama — tako so pravilne tudi po prestopih/izpadu v novi sezoni.
+  // Iz allMatches zajamemo tudi ekipe, ki nimajo rednega dela (npr. Cedevita).
+  const fromData = new Set();
+  (allMatches || []).forEach(m => {
+    if (m.firstTeamName)  fromData.add(normalizeTeamName(m.firstTeamName));
+    if (m.secondTeamName) fromData.add(normalizeTeamName(m.secondTeamName));
+  });
+  P.forEach(p => { if (p[F.team]) fromData.add(normalizeTeamName(p[F.team])); });
+  const lgTeams = getLg().teams;   // rezerva, če podatkov (še) ni
+  const teams = fromData.size
+    ? [...fromData].sort()
+    : [...(lgTeams || [])].sort();
 
   // Team select
   const ts = document.getElementById('team-sel');
@@ -3673,7 +3726,7 @@ function showTab(t){
   }
   if(t==='liga'||t==='ekipe'){
     // Show/hide phase filters based on league
-    const hasObstanek = getLg().id === 581; // samo 2. SKL ima ligo za obstanek
+    const hasObstanek = currentLeague === 'liga2'; // samo 2. SKL ima ligo za obstanek
     const obstBtn = document.getElementById('lph-obstanek');
     if(obstBtn) obstBtn.style.display = hasObstanek ? '' : 'none';
     const phaseFilterEl = document.getElementById('phase-filter');
@@ -3879,7 +3932,7 @@ function renderMatches(){
   const html=pageGroups.map(grp=>{
     const cards=grp.matches.sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))
       .map(m=>buildLiveCard(m,currentLeague)).join('');
-    const title=getLg().id===582?`KROG ${grp.round} — ${grp.phase}`:`KROG ${grp.round}`;
+    const title=currentLeague==='liga3'?`KROG ${grp.round} — ${grp.phase}`:`KROG ${grp.round}`;
     return `<div class="round-group"><div class="round-title">${title}</div><div class="matches-grid">${cards}</div></div>`;
   }).join('');
 
@@ -4603,7 +4656,7 @@ async function draw2KCard(d){
   x.fillStyle='rgba(255,255,255,.35)';
   x.textAlign='left';
   x.font='600 24px "Space Mono", monospace';
-  x.fillText('SLOVENSKA KOŠARKA · 2025/26 · bElo OVERALL',56,H-44);
+  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · bElo OVERALL',56,H-44);
   x.textAlign='right';
   x.fillStyle=col;
   x.fillText('by Blaž Erčulj',W-56,H-44);
@@ -4664,7 +4717,7 @@ async function drawShareCard(d){
   x.fillStyle='rgba(255,255,255,.55)';
   x.font='600 26px "Space Mono", monospace';
   x.textAlign='left';
-  x.fillText('SLOVENSKA KOŠARKA · 2025/26', 70, 100);
+  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel(), 70, 100);
 
   // Player photo — big circular, top-right. Logo badge sits on it.
   const photoSize=260, photoCX=W-photoSize/2-80, photoCY=photoSize/2+90;
@@ -4968,7 +5021,7 @@ async function renderRoundCard(){
   x.textAlign='left';
   x.fillStyle=acc;
   x.font='700 26px "Space Mono", monospace';
-  x.fillText(subtitle+' · 2025/26',M,95);
+  x.fillText(subtitle+' · '+seasonLabel(),M,95);
   x.fillStyle='#fff';
   x.font='800 '+(isPlayoff&&title.length>10?78:96)+'px "Space Grotesk", sans-serif';
   x.fillText(title,M-2,185);
@@ -5165,7 +5218,7 @@ function openSeasonCard(){
   let LPa=allLP.filter(p=>p[F.T]>=minGames);
   if(LPa.length<3)LPa=allLP.filter(p=>p[F.T]>=Math.max(Math.ceil(maxGames*0.5),5));
   if(!LPa.length){toast('Premalo podatkov','⏳');return;}
-  const isLiga3=getLg().id===582;
+  const isLiga3=currentLeague==='liga3';
   const score=p=>{const t=Math.max(p[F.T],1);return isLiga3?(p[F.toc]/t+p[F.fg3m]/t*1.2):(p[F.toc]/t+(p[F.nap]+p[F.obr])/t*0.7+p[F.pod]/t*0.8+p[F.sto]/t*1.5+p[F.blk]/t*1.5-p[F.izg]/t*0.8+p[F.efe]/t*0.3);};
   const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
   const pIdx=P.findIndex(x=>x[F.pid]===best[F.pid]);
@@ -5677,7 +5730,7 @@ function buildTicker(){
   if(!LPa.length){bar.style.display='none';return;}
   const best=(fn)=>[...LPa].sort((a,b)=>fn(b)-fn(a))[0];
   const items=[];
-  const isLiga3 = getLg().id===582; // 3. SKL: only reliable points & threes
+  const isLiga3 = currentLeague==='liga3'; // 3. SKL: only reliable points & threes
 
   // Points leader — reliable in all leagues
   const ptsL=best(p=>p[F.toc]/p[F.T]);
@@ -5748,7 +5801,7 @@ function renderSpotlight(){
   if(LPa.length<3)LPa=allLP.filter(p=>p[F.T]>=Math.max(Math.ceil(maxGames*0.5),5));
   if(!LPa.length){el.innerHTML='';return;}
   // MVP-style score to pick player of the season
-  const isLiga3=getLg().id===582;
+  const isLiga3=currentLeague==='liga3';
   const score=p=>{
     const t=Math.max(p[F.T],1);
     if(isLiga3){
@@ -7751,11 +7804,12 @@ function loadPBPData(){
   const el=document.getElementById('nerd-status');
   if(el)el.textContent='⏳ Nalagam PBP...';
   const lg=getLg();
-  const cacheKey=lg.cachePbp||lg.key+'_pbp_v3';
+  const baseKey=lg.cachePbp||currentLeague+'_pbp_v3';
+  const cacheKey=_currentSeason===SEASON_ID?baseKey:baseKey+'_s'+_currentSeason;
   let cached=null;
   try{const r=localStorage.getItem(cacheKey);if(r){const p=JSON.parse(r);if(Date.now()-p.ts<TTL_PBP)cached=p.data;}}catch(e){}
   if(cached){processPbp(cached);if(el)el.textContent='🐙 PBP iz cache';renderNerd();return;}
-  fetch(lg.pbpUrl+'?t='+Date.now())
+  fetch(seasonFileUrl(currentLeague+'_pbp')+'?t='+Date.now())
     .then(r=>r.json())
     .then(d=>{
       try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
@@ -8094,7 +8148,7 @@ function computeElo(){
   if(_eloRatings)return _eloRatings;
   const K=32,ratings={},history={};
   // Cedevita Olimpija preset samo za 1. SKL
-  const PRESET = getLg().id === 579 ? {'Cedevita Olimpija':1934} : {};
+  const PRESET = currentLeague === 'liga1' ? {'Cedevita Olimpija':1934} : {};
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&
     m.competitions?.[0]?.competitionPhaseName==='Redni del')
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
@@ -8317,7 +8371,7 @@ function renderPregled(){
   window._pregledRetry=0;
 
   const lgName=getLg().short||'1. SKL';
-  const lgColor=getLg().id===579?'#f97316':getLg().id===581?'#3b82f6':'#a855f7';
+  const lgColor=currentLeague==='liga1'?'#f97316':currentLeague==='liga2'?'#3b82f6':'#a855f7';
 
   // — Vodilni MVP — (getLeaguePlayers = združeni totali tudi pri prestopih)
   const _lp=getLeaguePlayers();
@@ -8564,7 +8618,7 @@ async function show3x3(){
   if(!_t3Loaded){
     _t3Loaded=true;
     try{
-      const r=await fetch(GITHUB_RAW+'/drzavc_3x3.json',{cache:'no-cache'});
+      const r=await fetch(seasonFileUrl('drzavc_3x3'),{cache:'no-cache'});
       if(r.ok){
         const live=await r.json();
         if(live&&live.tournaments&&live.tournaments.length){
@@ -9098,7 +9152,7 @@ function renderSeznum(){
   </div>`;
 
   let html=`<div class="sec-head" style="--sh-c:var(--acc)">📅 Sezona v številkah</div>
-    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:20px">${getLg().name} · 2025/26 — pregled sezone do zdaj.</div>`;
+    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:20px">${getLg().name} · ${seasonLabel()} — pregled sezone do zdaj.</div>`;
 
   // Stat grid
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:28px">';
@@ -9712,7 +9766,7 @@ function drawRaceStandings(){
   });
   standings.sort((a,b)=>a.pos-b.pos);
   const N=standings.length;
-  const clCount=getLg().id===579?7:(N>=10?8:N>=8?6:Math.ceil(N/2));
+  const clCount=currentLeague==='liga1'?7:(N>=10?8:N>=8?6:Math.ceil(N/2));
   const rows=standings.map((s,i)=>{
     const tc=TEAM_COLORS[s.team]||'#888';
     const rdMs=allMatches.filter(m=>m.status==='FINISHED'&&m.round<=currentRound&&
@@ -11376,7 +11430,7 @@ function buildStandingsTable(data, sort, title, color){
   // Playoff/relegation zone thresholds
   // 1. SKL (liga1): top 7 advance to playoff (Cedevita joins as 8th seed for playoff only)
   let clCount, relCount;
-  if(getLg().id===579){ clCount=7; relCount=1; }
+  if(currentLeague==='liga1'){ clCount=7; relCount=1; }
   else { clCount = N>=10 ? 8 : N>=8 ? 6 : Math.ceil(N/2); relCount = N>=12 ? 2 : N>=10 ? 1 : 0; }
   const rows=data.map((t,i)=>{
     const tc=TEAM_COLORS[t.name]||'#888';
@@ -11574,7 +11628,7 @@ function renderStandings(){
 
 function computePlayoffSeries(){
   const playoffPhases=['Osmina finala','Četrtfinale','Polfinale','Finale','Liga za obstanek'];
-  const aggregatePhases=getLg().id===582?new Set(['Osmina finala','Četrtfinale']):new Set();
+  const aggregatePhases=currentLeague==='liga3'?new Set(['Osmina finala','Četrtfinale']):new Set();
   const series={};
   allMatches.forEach(m=>{
     const phase=m.competitions?.[0]?.competitionPhaseName||'';
@@ -11583,7 +11637,7 @@ function computePlayoffSeries(){
     const key=phase+'|'+[a,b].sort().join('|');
     if(!series[key]){
       // 1. SKL Finale is best-of-5 (3 wins); everything else best-of-3 (2 wins)
-      const winsNeeded = (getLg().id===579 && phase==='Finale') ? 3 : 2;
+      const winsNeeded = (currentLeague==='liga1' && phase==='Finale') ? 3 : 2;
       series[key]={phase,t1:a,t2:b,w1:0,w2:0,pts1:0,pts2:0,matches:[],games:[],done:false,live:false,winsNeeded,isAggregate:aggregatePhases.has(phase)};
     }
     const s=series[key];
@@ -11727,7 +11781,7 @@ async function renderMladi(){
   if(!_ML_MANIFEST){
     wrap.innerHTML = `<div class="ml-empty">Nalagam mladinske podatke…</div>`;
     try{
-      const r = await fetch(GITHUB_RAW+'/mladi_manifest.json',{cache:'no-cache'});
+      const r = await fetch(seasonFileUrl('mladi_manifest'),{cache:'no-cache'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       _ML_MANIFEST = await r.json();
     }catch(e){
@@ -11839,7 +11893,7 @@ async function renderMladiBox(country){
   if(!cfg.M){
     wrap.innerHTML = `${mlCountrySeg()}<div class="ml-empty">Nalagam podatke…</div>`;
     try{
-      const r = await fetch(GITHUB_RAW+'/'+cfg.manifest,{cache:'no-cache'});
+      const r = await fetch(seasonFileUrl(cfg.manifest.replace(/\.json$/,'')),{cache:'no-cache'});
       if(!r.ok) throw new Error('HTTP '+r.status);
       cfg.M = await r.json();
     }catch(e){
@@ -12155,7 +12209,7 @@ async function mlRenderShortlist(){
     const cfg = BOX_CFG[it.country];
     if(cfg && !cfg.A[it.age]){
       try{
-        if(!cfg.M){ const r=await fetch(GITHUB_RAW+'/'+cfg.manifest,{cache:'no-cache'}); cfg.M=await r.json(); }
+        if(!cfg.M){ const r=await fetch(seasonFileUrl(cfg.manifest.replace(/\.json$/,'')),{cache:'no-cache'}); cfg.M=await r.json(); }
         const meta=cfg.M.ages[it.age];
         if(meta){ const r=await fetch(GITHUB_RAW+'/'+meta.file,{cache:'no-cache'}); cfg.A[it.age]=await r.json(); }
       }catch(e){}

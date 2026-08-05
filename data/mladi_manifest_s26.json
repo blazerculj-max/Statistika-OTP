@@ -1,0 +1,35 @@
+{
+  "generated": "2026-06-11T18:31:57.340Z",
+  "season": "2025/2026",
+  "ages": {
+    "u18": {
+      "label": "U18",
+      "ranks": [
+        "1.A",
+        "1.B",
+        "2."
+      ],
+      "file": "mladi_u18_s26.json"
+    },
+    "u16": {
+      "label": "U16",
+      "ranks": [
+        "1.A",
+        "1.B",
+        "2."
+      ],
+      "file": "mladi_u16_s26.json"
+    },
+    "u14": {
+      "label": "U14",
+      "ranks": [
+        "1.A",
+        "1.B",
+        "2."
+      ],
+      "file": "mladi_u14_s26.json"
+    }
+  },
+  "archivedFrom": "mladi_manifest.json",
+  "seasonId": 26
+}

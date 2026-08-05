@@ -16,6 +16,12 @@ on:
           - incremental+pbp    # stats + PBP za nove tekme
           - full               # vse od zacetka (pocasen)
           - full+pbp           # vse + PBP (zelo pocasen, 1h+)
+          - archive            # arhiviraj trenutno sezono (brez fetcha)
+      season:
+        description: 'Sezona za arhiviranje (prazno = trenutna iz seasons.json)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: write
@@ -29,6 +35,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      # ── Arhiviranje sezone (rocno, ob koncu sezone) ──
+      # Naredi posnetek VSEH podatkov sezone (lige, pregled, PBP, obisk,
+      # mladinci, HKS/KSS/BFB, 3x3) pod pripono _s{ID}. Fetch se ne izvede.
+      - name: Arhiviraj sezono
+        if: github.event.inputs.mode == 'archive'
+        run: python scripts/archive_season.py ${{ github.event.inputs.season }}
 
       - name: Incremental (stats only)
         if: github.event.inputs.mode == 'incremental' || github.event.inputs.mode == ''
@@ -51,7 +64,7 @@ jobs:
       # Tece vedno; inkrementalno je hitro (samo HEAD za obstojece).
       # Pri 'full' modu uporabi --force za popolno osvezitev slik.
       - name: Prenesi slike (inkrementalno)
-        if: github.event.inputs.mode != 'full' && github.event.inputs.mode != 'full+pbp'
+        if: github.event.inputs.mode != 'full' && github.event.inputs.mode != 'full+pbp' && github.event.inputs.mode != 'archive'
         run: python scripts/download_images.py
         continue-on-error: true    # ce KZS blokira, ne ustavi workflowa
 
@@ -65,5 +78,7 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           git add data/
-          git diff --staged --quiet || git commit -m "Auto: posodobi podatke $(date -u '+%Y-%m-%d %H:%M UTC')"
+          MSG="Auto: posodobi podatke $(date -u '+%Y-%m-%d %H:%M UTC')"
+          [ "${{ github.event.inputs.mode }}" = "archive" ] && MSG="Arhiv sezone $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git diff --staged --quiet || git commit -m "$MSG"
           git push

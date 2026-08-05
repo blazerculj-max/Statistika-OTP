@@ -2,11 +2,17 @@
 """
 KZS Data Fetcher — Incremental, brez PBP (PBP je ločen job).
 
-NOVO: generira tudi data/{key}_pregled.json — majhen JSON (~200-400 KB) z
-že-agregiranimi igralci (totali) + tekmami + game logom. Aplikacija ga
-naloži PRVEGA → Pregled se izriše takoj, veliki _stats.json pa se naloži
-v ozadju. bElo/power/MVP še vedno računa brskalnik (iz teh totalov), zato
-ni podvajanja logike.
+Generira data/{key}_pregled.json — majhen JSON (~200-400 KB) z že-agregiranimi
+igralci (totali) + tekmami + game logom. Aplikacija ga naloži PRVEGA → Pregled
+se izriše takoj, veliki _stats.json pa se naloži v ozadju. bElo/power/MVP še
+vedno računa brskalnik (iz teh totalov), zato ni podvajanja logike.
+
+SEZONA IN ID-ji SE ODKRIJEJO SAMI:
+  - Sezona: najnovejša z objavljenim koledarjem (ali --season N / env SEASON_ID).
+  - competitionId in vse faze (vključno s končnico, ki jo KZS doda med sezono)
+    se preberejo iz /competitions/?seasonId=N in /competitions/{id}.
+  Trdo kodiranih phase_ids in seznamov ekip ni več — ob novi sezoni ni treba
+  ničesar ročno posodabljati.
 """
 
 import json, time, urllib.request, os, sys
@@ -14,36 +20,20 @@ from datetime import datetime, timezone, timedelta
 
 API_BASE  = "https://api.kzs.si/api/v1/public"
 FIBA_BASE = "https://fibalivestats.dcd.shared.geniussports.com/data"
-SEASON_ID = 26
 
+# Katero tekmovanje je katera liga — po imenu + spolu + rangu (stabilno čez sezone).
 LEAGUES = {
-    'liga1': {
-        'id': 579,
-        'name': 'Liga OTP banka',
-        'phase_ids': [5811, 5889, 5890, 5894],  # Redni del, Četrtfinale, Polfinale, Finale
-        'groups': {},
-        'max_pages': 99,
-    },
-    'liga2': {
-        'id': 581,
-        'name': '2. SKL',
-        'phase_ids': [5813, 5873, 5874, 5880, 5885],
-        'groups': {},
-        'max_pages': 99,
-    },
-    'liga3': {
-        'id': 582,
-        'name': '3. SKL',
-        'phase_ids': [5814, 5868, 5869, 5878, 5884, 5892],  # 5892 = Finale
-        'max_pages': 3,
-        'phase_limits': {5814: 200},
-        'known_teams': {'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
-                        'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
-                        'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
-                        'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'},
-        'groups': {},
-    },
+    'liga1': {'name': 'Liga OTP banka', 'gender': 'MALE', 'rank': 'FIRST'},
+    'liga2': {'name': '2. SKL',         'gender': 'MALE', 'rank': 'SECOND'},
+    'liga3': {'name': '3. SKL',         'gender': 'MALE', 'rank': 'THIRD'},
 }
+
+SEASON_LABELS = {22:'2021/22',23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',
+                 27:'2026/27',28:'2027/28',29:'2028/29',30:'2029/30'}
+
+# Koliko najnovejših sezon preverimo, preden obupamo (KZS ima vnaprej
+# ustvarjene prazne sezone, zato jih je treba nekaj preskočiti).
+MAX_SEASON_LOOKBACK = 6
 
 FORCE_FULL  = '--full'  in sys.argv
 FETCH_PBP   = '--pbp'   in sys.argv
@@ -60,90 +50,149 @@ def fetch_json(url, retries=3):
             time.sleep(i + 1)
     return None
 
-def fetch_phase(comp_id, phase_id=None, group_id=None, max_pages=99, known_teams=None, limit=150):
+# ════════════════════════════════════════════════════════════
+# ODKRIVANJE SEZONE IN TEKMOVANJ
+# ════════════════════════════════════════════════════════════
+def _arg_season():
+    if '--season' in sys.argv:
+        i = sys.argv.index('--season')
+        if i + 1 < len(sys.argv):
+            return int(sys.argv[i + 1])
+    if os.environ.get('SEASON_ID'):
+        return int(os.environ['SEASON_ID'])
+    return None
+
+def find_competitions(season_id):
+    """{key: competitionId} — poišče naše lige po imenu + spolu + rangu (1 klic)."""
+    d = fetch_json(f"{API_BASE}/competitions/?seasonId={season_id}")
+    items = (d or {}).get('data', {}).get('items', [])
+    found = {}
+    for key, spec in LEAGUES.items():
+        for c in items:
+            if (c.get('name') == spec['name'] and c.get('gender') == spec['gender']
+                    and c.get('rank') == spec['rank']):
+                found[key] = c['id']
+                break
+    return found
+
+def fetch_phases(comp_id):
+    """[{'id':…, 'name':…, 'groups':[gid,…]}] — vključno s končnico, če že obstaja."""
+    d = fetch_json(f"{API_BASE}/competitions/{comp_id}")
+    out = []
+    for p in (d or {}).get('data', {}).get('phases', []):
+        out.append({'id': p['id'], 'name': p.get('name', ''),
+                    'groups': [g['id'] for g in p.get('groups', []) if g.get('id')]})
+    return out
+
+def resolve_season():
+    """
+    Vrne (season_id, {key: {'id':…, 'name':…, 'phases':[…]}}).
+    Brez --season/SEASON_ID vzame najnovejšo sezono, ki ima že objavljen koledar
+    1. lige — tako se ob začetku nove sezone preklopi sama.
+    """
+    forced = _arg_season()
+    d = fetch_json(f"{API_BASE}/seasons/")
+    items = (d or {}).get('data', {}).get('items', [])
+    # POZOR: ID-ji sezon pri KZS NISO kronološki (npr. id 39 = 1999/2000),
+    # zato razvrščamo po začetni letnici iz imena ("2026/2027" → 2026).
+    # KZS ima tudi vnaprej ustvarjene prazne sezone (2027/28 …), zato gremo po
+    # vrsti navzdol do prve, ki ima tekmovanja IN objavljen koledar.
+    def start_year(s):
+        try:
+            return int(str(s.get('name', ''))[:4])
+        except ValueError:
+            return 0
+    newest = sorted(items, key=start_year, reverse=True)
+    candidates = [forced] if forced else [s['id'] for s in newest[:MAX_SEASON_LOOKBACK]]
+
+    for sid in candidates:
+        ids = find_competitions(sid)
+        if 'liga1' not in ids:
+            if not forced:
+                continue          # prazna/vnaprej ustvarjena sezona
+            raise SystemExit(f"Sezona {sid}: ne najdem tekmovanja '{LEAGUES['liga1']['name']}'")
+        if not forced:
+            # sprejmi le sezono, ki ima že objavljen koledar 1. lige
+            probe = fetch_json(f"{API_BASE}/matches/?competitionId={ids['liga1']}&seasonId={sid}&limit=1")
+            if not (probe or {}).get('data', {}).get('items'):
+                print(f"  (sezona {sid}: koledar še ni objavljen — preverjam starejšo)")
+                continue
+        comps = {key: {'id': cid, 'name': LEAGUES[key]['name'], 'phases': fetch_phases(cid)}
+                 for key, cid in ids.items()}
+        return sid, comps
+
+    raise SystemExit("Ne najdem sezone z objavljenim koledarjem. Podaj ročno: --season N")
+
+PAGE_LIMIT = 200   # tekem na stran; večja stran = manj klicev
+
+def fetch_phase(comp_id, phase_id=None, group_id=None, limit=PAGE_LIMIT, max_pages=99):
     all_items = []
     page = 1
     while page <= max_pages:
         url = f"{API_BASE}/matches/?competitionId={comp_id}&seasonId={SEASON_ID}"
         if phase_id: url += f"&competitionPhaseId={phase_id}"
         if group_id: url += f"&competitionPhaseGroupId={group_id}"
-        if limit != 150: url += f"&limit={limit}"
+        url += f"&limit={limit}"
         if page > 1:  url += f"&page={page}"
         data = fetch_json(url)
         items = data.get('data', {}).get('items', []) if data else []
         if not items: break
-        if known_teams:
-            page_known = [m for m in items
-                         if m['firstTeamName'] in known_teams and m['secondTeamName'] in known_teams]
-            if not page_known and page > 1:
-                print(f"    Stran {page}: ni znanih ekip → ustavljam")
-                break
-            all_items.extend(items)
-        else:
-            all_items.extend(items)
+        all_items.extend(items)
         if len(items) < limit: break
         page += 1
         time.sleep(0.1)
     return all_items
 
 def fetch_all_matches(key, lg):
-    max_p = lg.get('max_pages', 99)
-    known = lg.get('known_teams')
-    phase_limits = lg.get('phase_limits', {})
-    if lg['phase_ids']:
-        all_items = []
-        for pid in lg['phase_ids']:
-            lim = phase_limits.get(pid, 150)
-            gids = lg['groups'].get(pid)
-            if gids:
-                for gid in gids:
-                    all_items.extend(fetch_phase(lg['id'], pid, gid, max_p, limit=lim))
-            else:
-                all_items.extend(fetch_phase(lg['id'], pid, max_pages=max_p, limit=lim))
-        seen = set()
-        matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
-    else:
-        all_items = fetch_phase(lg['id'], max_pages=max_p, known_teams=known)
-        seen = set()
-        matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
+    """
+    Pobere vse tekme lige: za vsako odkrito fazo (in njene skupine, npr. 3. SKL
+    Vzhod/Zahod) posebej, nato odstrani dvojnike in tekme drugih tekmovanj.
+    Filter po competitionId nadomešča nekdanje sezonske sezname ekip.
+    """
+    all_items = []
+    for ph in lg['phases']:
+        if ph['groups']:
+            for gid in ph['groups']:
+                all_items.extend(fetch_phase(lg['id'], ph['id'], gid))
+        else:
+            all_items.extend(fetch_phase(lg['id'], ph['id']))
+    if not lg['phases']:   # faz (še) ni — poberi celo tekmovanje naenkrat
+        all_items = fetch_phase(lg['id'])
 
-    LIGA2_TEAMS = {
-        'Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica',
-        'LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'
-    }
-    LIGA3_TEAMS = {
-        'Konjice','Branik Maribor','Bistrica Kety Emmi','Innoduler Dravograd Koroška',
-        'Vojnik G7','Elektra Šoštanj','Hrastnik','Vrani Vransko','Kovinarstvo Bučar Miklavž','Nazarje',
-        'Leone Ajdovščina','Armicafe Troti','Cedevita Olimpija mladi','Koper',
-        'Mesarija Prunk Sežana','Kolpa','Litija','Janče ECP Tactical','Gorenja vas','Tera Tolmin'
-    }
-    if key == 'liga2':
-        matches = [m for m in matches
-                   if m['firstTeamName'] in LIGA2_TEAMS and m['secondTeamName'] in LIGA2_TEAMS]
-    elif key == 'liga3':
-        matches = [m for m in matches
-                   if m['firstTeamName'] in LIGA3_TEAMS and m['secondTeamName'] in LIGA3_TEAMS]
-    else:
-        matches = [m for m in matches
-                   if any(c.get('competitionId') == lg['id']
-                          for c in m.get('competitions', [{}]))]
+    seen = set()
+    matches = [m for m in all_items if not (m['id'] in seen or seen.add(m['id']))]
+    matches = [m for m in matches
+               if any(c.get('competitionId') == lg['id']
+                      for c in m.get('competitions', [{}]))]
 
-    matches.sort(key=lambda m: (m['round'], m.get('dateTime', '')))
+    # id kot zadnje merilo → izpis je enak ne glede na vrstni red pobiranja faz
+    matches.sort(key=lambda m: (m['round'], m.get('dateTime', ''), m['id']))
     return matches
 
 def load_existing_stats(key):
+    """Obstoječi podatki — a le, če so iz ISTE sezone. Ob prehodu v novo sezono
+    začnemo prazno, da se stara sezona ne vleče naprej (arhiv jo že hrani)."""
     path = f"data/{key}_stats.json"
-    if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
-    return None
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        data = json.load(f)
+    prev = data.get('seasonId')
+    if prev is not None and prev != SEASON_ID:
+        print(f"  ↻ nova sezona ({prev} → {SEASON_ID}) — {path} začenjam prazno")
+        return None
+    return data
 
 def load_existing_pbp(key):
     path = f"data/{key}_pbp.json"
-    if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f).get('pbp', {})
-    return {}
+    if not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        data = json.load(f)
+    prev = data.get('seasonId')
+    if prev is not None and prev != SEASON_ID:
+        return {}
+    return data.get('pbp', {})
 
 def needs_full_fetch(existing):
     if FORCE_FULL or not existing:
@@ -314,7 +363,8 @@ def build_pregled(matches, stats):
     return {'players':players, 'matches':slim_matches, 'gamelog':gamelog, 'mvpPid':mvp_pid}
 
 def process_league(key, lg):
-    print(f"\n--- {lg['name']} ---")
+    phase_desc = ', '.join(f"{p['name']}({p['id']})" for p in lg['phases']) or 'brez faz'
+    print(f"\n--- {lg['name']} · comp {lg['id']} · {phase_desc} ---")
     existing = load_existing_stats(key)
 
     matches = fetch_all_matches(key, lg)
@@ -322,6 +372,11 @@ def process_league(key, lg):
     live     = [m for m in matches if m['status'] == 'LIVE']
     print(f"  {len(matches)} tekem | {len(finished)} končanih | {len(live)} v živo")
     print(f"  Ekipe: {len(set(m['firstTeamName'] for m in matches))}")
+
+    # Varovalka: če API vrne nič tekem, obstoječih datotek NE povozimo s praznimi.
+    if not matches and os.path.exists(f"data/{key}_stats.json"):
+        print(f"  ⚠ API ni vrnil nobene tekme — obdržim obstoječe datoteke")
+        return []
 
     existing_stats = existing.get('matchStats', {}) if existing else {}
     stats = fetch_stats_incremental(matches, existing_stats)
@@ -359,7 +414,6 @@ def process_league(key, lg):
         if os.path.exists(sm_path):
             with open(sm_path) as f: sm = json.load(f)
         seasons = sm.get('seasons', {})
-        SEASON_LABELS = {22:'2021/22',23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',27:'2026/27',28:'2027/28',29:'2028/29',30:'2029/30'}
         entry = seasons.get(str(SEASON_ID), {'id': SEASON_ID, 'name': SEASON_LABELS.get(SEASON_ID, f'Sezona {SEASON_ID}'), 'leagues': [], 'files': {}})
         if key not in entry['leagues']:
             entry['leagues'].append(key)
@@ -378,13 +432,13 @@ def process_league(key, lg):
             pbp_file = f"data/{key}_pbp.json"
             if not os.path.exists(pbp_file):
                 with open(pbp_file, 'w') as f:
-                    json.dump({'updatedAt': now, 'pbp': {}}, f)
+                    json.dump({'updatedAt': now, 'seasonId': SEASON_ID, 'pbp': {}}, f)
         else:
             existing_pbp = load_existing_pbp(key)
             pbp = fetch_pbp_incremental(matches, existing_pbp)
             pbp_file = f"data/{key}_pbp.json"
             with open(pbp_file, 'w') as f:
-                json.dump({'updatedAt': now, 'pbp': pbp},
+                json.dump({'updatedAt': now, 'seasonId': SEASON_ID, 'pbp': pbp},
                           f, ensure_ascii=False, separators=(',',':'))
             print(f"  ✅ {pbp_file} ({os.path.getsize(pbp_file)//1024} KB)")
     else:
@@ -406,8 +460,21 @@ os.makedirs('data', exist_ok=True)
 mode = 'FULL+PBP' if (FORCE_FULL and FETCH_PBP) else ('FULL' if FORCE_FULL else ('PBP' if FETCH_PBP else 'INCREMENTAL'))
 print(f"\n=== KZS Fetcher [{mode}] {datetime.now(timezone.utc).isoformat()} ===")
 
+SEASON_ID, COMPS = resolve_season()
+_lg_desc = ', '.join('{}={}'.format(k, v['id']) for k, v in COMPS.items())
+print(f"Sezona {SEASON_ID} ({SEASON_LABELS.get(SEASON_ID, '?')}) · lige: {_lg_desc}")
+
+if '--probe' in sys.argv:      # samo pokaži, kaj bi pobral, in končaj
+    for key, lg in COMPS.items():
+        ms = fetch_all_matches(key, lg)
+        teams = sorted({m['firstTeamName'] for m in ms} | {m['secondTeamName'] for m in ms})
+        print(f"\n{key}: comp {lg['id']} | faze "
+              f"{[(p['id'], p['name'], p['groups']) for p in lg['phases']]}")
+        print(f"  {len(ms)} tekem, {len(teams)} ekip: {teams}")
+    sys.exit(0)
+
 all_att = {}
-for key, lg in LEAGUES.items():
+for key, lg in COMPS.items():
     all_att[key] = process_league(key, lg)
 
 with open('data/attendance.json', 'w') as f:

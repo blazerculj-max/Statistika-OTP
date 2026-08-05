@@ -12,7 +12,35 @@
         "liga1": "liga1_stats_s26.json",
         "liga2": "liga2_stats_s26.json",
         "liga3": "liga3_stats_s26.json"
-      }
+      },
+      "assets": {
+        "leagues": {
+          "liga1": {
+            "stats": "liga1_stats_s26.json",
+            "pregled": "liga1_pregled_s26.json",
+            "pbp": "liga1_pbp_s26.json"
+          },
+          "liga2": {
+            "stats": "liga2_stats_s26.json",
+            "pregled": "liga2_pregled_s26.json",
+            "pbp": "liga2_pbp_s26.json"
+          },
+          "liga3": {
+            "stats": "liga3_stats_s26.json",
+            "pregled": "liga3_pregled_s26.json",
+            "pbp": "liga3_pbp_s26.json"
+          }
+        },
+        "attendance": "attendance_s26.json",
+        "drzavc_3x3": "drzavc_3x3_s26.json",
+        "manifests": {
+          "mladi": "mladi_manifest_s26.json",
+          "hks": "hks_manifest_s26.json",
+          "srb": "srb_manifest_s26.json",
+          "bg": "bg_manifest_s26.json"
+        }
+      },
+      "archivedAt": "2026-08-05T18:15:57+00:00"
     }
   },
   "current": 26
