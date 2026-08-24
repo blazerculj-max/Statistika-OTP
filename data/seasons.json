@@ -41,7 +41,21 @@
         }
       },
       "archivedAt": "2026-08-05T18:15:57+00:00"
+    },
+    "27": {
+      "id": 27,
+      "name": "2026/27",
+      "leagues": [
+        "liga1",
+        "liga2",
+        "liga3"
+      ],
+      "files": {
+        "liga1": "liga1_stats_s27.json",
+        "liga2": "liga2_stats_s27.json",
+        "liga3": "liga3_stats_s27.json"
+      }
     }
   },
-  "current": 26
+  "current": 27
 }
