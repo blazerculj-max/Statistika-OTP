@@ -24,19 +24,25 @@ UPORABA:
   python scripts/fetch_mladi.py --season 27
   python scripts/fetch_mladi.py --probe            # samo pokaži, kaj bi pobral
 """
-import json, os, sys, time, urllib.request
+import json, os, re, sys, time, urllib.request
 from datetime import datetime, timezone
 
 API_BASE = "https://api.kzs.si/api/v1/public"
 DATA = "data"
 
 AGES = ['u18', 'u16', 'u14']          # privzete starosti (moški)
-# ključ ranga → (rank, type) v /competitions
+
+# Ključ ranga → (rank, vzorec imena).
+# POZOR: tipa se NE zanašamo. KZS je za 2026/27 spremenil type pri 1.A/1.B iz
+# LEAGUE_A/LEAGUE_B v navaden LEAGUE, zato bi iskanje po tipu tiho izpustilo
+# obe prvi ligi. Ime ("Fantje U18 1.A SKL") je stabilno čez sezone.
 RANKS = {
-    '1.A': ('FIRST',  'LEAGUE_A'),
-    '1.B': ('FIRST',  'LEAGUE_B'),
-    '2.':  ('SECOND', 'LEAGUE'),
+    '1.A': ('FIRST',  r'1\.\s*A'),
+    '1.B': ('FIRST',  r'1\.\s*B'),
+    '2.':  ('SECOND', r'\b2\.\s*SKL'),
 }
+# Ligaška tekmovanja; kvalifikacije/pripravljalne/pokali nas ne zanimajo.
+LEAGUE_TYPES = ('LEAGUE', 'LEAGUE_A', 'LEAGUE_B')
 # Faza šteje za "finals", če je izločilna (BRACKET_*) ali se tako imenuje.
 FINALS_HINTS = ('turnir', 'izločiln', 'izlocil', 'finale', 'finala')
 
@@ -91,12 +97,17 @@ def competitions(season_id):
     return (d or {}).get('data', {}).get('items', [])
 
 
-def find_comp(comps, category, rank, ctype):
-    for c in comps:
-        if (c.get('gender') == 'MALE' and c.get('category') == category
-                and c.get('rank') == rank and c.get('type') == ctype):
-            return c
-    return None
+def find_comp(comps, category, rank, name_pat):
+    """Ligaško tekmovanje dane starosti in ranga, prepoznano po imenu (1.A/1.B/2.)."""
+    cands = [c for c in comps
+             if c.get('gender') == 'MALE' and c.get('category') == category
+             and c.get('type') in LEAGUE_TYPES
+             and re.search(name_pat, c.get('name') or '')]
+    if not cands:
+        return None
+    # če jih je več, ima prednost ujemanje tudi po rangu
+    exact = [c for c in cands if c.get('rank') == rank]
+    return (exact or cands)[0]
 
 
 def phases(comp_id):
@@ -244,10 +255,10 @@ def teams_map(matches):
 
 
 def process_rank(comps, age, rank_key, season_id):
-    rank, ctype = RANKS[rank_key]
-    c = find_comp(comps, age.upper(), rank, ctype)
+    rank, name_pat = RANKS[rank_key]
+    c = find_comp(comps, age.upper(), rank, name_pat)
     if not c:
-        print(f"  – {age} {rank_key}: tekmovanja ni v sezoni {season_id}")
+        print(f"  ! {age} {rank_key}: tekmovanja ni v sezoni {season_id} — PRESKOČENO")
         return None
     ph = phases(c['id'])
     print(f"  {age} {rank_key}: {c['name']} (comp {c['id']}) · "

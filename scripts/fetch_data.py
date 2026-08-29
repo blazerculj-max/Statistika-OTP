@@ -21,11 +21,17 @@ from datetime import datetime, timezone, timedelta
 API_BASE  = "https://api.kzs.si/api/v1/public"
 FIBA_BASE = "https://fibalivestats.dcd.shared.geniussports.com/data"
 
-# Katero tekmovanje je katera liga — po imenu + spolu + rangu (stabilno čez sezone).
+# Katero tekmovanje je katera liga. Iščemo po SPOLU + KATEGORIJI + RANGU + TIPU,
+# ker je ta četverica pri KZS enolična in stabilna čez sezone. Imena namenoma
+# NE zahtevamo: 1. liga se imenuje po sponzorju ("Liga OTP banka") in se lahko
+# preimenuje — 'name' je zato le pričakovana oznaka, ob odstopanju opozorimo.
 LEAGUES = {
-    'liga1': {'name': 'Liga OTP banka', 'gender': 'MALE', 'rank': 'FIRST'},
-    'liga2': {'name': '2. SKL',         'gender': 'MALE', 'rank': 'SECOND'},
-    'liga3': {'name': '3. SKL',         'gender': 'MALE', 'rank': 'THIRD'},
+    'liga1': {'name': 'Liga OTP banka', 'gender': 'MALE',
+              'category': 'ABSOLUTE', 'rank': 'FIRST',  'type': 'LEAGUE'},
+    'liga2': {'name': '2. SKL',         'gender': 'MALE',
+              'category': 'ABSOLUTE', 'rank': 'SECOND', 'type': 'LEAGUE'},
+    'liga3': {'name': '3. SKL',         'gender': 'MALE',
+              'category': 'ABSOLUTE', 'rank': 'THIRD',  'type': 'LEAGUE'},
 }
 
 SEASON_LABELS = {22:'2021/22',23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',
@@ -63,16 +69,24 @@ def _arg_season():
     return None
 
 def find_competitions(season_id):
-    """{key: competitionId} — poišče naše lige po imenu + spolu + rangu (1 klic)."""
+    """{key: (competitionId, ime)} — poišče naše lige (1 klic)."""
     d = fetch_json(f"{API_BASE}/competitions/?seasonId={season_id}")
     items = (d or {}).get('data', {}).get('items', [])
     found = {}
     for key, spec in LEAGUES.items():
-        for c in items:
-            if (c.get('name') == spec['name'] and c.get('gender') == spec['gender']
-                    and c.get('rank') == spec['rank']):
-                found[key] = c['id']
-                break
+        cands = [c for c in items
+                 if c.get('gender') == spec['gender']
+                 and c.get('category') == spec['category']
+                 and c.get('rank') == spec['rank']
+                 and c.get('type') == spec['type']]
+        if not cands:
+            continue
+        # Če jih je kdaj več, ima prednost pričakovano ime.
+        c = next((x for x in cands if x.get('name') == spec['name']), cands[0])
+        if c.get('name') != spec['name']:
+            print(f"  ⚠ {key}: tekmovanje se zdaj imenuje '{c.get('name')}' "
+                  f"(pričakovano '{spec['name']}') — uporabljam ga naprej")
+        found[key] = (c['id'], c.get('name') or spec['name'])
     return found
 
 def fetch_phases(comp_id):
@@ -113,12 +127,12 @@ def resolve_season():
             raise SystemExit(f"Sezona {sid}: ne najdem tekmovanja '{LEAGUES['liga1']['name']}'")
         if not forced:
             # sprejmi le sezono, ki ima že objavljen koledar 1. lige
-            probe = fetch_json(f"{API_BASE}/matches/?competitionId={ids['liga1']}&seasonId={sid}&limit=1")
+            probe = fetch_json(f"{API_BASE}/matches/?competitionId={ids['liga1'][0]}&seasonId={sid}&limit=1")
             if not (probe or {}).get('data', {}).get('items'):
                 print(f"  (sezona {sid}: koledar še ni objavljen — preverjam starejšo)")
                 continue
-        comps = {key: {'id': cid, 'name': LEAGUES[key]['name'], 'phases': fetch_phases(cid)}
-                 for key, cid in ids.items()}
+        comps = {key: {'id': cid, 'name': cname, 'phases': fetch_phases(cid)}
+                 for key, (cid, cname) in ids.items()}
         return sid, comps
 
     raise SystemExit("Ne najdem sezone z objavljenim koledarjem. Podaj ročno: --season N")
