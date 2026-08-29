@@ -3519,12 +3519,15 @@ function initUI() {
       }
     });
   } else {
-    // Single phase — just rounds
+    // Single phase — just rounds.
+    // rf je lahko null (postavitev brez 'round-filter'); ostale veje to že
+    // upoštevajo, ta pa je manjkala — sprožilo se je šele ob sezoni z eno
+    // samo fazo (nova sezona pred začetkom končnice).
     const rounds = [...new Set(allMatches.map(m => m.round))].sort((a,b)=>a-b);
     rounds.forEach(r => {
       const o = document.createElement('option');
       o.value = 'r_' + r; o.textContent = 'Krog ' + r;
-      rf.appendChild(o);
+      if(rf) rf.appendChild(o);
     });
   }
 
