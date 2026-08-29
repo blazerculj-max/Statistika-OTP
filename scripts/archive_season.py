@@ -68,13 +68,69 @@ def archived_name(fname, sid):
     return f"{stem}_s{sid}.json"
 
 
+# Sezona 2025/26 ima id 26, 2026/27 id 27 … → id = začetna letnica - 1999.
+def _year_to_sid(year):
+    return int(year) - 1999
+
+
+def _read_head(path, n=4096):
+    try:
+        with open(path, encoding='utf-8') as f:
+            return f.read(n)
+    except Exception:
+        return ''
+
+
+def source_season(name):
+    """
+    Kateri sezoni pripada data/<name>? Vrne id ali None, če je ni mogoče ugotoviti.
+      1. eksplicitni "seasonId"                (liga*_stats, liga*_pbp, mladi_u*, po novem tudi pregled/attendance)
+      2. razpon v "season": "2025-26" / "2025/2026"   (hks/srb/bg/mladi manifesti)
+      3. pregled in attendance brez oznake podedujeta sezono od pripadajočega _stats
+    """
+    head = _read_head(os.path.join(DATA, name))
+    m = re.search(r'"seasonId"\s*:\s*(\d+)', head)
+    if m:
+        return int(m.group(1))
+    m = re.search(r'"season"\s*:\s*"(\d{4})[-/]\d{2,4}"', head)
+    if m:
+        return _year_to_sid(m.group(1))
+    # starejše datoteke brez oznake: podedujmo od pripadajoče _stats datoteke
+    sib = None
+    if name.endswith('_pregled.json'):
+        sib = name.replace('_pregled.json', '_stats.json')
+    elif name == 'attendance.json':
+        sib = next((f"{k}_stats.json" for k in LEAGUES
+                    if os.path.exists(os.path.join(DATA, f"{k}_stats.json"))), None)
+    if sib:
+        m = re.search(r'"seasonId"\s*:\s*(\d+)', _read_head(os.path.join(DATA, sib)))
+        if m:
+            return int(m.group(1))
+    return None
+
+
 def copy(src_name, sid, log):
     """Kopira data/<src_name> v arhivsko različico. Vrne ime arhiva ali None."""
     src = os.path.join(DATA, src_name)
     if not os.path.exists(src):
         log.append(f"  – {src_name} ne obstaja — preskačem")
         return None
+
+    # VARNOSTNA ZAPORA: ko se sezona prelomi, žive datoteke pripadajo že NOVI
+    # sezoni. Brez tega bi arhiviranje stare sezone povozilo njen arhiv z
+    # novimi (praznimi) podatki. Datoteke z neujemajočo se sezono preskočimo.
     dst_name = archived_name(src_name, sid)
+    src_sid = source_season(src_name)
+    if src_sid is not None and src_sid != sid:
+        # Arhiv, ki že obstaja, ostane veljaven in ohrani mesto v manifestu.
+        if os.path.exists(os.path.join(DATA, dst_name)):
+            log.append(f"  = {dst_name} že arhiviran — ohranjam "
+                       f"(živa datoteka je zdaj sezona {src_sid})")
+            return dst_name
+        log.append(f"  ⛔ {src_name} je sezona {src_sid}, ne {sid} — NE arhiviram "
+                   f"(arhiva ni, živa datoteka pripada drugi sezoni)")
+        return None
+
     dst = os.path.join(DATA, dst_name)
     size = os.path.getsize(src) // 1024
     if DRY_RUN:

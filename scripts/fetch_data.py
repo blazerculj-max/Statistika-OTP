@@ -406,6 +406,7 @@ def process_league(key, lg):
         pregled = build_pregled(matches, stats)
         pregled['updatedAt'] = now
         pregled['league'] = lg['name']
+        pregled['seasonId'] = SEASON_ID   # da arhiviranje prepozna sezono datoteke
         pregled_file = f"data/{key}_pregled.json"
         with open(pregled_file, 'w') as f:
             json.dump(pregled, f, ensure_ascii=False, separators=(',',':'))
@@ -490,7 +491,8 @@ for key, lg in COMPS.items():
     all_att[key] = process_league(key, lg)
 
 with open('data/attendance.json', 'w') as f:
-    json.dump({'updatedAt': datetime.now(timezone.utc).isoformat(), 'leagues': all_att},
+    json.dump({'updatedAt': datetime.now(timezone.utc).isoformat(),
+               'seasonId': SEASON_ID, 'leagues': all_att},
               f, ensure_ascii=False, separators=(',',':'))
 print(f"\n✅ data/attendance.json")
 print(f"=== Done! ===")
