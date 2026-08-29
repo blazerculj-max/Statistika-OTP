@@ -8144,7 +8144,16 @@ function computeElo(){
   if(_eloRatings)return _eloRatings;
   const K=32,ratings={},history={};
   // Cedevita Olimpija preset samo za 1. SKL
-  const PRESET = currentLeague === 'liga1' ? {'Cedevita Olimpija':1934} : {};
+  // Ekipe, ki ne igrajo rednega dela (Cedevita Olimpija zaradi lige ABA), bi v
+  // končnico vstopile s privzetimi 1500, kar močno podceni njihovo moč — zato
+  // začetna ocena. Uporabimo jo SAMO za ekipe, ki v tej sezoni res nastopajo:
+  // sicer se v lestvici pojavi ekipa, ki je v ligi sploh ni (2026/27 je bila
+  // Cedevita edina vrstica v tabeli, čeprav v 1. SKL ne igra).
+  const PRESET_KNOWN = {'Cedevita Olimpija':1934};
+  const _vLigi = new Set(allMatches.flatMap(m=>[m.firstTeamName,m.secondTeamName]));
+  const PRESET = currentLeague === 'liga1'
+    ? Object.fromEntries(Object.entries(PRESET_KNOWN).filter(([t])=>_vLigi.has(t)))
+    : {};
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&
     m.competitions?.[0]?.competitionPhaseName==='Redni del')
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
@@ -8345,10 +8354,102 @@ function computeTeamPower(){
 // ═══════════════════════════════════════════════════
 // PREGLED — dashboard: utrip lige v enem pogledu
 // ═══════════════════════════════════════════════════
+// Pregled pred začetkom sezone: koledar že obstaja, odigranih tekem pa ni.
+// Namesto praznih šablon (ki se ne bi nikoli napolnile) pokažemo odštevanje
+// do prve tekme in prve kroge — edino, kar je takrat sploh na voljo.
+function preseasonHtml(){
+  const lgColor = currentLeague==='liga1'?'#f97316':currentLeague==='liga2'?'#3b82f6':'#a855f7';
+  const now = new Date();
+  const prih = allMatches
+    .filter(m=>m.dateTime && new Date(m.dateTime) > now)
+    .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
+  const prva = prih[0] || allMatches.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))[0];
+
+  // KZS ob objavi koledarja ure pogosto še nima nastavljene (dateTime = 00:00Z).
+  // V tem primeru izpišemo samo datum — sicer bi lokalni čas pokazal izmišljeno
+  // uro (npr. "02:00") za tekmo, ki se seveda ne igra ponoči.
+  const brezUre = m => /T00:00(:00)?Z?$/.test(m.dateTime||'');
+  const datum = m => new Date(m.dateTime).toLocaleDateString('sl-SI',
+    brezUre(m) ? {day:'numeric',month:'short'}
+               : {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+
+  let odst = '';
+  if(prva){
+    const ms = new Date(prva.dateTime) - now;
+    if(ms > 0){
+      const d = Math.floor(ms/86400000), h = Math.floor(ms%86400000/3600000);
+      odst = d>0 ? `${d}d ${h}h` : `${h}h`;
+    }
+  }
+
+  const kartica = prva ? `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;cursor:pointer"
+         onclick="openMatch(${prva.id})">
+      <div style="font-family:var(--fm);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:14px">Prva tekma sezone</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px">
+          ${teamLogoHtml(prva.firstTeamName,46)}
+          <div style="font-weight:700">${prva.firstTeamName}</div>
+        </div>
+        <div style="min-width:96px">
+          <div style="font-family:var(--fm);font-size:1.6rem;font-weight:800;color:${lgColor}">${odst||'—'}</div>
+          <div style="font-size:.7rem;color:var(--mut)">do začetka</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px">
+          ${teamLogoHtml(prva.secondTeamName,46)}
+          <div style="font-weight:700">${prva.secondTeamName}</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:.8rem;color:var(--sub)">${datum(prva)}${prva.sportHallName?' · '+prva.sportHallName:''}</div>
+    </div>` : '';
+
+  const seznam = prih.slice(0,6).map(m=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border)">
+      <div style="flex:1;display:flex;align-items:center;gap:8px;min-width:0">
+        ${teamLogoHtml(m.firstTeamName,20)}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.firstTeamName}</span>
+      </div>
+      <div style="font-family:var(--fm);font-size:.7rem;color:var(--mut);white-space:nowrap">${datum(m)}</div>
+      <div style="flex:1;display:flex;align-items:center;gap:8px;justify-content:flex-end;min-width:0">
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.secondTeamName}</span>${teamLogoHtml(m.secondTeamName,20)}
+      </div>
+    </div>`).join('');
+
+  const ekip = new Set(allMatches.flatMap(m=>[m.firstTeamName,m.secondTeamName])).size;
+
+  return `
+    <div style="margin-bottom:18px">
+      <h2 style="margin:0">Pregled <span style="color:${lgColor}">${getLg().short||''}</span></h2>
+      <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-top:4px">
+        ${seasonLabel()} — sezona se še ni začela.
+      </div>
+    </div>
+    ${kartica}
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:14px">
+      <div style="padding:11px 12px;font-family:var(--fm);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--border)">Prve tekme</div>
+      ${seznam || '<div style="padding:14px;color:var(--mut)">Koledar še ni objavljen.</div>'}
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="nb" onclick="showTabDirect('tekme')"
+        style="background:${lgColor};color:#fff;border:none;border-radius:12px;padding:10px 16px;font-weight:700;cursor:pointer">
+        Ves razpored →</button>
+      <div style="font-size:.78rem;color:var(--mut)">
+        ${ekip} ekip · ${allMatches.length} tekem. Statistika, lestvice in ocene se začnejo polniti po prvem krogu.
+      </div>
+    </div>`;
+}
+
 function renderPregled(){
   const wrap=document.getElementById('pregled-wrap');
   if(!wrap)return;
   if(!P.length){
+    // Razlikuj DVE stanji, ki sta si na videz enaki:
+    //  a) podatki se še nalagajo → šablone in ponovni poskus,
+    //  b) sezona se še ni začela (koledar je tu, odigranih tekem ni) →
+    //     šablone se ne bi nikoli napolnile in stran bi izgledala pokvarjena.
+    const koledarTu = allMatches.length > 0;
+    const odigrane  = koledarTu && allMatches.some(m=>m.status==='FINISHED');
+    if(koledarTu && !odigrane){ wrap.innerHTML = preseasonHtml(); return; }
+
     wrap.innerHTML=`<div style="margin-bottom:22px">
         <div class="skeleton" style="width:200px;height:30px;border-radius:8px"></div>
         <div class="skeleton" style="width:140px;height:14px;border-radius:6px;margin-top:8px"></div>
