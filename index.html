@@ -11525,7 +11525,12 @@ function buildStandingsTable(data, sort, title, color){
   }
   const N=data.length;
   // Playoff/relegation zone thresholds
-  // 1. SKL (liga1): top 7 advance to playoff (Cedevita joins as 8th seed for playoff only)
+  // 1. SKL (liga1): v končnico gre prvih 7 z lestvice, osmi udeleženec je
+  // Cedevita Olimpija, ki zaradi lige ABA in Eurocupa ne igra rednega dela.
+  // POZOR na vlogi: Cedevita se priključi kot PRVOUVRŠČENA, sedmi z lestvice
+  // pa nastopi kot osmi — zato je meja 7 in ne 8. Prednost domačega igrišča v
+  // tej seriji pripada osmemu (sezona 2025/26: vse tri Cedevitine serije je
+  // doma odprl nasprotnik, v finalu je Krka gostila 1. in 3. tekmo).
   let clCount, relCount;
   if(currentLeague==='liga1'){ clCount=7; relCount=1; }
   else { clCount = N>=10 ? 8 : N>=8 ? 6 : Math.ceil(N/2); relCount = N>=12 ? 2 : N>=10 ? 1 : 0; }
@@ -11675,6 +11680,22 @@ function renderStandings(){
     html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
   } else {
     html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
+    if(currentLeague==='liga1'){
+      // Brez tega bralec ne more razumeti, zakaj se v končnico uvrsti prvih 7
+      // in od kod v pajku Cedevita, ki je na lestvici sploh ni.
+      html+=`<div style="display:flex;gap:11px;align-items:flex-start;background:var(--card);
+        border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-top:12px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--mut)" stroke-width="2"
+             stroke-linecap="round" style="flex-shrink:0;margin-top:1px">
+          <circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+        <div style="font-size:.78rem;color:var(--sub);line-height:1.55">
+          <strong style="color:var(--text)">Zakaj v končnico prvih sedem.</strong>
+          Cedevita Olimpija zaradi lige ABA in Eurocupa ne igra rednega dela, zato je na tej
+          lestvici ni. Končnici se pridruži kot prvouvrščena, sedmi z lestvice pa nastopi kot
+          osmi — in prav osmi ima v tej seriji prednost domačega igrišča.
+        </div>
+      </div>`;
+    }
     if(currentLeague==='liga2'){
       // Liga za obstanek: carry over H2H from redni del + new obstanek games
       const obstMatches = allMatches.filter(m=>m.status==='FINISHED'&&
