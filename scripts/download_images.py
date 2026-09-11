@@ -83,6 +83,26 @@ def collect_uuids():
                 for ps in team.get('playerStats', []):
                     if ps.get('photoUuid'):
                         uuids[ps['photoUuid']] = 'photo'
+
+    # Sestavi (data/rosters.json) — edini vir fotografij pred prvo tekmo,
+    # ko statistike še ni. Vsebuje tudi nove igralce, ki jih stats ne pozna.
+    rosters_path = "data/rosters.json"
+    if os.path.exists(rosters_path):
+        try:
+            with open(rosters_path, encoding='utf-8') as f:
+                rosters = json.load(f)
+            for lg in rosters.get('leagues', {}).values():
+                for team in lg.get('teams', []):
+                    if team.get('logo'):
+                        uuids.setdefault(team['logo'], 'logo')
+                    for p in team.get('players', []):
+                        if p.get('photo'):
+                            uuids[p['photo']] = 'photo'
+        except Exception as e:
+            print(f"  ! {rosters_path} ni berljiv ({e}) - preskacem")
+    else:
+        print(f"  - {rosters_path} ne obstaja - preskacem")
+
     return uuids
 
 

@@ -3774,8 +3774,90 @@ function setLMode(m){lMode=m;document.getElementById('lbtn-avg').classList.toggl
 function setMinShots(){min2T=parseFloat(document.getElementById('min2t').value);min3T=parseFloat(document.getElementById('min3t').value);minPM=parseFloat(document.getElementById('minpm').value);renderLeaders();}
 function toggleHeatmap(){heatmap=!heatmap;document.getElementById('btn-hm').classList.toggle('active',heatmap);renderTeam();}
 
+// ═══ SESTAVI — prijavljeni igralci (data/rosters.json) ═══
+// Statistika nastane šele iz odigranih tekem; sestavi obstajajo že prej.
+// Zato je to edini vir imen in fotografij v predsezonskem obdobju.
+let _ROSTERS=null, _rostersTried=false;
+async function loadRosters(){
+  if(_ROSTERS||_rostersTried)return _ROSTERS;
+  _rostersTried=true;
+  try{
+    const r=await fetch(seasonFileUrl('rosters'),{cache:'no-cache'});
+    if(r.ok)_ROSTERS=await r.json();
+  }catch(e){}
+  return _ROSTERS;
+}
+// Slovenščina ima dvojino: 1 tujec, 2 tujca, 3–4 tujci, 5+ tujcev.
+function sklonTujec(n){
+  const m=n%100;
+  if(m===1)return 'Tujec';
+  if(m===2)return 'Tujca';
+  if(m===3||m===4)return 'Tujci';
+  return 'Tujcev';
+}
+// Sestav izbrane ekipe v trenutni ligi, ali null.
+function rosterFor(teamName){
+  const lg=_ROSTERS&&_ROSTERS.leagues&&_ROSTERS.leagues[currentLeague];
+  if(!lg)return null;
+  const n=normalizeTeamName(teamName);
+  return lg.teams.find(t=>normalizeTeamName(t.name)===n)||null;
+}
+function renderRosterCard(teamName){
+  const wrap=document.getElementById('team-hdr-wrap');
+  const st=document.getElementById('st');
+  const t=rosterFor(teamName);
+  const color=TEAM_COLORS[teamName]||'#f97316';
+  if(!t||!t.players.length){
+    if(wrap)wrap.innerHTML='';
+    if(st)st.innerHTML=`<tbody><tr><td class="empty" style="padding:26px">`+
+      (t?`${teamName} še ni prijavil igralcev za sezono ${seasonLabel()}.`
+        :`Sestavi za sezono ${seasonLabel()} še niso na voljo.`)+`</td></tr></tbody>`;
+    return;
+  }
+  const yrs=t.players.map(p=>p.born).filter(Boolean);
+  const povp=yrs.length?(new Date().getFullYear()-yrs.reduce((a,b)=>a+b,0)/yrs.length).toFixed(1):'—';
+  const tujci=t.players.filter(p=>p.natCode&&p.natCode!=='SI').length;
+  if(wrap)wrap.innerHTML=`
+    <div class="team-hdr" style="--tc:${color}">
+      <div class="team-hdr-logo">${teamLogoHtml(teamName,48)}</div>
+      <div><div class="tname">${teamName}</div>
+        <div class="tmeta">Prijavljeni sestav · sezona ${seasonLabel()}</div></div>
+      <div class="tstats">
+        <div class="ts"><div class="tsv" style="color:${color}">${t.players.length}</div><div class="tsl">Igralcev</div></div>
+        <div class="ts"><div class="tsv" style="color:${color}">${povp}</div><div class="tsl">Povp. starost</div></div>
+        <div class="ts"><div class="tsv" style="color:${color}">${tujci}</div><div class="tsl">${sklonTujec(tujci)}</div></div>
+      </div>
+    </div>`;
+  const rows=t.players.map(p=>{
+    const img=p.photo?`<img src="${LOCAL_IMG_BASE}${p.photo}.png" alt="" loading="lazy"
+        style="width:34px;height:34px;border-radius:9px;object-fit:cover;background:var(--card2)"
+        onerror="this.onerror=null;this.src='https://api.kzs.si/public/images/${p.photo}'">`
+      :`<div style="width:34px;height:34px;border-radius:9px;background:var(--card2)"></div>`;
+    const age=p.born?(new Date().getFullYear()-p.born):'';
+    return `<tr>
+      <td style="text-align:left;padding-left:14px">${img}</td>
+      <td style="text-align:left;font-family:var(--fh);font-weight:600">${p.name}</td>
+      <td>${p.born||'—'}</td>
+      <td>${age||'—'}</td>
+      <td style="text-align:left">${p.nat||'—'}</td>
+      <td>${p.homegrown?'✓':''}</td>
+    </tr>`;}).join('');
+  if(st)st.innerHTML=`<thead><tr>
+      <th style="text-align:left;padding-left:14px"></th>
+      <th style="text-align:left">Igralec</th><th>Letnik</th><th>Starost</th>
+      <th style="text-align:left">Državljanstvo</th><th>Domači</th>
+    </tr></thead><tbody>${rows}</tbody>`;
+}
+
 function renderTeam(){
-  if(!Object.keys(matchStatsCache).length)return;
+  // Pred prvo odigrano tekmo statistike ni — pokaži prijavljeni sestav.
+  if(!Object.keys(matchStatsCache).length){
+    const team=document.getElementById('team-sel')?.value;
+    if(!team)return;
+    if(_ROSTERS){renderRosterCard(team);}
+    else loadRosters().then(()=>{ if(!Object.keys(matchStatsCache).length)renderRosterCard(team); });
+    return;
+  }
   // Re-aggregate with phase filter
   const phaseFilter = document.getElementById('phase-filter')?.value || 'all';
   aggregatePlayers(phaseFilter);

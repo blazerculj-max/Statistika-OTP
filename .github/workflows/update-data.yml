@@ -60,6 +60,15 @@ jobs:
         run: python scripts/fetch_data.py --full --pbp
         timeout-minutes: 120
 
+      # ── Sestavi (prijavljeni igralci) ──
+      # Klubi prijavljajo igralce postopoma, zato osvezujemo ob vsakem zagonu.
+      # Tece PRED prenosom slik: rosters.json prinese photoUuid tudi za igralce,
+      # ki se niso odigrali nobene tekme, in je pred zacetkom sezone edini vir.
+      - name: Posodobi sestave
+        if: github.event.inputs.mode != 'archive'
+        run: python scripts/fetch_rosters.py
+        continue-on-error: true
+
       # ── NOVO: prenesi slike (inkrementalno) po fetchu ──
       # Tece vedno; inkrementalno je hitro (samo HEAD za obstojece).
       # Pri 'full' modu uporabi --force za popolno osvezitev slik.
