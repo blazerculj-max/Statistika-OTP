@@ -103,6 +103,24 @@ def collect_uuids():
     else:
         print(f"  - {rosters_path} ne obstaja - preskacem")
 
+    # Prestopi (data/transfers.json) — odsli igralci so iz LANSKEGA indeksa,
+    # zato jih ne pozna ne rosters.json ne letosnji stats. Brez tega se njihove
+    # fotografije vlecejo neposredno s KZS ob vsakem ogledu.
+    transfers_path = "data/transfers.json"
+    if os.path.exists(transfers_path):
+        try:
+            with open(transfers_path, encoding='utf-8') as f:
+                tr = json.load(f)
+            for lg in tr.get('leagues', {}).values():
+                for team in lg.get('teams', []):
+                    for p in team.get('in', []) + team.get('out', []):
+                        if p.get('photo'):
+                            uuids.setdefault(p['photo'], 'photo')
+        except Exception as e:
+            print(f"  ! {transfers_path} ni berljiv ({e}) - preskacem")
+    else:
+        print(f"  - {transfers_path} ne obstaja - preskacem")
+
     return uuids
 
 
