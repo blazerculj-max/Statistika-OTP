@@ -1824,6 +1824,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     <button class="nb" onclick="showTab('tekme')">Tekme</button>
     <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
     <button class="nb" onclick="showTab('mvp')">MVP</button>
+    <button class="nb" onclick="showTab('transferji')">Prestopi</button>
     <button class="nb" id="mladi-nav-btn" onclick="showTab('mladi')" style="color:var(--teal2)">🌱 Mladi</button>
     <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
         style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
@@ -2165,6 +2166,10 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 
   <div id="tab-3x3" class="tab">
     <div id="t3x3-wrap"></div>
+  </div>
+
+  <div id="tab-transferji" class="tab">
+    <div id="tr-wrap"></div>
   </div>
 
   <div id="tab-mladi" class="tab">
@@ -3692,6 +3697,7 @@ function showTab(t){
     if(b.getAttribute('onclick')?.includes("'"+t+"'")) b.classList.add('active');
   });
   if(t==='ekipe')renderTeam();
+  if(t==='transferji')renderTransferji();
   if(t==='tekme')renderMatches();
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
@@ -3773,6 +3779,100 @@ function setLigaPhase(ph){
 function setLMode(m){lMode=m;document.getElementById('lbtn-avg').classList.toggle('active',m==='avg');document.getElementById('lbtn-tot').classList.toggle('active',m==='tot');renderLeaders();}
 function setMinShots(){min2T=parseFloat(document.getElementById('min2t').value);min3T=parseFloat(document.getElementById('min3t').value);minPM=parseFloat(document.getElementById('minpm').value);renderLeaders();}
 function toggleHeatmap(){heatmap=!heatmap;document.getElementById('btn-hm').classList.toggle('active',heatmap);renderTeam();}
+
+// ═══ PRESTOPI — primerjava registracij dveh sezon (data/transfers.json) ═══
+let _TRANSFERS=null, _trTried=false;
+async function loadTransfers(){
+  if(_TRANSFERS||_trTried)return _TRANSFERS;
+  _trTried=true;
+  try{
+    const r=await fetch(seasonFileUrl('transfers'),{cache:'no-cache'});
+    if(r.ok)_TRANSFERS=await r.json();
+  }catch(e){}
+  return _TRANSFERS;
+}
+// Od kod / kam — besedilo pod imenom.
+function trStation(p, smer){
+  const s=smer==='in'?p.from:p.to;
+  // Premik znotraj istega kluba (mladinska ↔ članska) ni prestop.
+  if(p.own) return s ? `znotraj kluba · ${s.comp}` : 'znotraj kluba';
+  if(!s) return smer==='in' ? 'lani ni bil registriran v Sloveniji'
+                            : 'letos ni registriran v Sloveniji';
+  return `${smer==='in'?'iz':'v'} ${s.team} · ${s.comp}`;
+}
+function trPlayerRow(p, smer){
+  const c = smer==='in' ? 'var(--green)' : 'var(--red)';
+  const img=p.photo?`<img src="${LOCAL_IMG_BASE}${p.photo}.png" alt="" loading="lazy"
+      style="width:30px;height:30px;border-radius:8px;object-fit:cover;background:var(--card2);flex-shrink:0"
+      onerror="this.onerror=null;this.src='https://api.kzs.si/public/images/${p.photo}'">`
+    :`<div style="width:30px;height:30px;border-radius:8px;background:var(--card2);flex-shrink:0"></div>`;
+  return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+    ${img}
+    <div style="flex-grow:1;min-width:0">
+      <div style="font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}${p.born?` <span style="color:var(--mut);font-weight:400;font-family:var(--fm);font-size:.72rem">${p.born}</span>`:''}</div>
+      <div style="font-size:.74rem;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${trStation(p,smer)}</div>
+    </div>
+    <span style="color:${c};font-family:var(--fm);font-size:.9rem;flex-shrink:0">${smer==='in'?'↘':'↗'}</span>
+  </div>`;
+}
+function renderTransferji(){
+  const wrap=document.getElementById('tr-wrap');
+  if(!wrap)return;
+  if(!_TRANSFERS){
+    wrap.innerHTML='<div class="empty">Nalagam prestope…</div>';
+    loadTransfers().then(()=>{ if(_TRANSFERS)renderTransferji();
+      else wrap.innerHTML='<div class="empty">Prestopi še niso na voljo.</div>'; });
+    return;
+  }
+  const lg=_TRANSFERS.leagues[currentLeague];
+  if(!lg){wrap.innerHTML='<div class="empty">Za to ligo ni podatkov o prestopih.</div>';return;}
+  const lgColor=currentLeague==='liga1'?'#f97316':currentLeague==='liga2'?'#3b82f6':'#a855f7';
+  const prevLbl=SEASON_NAMES[_TRANSFERS.prevSeasonId]||('S'+_TRANSFERS.prevSeasonId);
+  const curLbl=SEASON_NAMES[_TRANSFERS.seasonId]||('S'+_TRANSFERS.seasonId);
+  const tin=lg.teams.reduce((s,t)=>s+t.in.length,0), tout=lg.teams.reduce((s,t)=>s+t.out.length,0);
+
+  let html=`<div style="margin-bottom:8px">
+      <h2 style="margin:0">Prestopi <span style="color:${lgColor}">${getLg().short||''}</span></h2>
+      <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-top:4px">
+        ${prevLbl} → ${curLbl} · ${tin} prišlo, ${tout} odšlo
+      </div>
+    </div>
+    <div style="font-size:.78rem;color:var(--mut);line-height:1.5;margin-bottom:18px;max-width:760px">
+      Primerjava prijavljenih igralcev obeh sezon. Kjer je igralec lani (ali letos) igral drugje v
+      Sloveniji, je navedena ekipa in tekmovanje — tudi zunaj teh treh lig.
+    </div>`;
+
+  lg.teams.forEach(t=>{
+    const color=TEAM_COLORS[t.name]||lgColor;
+    // Dokler klub ni prijavil vsaj približno cele ekipe, so "odhodi" nezanesljivi:
+    // večina jih je le še neregistriranih igralcev.
+    const nepopoln = (t.squadNow||0) < 10 || (t.out.length >= (t.squadNow||0));
+    html+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+        ${teamLogoHtml(t.name,28)}
+        <span style="font-size:1.02rem;font-weight:700">${t.name}</span>
+        <span style="flex-grow:1"></span>
+        <span style="font-family:var(--fm);font-size:.72rem;color:var(--green)">+${t.in.length}</span>
+        <span style="font-family:var(--fm);font-size:.72rem;color:var(--red)">−${t.out.length}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px">
+        <div>
+          <div style="font-family:var(--fm);font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--green);margin-bottom:6px">Prišli</div>
+          ${t.in.length?t.in.map(p=>trPlayerRow(p,'in')).join(''):'<div style="font-size:.78rem;color:var(--mut);padding:8px 0">Ni prihodov</div>'}
+        </div>
+        <div>
+          <div style="font-family:var(--fm);font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--red);margin-bottom:6px">Odšli</div>
+          ${nepopoln?`<div style="font-size:.74rem;color:var(--mut);line-height:1.45;padding:8px 10px;margin-bottom:6px;border:1px dashed var(--border2);border-radius:8px">
+              Klub ima za zdaj ${t.squadNow} ${t.squadNow===1?'prijavljenega':'prijavljenih'} — prijave še tečejo,
+              zato spodnji seznam našteva tudi igralce, ki morda le še niso registrirani.
+            </div>`:''}
+          ${t.out.length?t.out.map(p=>trPlayerRow(p,'out')).join(''):'<div style="font-size:.78rem;color:var(--mut);padding:8px 0">Ni odhodov</div>'}
+        </div>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML=html;
+}
 
 // ═══ SESTAVI — prijavljeni igralci (data/rosters.json) ═══
 // Statistika nastane šele iz odigranih tekem; sestavi obstajajo že prej.

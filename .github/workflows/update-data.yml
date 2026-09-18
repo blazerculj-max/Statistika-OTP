@@ -69,6 +69,15 @@ jobs:
         run: python scripts/fetch_rosters.py
         continue-on-error: true
 
+      # ── Prestopi (primerjava registracij obeh sezon) ──
+      # Tece PO sestavih (rabi jih) in PRED slikami. Lanski indeks je
+      # predpomnjen v data/_registrations_s{N}.json, zato zagon bere samo
+      # letosnjo sezono (~2 min namesto ~5).
+      - name: Posodobi prestope
+        if: github.event.inputs.mode != 'archive'
+        run: python scripts/fetch_transfers.py
+        continue-on-error: true
+
       # ── NOVO: prenesi slike (inkrementalno) po fetchu ──
       # Tece vedno; inkrementalno je hitro (samo HEAD za obstojece).
       # Pri 'full' modu uporabi --force za popolno osvezitev slik.
