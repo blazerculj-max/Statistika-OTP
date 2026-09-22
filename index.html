@@ -139,6 +139,7 @@ select:focus{outline:none;border-color:var(--acc)}
 .ps-tn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .ts{text-align:center}.tsv{font-family:var(--fh);font-size:1.4rem}
 .tsl{font-size:.62rem;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.std-team-bar{display:inline-block;width:3px;height:18px;border-radius:2px;flex-shrink:0;margin-right:2px}
 .tw{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
 .tw-hint{display:none;font-family:var(--fs);font-size:.62rem;color:var(--mut);
   letter-spacing:.06em;text-align:right;margin:0 2px 6px}
@@ -151,10 +152,11 @@ select:focus{outline:none;border-color:var(--acc)}
 .st th:first-child,.st td:first-child{text-align:left;padding-left:12px;min-width:160px;font-family:var(--fs);font-weight:500}
 .st td{padding:10px 7px;text-align:center;border-bottom:1px solid var(--border);white-space:nowrap;transition:background .12s;font-variant-numeric:tabular-nums}
 .st tr:hover td{background:rgba(249,115,22,.04)}
-.lp{background:rgba(249,115,22,.16)!important;color:var(--acc)!important;font-weight:700}
-.lr{background:rgba(96,165,250,.14)!important;color:var(--blue)!important;font-weight:700}
-.la{background:rgba(167,139,250,.14)!important;color:var(--purple)!important;font-weight:700}
-.le{background:rgba(52,211,153,.14)!important;color:var(--green)!important;font-weight:700}
+/* EN sam poudarek za vodilnega v kategoriji. Prej so bile štiri barve
+   (oranžna/modra/vijolična/zelena), a katero kategorijo celica predstavlja,
+   pove že stolpec — barva je bila podvojena informacija. Hkrati sta zelena
+   in rdeča s tem izgubili edini pomen, ki ga morata imeti: dobro/slabo. */
+.lp,.lr,.la,.le{background:rgba(249,115,22,.14)!important;color:var(--acc)!important;font-weight:700}
 .phi{color:#4ade80}.pmd{color:#facc15}.plo{color:#f87171}
 .td-pct{display:flex;flex-direction:column;align-items:center;gap:1px}
 .td-pct-sub{font-size:.62rem;color:var(--mut);font-family:var(--fm);line-height:1}
@@ -1913,10 +1915,8 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     <div class="tw-hint">↔ povleci tabelo za več stolpcev</div>
     <div class="tw"><table class="st" id="st"></table></div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.7rem;color:var(--mut);margin-top:8px">
-      <div style="width:10px;height:10px;border-radius:2px;background:var(--acc)"></div><span>Vodilni v točkah</span>
-      <div style="width:10px;height:10px;border-radius:2px;background:var(--blue)"></div><span>Vodilni v skokih</span>
-      <div style="width:10px;height:10px;border-radius:2px;background:var(--purple)"></div><span>Vodilni v asistencah</span>
-      <div style="width:10px;height:10px;border-radius:2px;background:var(--green)"></div><span>Vodilni v EFE</span>
+      <div style="width:10px;height:10px;border-radius:2px;background:var(--acc)"></div>
+      <span>Poudarjena vrednost = vodilni v ekipi pri tem stolpcu</span>
     </div>
   </div>
 
@@ -10172,7 +10172,7 @@ function drawRaceStandings(){
     }
     return `<tr>
       <td><span class="std-pos ${posCls} ${zone}">${s.pos}</span></td>
-      <td><div class="std-team-cell">${teamLogoHtml(s.team,24)}<span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${s.team.replace(/'/g,"\\'")}')">${s.team}</span></div></td>
+      <td><div class="std-team-cell"><span class="std-team-bar" style="background:${tc}"></span>${teamLogoHtml(s.team,24)}<span class="std-team-name team-clickable" onclick="showTeamProfile('${s.team.replace(/'/g,"\\'")}')">${s.team}</span></div></td>
       <td>${move}</td>
       <td>${rdMs.length}</td>
       <td style="color:#22c55e;font-weight:700">${W}</td>
@@ -11836,7 +11836,7 @@ function buildStandingsTable(data, sort, title, color){
     let zone = i<clCount?'zone-cl':(i>=N-relCount && relCount>0)?'zone-rel':'';
     return `<tr>
       <td><span class="std-pos ${posCls} ${zone}">${i+1}</span></td>
-      <td><div class="std-team-cell">${teamLogoHtml(t.name,26)}<span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
+      <td><div class="std-team-cell"><span class="std-team-bar" style="background:${tc}"></span>${teamLogoHtml(t.name,26)}<span class="std-team-name team-clickable" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
       <td>${t.T}</td>
       <td style="color:#22c55e;font-weight:700">${t.W}</td>
       <td style="color:#ef4444">${t.L}</td>
@@ -12026,7 +12026,7 @@ function renderStandings(){
     rows.forEach((r,i)=>{
       const tc=TEAM_COLORS[r.t]||'#888';const diff=r.pf-r.pa;
       html2+=`<tr><td style="text-align:center;color:var(--mut)">${i+1}.</td>
-        <td><div class="std-team-cell">${teamLogoHtml(r.t,22)}<span class="std-team-name team-clickable" style="color:${tc}" onclick="showTeamProfile('${r.t.replace(/'/g,"\\'")}')">${r.t}</span></div></td>
+        <td><div class="std-team-cell"><span class="std-team-bar" style="background:${tc}"></span>${teamLogoHtml(r.t,22)}<span class="std-team-name team-clickable" onclick="showTeamProfile('${r.t.replace(/'/g,"\\'")}')">${r.t}</span></div></td>
         <td style="text-align:center">${r.g}</td><td style="text-align:center;color:#22c55e;font-weight:700">${r.w}</td>
         <td style="text-align:center;color:#ef4444">${r.l}</td>
         <td style="text-align:center;color:${diff>=0?'#22c55e':'#ef4444'}">${diff>0?'+':''}${diff}</td></tr>`;
