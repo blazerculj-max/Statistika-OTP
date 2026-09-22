@@ -157,7 +157,13 @@ select:focus{outline:none;border-color:var(--acc)}
    pove že stolpec — barva je bila podvojena informacija. Hkrati sta zelena
    in rdeča s tem izgubili edini pomen, ki ga morata imeti: dobro/slabo. */
 .lp,.lr,.la,.le{background:rgba(249,115,22,.14)!important;color:var(--acc)!important;font-weight:700}
-.phi{color:#4ade80}.pmd{color:#facc15}.plo{color:#f87171}
+/* Odstotki meta: signal ostane, a ne na barvni osi. Zelena in rdeča morata
+   povsod pomeniti samo smer izida (zmaga/poraz, razlika v koših); tu ju je
+   prej jemala uspešnost meta. Namesto barve zato kontrast in teža:
+   odličen met izstopa, slab se umakne. */
+.phi{color:var(--text);font-weight:700}
+.pmd{color:var(--text)}
+.plo{color:var(--sub);font-weight:400}
 .td-pct{display:flex;flex-direction:column;align-items:center;gap:1px}
 .td-pct-sub{font-size:.62rem;color:var(--mut);font-family:var(--fm);line-height:1}
 .ldrs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
