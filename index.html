@@ -99,6 +99,20 @@ select:focus{outline:none;border-color:var(--acc)}
   .ps-match{grid-template-columns:1fr auto 1fr;gap:10px}
   .ps-match .ps-logo{width:38px;height:38px}
 
+  /* GOSTA TABELA: 25 stolpcev na 375px se mora drsati, a ob drsenju izgubiš
+     ime igralca in ne veš več, čigava je vrstica. Prvi stolpec zato prilepimo
+     na levi rob. Ozadje mora biti neprosojno, sicer skozenj drsijo številke. */
+  /* Ime igralca je jemalo 265 od 375px, za šest števil je ostalo ~110px.
+     Specifičnost .tw .st mora preseči kasnejši .st td:first-child{min-width:160px}. */
+  .tw .st th:first-child,.tw .st td:first-child{
+    position:sticky;left:0;min-width:0;max-width:124px;
+    overflow:hidden;text-overflow:ellipsis;box-shadow:1px 0 0 var(--border2)}
+  .tw .st tbody td:first-child{background:var(--bg);z-index:3}
+  .tw .st thead th:first-child{background:var(--card2);z-index:6}
+  .st{font-size:.72rem}
+  .st td{padding:11px 5px}
+  .st th{padding:10px 5px}
+
   .team-hdr{flex-wrap:wrap;gap:10px 12px;padding:14px}
   .tname{font-size:1.15rem;line-height:1.15}
   .tstats{margin-left:0;width:100%;gap:0;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px}
@@ -114,6 +128,8 @@ select:focus{outline:none;border-color:var(--acc)}
 .ts{text-align:center}.tsv{font-family:var(--fh);font-size:1.4rem}
 .tsl{font-size:.62rem;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
 .tw{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+.tw-hint{display:none;font-family:var(--fs);font-size:.62rem;color:var(--mut);
+  letter-spacing:.06em;text-align:right;margin:0 2px 6px}
 .st{width:100%;border-collapse:collapse;font-family:var(--fm);font-size:.75rem}
 .st .gr{font-size:.6rem;letter-spacing:.12em;text-align:center;padding:3px;font-family:var(--fh);border-bottom:1px solid var(--border)}
 .gr-met{background:#0f0f20;color:var(--acc)}.gr-sk{background:#0a1020;color:var(--blue)}.gr-on{background:#120a20;color:var(--purple)}.gr-bl{background:#0a1a12;color:var(--green)}.gr-em{background:#0e0e1a;color:transparent}
@@ -1882,6 +1898,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
       </select>
     </div>
     <div id="team-hdr-wrap"></div>
+    <div class="tw-hint">↔ povleci tabelo za več stolpcev</div>
     <div class="tw"><table class="st" id="st"></table></div>
     <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:.7rem;color:var(--mut);margin-top:8px">
       <div style="width:10px;height:10px;border-radius:2px;background:var(--acc)"></div><span>Vodilni v točkah</span>
@@ -3975,6 +3992,16 @@ function renderRosterCard(teamName){
     </tr></thead><tbody>${rows}</tbody>`;
 }
 
+// Namig o vodoravnem drsenju kaže samo, kadar tabela res presega okno —
+// sicer bi uporabniku obljubljal stolpce, ki jih ni.
+function osveziNamigDrsenja(){
+  const tw=document.querySelector('.tw'), hint=document.querySelector('.tw-hint');
+  if(!tw||!hint)return;
+  requestAnimationFrame(()=>{
+    hint.style.display = tw.scrollWidth > tw.clientWidth + 4 ? 'block' : 'none';
+  });
+}
+
 function renderTeam(){
   // Pred prvo odigrano tekmo statistike ni — pokaži prijavljeni sestav.
   if(!Object.keys(matchStatsCache).length){
@@ -4038,7 +4065,10 @@ function renderTeam(){
   function hmStyle(k,p){if(!heatmap||!hmRange[k])return '';const{min,max}=hmRange[k];if(max===min)return '';const raw=sortVal(p,k);if(raw<=-999)return '';let t=(raw-min)/(max-min);if(hmInverse.has(k))t=1-t;if(t<0.15||t>0.85){const op=(t>0.5?(t-0.15):((1-t)-0.15))*0.35;return t>0.5?'background:rgba(52,211,153,'+op.toFixed(2)+') !important':'background:rgba(248,113,113,'+op.toFixed(2)+') !important';}return '';}
 
   const hdrGrpRow=GRPS.map(g=>`<th colspan="${g.span}" class="gr ${g.cls}">${g.lbl}</th>`).join('');
-  const MOBILE_COLS=['name','T','toc','obr','pod','efe'];
+  // Na telefonu klasična vrstica iz zapisnika: tekme, točke, SKUPNI skoki,
+  // podaje, učinek. Prej je bil tu 'obr' (samo obrambni skoki), kar je brez
+  // 'nap' zavajajoče — bralec to bere kot skoke.
+  const MOBILE_COLS=['name','T','toc','sk','pod','efe'];
   const hdrRow=COLS.map((c,i)=>{let cls=c.k==='name'?'':'';if(sortCol===i)cls+=' '+(sortDir===1?'sd':'sa');if(!MOBILE_COLS.includes(c.k))cls+=' col-mob-hide';return `<th class="${cls}" title="${c.tip}" onclick="sortTeam(${i})" style="white-space:nowrap">${c.lbl}${c.tip&&c.tip.length>20?'<span class="th-q">?</span>':''}</th>`;}).join('');
 
   const rows=players.map(p=>{
@@ -4060,6 +4090,7 @@ function renderTeam(){
   }).join('');
 
   document.getElementById('st').innerHTML=`<thead><tr class="grp-hdr-row">${hdrGrpRow}</tr><tr>${hdrRow}</tr></thead><tbody>${rows||'<tr><td colspan="25" class="empty">Ni podatkov</td></tr>'}</tbody>`;
+  osveziNamigDrsenja();
 }
 
 function renderMiniTrend(pid){
