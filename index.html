@@ -3415,6 +3415,12 @@ let ws = null;
 let liveMatchId = null;
 
 function initWebSocket() {
+  // Klicano je z več mest (ob nalaganju, po podatkih, ob ponovni povezavi).
+  // Brez te varovalke vsak klic odpre NOV socket čez prejšnjega: stari ostane
+  // odprt, nov pa prepiše ws, zato onopen starega pošlje naročnino na novega,
+  // ki je še v CONNECTING → "Failed to execute 'send'" in naročnina propade.
+  if (ws && ws.readyState === WebSocket.OPEN) { subscribeToLiveMatches(); return; }
+  if (ws && ws.readyState === WebSocket.CONNECTING) return;  // onopen bo poskrbel
   ws = new WebSocket('wss://zapisniki.kzs.si/cable', ['actioncable-v1-json']);
   ws.onopen = () => subscribeToLiveMatches();
   ws.onmessage = (e) => {
@@ -3438,6 +3444,8 @@ function initWebSocket() {
 }
 
 function subscribeToLiveMatches() {
+  // Poslati se da samo po odprti povezavi; sicer to opravi onopen.
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
   // Find today's matches that might be live
   const now = new Date();
   const todayMatches = allMatches.filter(m => {
@@ -8564,10 +8572,14 @@ function computeTeamPower(){
 function preseasonHtml(){
   const lgColor = currentLeague==='liga1'?'#f97316':currentLeague==='liga2'?'#3b82f6':'#a855f7';
   const now = new Date();
+  // Tekma, ki TEČE, ima prednost pred odštevanjem — sicer bi med prvo tekmo
+  // sezone pisalo "sezona se še ni začela" in odštevalo do naslednje.
+  const zivaM = allMatches.find(m=>m.status==='LIVE'
+                || (typeof liveScores!=='undefined' && liveScores[m.id]?.isLive));
   const prih = allMatches
     .filter(m=>m.dateTime && new Date(m.dateTime) > now)
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
-  const prva = prih[0] || allMatches.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))[0];
+  const prva = zivaM || prih[0] || allMatches.slice().sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))[0];
 
   // KZS ob objavi koledarja ure pogosto še nima nastavljene (dateTime = 00:00Z).
   // V tem primeru izpišemo samo datum — sicer bi lokalni čas pokazal izmišljeno
@@ -8586,18 +8598,26 @@ function preseasonHtml(){
     }
   }
 
+  // V živo: rezultat in četrtina. Sicer: odštevanje do začetka.
+  let sredina = odst || '—';
+  if(zivaM){
+    const ls=(typeof liveScores!=='undefined')?liveScores[zivaM.id]:null;
+    const s1=ls?.score1 ?? zivaM.firstTeamScore ?? 0, s2=ls?.score2 ?? zivaM.secondTeamScore ?? 0;
+    sredina = `${s1} : ${s2}`;
+  }
+
   const kartica = prva ? `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:16px;text-align:center;cursor:pointer"
          onclick="openMatch(${prva.id})">
-      <div style="font-family:var(--fm);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:14px">Prva tekma sezone</div>
+      <div style="font-family:var(--fm);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:${zivaM?'var(--red)':'var(--mut)'};margin-bottom:14px">${zivaM?'● Tekma v teku':'Prva tekma sezone'}</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap">
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px">
           ${teamLogoHtml(prva.firstTeamName,46)}
           <div style="font-weight:700">${prva.firstTeamName}</div>
         </div>
         <div style="min-width:96px">
-          <div style="font-family:var(--fm);font-size:1.6rem;font-weight:800;color:${lgColor}">${odst||'—'}</div>
-          <div style="font-size:.7rem;color:var(--mut)">do začetka</div>
+          <div style="font-family:var(--fm);font-size:1.6rem;font-weight:800;color:${zivaM?'var(--red)':lgColor}">${sredina}</div>
+          <div style="font-size:.7rem;color:var(--mut)">${zivaM?'v živo':'do začetka'}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px">
           ${teamLogoHtml(prva.secondTeamName,46)}
@@ -8624,7 +8644,7 @@ function preseasonHtml(){
     <div style="margin-bottom:18px">
       <h2 style="margin:0">Pregled <span style="color:${lgColor}">${getLg().short||''}</span></h2>
       <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-top:4px">
-        ${seasonLabel()} — sezona se še ni začela.
+        ${zivaM ? `${seasonLabel()} — prva tekma je v teku.` : `${seasonLabel()} — sezona se še ni začela.`}
       </div>
     </div>
     ${kartica}
