@@ -113,6 +113,18 @@ select:focus{outline:none;border-color:var(--acc)}
   .st td{padding:11px 5px}
   .st th{padding:10px 5px}
 
+  /* TIPALNE TARČE: klikljivo je bilo samo besedilo (ime igralca 142x15,
+     ime ekipe v lestvici 28x18). Napis raztegnemo čez celico, navpični
+     padding z negativno marginico pa ne spremeni višine vrstice. */
+  .pname-link{display:block;padding:11px 0;margin:-11px 0}
+  /* .standings-table … mora preseči kasnejši .team-clickable{padding:2px 0} */
+  .standings-table .std-team-name{display:block;width:100%;padding:11px 0;margin:-11px 0}
+
+  /* Rezultati v pajku končnice so podatek, ne oznaka — 9.6px je premalo.
+     Specifičnost mora preseči kasnejši osnovni .pbgame{font-size:.6rem}. */
+  .pbracket .pbgame{font-size:.72rem}
+  .pbracket .pbseries-tag{font-size:.64rem}
+
   .team-hdr{flex-wrap:wrap;gap:10px 12px;padding:14px}
   .tname{font-size:1.15rem;line-height:1.15}
   .tstats{margin-left:0;width:100%;gap:0;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px}
