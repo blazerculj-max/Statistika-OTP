@@ -1778,6 +1778,17 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
   /* Domača ekipa ima v DOM najprej ime, gostujoča najprej grb. Na namizju je
      to zrcalno in deluje, v stolpcu na telefonu pa je pri eni ekipi ime nad
      grbom, pri drugi pod njim. Vrstni red zato poenotimo: grb, ime, oznaka. */
+  /* MLADI: izbirnik držav (4 zastave + zvezdica) je širok 460px in je sam
+     povzročal vodoravno drsenje CELE strani. Naj se prelomi v dve vrstici. */
+  /* STAROST: kartici najmlajši/najstarejši sta v mreži 1fr 1fr, ki se pod
+     vsebino ne more skrčiti — skupaj 460px je širilo celo stran. Drug pod
+     drugo. */
+  .age-extremes{grid-template-columns:1fr!important}
+
+  .ml-seg.ml-country-seg{display:flex;flex-wrap:wrap;justify-content:center;
+    max-width:100%;gap:4px}
+  .ml-seg.ml-country-seg>*{flex:0 0 auto}
+
   .live-team-name{justify-content:flex-start;gap:5px}
   .live-team-name img,.live-team-name .live-team-logo,.live-team-name .logo-fallback{order:1}
   .live-team-name .tn-txt{order:2}
@@ -6466,7 +6477,7 @@ function renderAge(){
       <div style="text-align:center"><div style="font-family:var(--fs);font-size:2rem;font-weight:800;color:${color};line-height:1">${age}</div><div style="font-size:.6rem;color:var(--mut)">let</div></div>
     </div>`;
   };
-  const highlights = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+  const highlights = `<div class="age-extremes" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
     ${ageCard(youngest,'👶 Najmlajši',' #34d399')}
     ${ageCard(oldest,'🎓 Najstarejši','#f97316')}
   </div>`;
