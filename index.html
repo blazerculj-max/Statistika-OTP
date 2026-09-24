@@ -1806,6 +1806,13 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     max-width:100%;gap:4px}
   .ml-seg.ml-country-seg>*{flex:0 0 auto}
 
+  /* Trije filtri so vsak zasedli svojo vrstico, ker privzeti min-width:auto
+     spusti <select> ne dovoli skrčiti pod najdaljšo možnost ("Sortiraj: nad
+     letnikom"). Pred prvim podatkom je bilo tako pet vrstic krmilnikov. Z
+     min-width:0 se letniki in ekipe postavijo v isto vrstico, sortiranje z
+     najdaljšimi napisi pa se prelomi v svojo. */
+  .ml-ctrls select{min-width:0;max-width:none}
+
   .live-team-name{justify-content:flex-start;gap:5px}
   .live-team-name img,.live-team-name .live-team-logo,.live-team-name .logo-fallback{order:1}
   .live-team-name .tn-txt{order:2}
