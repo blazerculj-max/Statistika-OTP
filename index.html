@@ -1485,6 +1485,9 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .pstat-img,.pstat-fb{width:30px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0}
 .pstat-fb{display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.7rem}
 .pstat-name{font-family:var(--fh);font-weight:600;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Polno ime na siroko, skrajsano ("S. Knezevic") na ozkih zaslonih —
+   preklop je v mobilnem bloku na koncu stylesheeta. */
+.nm-short{display:none}
 /* Pregled — zadnji rezultati */
 .pregled-res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .pregled-res{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 15px;cursor:pointer;transition:transform .2s cubic-bezier(.2,.8,.2,1),border-color .2s,box-shadow .2s}
@@ -1739,6 +1742,11 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
   /* Kartica prve/žive tekme: mreža, da se Šentjur ne prelomi pod rezultat. */
   .ps-match{grid-template-columns:1fr auto 1fr;gap:10px}
   .ps-match .ps-logo{width:38px;height:38px}
+
+  /* Kartice statističnih poudarkov so na 375px široke ~165px: polno ime je
+     odrezalo v "Sreten Knež…". Namesto tritočkovnika pokažemo "S. Knežević". */
+  .nm-full{display:none}
+  .nm-short{display:inline}
 
   /* GOSTA TABELA: 25 stolpcev na 375px se mora drsati, a ob drsenju izgubiš
      ime igralca in ne veš več, čigava je vrstica. Prvi stolpec zato prilepimo
@@ -3989,13 +3997,25 @@ async function loadRosters(){
   }catch(e){}
   return _ROSTERS;
 }
-// Slovenščina ima dvojino: 1 tujec, 2 tujca, 3–4 tujci, 5+ tujcev.
-function sklonTujec(n){
-  const m=n%100;
-  if(m===1)return 'Tujec';
-  if(m===2)return 'Tujca';
-  if(m===3||m===4)return 'Tujci';
-  return 'Tujcev';
+// Slovenščina ima štiri oblike: ednina (1), dvojina (2), množina (3–4)
+// in rodilnik (5+). Oblike podamo v tem vrstnem redu. Pri sestavljenih
+// številih (21, 22 …) slovenščina uporabi rodilnik, zato primerjamo
+// natanko 1–4 in ne ostanka po deljenju.
+function sklon(n,forms){
+  if(n===1)return forms[0];
+  if(n===2)return forms[1];
+  if(n===3||n===4)return forms[2];
+  return forms[3];
+}
+function sklonTujec(n){return sklon(n,['Tujec','Tujca','Tujci','Tujcev']);}
+function nTekem(n){return `${n} ${sklon(n,['tekma','tekmi','tekme','tekem'])}`;}
+function nIgralcev(n){return `${n} ${sklon(n,['igralec','igralca','igralci','igralcev'])}`;}
+// Prvo ime skrčimo na začetnico, priimek ostane cel: "S. Knežević".
+// Za ozke kartice, kjer bi polno ime odrezal tritočkovnik.
+function kratkoIme(full){
+  const parts=String(full||'').trim().split(/\s+/);
+  if(parts.length<2)return full||'';
+  return `${parts[0][0]}. ${parts[parts.length-1]}`;
 }
 // Sestav izbrane ekipe v trenutni ligi, ali null.
 function rosterFor(teamName){
@@ -4108,7 +4128,7 @@ function renderTeam(){
   document.getElementById('team-hdr-wrap').innerHTML=`
   <div class="team-hdr" style="--tc:${color}">
     <div class="team-hdr-logo">${teamLogoHtml(team,48)}</div>
-    <div><div class="tname team-clickable" onclick="showTeamProfile('${team.replace(/'/g,"\\'")}')" style="cursor:pointer">${team}</div><div class="tmeta">${allTm.length} igralcev · ${tmGames} tekem</div></div>
+    <div><div class="tname team-clickable" onclick="showTeamProfile('${team.replace(/'/g,"\\'")}')" style="cursor:pointer">${team}</div><div class="tmeta">${nIgralcev(allTm.length)} · ${nTekem(tmGames)}</div></div>
     <div class="tstats">
       <div class="ts"><div class="tsv" style="color:${color}">${tmPts}</div><div class="tsl">Skupaj TOČ</div></div>
       <div class="ts"><div class="tsv" style="color:${color}">${fmt(tmPts/tmGames)}</div><div class="tsl">TOČ/TM</div></div>
@@ -6150,7 +6170,7 @@ function renderSpotlight(){
           return `<div class="pp-photo-wrap" style="width:64px;height:64px">${ph?`<img src="${ph}" class="pp-photo" style="width:64px;height:64px" onerror="_ppPhotoErr(this,'${ini}',64)">`:`<div class="pp-photo-fallback" style="width:64px;height:64px">${ini}</div>`}<span class="pp-photo-logo">${teamLogoHtml(best[F.team],22)}</span></div>`;})()}
         <div>
           <div class="spotlight-name">${best[F.name]}</div>
-          <div class="spotlight-team">${best[F.team]} · ${best[F.T]} tekem</div>
+          <div class="spotlight-team">${best[F.team]} · ${nTekem(best[F.T])}</div>
         </div>
       </div>
       <div class="spotlight-stats">
@@ -6213,7 +6233,7 @@ function renderLigaFeatured(){
       <div>
         <div class="hcard-val"><span data-count="${_lpAvg(p,F.toc)}" data-dec="1">0</span><small>PTS/tm</small></div>
         <div class="hcard-name">${p[F.name]}</div>
-        <div class="hcard-team">${p[F.team]} · ${p[F.T]} tekem</div>
+        <div class="hcard-team">${p[F.team]} · ${nTekem(p[F.T])}</div>
         <div class="hcard-spark">${spark}</div>
       </div>
       <div class="hcard-share" onclick="event.stopPropagation();openShareCard(${pIdx})" title="Deli kartico">
@@ -6549,7 +6569,7 @@ function doSearch(){
           return ph?`<img src="${ph}" class="scard-photo" alt="" onerror="this.outerHTML='<div class=\'scard-photo-fb\' style=\'background:${color}33;color:${color}\'>${ini}</div>'">`:`<div class="scard-photo-fb" style="background:${color}33;color:${color}">${ini}</div>`;})()}
         <div>
           <div class="scard-name">${p[F.name]}</div>
-          <div class="scard-team" style="color:${color}">${p[F.team]} · ${p[F.T]} tekem</div>
+          <div class="scard-team" style="color:${color}">${p[F.team]} · ${nTekem(p[F.T])}</div>
         </div>
       </div>
       <div class="scard-stats">
@@ -6690,7 +6710,7 @@ function showPlayer(idx){
           })()}
           <div>
             <div class="pp-hero-name">${p[F.name]}</div>
-            <div class="pp-hero-meta">${p[F.team]} · ${p[F.born]} · ${age(p[F.born])} let · ${t} tekem</div>
+            <div class="pp-hero-meta">${p[F.team]} · ${p[F.born]} · ${age(p[F.born])} let · ${nTekem(t)}</div>
           </div>
         </div>
         <div class="pp-hero-signature">
@@ -6825,7 +6845,7 @@ async function renderPlayerSeasonCompare(playerName){
     html+=`<div style="background:var(--card2);border-radius:10px;padding:10px 12px;${r.current?`border:1px solid ${acc}66`:'border:1px solid var(--border)'}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <span style="font-weight:700;font-size:.82rem">${r.label}${r.current?' <span style="color:'+acc+';font-size:.65rem">aktualna</span>':''}</span>
-        <span style="font-size:.68rem;color:var(--mut)">${r.games} tekem</span>
+        <span style="font-size:.68rem;color:var(--mut)">${nTekem(r.games)}</span>
       </div>
       <div style="display:flex;gap:14px;font-family:var(--fm);font-size:.74rem;color:var(--sub)">
         <span><b style="color:#f97316">${r.pts.toFixed(1)}</b> tč</span>
@@ -7841,13 +7861,13 @@ function renderPlayerCompare() {
       <div style="text-align:center">
         ${p1?`<div style="display:flex;justify-content:center;margin-bottom:8px">${(()=>{const ph=playerPhotoUrl(p1[F.pid]);const ini=p1[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);return ph?`<img src="${ph}" style="width:56px;height:64px;border-radius:12px;object-fit:cover;object-position:top center;border:2px solid ${c1}" onerror="this.outerHTML='<div style=&quot;width:56px;height:64px;border-radius:12px;background:${c1}33;color:${c1};display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--fh)&quot;>${ini}</div>'">`:`<div style="width:56px;height:64px;border-radius:12px;background:${c1}33;color:${c1};display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--fh)">${ini}</div>`;})()}</div><div style="font-size:1.1rem;font-weight:700;color:${c1}">${p1[F.name]}</div>
         <div style="font-size:.75rem;padding:2px 8px;background:${c1}22;color:${c1};border-radius:20px;display:inline-block;margin-top:3px">${TEAM_SHORT[p1[F.team]]||p1[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${p1[F.T]} tekem · ${(p1[F.toc]/Math.max(p1[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
+        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${nTekem(p1[F.T])} · ${(p1[F.toc]/Math.max(p1[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
       </div>
       <div style="text-align:center">${radarSvg(p1,p2)}</div>
       <div style="text-align:center">
         ${p2?`<div style="display:flex;justify-content:center;margin-bottom:8px">${(()=>{const ph=playerPhotoUrl(p2[F.pid]);const ini=p2[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);return ph?`<img src="${ph}" style="width:56px;height:64px;border-radius:12px;object-fit:cover;object-position:top center;border:2px solid ${c2}" onerror="this.outerHTML='<div style=&quot;width:56px;height:64px;border-radius:12px;background:${c2}33;color:${c2};display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--fh)&quot;>${ini}</div>'">`:`<div style="width:56px;height:64px;border-radius:12px;background:${c2}33;color:${c2};display:flex;align-items:center;justify-content:center;font-weight:800;font-family:var(--fh)">${ini}</div>`;})()}</div><div style="font-size:1.1rem;font-weight:700;color:${c2}">${p2[F.name]}</div>
         <div style="font-size:.75rem;padding:2px 8px;background:${c2}22;color:${c2};border-radius:20px;display:inline-block;margin-top:3px">${TEAM_SHORT[p2[F.team]]||p2[F.team]}</div>
-        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${p2[F.T]} tekem · ${(p2[F.toc]/Math.max(p2[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
+        <div style="font-size:.65rem;color:var(--mut);margin-top:3px">${nTekem(p2[F.T])} · ${(p2[F.toc]/Math.max(p2[F.T],1)).toFixed(1)} pts</div>`:'<div style="color:var(--mut);font-size:.8rem">Izberi igralca</div>'}
       </div>
     </div>
     <div style="background:var(--card2);border-radius:12px;padding:14px 16px;border:1px solid var(--border)">${statBars}</div>`
@@ -7997,7 +8017,7 @@ async function renderAttendance(){
         <div style="width:${pct}%;height:100%;background:${tc};border-radius:3px"></div>
       </div>
       <span style="font-family:var(--fh);color:${tc};font-weight:700;min-width:44px;text-align:right">${td.avg.toLocaleString()}</span>
-      <span style="font-size:.65rem;color:var(--mut);min-width:60px;text-align:right">${td.count} tekem</span>
+      <span style="font-size:.65rem;color:var(--mut);min-width:60px;text-align:right">${nTekem(td.count)}</span>
     </div>`;
   }).join('');
 
@@ -8860,7 +8880,7 @@ function renderPregled(){
         ${av}
         <div class="hero-info">
           <div class="hero-name">${p[F.name]}</div>
-          <div class="hero-meta">${TEAM_SHORT[p[F.team]]||p[F.team]} · ${p[F.T]} tekem${beRank?` · #${beRank} bElo`:''}</div>
+          <div class="hero-meta">${TEAM_SHORT[p[F.team]]||p[F.team]} · ${nTekem(p[F.T])}${beRank?` · #${beRank} bElo`:''}</div>
           <div class="hero-stats">
             <div class="hero-stat"><span class="hs-v" style="color:${tc}">${toc}</span><span class="hs-l">TOČ</span></div>
             <div class="hero-stat"><span class="hs-v">${sk}</span><span class="hs-l">SKOKI</span></div>
@@ -8945,7 +8965,7 @@ function renderPregled(){
   const leaders=[
     {ic:'🎯',lab:'Trojke / tekmo',get:topBy(p=>p[F.fg3m]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#a855f7'},
     {ic:'💪',lab:'Skoki / tekmo',get:topBy(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#10b981'},
-    {ic:'🎩',lab:'Asistence / tekmo',get:topBy(p=>p[F.pod]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#3b82f6'},
+    {ic:'🎩',lab:'Asist. / tekmo',get:topBy(p=>p[F.pod]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#3b82f6'},
     {ic:'🔥',lab:'Točke / tekmo',get:topBy(p=>p[F.toc]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:lgColor},
   ].filter(x=>x.get);
   if(leaders.length){
@@ -8960,7 +8980,7 @@ function renderPregled(){
       html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
         <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span></div>
         <div class="pstat-val" style="color:${L.col}">${L.fmt(L.get.v)}</div>
-        <div class="pstat-pl">${av}<span class="pstat-name">${p[F.name]}</span></div>
+        <div class="pstat-pl">${av}<span class="pstat-name"><span class="nm-full">${p[F.name]}</span><span class="nm-short">${kratkoIme(p[F.name])}</span></span></div>
       </div>`;
     });
     html+='</div>';
@@ -10033,7 +10053,7 @@ function renderMVP(){
             return `<div class="pp-photo-wrap" style="width:72px;height:72px">${ph?`<img src="${ph}" class="pp-photo" style="width:72px;height:72px" onerror="this.parentElement.querySelector('.pp-photo-logo')?.remove();_ppPhotoErr(this,'${ini}',72)">`:`<div class="pp-photo-fallback" style="width:72px;height:72px">${ini}</div>`}<span class="pp-photo-logo">${teamLogoHtml(p[F.team],24)}</span></div>`;})()}
           <div>
             <div class="mvp-hero-name">${p[F.name]}</div>
-            <div class="mvp-hero-team">${p[F.team]} · ${p[F.T]} tekem</div>
+            <div class="mvp-hero-team">${p[F.team]} · ${nTekem(p[F.T])}</div>
           </div>
         </div>
         <div class="mvp-hero-stats">
@@ -10377,7 +10397,7 @@ function renderCrossObisk(wrap,d1,d2,d3,names,colors){
         <div style="width:${Math.round(s.avg/maxTeamAvg*100)}%;height:100%;background:${s.color};border-radius:3px"></div>
       </div>
       <span style="font-family:var(--fh);color:${s.color};font-weight:700;min-width:44px;text-align:right">${s.avg.toLocaleString()}</span>
-      <span style="font-size:.65rem;color:var(--mut);min-width:50px">${s.count} tekem</span>
+      <span style="font-size:.65rem;color:var(--mut);min-width:50px">${nTekem(s.count)}</span>
     </div>`).join('');
 
   wrap.innerHTML=`
@@ -10385,7 +10405,7 @@ function renderCrossObisk(wrap,d1,d2,d3,names,colors){
       ${attByLeague.map(l=>`<div style="background:var(--card);border:1px solid ${l.color}40;border-left:3px solid ${l.color};border-radius:12px;padding:14px">
         <div style="font-size:.62rem;color:var(--mut);margin-bottom:4px">${l.name}</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:${l.color};line-height:1">${l.avg.toLocaleString()}</div>
-        <div style="font-size:.65rem;color:var(--mut);margin-top:4px">povp./tekmo · ${l.count} tekem</div>
+        <div style="font-size:.65rem;color:var(--mut);margin-top:4px">povp./tekmo · ${nTekem(l.count)}</div>
         <div style="font-size:.7rem;margin-top:4px">Rekord: <b style="color:${l.color}">${l.max.toLocaleString()}</b></div>
       </div>`).join('')}
     </div>
@@ -10581,7 +10601,7 @@ function renderCrossStarost(wrap,d1,d2,d3,names,colors){
         const ms=Object.values(d.matchStats||{});
         return `<div style="background:var(--card);border:1px solid ${colors[li]}40;border-left:3px solid ${colors[li]};border-radius:12px;padding:14px">
           <div style="font-size:.62rem;color:var(--mut);margin-bottom:4px">${names[li]}</div>
-          <div style="font-size:.75rem;color:${colors[li]}">${(d.allMatches||[]).filter(m=>m.status==='FINISHED').length} tekem</div>
+          <div style="font-size:.75rem;color:${colors[li]}">${nTekem((d.allMatches||[]).filter(m=>m.status==='FINISHED').length)}</div>
         </div>`;
       }).join('')}
     </div>
@@ -10651,7 +10671,7 @@ function renderCrossStats(wrap,d1,d2,d3,names,colors){
       ${statsByLeague.map(s=>`<div style="background:var(--card);border:1px solid ${s.color}40;border-left:3px solid ${s.color};border-radius:12px;padding:14px">
         <div style="font-size:.62rem;color:var(--mut);margin-bottom:4px">${s.name}</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:${s.color}">${s.avgPts.toFixed(1)}</div>
-        <div style="font-size:.65rem;color:var(--mut)">točk/tekmo · ${s.totalMatches} tekem</div>
+        <div style="font-size:.65rem;color:var(--mut)">točk/tekmo · ${nTekem(s.totalMatches)}</div>
         <div style="font-size:.7rem;margin-top:4px">Doma zmagajo: <b style="color:${s.color}">${s.homeWinPct}%</b></div>
       </div>`).join('')}
     </div>
@@ -11374,7 +11394,7 @@ function renderSodniki(){
       <div style="font-size:.6rem;color:var(--mut);margin-bottom:4px">${x.icon} ${x.label}</div>
       <div style="font-weight:700;font-size:.85rem;margin-bottom:2px">${x.name||'—'}</div>
       <div style="font-family:var(--fh);font-size:1.4rem;color:${x.color};line-height:1">${x.val}</div>
-      <div style="font-size:.62rem;color:var(--mut);margin-top:2px">${x.games||0} tekem</div>
+      <div style="font-size:.62rem;color:var(--mut);margin-top:2px">${nTekem(x.games||0)}</div>
     </div>`).join('')}
   </div>`;
 
@@ -11484,7 +11504,7 @@ function renderSodniki(){
     <div class="ctrls" style="margin-bottom:12px">
       <select id="ref-select" onchange="renderRefTeamCross(this.value,window.refTeamStatsGlobal,window.teamStatsGlobal)">
         <option value="">— Izberi sodnika —</option>
-        ${sorted.map(s=>`<option value="${s.name}">${s.name} (${s.games} tekem)</option>`).join('')}
+        ${sorted.map(s=>`<option value="${s.name}">${s.name} (${nTekem(s.games)})</option>`).join('')}
       </select>
     </div>
     <div id="ref-team-cross"></div>
@@ -11610,7 +11630,7 @@ function renderRefTeamCross(refName, refTeamStats, teamStats){
 
   wrap.innerHTML=`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
     <div style="font-size:.75rem;color:var(--mut);margin-bottom:10px">
-      <b>${refName}</b> · ${refSt?.games||0} tekem · ${refAvgPF.toFixed(1)} PF/tm · dom. ${refHomePct}%
+      <b>${refName}</b> · ${nTekem(refSt?.games||0)} · ${refAvgPF.toFixed(1)} PF/tm · dom. ${refHomePct}%
       <span style="font-size:.62rem;margin-left:8px">· klikni stolpec za sortiranje · klikni ekipo za tekme</span>
     </div>
     <div style="overflow-x:auto">
@@ -11965,7 +11985,7 @@ function renderH2H(){
           <span style="color:var(--mut);margin:0 8px">–</span>
           <span style="color:${w2>w1?c2:'var(--mut)'}">${w2}</span>
         </div>
-        <div style="font-size:.68rem;color:var(--mut)">${matches.length} tekem · točke: ${pts1}:${pts2}</div>
+        <div style="font-size:.68rem;color:var(--mut)">${nTekem(matches.length)} · točke: ${pts1}:${pts2}</div>
       </div>
       <div style="font-family:var(--fh);font-size:1.2rem;color:${c2}">${t2}</div>
     </div>
@@ -12452,24 +12472,24 @@ function drawMladiBox(country){
         oninput="boxMinGp('${country}',this.value)" style="accent-color:${cfg.c1}">
     </div>
 
-    ${(query||minGp>0||bornFilter!=='all') ? `<div class="ml-note ml-filter-info">Prikazanih ${rows.length} igralcev${query?` za "${query}"`:''}${bornFilter!=='all'?`, letnik ${bornFilter}`:''}${minGp>0?`, min ${minGp} tekem`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a></div>` : ''}
+    ${(query||minGp>0||bornFilter!=='all') ? `<div class="ml-note ml-filter-info">Prikazanih ${nIgralcev(rows.length)}${query?` za "${query}"`:''}${bornFilter!=='all'?`, letnik ${bornFilter}`:''}${minGp>0?`, min ${nTekem(minGp)}`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a></div>` : ''}
 
     ${prospects.length && S.team==='all' ? `
       <div class="ml-section-title"><span class="dot" style="background:${cfg.c1}"></span>Dragulji — ${mlabel}</div>
-      <div class="ml-note">Igralci, ki najbolj izstopajo po izbrani metriki (min ${BOX_MIN_GP} tekem).</div>
+      <div class="ml-note">Igralci, ki najbolj izstopajo po izbrani metriki (min ${nTekem(BOX_MIN_GP)}).</div>
       <div class="ml-prospect-grid">
         ${prospects.map(p=>`
           <div class="ml-prospect ml-hr-prospect" style="--pc:${cfg.c1}" onclick="boxProfile('${country}','${p.name.replace(/'/g,"\\'")}','${(p.team||'').replace(/'/g,"\\'")}')">
             <span class="ml-born-badge ml-hr-badge" style="background:${cfg.c1}">${cfg.hasBorn&&p.born?`'`+String(p.born).slice(2):p.gp+'T'}</span>
             <div class="ml-pname">${p.name}</div>
-            <div class="ml-pteam">${cfg.hasBorn?(p.born?'letnik '+p.born:'')+' · '+p.gp+' tekem':p.team}</div>
+            <div class="ml-pteam">${cfg.hasBorn?(p.born?'letnik '+p.born:'')+' · '+nTekem(p.gp):p.team}</div>
             <div class="ml-pstat"><b style="color:${cfg.c2}">${(p[metric]||0).toFixed(1)}</b><span>${mlabel}</span></div>
             <div class="ml-pz" style="color:${cfg.c2}">${p.ppg.toFixed(1)}p · ${p.rpg.toFixed(1)}r · ${p.apg.toFixed(1)}a</div>
           </div>`).join('')}
       </div>` : ''}
 
     <div class="ml-section-title"><span class="dot" style="background:${cfg.c1}"></span>Lestvica</div>
-    <div class="ml-note"><span class="ml-star">*</span> = manj kot ${BOX_MIN_GP} tekem. σ = koliko nad povprečjem lige po metriki <b>${mlabel}</b>.</div>
+    <div class="ml-note"><span class="ml-star">*</span> = manj kot ${nTekem(BOX_MIN_GP)}. σ = koliko nad povprečjem lige po metriki <b>${mlabel}</b>.</div>
     ${rows.length ? `
     <div class="ml-table-wrap">
       <table class="ml-table">
@@ -12534,7 +12554,7 @@ function boxRedrawResults(country){
   // info vrstica
   const info=document.querySelector('.ml-filter-info');
   if(info){
-    if(query||minGp>0||bornFilter!=='all'){ info.style.display=''; info.innerHTML=`Prikazanih ${rows.length} igralcev${query?` za "${query}"`:''}${bornFilter!=='all'?`, letnik ${bornFilter}`:''}${minGp>0?`, min ${minGp} tekem`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a>`; }
+    if(query||minGp>0||bornFilter!=='all'){ info.style.display=''; info.innerHTML=`Prikazanih ${nIgralcev(rows.length)}${query?` za "${query}"`:''}${bornFilter!=='all'?`, letnik ${bornFilter}`:''}${minGp>0?`, min ${nTekem(minGp)}`:''}. <a onclick="boxClearFilter('${country}')" style="color:${cfg.c2};cursor:pointer">počisti</a>`; }
     else info.style.display='none';
   }
   // tabela
@@ -12585,7 +12605,7 @@ function boxProfile(country, name, team){
     <div class="ml-prof-head">
       <div>
         <h3 class="ml-prof-name">${p.name}</h3>
-        <div class="ml-prof-meta">${cfg.hasBorn ? (p.born?`letnik ${p.born} · `:'') + `${p.gp} tekem` : `${p.team} · #${p.no} · ${p.gp} tekem`}</div>
+        <div class="ml-prof-meta">${cfg.hasBorn ? (p.born?`letnik ${p.born} · `:'') + nTekem(p.gp) : `${p.team} · #${p.no} · ${nTekem(p.gp)}`}</div>
       </div>
       <button class="ml-star-btn ${mlInShortlist(country,p.name,p.team)?'on':''}" onclick="mlToggleShortlist('${country}','${p.name.replace(/'/g,"\\'")}','${p.team.replace(/'/g,"\\'")}','${cfg.S.age}',this)" title="Dodaj na shortlist">${mlInShortlist(country,p.name,p.team)?'★':'☆'}</button>
     </div>
@@ -13006,12 +13026,12 @@ function drawMladi(){
             <div class="ml-pname">${r.name}</div>
             <div class="ml-pteam">${r.team}</div>
             <div class="ml-pstat"><b>${r.ppg.toFixed(1)}</b><span>točk / tekmo</span></div>
-            <div class="ml-pz">+${r._zYear.toFixed(1)}σ nad svojim letnikom · ${r.gp} tekem</div>
+            <div class="ml-pz">+${r._zYear.toFixed(1)}σ nad svojim letnikom · ${nTekem(r.gp)}</div>
           </div>`).join('')}
       </div>` : ''}
 
     <div class="ml-section-title"><span class="dot"></span>Lestvica izstopajočih${_ML_STATE.born!=='all'?` — letnik ${_ML_STATE.born}`:''}</div>
-    <div class="ml-note"><span class="ml-star">*</span> = majhen vzorec (manj kot ${ML_MIN_GP} tekem), z-score jemlji z rezervo. σ = standardni odklon nad povprečjem.</div>
+    <div class="ml-note"><span class="ml-star">*</span> = majhen vzorec (manj kot ${nTekem(ML_MIN_GP)}), z-score jemlji z rezervo. σ = standardni odklon nad povprečjem.</div>
     ${rows.length ? `
     <div class="ml-table-wrap">
       <table class="ml-table">
@@ -13134,7 +13154,7 @@ function mlProfile(pid){
     const fg3 = b.fg3a? Math.round(b.fg3m/b.fg3a*100):0;
     const ft  = b.fta?  Math.round(b.ftm/b.fta*100):0;
     boxHtml = `
-      <div class="ml-section-title" style="font-size:.95rem;margin-top:18px"><span class="dot"></span>Poln boxscore (turnir, ${b.g} tekem)</div>
+      <div class="ml-section-title" style="font-size:.95rem;margin-top:18px"><span class="dot"></span>Poln boxscore (turnir, ${nTekem(b.g)})</div>
       <table class="ml-box-table">
         <tr><td>Minute / tekmo</td><td>${b.mpg}</td></tr>
         <tr><td>Skoki / tekmo</td><td>${b.rpg}</td></tr>
@@ -13153,7 +13173,7 @@ function mlProfile(pid){
     <div class="ml-prof-head">
       <div>
         <h3 class="ml-prof-name">${r.name}${small?'<span class="ml-star">*</span>':''}</h3>
-        <div class="ml-prof-meta">${r.team} · letnik ${r.born||'—'} · ${r.gp} tekem (${_ML_STATE.segment==='finals'?'turnir':'redni del'})</div>
+        <div class="ml-prof-meta">${r.team} · letnik ${r.born||'—'} · ${nTekem(r.gp)} (${_ML_STATE.segment==='finals'?'turnir':'redni del'})</div>
       </div>
     </div>
     <div class="ml-prof-stats">
