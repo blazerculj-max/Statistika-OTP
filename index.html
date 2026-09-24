@@ -1766,6 +1766,15 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
      ime ekipe v lestvici 28x18). Napis raztegnemo čez celico, navpični
      padding z negativno marginico pa ne spremeni višine vrstice. */
   .pname-link{display:block;padding:11px 0;margin:-11px 0}
+  /* Tritočkovnik na celici ni deloval: v samodejni postavitvi tabele brskalnik
+     max-width na <td> prezre (celica je merila 145px namesto 124px), poleg tega
+     pa .pname-link zgoraj postane blok, ki ga obrezovanje celice ne zajame —
+     imena so se sekala sredi črke ("Dewayne Stewart J"). Omejimo torej napis
+     sam; s tem se skrči tudi celica. Letnico ob imenu v tej gosti tabeli
+     skrijemo, vidna je na profilu igralca. */
+  .tw .st td:first-child .pname-link{
+    max-width:112px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tw .st .pl-born{display:none}
   /* .standings-table … mora preseči kasnejši .team-clickable{padding:2px 0} */
   .standings-table .std-team-name{display:block;width:100%;padding:11px 0;margin:-11px 0}
 
@@ -2031,11 +2040,13 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     <div class="ctrls">
       <select id="standings-sort" onchange="renderStandings()">
         <option value="pts">Po zmagah</option>
-        <option value="ptsdiff">Po point differential</option>
-        <option value="ptsfor">Po točkah za</option>
+        <option value="ptsdiff">Po razliki v točkah</option>
+        <option value="ptsfor">Po doseženih točkah</option>
       </select>
+      <!-- Placeholder je bil "Head-to-head: Ekipa 1" in se je na telefonu
+           odrezal v "Head-to-hea". Vmesni "vs" že pove, da gre za dvoboj. -->
       <select id="h2h-team1" onchange="renderH2H()" style="width:200px">
-        <option value="">Head-to-head: Ekipa 1</option>
+        <option value="">Ekipa 1</option>
       </select>
       <span style="color:var(--mut);font-size:.8rem">vs</span>
       <select id="h2h-team2" onchange="renderH2H()" style="width:200px">
