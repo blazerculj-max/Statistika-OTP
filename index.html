@@ -12036,7 +12036,7 @@ function renderStandings(){
     const el=document.getElementById(id);
     if(!el)return;
     const prev=el.value;
-    el.innerHTML=`<option value="">${i===0?'Head-to-head: Ekipa 1':'Ekipa 2'}</option>`;
+    el.innerHTML=`<option value="">Ekipa ${i+1}</option>`;
     lgTeams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;el.appendChild(o);});
     if(prev&&lgTeams.includes(prev))el.value=prev;
   });
