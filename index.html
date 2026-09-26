@@ -8,6 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <!-- Obiskanost: GoatCounter. Brez piškotkov in brez osebnih podatkov, zato
+       ne potrebuje privolitvenega okna. Skripta sama ne šteje obiskov z
+       localhost, zasebnih IP-jev in file:// — razvoj torej ne kvari številk.
+       Svoje obiske izključiš z obiskom .../#toggle-goatcounter (enkrat). -->
+  <script data-goatcounter="https://blazerculj.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SKL Statistika">
@@ -3064,6 +3070,9 @@ function closeOnboard(){
 }
 
 function enterApp(){
+  // Razmerje med ogledi strani in tem dogodkom pove, koliko ljudi obstane
+  // na vstopni strani in nikoli ne pride do podatkov.
+  gcEvent('vstop', 'Vstop v aplikacijo');
   // Glavni vstop — naloži 1. SKL, ostali dve se preloadata v ozadju
   selectLeague('liga1');
   // onboarding ob prvem obisku (po kratkem zamiku, da se Pregled prikaže)
@@ -3071,6 +3080,15 @@ function enterApp(){
 }
 
 function selectLeague(lg) {
+  gcEvent('liga/'+lg, 'Liga: '+lg);
+  // Vstopni zaslon je Pregled, a ga showTabDirect() ob vstopu ne odpre vec:
+  // tryFastPregled() ga pripravi (in postavi _firstTabShown) ze med nalaganjem
+  // strani, medtem ko heroj se prekriva vsebino. Brez tega stetja bi bil
+  // najbolj gledan zaslon na strani v statistiki popolnoma odsoten.
+  if(!window._gcEntryCounted){
+    window._gcEntryCounted = true;
+    gcEvent('zavihek/pregled', 'Zavihek: pregled');
+  }
   // Hide hero, show loading
   document.getElementById('hero-overlay').style.display = 'none';
   document.getElementById('loading-overlay').style.display = 'flex';
@@ -3244,6 +3262,9 @@ async function switchSeason(seasonId){
 
 async function switchLeague(lg) {
   if (currentLeague === lg) return;
+  // Preklop iz glave strani — pogostejsa pot kot selectLeague() z vstopne
+  // strani, in edina, po kateri se pride do 3x3.
+  gcEvent('liga/'+lg, 'Liga: '+lg);
   // ── 3x3 je arhitekturno drugačen: lasten pogled, ne 5-na-5 nalaganje ──
   if (lg === '3x3') {
     currentLeague = '3x3';
@@ -3274,6 +3295,12 @@ async function switchLeague(lg) {
 }
 
 function showTabDirect(t) {
+  // Stejemo samo, kadar uporabnik zaslon res vidi. Ta funkcija tece tudi med
+  // nalaganjem strani, ko heroj se prekriva vsebino (glej selectLeague).
+  const _hero = document.getElementById('hero-overlay');
+  if (!_hero || getComputedStyle(_hero).display === 'none') {
+    gcEvent('zavihek/' + t, 'Zavihek: ' + t);
+  }
   document.querySelectorAll('.tab').forEach(e => e.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(e => e.classList.remove('active'));
   document.getElementById('tab-' + t).classList.add('active');
@@ -3822,7 +3849,39 @@ function sortVal(p,k){
 // ═══════════════════════════════════════════════════
 // RENDER TEAM
 // ═══════════════════════════════════════════════════
+// ── Merjenje uporabe ──────────────────────────────────────────────────────
+// GoatCounter sam prešteje en ogled ob nalaganju strani. Ker je to ena sama
+// stran brez naslovov za posamezne zavihke, bi bil to tudi edini podatek, ki
+// bi ga kdaj dobili — ne bi vedeli, kaj od 25 zavihkov kdo sploh odpre.
+// Zato menjavo zavihka, vstop in menjavo lige javimo kot dogodek.
+// Ko bo stran dobila prave naslove (#/zavihek/...), to nadomestimo z navadnim
+// štetjem ogledov in ta funkcija lahko odpade.
+//
+// Čakalna vrsta: skripta GoatCounterja se nalaga z "async", prvi dogodki
+// (vstop, vstopni zaslon) pa nastanejo takoj ob kliku. Brez vrste bi tiho
+// odpadli — in to sistematično, ne naključno: podšteti bi bili ravno
+// najpogostejši dogodki, kar je slabše kot nobena meritev.
+let _gcQueue = [];
+function _gcFlush(){
+  if(!(window.goatcounter && typeof window.goatcounter.count==='function')) return false;
+  while(_gcQueue.length){
+    try{ window.goatcounter.count(_gcQueue.shift()); }catch(e){}
+  }
+  return true;
+}
+function gcEvent(path, title){
+  _gcQueue.push({path:path, title:title||path, event:true});
+  if(_gcQueue.length>50) _gcQueue.shift();   // varovalka, če skripta ne pride
+  _gcFlush();
+}
+// Če se skripta naloži šele po prvih dogodkih, vrsto izpraznimo takrat.
+window.addEventListener('load', ()=>{
+  let n=0;
+  const t=setInterval(()=>{ if(_gcFlush() || ++n>20) clearInterval(t); }, 500);
+});
+
 function showTab(t){
+  gcEvent('zavihek/'+t, 'Zavihek: '+t);
   // Zapri morebitne odprte modale (profil/ekipa/tekma...) ob menjavi zavihka
   _MODALS.forEach(({id,close})=>{
     const el=document.getElementById(id);
