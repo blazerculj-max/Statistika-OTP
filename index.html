@@ -2333,6 +2333,12 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 // ═══════════════════════════════════════════════════
 const API = 'https://api.kzs.si/api/v1/public';
 const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
+// Naslov strani na deljenih karticah. Kartice ga izrisujejo IZ TE konstante,
+// zato je ob prehodu na lastno domeno treba popraviti samo ti dve vrstici.
+// SITE_LABEL je brez "https://" in brez koncne posevnice — na kartici se bere
+// kot napis, ne kot povezava.
+const SITE_URL   = 'https://blazerculj-max.github.io/Statistika-OTP/';
+const SITE_LABEL = 'blazerculj-max.github.io/Statistika-OTP';
 const GITHUB_MAX_AGE = 6 * 3600 * 1000;
 // Privzeta trenutna sezona. Prava vrednost pride iz seasons.json ("current"),
 // ki ga vzdržuje fetcher — ob novi sezoni ni treba nič ročno spreminjati.
@@ -5234,13 +5240,19 @@ async function draw2KCard(d){
   }
 
   // ── Footer ──
+  // Naslov strani ima svojo vrstico: kartica se deli na Instagramu, kjer je
+  // bila doslej edini podatek o izvoru podpis avtorja — bralec ni imel kam.
   x.fillStyle='rgba(255,255,255,.35)';
   x.textAlign='left';
   x.font='600 24px "Space Mono", monospace';
-  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · bElo OVERALL',56,H-44);
+  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · bElo OVERALL',56,H-80);
   x.textAlign='right';
   x.fillStyle=col;
-  x.fillText('by Blaž Erčulj',W-56,H-44);
+  x.fillText('by Blaž Erčulj',W-56,H-80);
+  x.textAlign='left';
+  x.fillStyle='rgba(255,255,255,.55)';
+  x.font='600 26px "Space Mono", monospace';
+  x.fillText(SITE_LABEL,56,H-36);
 }
 
 function openShareCard(pIdx){
@@ -5395,6 +5407,9 @@ async function drawShareCard(d){
   x.textAlign='right';
   x.fillText('by Blaž Erčulj', W-70, H-50);
   x.textAlign='left';
+  x.fillStyle='rgba(255,255,255,.55)';
+  x.font='600 24px "Space Mono", monospace';
+  x.fillText(SITE_LABEL, 70, H-50);
 }
 
 function _roundRect(ctx,x,y,w,h,r){
@@ -5788,6 +5803,9 @@ async function renderRoundCard(){
   x.font='600 22px "Space Mono", monospace';x.textAlign='right';
   x.fillText('by Blaž Erčulj',W-M,H-46);
   x.textAlign='left';
+  x.fillStyle='rgba(255,255,255,.55)';
+  x.font='600 24px "Space Mono", monospace';
+  x.fillText(SITE_LABEL,M,H-46);
 }
 
 function openSeasonCard(){
