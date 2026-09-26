@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Barve so prepisane iz :root v index.html, da je predogled enak strani. */
+  :root{
+    --bg:#06060f; --acc:#f97316; --blue:#3b82f6; --purple:#a855f7;
+    --text:rgba(255,255,255,.92); --sub:rgba(255,255,255,.5); --mut:rgba(255,255,255,.28);
+    --border:rgba(255,255,255,.07); --card:#0d0d1b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1200px;height:630px;overflow:hidden}
+  body{
+    background:
+      radial-gradient(ellipse 900px 620px at 18% -15%, rgba(249,115,22,.20), transparent 58%),
+      radial-gradient(ellipse 760px 560px at 100% 112%, rgba(59,130,246,.15), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:66px 72px 58px;
+    position:relative;
+  }
+  /* Obroč v ozadju — namig na koš, brez risanja žoge. */
+  .ring{
+    position:absolute; right:-130px; top:50%; transform:translateY(-50%);
+    width:560px; height:560px; border-radius:50%;
+    border:1px solid rgba(255,255,255,.05);
+  }
+  .ring::after{
+    content:''; position:absolute; inset:88px; border-radius:50%;
+    border:1px solid rgba(249,115,22,.14);
+  }
+  .eyebrow{
+    font-family:'DM Mono',ui-monospace,monospace; font-size:19px; font-weight:500;
+    letter-spacing:.30em; color:var(--mut); text-transform:uppercase;
+  }
+  h1{
+    font-size:116px; font-weight:800; line-height:.88; letter-spacing:-.045em;
+    margin:28px 0 34px;
+  }
+  h1 .grad{
+    background:linear-gradient(120deg,var(--acc),#fbbf24);
+    -webkit-background-clip:text; background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .sub{ font-size:27px; font-weight:400; color:var(--sub); letter-spacing:-.005em }
+  .foot{ position:absolute; left:72px; right:72px; bottom:58px; display:flex; align-items:center; justify-content:space-between; gap:24px }
+  .chips{ display:flex; gap:12px }
+  .chip{
+    display:flex; align-items:center; gap:10px;
+    background:var(--card); border:1px solid var(--border); border-radius:999px;
+    padding:12px 22px 12px 18px; font-size:19px; font-weight:600; letter-spacing:-.01em;
+  }
+  .dot{ width:10px; height:10px; border-radius:50%; flex:0 0 auto }
+  .src{
+    font-family:'DM Mono',ui-monospace,monospace; font-size:17px;
+    color:var(--mut); letter-spacing:.06em; white-space:nowrap;
+  }
+</style>
+</head>
+<body>
+  <div class="ring"></div>
+
+  <div>
+    <div class="eyebrow">Slovenska košarka</div>
+    <h1>Vsa statistika<br><span class="grad">treh lig</span></h1>
+    <div class="sub">Live rezultati · MVP lestvice · rekordi · ELO moč ekip</div>
+  </div>
+
+  <div class="foot">
+    <div class="chips">
+      <div class="chip"><span class="dot" style="background:#f97316"></span>1. SKL</div>
+      <div class="chip"><span class="dot" style="background:#3b82f6"></span>2. SKL</div>
+      <div class="chip"><span class="dot" style="background:#a855f7"></span>3. SKL</div>
+      <div class="chip"><span class="dot" style="background:#14b8a6"></span>Mladi</div>
+    </div>
+    <div class="src">PODATKI: KZS · POSODOBLJENO SAMODEJNO</div>
+  </div>
+</body>
+</html>

@@ -8,26 +8,37 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0a18">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SKL Statistika">
   <meta name="mobile-web-app-capable" content="yes">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <meta name="description" content="Napredna statistika slovenske košarke — 1., 2. in 3. SKL. Live rezultati, MVP lestvice, rekordi, ELO moč ekip in končnica.">
+  <meta name="description" content="Napredna statistika slovenske košarke — 1., 2. in 3. SKL ter mladinske lige. Live rezultati, MVP lestvice, rekordi, prestopi, ELO moč ekip in končnica.">
   <meta name="theme-color" content="#06060f">
+  <link rel="canonical" href="https://blazerculj-max.github.io/Statistika-OTP/">
+  <!-- V naslovu in og: oznakah NI letnice sezone. Facebook, WhatsApp in X ob
+       branju predogleda ne poganjajo JavaScripta, zato trdo zapisane "2025/26"
+       ni mogel popraviti noben skript — deljena povezava je še sredi nove
+       sezone oglaševala lansko. Sezono v naslov zavihka doda
+       refreshSeasonLabels(), ko se naloži seasons.json.
+       ?v=1 je zato, ker je og-image.png prej vracal 404 in si ga je del
+       omrezij ze zapomnil; ob zamenjavi slike stevilko povecaj. -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Slovenska Košarka — Statistika 2025/26">
-  <meta property="og:description" content="Live rezultati, MVP lestvice, rekordi in napredna statistika za 1., 2. in 3. SKL.">
-  <meta property="og:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png">
+  <meta property="og:locale" content="sl_SI">
+  <meta property="og:site_name" content="Slovenska košarka — statistika">
+  <meta property="og:title" content="Slovenska košarka — statistika 1., 2. in 3. SKL">
+  <meta property="og:description" content="Live rezultati, MVP lestvice, rekordi, prestopi in napredna statistika za vse tri slovenske lige in mladince.">
   <meta property="og:url" content="https://blazerculj-max.github.io/Statistika-OTP/">
-  <meta property="og:site_name" content="Slovenska Košarka Statistika">
+  <meta property="og:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png?v=1">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Slovenska košarka — vsa statistika treh lig">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Slovenska Košarka — Statistika 2025/26">
-  <meta name="twitter:description" content="Live rezultati, MVP lestvice, rekordi in napredna statistika za vse tri slovenske lige.">
-  <meta name="twitter:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png">
-<title>Liga OTP banka – Statistika 2025/26</title>
+  <meta name="twitter:title" content="Slovenska košarka — statistika 1., 2. in 3. SKL">
+  <meta name="twitter:description" content="Live rezultati, MVP lestvice, rekordi, prestopi in napredna statistika za vse tri slovenske lige in mladince.">
+  <meta name="twitter:image" content="https://blazerculj-max.github.io/Statistika-OTP/og-image.png?v=1">
+<title>Slovenska košarka — statistika 1., 2. in 3. SKL</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--teal2:#2dd4bf;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.5);--mut:rgba(255,255,255,.28);--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace;
@@ -1839,7 +1850,9 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 <div id="hero-overlay">
   <canvas id="hero-canvas"></canvas>
   <div class="hero-wrap">
-    <div class="hero-eyebrow">Sezona 2025/26</div>
+    <!-- Prazno do refreshSeasonLabels(): trdo zapisana letnica je ob vstopu
+         za hip pokazala lansko sezono, preden se je naložil seasons.json. -->
+    <div class="hero-eyebrow">&nbsp;</div>
     <h1 class="hero-title">Slovenska<br><span>košarka</span></h1>
     <p class="hero-sub">Vsa statistika treh slovenskih lig na enem mestu.</p>
     <button class="hero-cta" onclick="enterApp()">
@@ -2366,9 +2379,12 @@ function seasonLabel(seasonId){
 }
 
 // Osveži napise sezone v naslovu strani in v junaku (po nalaganju seasons.json).
+// Naslov sestavimo, ne popravljamo: statični <title> je namenoma brez letnice
+// (glej komentar ob og: oznakah), zato prejšnji replace(/\d{4}\/\d{2}/) ne bi
+// imel česa zamenjati.
 function refreshSeasonLabels(){
   const lbl = seasonLabel();
-  try{ document.title = document.title.replace(/\d{4}\/\d{2}/, lbl); }catch(e){}
+  try{ document.title = 'Slovenska košarka · ' + lbl; }catch(e){}
   const eb = document.querySelector('.hero-eyebrow');
   if(eb) eb.textContent = 'Sezona ' + lbl;
 }
@@ -11766,7 +11782,13 @@ function initHeroCanvas(){
   draw();
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}try{initHeroParticles();}catch(e){}});
+document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}try{initHeroParticles();}catch(e){}
+  // Sezono na vstopni strani preberemo takoj, ne šele ob kliku na "Vstopi":
+  // initSeasonSelector() teče namreč šele v enterApp(), zato je junak do
+  // vstopa ostal brez letnice (prej je tam stala trdo zapisana, ki je
+  // zastarala). Manifest je majhen in se tako ali tako prenese.
+  (async()=>{try{await loadSeasonsManifest();refreshSeasonLabels();}catch(e){}})();
+});
 
 // ═══ PWA — Service Worker registracija (network-first, samoposodabljanje) ═══
 if('serviceWorker' in navigator){
