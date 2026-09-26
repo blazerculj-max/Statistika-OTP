@@ -3089,6 +3089,9 @@ function selectLeague(lg) {
     window._gcEntryCounted = true;
     gcEvent('zavihek/pregled', 'Zavihek: pregled');
   }
+  // Iz istega razloga tu zapišemo tudi naslov vstopnega zaslona — sicer bi
+  // uporabnik po vstopu ostal na golem naslovu brez lojtre.
+  _routeWrite([lg, 'pregled']);
   // Hide hero, show loading
   document.getElementById('hero-overlay').style.display = 'none';
   document.getElementById('loading-overlay').style.display = 'flex';
@@ -3338,6 +3341,7 @@ async function preloadOtherLeagues(){
 }
 
 async function loadAllData() {
+  window._fullDataLoaded = false;
   try {
     document.getElementById('loading-overlay').style.display = 'flex';
     setProgress(0, 'Pripravljam...');
@@ -3725,6 +3729,11 @@ function initUI() {
     if(!el)return;
     teams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;el.appendChild(o);});
   });
+
+  // Signal za usmerjevalnik. Brez njega je _routeWaitData() koncal ze pri
+  // podatkih hitrega pregleda in izrisal npr. prazno lestvico, ki se nato ni
+  // nikoli osvezila.
+  window._fullDataLoaded = true;
 }
 
 // ═══════════════════════════════════════════════════
@@ -3880,8 +3889,150 @@ window.addEventListener('load', ()=>{
   const t=setInterval(()=>{ if(_gcFlush() || ++n>20) clearInterval(t); }, 500);
 });
 
+// ═══════════════════════════════════════════════════
+// NASLOVI — da se da povezavo do vsebine deliti
+// ═══════════════════════════════════════════════════
+// GitHub Pages ne zna prepisovati poti, zato uporabljamo lojtro. Oblike:
+//
+//   #/liga1/pregled             zavihek
+//   #/liga1/igralec/12345       profil igralca
+//   #/liga1/ekipa/Krka          profil ekipe
+//   #/liga1/tekma/2888432       zapisnik tekme
+//   ...?s=26                    arhivska sezona (aktualne ne pripenjamo)
+//
+// Igralca naslavljamo s pid in NE z indeksom v P: indeks je odvisen od
+// vrstnega reda nalaganja, zato bi ista povezava jutri odprla drugega igralca.
+//
+// POZOR pri pričakovanjih: Google del naslova za lojtro odreže, zato to NI
+// izboljšava za iskalnike — za to bi bile potrebne resnične poti in vnaprej
+// izrisane strani. Tu gre za deljive povezave, gumb nazaj in preživetje
+// osvežitve strani.
+let _routeLast = '';        // zadnji naslov, ki smo ga zapisali sami
+let _routeRestoring = false; // med obnavljanjem stanja ne pišemo nazaj
+
+function _routeWrite(parts, push){
+  if(_routeRestoring) return;
+  const clean = parts.filter(x=>x!==undefined && x!==null && x!=='');
+  if(!clean.length) return;
+  let h = '#/' + clean.map(x=>encodeURIComponent(String(x))).join('/');
+  if(typeof _currentSeason!=='undefined' && _currentSeason !== SEASON_ID) h += '?s=' + _currentSeason;
+  if(h === location.hash) return;
+  _routeLast = h;
+  try{
+    // Zavihki gredo v zgodovino (gumb nazaj se vrne na prejšnjega), modali pa
+    // naslov le zamenjajo — sicer bi zapiranje modala pustilo prazen vnos.
+    if(push) history.pushState(null,'',h); else history.replaceState(null,'',h);
+  }catch(e){}
+}
+
+function _routeParse(h){
+  h = String(h||'').replace(/^#\/?/, '');
+  if(!h) return null;
+  let season = null;
+  const q = h.indexOf('?');
+  if(q >= 0){
+    const s = parseInt(new URLSearchParams(h.slice(q+1)).get('s'), 10);
+    if(!isNaN(s)) season = s;
+    h = h.slice(0, q);
+  }
+  let seg;
+  try{ seg = h.split('/').filter(Boolean).map(decodeURIComponent); }
+  catch(e){ return null; }   // pokvarjen naslov — raje normalen vstop
+  if(!seg.length) return null;
+  return {liga:seg[0], kind:seg[1]||'pregled', arg:seg[2]||null, season:season};
+}
+
+// Naslov trenutnega stanja — uporabimo ga po zapiranju modala.
+function _routeTab(){
+  const el = document.querySelector('.tab.active');
+  return el ? el.id.replace(/^tab-/,'') : 'pregled';
+}
+
+// Podatki se nalagajo asinhrono in po več poteh (hitri pregled, polni fetch,
+// menjava sezone), zato namesto vpletanja v vse te poti počakamo na rezultat.
+// Čakamo na _fullDataLoaded in ne na allMatches: hitri pregled napolni
+// allMatches že po nekaj desetinkah, a lestvica in statistike iz njega še ne
+// nastanejo — povezava do lestvice je zato odprla prazno tabelo.
+async function _routeWaitData(ms){
+  const t0 = Date.now();
+  while(Date.now() - t0 < (ms||25000)){
+    if(window._fullDataLoaded) return true;
+    await new Promise(r=>setTimeout(r,120));
+  }
+  return false;   // po izteku vseeno izrišemo, kar imamo
+}
+
+async function _routeApply(r){
+  if(!r) return;
+  _routeRestoring = true;
+  try{
+    // Sezono moramo obravnavati tudi tu, ne le ob vstopu: menjava lojtre na
+    // že naloženi strani (gumb nazaj, prilepljena povezava) strani ne naloži
+    // znova, zato routeBoot() takrat sploh ne teče.
+    const wantSeason = r.season || SEASON_ID;
+    if(wantSeason !== _currentSeason && typeof switchSeason==='function'){
+      await switchSeason(wantSeason);
+      const sel=document.getElementById('season-select');
+      if(sel) sel.value=String(wantSeason);
+    }
+    if(r.liga && r.liga !== currentLeague && (LEAGUES[r.liga] || r.liga==='3x3')){
+      await switchLeague(r.liga);
+    }
+    if(r.liga === '3x3') return;
+    await _routeWaitData();
+    if(r.kind === 'igralec'){
+      const pid = parseInt(r.arg,10);
+      const idx = (typeof P!=='undefined' && P) ? P.findIndex(x=>x[F.pid]===pid) : -1;
+      if(idx >= 0) showPlayer(idx);
+      else toast('Igralca iz povezave ni v tej sezoni','🔍');
+    } else if(r.kind === 'ekipa' && r.arg){
+      showTeamProfile(r.arg);
+    } else if(r.kind === 'tekma' && r.arg){
+      await openMatch(parseInt(r.arg,10));
+    } else if(document.getElementById('tab-'+r.kind)){
+      showTab(r.kind);
+    }
+  }catch(e){ console.warn('routeApply:', e); }
+  finally{
+    _routeRestoring = false;
+    _routeLast = location.hash;
+  }
+}
+
+// Vstop neposredno po povezavi: preskoči vstopno stran in naloži pravo ligo.
+// Vrne true, če je naslov prevzel vstop.
+function routeBoot(){
+  const r = _routeParse(location.hash);
+  if(!r) return false;
+  const lg = (LEAGUES[r.liga] || r.liga==='3x3') ? r.liga : null;
+  if(!lg) return false;
+  _routeLast = location.hash;
+  (async()=>{
+    try{
+      if(r.season && typeof switchSeason==='function' && r.season !== _currentSeason){
+        _currentSeason = r.season; _seasonSwitched = true;
+      }
+      if(lg === '3x3'){ document.getElementById('hero-overlay').style.display='none'; await switchLeague('3x3'); return; }
+      // Zastavico postavimo ŽE tu: selectLeague() sicer zapiše naslov
+      // vstopnega zaslona in s tem povozi ravno povezavo, po kateri smo prišli.
+      _routeRestoring = true;
+      selectLeague(lg);
+      await _routeApply(Object.assign({}, r, {liga:lg}));
+    }catch(e){ console.warn('routeBoot:', e); }
+  })();
+  return true;
+}
+
+// Gumb nazaj/naprej ali prilepljena povezava med uporabo.
+window.addEventListener('hashchange', ()=>{
+  if(location.hash === _routeLast) return;   // to smo zapisali sami
+  const r = _routeParse(location.hash);
+  if(r) _routeApply(r);
+});
+
 function showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
+  _routeWrite([currentLeague, t], true);
   // Zapri morebitne odprte modale (profil/ekipa/tekma...) ob menjavi zavihka
   _MODALS.forEach(({id,close})=>{
     const el=document.getElementById(id);
@@ -4546,6 +4697,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
 }
 
 async function openMatch(matchId){
+  _routeWrite([currentLeague,'tekma',matchId]);
   const matchData=matchStatsCache[matchId];
   const matchInfo=allMatches.find(m=>m.id===matchId);
   if(!matchInfo)return;
@@ -4699,7 +4851,7 @@ async function openMatch(matchId){
   }
 }
 
-function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}}
+function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}}
 
 function drawMomentum(changes,c1,c2,t1,t2){
   const w=600,h=140,pad=30;
@@ -5674,6 +5826,7 @@ function downloadRoundCard(){
 
 // ═══ TEAM PROFILE OVERLAY ═══
 function showTeamProfile(teamName){
+  _routeWrite([currentLeague,'ekipa',teamName]);
   if(!teamName||!allMatches.length)return;
   const color=TEAM_COLORS[teamName]||'#f97316';
   const overlay=document.getElementById('team-overlay');
@@ -5730,6 +5883,7 @@ function showTeamProfile(teamName){
 function closeTeamProfile(){
   document.getElementById('team-overlay').style.display='none';
   document.body.style.overflow='';
+  _routeWrite([currentLeague,_routeTab()]);
 }
 
 // ═══ HERO PARTICLES (subtle floating dots) ═══
@@ -6739,6 +6893,7 @@ function renderCmpSection(){
 // ═══════════════════════════════════════════════════
 function showPlayer(idx){
   const _raw=P[idx];if(!_raw)return;
+  _routeWrite([currentLeague,'igralec',_raw[F.pid]]);
   // Združi vse vrstice istega igralca (prestop med sezono) v ENO sezonsko statistiko.
   // Posamezne ekipe shranimo v _byTeam za razčlenitev v profilu.
   const _rows=P.filter(x=>x[F.pid]===_raw[F.pid]);
@@ -7365,7 +7520,7 @@ function hideTrendTip(){
   if(tip)tip.style.display='none';
 }
 
-function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';}
+function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);}
 
 function ppSearch(){
   const q=document.getElementById('pp-srch').value.toLowerCase();
@@ -11846,7 +12001,11 @@ document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}tr
   // initSeasonSelector() teče namreč šele v enterApp(), zato je junak do
   // vstopa ostal brez letnice (prej je tam stala trdo zapisana, ki je
   // zastarala). Manifest je majhen in se tako ali tako prenese.
-  (async()=>{try{await loadSeasonsManifest();refreshSeasonLabels();}catch(e){}})();
+  (async()=>{
+    try{await loadSeasonsManifest();refreshSeasonLabels();}catch(e){}
+    // Šele za manifestom, da zna povezava z ?s=26 odpreti arhivsko sezono.
+    try{routeBoot();}catch(e){console.warn('routeBoot:',e);}
+  })();
 });
 
 // ═══ PWA — Service Worker registracija (network-first, samoposodabljanje) ═══
