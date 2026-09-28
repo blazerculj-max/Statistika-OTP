@@ -172,6 +172,11 @@ select:focus{outline:none;border-color:var(--acc)}
 .pc-sv{font-family:var(--fh);font-size:1.1rem}.pc-sl{font-size:.6rem;color:var(--mut);letter-spacing:.04em}
 .pname-link{cursor:pointer;transition:color .15s}
 .pname-link:hover{color:var(--acc)!important;text-decoration:underline}
+/* Ime v boxscoreu je klikljivo — tudi med živo tekmo. Podčrtana pikčasta
+   črta pove, da se da klikniti, ne da bi vrstico prebarvala. */
+.box-player{cursor:pointer;border-bottom:1px dotted rgba(255,255,255,.25);transition:color .15s}
+.box-player:hover{color:var(--acc);border-bottom-color:var(--acc)}
+.box-total td{border-top:1px solid var(--border2);color:var(--sub)}
 .filter-note{font-size:.72rem;color:var(--mut);font-family:var(--fm);padding:6px 0}
 /* STAT TOOLTIPS */
 .stat-tip{position:relative;cursor:help;border-bottom:1px dotted var(--mut)}
@@ -4784,12 +4789,12 @@ async function openMatch(matchId){
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
       <div class="mo-tabs">
         ${matchInfo.status!=='FINISHED'&&!isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-preview')">🔮 PREVIEW</button>`:''}
-        ${boxScore||matchData?`<button class="mo-tab ${matchInfo.status!=='FINISHED'&&!isLive?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
+        ${boxScore||matchData||isLive?`<button class="mo-tab ${matchInfo.status!=='FINISHED'&&!isLive?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
         ${hasFiba&&isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-livebox')">📊 LIVE BOX</button>`:''}
         ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
       </div>
       ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
-      ${boxScore||matchData?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${matchInfo.status!=='FINISHED'&&!isLive?'none':'block'}"><div class="mo-section">${boxScore||''}</div></div>`:''}
+      ${boxScore||matchData||isLive?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${matchInfo.status!=='FINISHED'&&!isLive?'none':'block'}"><div class="mo-section" id="mo-box-inner">${boxScore||(isLive?'<div class="empty">Nalagam boxscore...</div>':'')}</div></div>`:''}
       ${(()=>{
         if(!hasFiba||!isLive)return '';
         const _fid=(matchInfo.fibaLiveStatsUrl||'').split('/').filter(Boolean).pop();
@@ -4808,6 +4813,12 @@ async function openMatch(matchId){
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
+
+  // Živa tekma: lasten boxscore namesto FIBA okvirja. V okvir ne moremo seči,
+  // zato v njem ni mogoče klikniti na igralca — KZS pa ima na
+  // /matches/{id}/stats odprt CORS in isto strukturo kot končane tekme.
+  // Če vrne prazno (statistika še ne teče), ostane spodaj FIBA okvir.
+  if(isLive && !boxScore) startLiveBoxScore(matchId, c1, c2);
 
   // Fetch PBP if no box score
   if(!boxScore && hasFiba) {
@@ -4857,7 +4868,7 @@ async function openMatch(matchId){
   }
 }
 
-function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}}
+function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;}}
 
 function drawMomentum(changes,c1,c2,t1,t2){
   const w=600,h=140,pad=30;
@@ -4911,30 +4922,107 @@ function drawMomentum(changes,c1,c2,t1,t2){
   </svg>`;
 }
 
+// ── Živi boxscore ──────────────────────────────────────────────────────────
+// Med tekmo smo doslej prikazovali FIBA okvir (bs.html). Ta deluje, a je tuja
+// stran v iframeu: vanjo ne moremo poseči, zato v njej ni mogoče klikniti na
+// igralca in se ne ujema z videzom ostalega. KZS ima na /matches/{id}/stats
+// odprt CORS (access-control-allow-origin: *) in vrne isto strukturo kot za
+// končane tekme, zato lahko izrišemo svojega.
+//
+// OPOZORILO: ali KZS te številke med tekmo res sproti osvežuje, ni bilo
+// mogoče preveriti — ob pisanju ni tekla nobena tekma. Če vrne prazno, se
+// tiho ohrani FIBA okvir, ki je bil tu prej.
+let liveBoxTimer = null;
+async function _fetchLiveBox(matchId){
+  try{
+    const r = await fetch(`${API}/matches/${matchId}/stats?t=`+Date.now());
+    if(!r.ok) return null;
+    const j = await r.json();
+    const d = j && (j.data || j);
+    if(!d || !d.firstTeam || !d.secondTeam) return null;
+    const n = (d.firstTeam.playerStats||[]).length + (d.secondTeam.playerStats||[]).length;
+    return n ? d : null;
+  }catch(e){ return null; }
+}
+async function startLiveBoxScore(matchId, c1, c2){
+  if(liveBoxTimer){ clearInterval(liveBoxTimer); liveBoxTimer=null; }
+  const paint = async ()=>{
+    // Modal je lahko medtem zaprt ali odprt na drugi tekmi.
+    if(liveMatchId !== matchId){ if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;} return; }
+    const el = document.getElementById('mo-box-inner');
+    if(!el) return;
+    const d = await _fetchLiveBox(matchId);
+    if(!d){
+      if(!el.dataset.filled) el.innerHTML='<div class="empty">Boxscore med tekmo še ni na voljo — spodaj je uradni FIBA prikaz.</div>';
+      return;
+    }
+    el.innerHTML = drawBoxScore(d, c1, c2);
+    el.dataset.filled = '1';
+  };
+  await paint();
+  liveBoxTimer = setInterval(paint, 30000);   // tekma se spreminja počasi
+}
+
+// Odpre profil igralca po stabilnem pid. Med živo tekmo igralca, ki nastopa
+// prvič, v P še ni — sezonska statistika nastane šele iz končanih tekem —
+// zato takrat namesto praznega profila povemo, zakaj ga še ni.
+function openPlayerByPid(pid){
+  pid = parseInt(pid,10);
+  if(!pid) return;
+  const idx = (typeof P!=='undefined' && P) ? P.findIndex(x=>x[F.pid]===pid) : -1;
+  if(idx >= 0){ showPlayer(idx); return; }
+  try{ toast('Profil bo na voljo, ko bo tekma obdelana','⏳'); }catch(e){}
+}
+
+// Met v boxscoreu: zadeti/vrženi in pod njima odstotek. Doslej je bil viden
+// samo odstotek — "50 %" iz dveh metov in iz dvanajstih je bilo videti enako.
+function _boxShot(m,a){
+  if(!a) return '<td style="color:var(--mut)">—</td>';
+  return `<td><span style="font-weight:600">${m}/${a}</span><br>`+
+         `<span style="font-size:.6rem;color:var(--mut)">${Math.round(m/a*100)}%</span></td>`;
+}
+
 function drawBoxScore(matchData,c1,c2){
   const teams=[matchData.firstTeam,matchData.secondTeam];
   const colors=[c1,c2];
   const sections=teams.map((team,ti)=>{
     const played=team.playerStats.filter(ps=>ps.played&&ps.minutes>0).sort((a,b)=>b.points-a.points);
-    const rows=played.map(ps=>`<tr>
-      <td style="font-family:var(--fs)">${ps.matchTeamPlayerFirstname.trim()} ${ps.matchTeamPlayerLastname} <span style="font-size:.65rem;color:var(--mut)">${ps.startingLineup?'●':''}</span></td>
+    const rows=played.map(ps=>{
+      const nm=`${ps.matchTeamPlayerFirstname.trim()} ${ps.matchTeamPlayerLastname}`;
+      return `<tr>
+      <td style="font-family:var(--fs)"><span class="box-player" onclick="openPlayerByPid(${ps.playerId||0})">${nm}</span> <span style="font-size:.65rem;color:var(--mut)">${ps.startingLineup?'●':''}</span></td>
       <td>${fmt(ps.minutes,0)}'</td>
       <td style="color:${colors[ti]};font-weight:600">${ps.points}</td>
       <td>${ps.offensiveRebounds+ps.defensiveRebounds}</td>
       <td>${ps.assists}</td>
-      <td>${pct(ps.twoPM,ps.twoPA)??'—'}%</td>
-      <td>${pct(ps.threePM,ps.threePA)??'—'}%</td>
+      ${_boxShot(ps.twoPM,ps.twoPA)}
+      ${_boxShot(ps.threePM,ps.threePA)}
+      ${_boxShot(ps.fTM,ps.fTA)}
       <td>${ps.steals}/${ps.turnovers}</td>
       <td style="color:${(ps.efficiencyCustom||0)>0?'var(--green)':'var(--red)'}">${ps.efficiencyCustom||ps.efficiency||0}</td>
-    </tr>`).join('');
+    </tr>`;}).join('');
+    // Ekipni seštevek metov — brez njega je treba stolpce seštevati na roko.
+    const sum=(f)=>played.reduce((s,p)=>s+(p[f]||0),0);
+    const tot=`<tr class="box-total">
+      <td style="font-family:var(--fs);font-weight:700">Skupaj</td>
+      <td></td>
+      <td style="color:${colors[ti]};font-weight:700">${sum('points')}</td>
+      <td>${sum('offensiveRebounds')+sum('defensiveRebounds')}</td>
+      <td>${sum('assists')}</td>
+      ${_boxShot(sum('twoPM'),sum('twoPA'))}
+      ${_boxShot(sum('threePM'),sum('threePA'))}
+      ${_boxShot(sum('fTM'),sum('fTA'))}
+      <td>${sum('steals')}/${sum('turnovers')}</td>
+      <td></td>
+    </tr>`;
     return `<div style="margin-bottom:16px">
       <div class="mo-section-title" style="color:${colors[ti]}">${team.teamName}</div>
       <div style="overflow-x:auto"><table class="st" style="font-size:.72rem">
         <thead><tr>
           <th style="text-align:left;padding-left:8px;min-width:140px">IGRALEC</th>
-          <th>MIN</th><th>TOČ</th><th>SK</th><th>AST</th><th>2T%</th><th>3T%</th><th>STO/IZG</th><th>EFE</th>
+          <th>MIN</th><th>TOČ</th><th>SK</th><th>AST</th><th>2T</th><th>3T</th><th>PM</th><th>STO/IZG</th><th>EFE</th>
         </tr></thead>
-        <tbody>${rows}</tbody>
+        <tbody>${rows}${tot}</tbody>
       </table></div>
     </div>`;
   }).join('');
@@ -7538,7 +7626,19 @@ function hideTrendTip(){
   if(tip)tip.style.display='none';
 }
 
-function closePlayer(){document.getElementById('player-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);}
+function closePlayer(){
+  document.getElementById('player-overlay').style.display='none';
+  document.body.style.overflow='';
+  // Profil se pogosto odpre iz boxscorea; tekma ostane odprta pod njim, zato
+  // se naslov vrne nanjo in ne na zavihek v ozadju.
+  const mo=document.getElementById('match-overlay');
+  if(mo && getComputedStyle(mo).display!=='none' && liveMatchId){
+    document.body.style.overflow='hidden';
+    _routeWrite([currentLeague,'tekma',liveMatchId]);
+  } else {
+    _routeWrite([currentLeague,_routeTab()]);
+  }
+}
 
 function ppSearch(){
   const q=document.getElementById('pp-srch').value.toLowerCase();
@@ -8395,10 +8495,13 @@ function setNerdView(v){
 
 function processPbp(d){
   pbpData = {};
-  if(!d||!d.pbp) return;
-  Object.entries(d.pbp).forEach(([id,evts])=>{
-    pbpData[parseInt(id)] = {pbp: evts, matchId: parseInt(id)};
-  });
+  // pbpLoaded postavimo tudi ob prazni datoteki: sicer je zavihek obtical na
+  // "Nalagam PBP..." in ni bilo razvidno, ali se nalaga ali podatkov ni.
+  if(d && d.pbp){
+    Object.entries(d.pbp).forEach(([id,evts])=>{
+      pbpData[parseInt(id)] = {pbp: evts, matchId: parseInt(id)};
+    });
+  }
   pbpLoaded = true;
 }
 
@@ -8408,8 +8511,26 @@ function loadPBPData(){
   const lg=getLg();
   const baseKey=lg.cachePbp||currentLeague+'_pbp_v3';
   const cacheKey=_currentSeason===SEASON_ID?baseKey:baseKey+'_s'+_currentSeason;
+  // Predpomnilnik velja 7 dni, kar je med sezono predolgo: PBP se dopolnjuje
+  // vsak teden, ob začetku sezone pa je datoteka sprva prazna. Kdor je zavihek
+  // odprl takrat, je cel teden dobival "PBP ni dosegljiv", čeprav so podatki
+  // medtem prišli. Zato predpomnilnik zavržemo, če pokriva manj tekem, kot jih
+  // je odigranih — ali če je prazen.
   let cached=null;
-  try{const r=localStorage.getItem(cacheKey);if(r){const p=JSON.parse(r);if(Date.now()-p.ts<TTL_PBP)cached=p.data;}}catch(e){}
+  try{
+    const r=localStorage.getItem(cacheKey);
+    if(r){
+      const p=JSON.parse(r);
+      const n=Object.keys((p.data&&p.data.pbp)||{}).length;
+      const odigranih=(typeof allMatches!=='undefined'&&allMatches)
+        ? allMatches.filter(m=>m.status==='FINISHED').length : 0;
+      // Ni nujno, da ima vsaka odigrana tekma PBP (FIBA ne pokriva vseh), zato
+      // ob manjku ne osvežujemo ob vsakem odpiranju, ampak največ enkrat na uro.
+      const manjka = n < odigranih && (Date.now()-p.ts) > 3600*1000;
+      const prazen = n === 0;
+      if(Date.now()-p.ts < TTL_PBP && !manjka && !prazen) cached=p.data;
+    }
+  }catch(e){}
   if(cached){processPbp(cached);if(el)el.textContent='🐙 PBP iz cache';renderNerd();return;}
   fetch(seasonFileUrl(currentLeague+'_pbp')+'?t='+Date.now())
     .then(r=>r.json())
@@ -8712,7 +8833,13 @@ function renderNerd(){
   const statusEl=document.getElementById('nerd-status');
   if(!wrap)return;
   if(!pbpLoaded){wrap.innerHTML='<div class="empty">Nalagam PBP...</div>';return;}
-  if(!Object.keys(pbpData).length){wrap.innerHTML='<div class="empty">PBP ni dosegljiv za to ligo</div>';return;}
+  if(!Object.keys(pbpData).length){
+    const odigranih=(typeof allMatches!=='undefined'&&allMatches)?allMatches.filter(m=>m.status==='FINISHED').length:0;
+    wrap.innerHTML='<div class="empty">'+(odigranih
+      ? 'Play-by-play za to ligo še ni obdelan. Zajem tece ob ponedeljkih zjutraj.'
+      : 'Play-by-play bo na voljo po prvih odigranih tekmah.')+'</div>';
+    return;
+  }
   const minT=parseInt(document.getElementById('nerd-min-sel')?.value||5);
   const nd=computeNerdStats();
   const e=Object.entries(nd.stats).filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
