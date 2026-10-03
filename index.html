@@ -1852,6 +1852,21 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
      ime ekipe v lestvici 28x18). Napis raztegnemo čez celico, navpični
      padding z negativno marginico pa ne spremeni višine vrstice. */
   .pname-link{display:block;padding:11px 0;margin:-11px 0}
+  /* BOXSCORE V TEKMI: tabela ima 10 stolpcev in se pri 375 px drsa vodoravno
+     (492 px vsebine v 333 px okvirju). Prvi stolpec je bil pri tem izgubljen —
+     ob pogledu na 3T, PM ali EFE se ni vec vedelo, cigava je vrstica. Lepimo
+     ga na levi rob. Ozadje mora biti neprosojno (vrstice ga nimajo), sicer
+     skozenj drsijo stevilke. Inline min-width:140px na <th> prebijemo z
+     !important, da ime ne poje polovice sirine. */
+  #mo-tab-box table th:first-child,
+  #mo-tab-box table td:first-child{
+    position:sticky;left:0;z-index:2;min-width:0!important;
+    background:var(--card);box-shadow:1px 0 0 var(--border2)}
+  #mo-tab-box table thead th:first-child{z-index:3;background:var(--card2)}
+  #mo-tab-box .box-player{
+    display:inline-block;max-width:108px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+
   /* Tritočkovnik na celici ni deloval: v samodejni postavitvi tabele brskalnik
      max-width na <td> prezre (celica je merila 145px namesto 124px), poleg tega
      pa .pname-link zgoraj postane blok, ki ga obrezovanje celice ne zajame —
