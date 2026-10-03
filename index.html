@@ -13203,10 +13203,33 @@ async function mlEnsureAge(age){
   }
 }
 
+// "KVAL SKL" ni ime nicesar; kvalifikacije niso rang lige.
+function mlRankLabel(rk){
+  if(rk==='KVAL') return 'Kvalifikacije';
+  if(rk==='2.')   return '2. SKL';
+  return rk+' SKL';
+}
+// Pri kvalifikacijah fazi nista "redni del" in "zakljucni turnir": KZS ju vodi
+// kot Kvalifikacije in Predkvalifikacije (slednje so izlocilne, zato jih zajem
+// uvrsti med "finals").
+function mlSegLabel(seg){
+  if(_ML_STATE.rank==='KVAL') return seg==='finals' ? 'Predkvalifikacije' : 'Kvalifikacije';
+  return seg==='finals' ? 'Zaključni turnir' : 'Redni del';
+}
 function mlCat(){
   const age = _ML_AGES[_ML_STATE.age];
   if(!age) return null;
-  return age.ranks[_ML_STATE.rank] || age.ranks[Object.keys(age.ranks)[0]];
+  const izbrani = age.ranks[_ML_STATE.rank];
+  const ima = r => r && (((r.regular||[]).length) || ((r.finals||[]).length));
+  if(ima(izbrani)) return izbrani;
+  // Jeseni so odigrane samo kvalifikacije, redne lige pa so prazne — brez tega
+  // se je zavihek odprl na 1.A in pokazal "Ni igralcev za izbrane filtre".
+  const prviSPodatki = Object.keys(age.ranks).find(k=>ima(age.ranks[k]));
+  if(prviSPodatki){
+    if(_ML_STATE.rank!==prviSPodatki) _ML_STATE.rank = prviSPodatki;
+    return age.ranks[prviSPodatki];
+  }
+  return izbrani || age.ranks[Object.keys(age.ranks)[0]];
 }
 function mlRows(){
   const c = mlCat();
@@ -13225,11 +13248,11 @@ function mlStats(vals){
 // Skupni preklopnik države (SI / HR / SRB / ★)
 function mlCountrySeg(){
   const slN = (typeof mlGetShortlist==='function')?mlGetShortlist().length:0;
+  // Hrvaska, Srbija in Bolgarija so odstranjene — stran se osredotoca na
+  // slovensko kosarko. Zajem zanje (fetch_hks/srb/bg) ostane, podatki ravno
+  // tako; ce jih kdaj znova potrebujemo, se vrnejo z eno vrstico.
   return `<div class="ml-ctrls"><div class="ml-seg ml-country-seg">
-    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='si'?'active':''}" onclick="mlSetCountry('si')">🇸🇮 Slovenija</button>
-    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='hr'?'active':''}" onclick="mlSetCountry('hr')">🇭🇷 Hrvaška</button>
-    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='srb'?'active':''}" onclick="mlSetCountry('srb')">🇷🇸 Srbija</button>
-    <button class="${_ML_STATE.view!=='shortlist'&&_ML_STATE.country==='bg'?'active':''}" onclick="mlSetCountry('bg')">🇧🇬 Bolgarija</button>
+    <button class="${_ML_STATE.view!=='shortlist'?'active':''}" onclick="mlSetCountry('si')">🇸🇮 Slovenija</button>
     <button class="ml-sl-tab-btn ${_ML_STATE.view==='shortlist'?'active':''}" onclick="mlShowShortlist()">★<span class="ml-sl-count" style="${slN?'':'display:none'}">${slN}</span></button>
   </div></div>`;
 }
@@ -13898,14 +13921,14 @@ function drawMladi(){
     ${rankKeys.length>1 ? `
     <div class="ml-ctrls">
       <div class="ml-seg ml-rank-seg">
-        ${rankKeys.map(rk=>`<button class="${_ML_STATE.rank===rk?'active':''}" onclick="mlSetRank('${rk}')">${rk==='2.'?'2. SKL':rk+' SKL'}</button>`).join('')}
+        ${rankKeys.map(rk=>`<button class="${_ML_STATE.rank===rk?'active':''}" onclick="mlSetRank('${rk}')">${mlRankLabel(rk)}</button>`).join('')}
       </div>
     </div>` : ''}
 
     <div class="ml-ctrls">
       <div class="ml-seg">
-        <button class="${!segFin?'active':''}" onclick="mlSet('segment','regular')">Redni del</button>
-        <button class="${segFin?'active':''}" onclick="mlSet('segment','finals')"${hasFinals?'':' disabled style="opacity:.4;cursor:not-allowed"'}>Zaključni turnir</button>
+        <button class="${!segFin?'active':''}" onclick="mlSet('segment','regular')">${mlSegLabel('regular')}</button>
+        <button class="${segFin?'active':''}" onclick="mlSet('segment','finals')"${hasFinals?'':' disabled style="opacity:.4;cursor:not-allowed"'}>${mlSegLabel('finals')}</button>
       </div>
     </div>
     <div class="ml-ctrls">

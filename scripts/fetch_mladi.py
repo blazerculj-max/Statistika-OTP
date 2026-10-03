@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 API_BASE = "https://api.kzs.si/api/v1/public"
 DATA = "data"
 
-AGES = ['u18', 'u16', 'u14']          # privzete starosti (moški)
+AGES = ['u20', 'u18', 'u16', 'u14']   # privzete starosti (moški)
 
 # Ključ ranga → (rank, vzorec imena).
 # POZOR: tipa se NE zanašamo. KZS je za 2026/27 spremenil type pri 1.A/1.B iz
@@ -40,9 +40,14 @@ RANKS = {
     '1.A': ('FIRST',  r'1\.\s*A'),
     '1.B': ('FIRST',  r'1\.\s*B'),
     '2.':  ('SECOND', r'\b2\.\s*SKL'),
+    # Kvalifikacije so jeseni edino, kar je odigrano: redne lige se zacnejo
+    # pozneje. Preverjeno 3.10.2026 — redne lige 0 odigranih tekem, kvalifikacije
+    # 424 (U14 118, U16 132, U18 108, U20 66), s statistiko igralcev.
+    'KVAL': ('QUAL',  r'[Kk]valifikacij'),
 }
-# Ligaška tekmovanja; kvalifikacije/pripravljalne/pokali nas ne zanimajo.
-LEAGUE_TYPES = ('LEAGUE', 'LEAGUE_A', 'LEAGUE_B')
+# Ligaska tekmovanja + kvalifikacije. Pripravljalne tekme in pokali ostajajo
+# zunaj: prve niso tekmovanje, drugi so enkratni turnirji.
+LEAGUE_TYPES = ('LEAGUE', 'LEAGUE_A', 'LEAGUE_B', 'QUALIFICATION')
 # Faza šteje za "finals", če je izločilna (BRACKET_*) ali se tako imenuje.
 FINALS_HINTS = ('turnir', 'izločiln', 'izlocil', 'finale', 'finala')
 

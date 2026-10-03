@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T09:25:14.629Z",
+  "generated": "2026-10-03T17:05:04.595Z",
   "season": "2026/2027",
   "ages": {
     "u18": {
@@ -7,7 +7,8 @@
       "ranks": [
         "1.A",
         "1.B",
-        "2."
+        "2.",
+        "KVAL"
       ],
       "file": "mladi_u18.json"
     },
@@ -16,7 +17,8 @@
       "ranks": [
         "1.A",
         "1.B",
-        "2."
+        "2.",
+        "KVAL"
       ],
       "file": "mladi_u16.json"
     },
@@ -25,9 +27,20 @@
       "ranks": [
         "1.A",
         "1.B",
-        "2."
+        "2.",
+        "KVAL"
       ],
       "file": "mladi_u14.json"
+    },
+    "u20": {
+      "label": "U20",
+      "ranks": [
+        "1.A",
+        "1.B",
+        "2.",
+        "KVAL"
+      ],
+      "file": "mladi_u20.json"
     }
   }
 }
