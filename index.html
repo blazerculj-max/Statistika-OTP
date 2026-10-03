@@ -2486,7 +2486,13 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 // CONFIG
 // ═══════════════════════════════════════════════════
 const API = 'https://api.kzs.si/api/v1/public';
-const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-OTP/main/data';
+// Podatki se berejo z iste strani (GitHub Pages), ne vec z
+// raw.githubusercontent.com. Raw ima svoj CDN predpomnilnik, ki ga stran ne
+// more obiti niti z ?cb= niti s cache:'no-cache' — preverjeno 3.10.2026, ko je
+// Pages ze strezel nove mladinske podatke, raw pa se vedno stare. Posledica je
+// bila, da se posodobitve niso pokazale. Relativna pot resi oboje: isti izvor,
+// isti predpomnilnik kot stran, in deluje tudi na lokalnem strezniku.
+const GITHUB_RAW = 'data';
 // Naslov strani na deljenih karticah. Kartice ga izrisujejo IZ TE konstante,
 // zato je ob prehodu na lastno domeno treba popraviti samo ti dve vrstici.
 // SITE_LABEL je brez "https://" in brez koncne posevnice — na kartici se bere
