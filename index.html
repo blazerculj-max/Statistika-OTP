@@ -84,11 +84,18 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 .hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
 .hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
 .nav{display:flex;flex-direction:column;gap:0;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
-.nav-row{display:flex;gap:1px;padding:4px 20px;overflow-x:auto;justify-content:center;align-items:center}
+.nav-row{display:flex;gap:1px;padding:4px 20px;overflow-x:auto;justify-content:center;align-items:center;position:relative}
+/* En sam podcrtaj, ki zdrsne z zavihka na zavihek. Prej ga je imel vsak
+   gumb svojega (::after), zato se ob menjavi ni nikamor premaknil — samo
+   izginil je na enem in se prikazal na drugem. */
+.nav-ind{position:absolute;bottom:-1px;height:2px;background:var(--acc);border-radius:2px;
+  pointer-events:none;opacity:0;will-change:transform,width;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),width .32s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.nav-ind.on{opacity:1}
 
 .nb{padding:8px 15px;border-radius:var(--r-sm);border:none;background:transparent;color:var(--mut);font-family:var(--fm);font-size:var(--t-sm);font-weight:500;cursor:pointer;transition:color .18s,background .18s;letter-spacing:.01em;white-space:nowrap}
 .nb:hover{color:var(--text);background:var(--card)}.nb.active{background:var(--card2);color:var(--acc);font-weight:700;position:relative}
-.nav-row > .nb.active::after{content:'';position:absolute;left:15px;right:15px;bottom:-1px;height:2px;background:var(--acc);border-radius:2px}
+
 .content{padding:var(--sp-6) var(--sp-5);max-width:1500px;margin:0 auto;min-height:calc(100vh - 120px)}
 .tab{display:none}
 .tab.active{display:block;animation:tabFadeUp .35s cubic-bezier(.2,.8,.2,1)}
@@ -2013,6 +2020,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 
 <nav class="nav">
   <div class="nav-row">
+    <span class="nav-ind" id="nav-ind" aria-hidden="true"></span>
     <button class="nb" id="live-nav-btn" onclick="showTab('live')" style="position:relative">
       🔴 LIVE
       <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
@@ -3384,6 +3392,7 @@ function showTabDirect(t) {
   document.getElementById('tab-' + t).classList.add('active');
   const btn = [...document.querySelectorAll('.nb')].find(b => b.onclick?.toString().includes("'" + t + "'"));
   if (btn) btn.classList.add('active');
+  moveNavIndicatorSoon();
   if (t === 'ekipe') renderTeam();
   if (t === 'pregled') renderPregled();
 }
@@ -4105,6 +4114,38 @@ window.addEventListener('hashchange', ()=>{
   if(r) _routeApply(r);
 });
 
+// Premakne drsni podcrtaj pod trenutni zavihek. Gumbi so v vrstici z
+// vodoravnim drsenjem, zato racunamo offsetLeft glede na .nav-row (ta je
+// position:relative), ne glede na zaslon — tako podcrtaj ostane pravilno
+// postavljen tudi, ko je vrstica zdrsnjena.
+function moveNavIndicator(){
+  const ind=document.getElementById('nav-ind');
+  const row=ind&&ind.parentElement;
+  if(!ind||!row)return;
+  const btn=row.querySelector('.nb.active');
+  // Na telefonu je ta navigacija skrita (spodaj je svoja), takrat sirina = 0.
+  if(!btn||!btn.offsetWidth){ ind.classList.remove('on'); return; }
+  ind.style.width=btn.offsetWidth+'px';
+  ind.style.transform='translateX('+btn.offsetLeft+'px)';
+  ind.classList.add('on');
+}
+// Vsebina zavihka se izrise sele za showTab(). Ce se pri tem spremeni visina
+// strani, se pojavi ali izgine navpicni drsnik, vrstica z gumbi (ki je
+// centrirana) se premakne — merjeno natanko 5 px. Dva okvirja zamika tega ne
+// ujameta zanesljivo, ker nekateri zavihki podatke dobijo pozneje, zato
+// vrstico opazujemo in kazalec popravimo ob vsaki spremembi njene sirine.
+function moveNavIndicatorSoon(){
+  moveNavIndicator();
+  requestAnimationFrame(()=>requestAnimationFrame(moveNavIndicator));
+}
+if(typeof ResizeObserver!=='undefined'){
+  document.addEventListener('DOMContentLoaded',()=>{
+    const row=document.getElementById('nav-ind')?.parentElement;
+    if(row) new ResizeObserver(()=>moveNavIndicator()).observe(row);
+  });
+}
+window.addEventListener('resize',()=>{try{moveNavIndicator();}catch(e){}});
+
 function showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
   _routeWrite([currentLeague, t], true);
@@ -4125,6 +4166,7 @@ function showTab(t){
   document.querySelectorAll('.nb').forEach(b=>{
     if(b.getAttribute('onclick')?.includes("'"+t+"'")) b.classList.add('active');
   });
+  moveNavIndicatorSoon();
   if(t==='ekipe')renderTeam();
   if(t==='transferji')renderTransferji();
   if(t==='tekme')renderMatches();
