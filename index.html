@@ -1589,9 +1589,11 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .pstat-ic{font-size:.9rem}
 .pstat-lab{font-family:var(--fm);font-size:.6rem;letter-spacing:.04em;color:var(--mut);text-transform:uppercase;font-weight:700}
 .pstat-val{font-family:var(--fs);font-weight:800;font-size:1.7rem;line-height:1}
-.pstat-pl{display:flex;align-items:center;gap:8px;margin-top:10px}
-.pstat-img,.pstat-fb{width:30px;height:34px;border-radius:8px;object-fit:cover;flex-shrink:0}
-.pstat-fb{display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.7rem}
+.pstat-pl{display:flex;align-items:center;gap:10px;margin-top:12px}
+/* 30x34 je ikona, ne obraz. Pri sportu so obrazi izdelek — v repozitoriju je
+   cez 500 fotografij, ki so bile prikazane kot pikice. */
+.pstat-img,.pstat-fb{width:46px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.pstat-fb{display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:800;font-size:.95rem}
 .pstat-name{font-family:var(--fh);font-weight:600;font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Polno ime na siroko, skrajsano ("S. Knezevic") na ozkih zaslonih —
    preklop je v mobilnem bloku na koncu stylesheeta. */
@@ -1862,6 +1864,11 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
      preklopnik ostane širok 23px in gumbe odreže. */
   .hdr .hdr-right .tgl{flex:1 1 100%;order:-1;overflow:visible}
   .hdr .hdr-right .tgl .tb{flex:1;min-height:40px;padding:9px 4px;font-size:.7rem}
+  /* Z dodanim gumbom "?" se je glava raztegnila na stiri vrstice — luna je
+     ostala sama spodaj. Izmerjeno: izbirnik sezone je jemal 174 px od 347.
+     Skrcimo ga; letnica je podatek, "(aktualna)" le okras in se sme odrezati. */
+  #season-select{max-width:104px;font-size:.74rem;padding:8px 8px}
+  .hdr .hdr-icon-btn{width:34px;height:34px;font-size:.9rem}
 
   /* Kartica prve/žive tekme: mreža, da se Šentjur ne prelomi pod rezultat. */
   .ps-match{grid-template-columns:1fr auto 1fr;gap:10px}
@@ -3412,10 +3419,13 @@ async function initSeasonSelector(){
   if(!sel)return;
   // Pokaži selektor samo če je več kot ena sezona
   if(ids.length<=1){sel.style.display='none';return;}
+  // Na telefonu izpustimo "(aktualna)": izbirnik je tam ozek in napis se je
+  // odrezal sredi besede ("2026/27 (akt"). Letnica je podatek, pripis okras.
+  const ozko = window.innerWidth <= 640;
   sel.innerHTML=ids.map(id=>{
     const label=SEASON_NAMES[id]||('Sezona '+id);
     const isCur=id===SEASON_ID;
-    return `<option value="${id}" ${id===_currentSeason?'selected':''}>${label}${isCur?' (aktualna)':''}</option>`;
+    return `<option value="${id}" ${id===_currentSeason?'selected':''}>${label}${isCur&&!ozko?' (aktualna)':''}</option>`;
   }).join('');
   sel.style.display='';
 }
@@ -4290,7 +4300,11 @@ if(typeof ResizeObserver!=='undefined'){
     if(row) new ResizeObserver(()=>moveNavIndicator()).observe(row);
   });
 }
-window.addEventListener('resize',()=>{try{moveNavIndicator();}catch(e){}});
+window.addEventListener('resize',()=>{
+  try{moveNavIndicator();}catch(e){}
+  // Ob prehodu cez mejo 640 px se spremeni tudi napis v izbirniku sezone.
+  try{initSeasonSelector();}catch(e){}
+});
 
 function showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
