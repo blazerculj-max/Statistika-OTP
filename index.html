@@ -4900,18 +4900,30 @@ async function openMatch(matchId){
     </div>
     <div class="mo-body">
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
-      <div class="mo-tabs">
-        ${matchInfo.status!=='FINISHED'&&!isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-preview')">🔮 PREVIEW</button>`:''}
-        ${boxScore||matchData||isLive?`<button class="mo-tab ${matchInfo.status!=='FINISHED'&&!isLive?'':'active'}" onclick="switchMatchTab(this,'mo-tab-box')">📊 BOXSCORE</button>`:''}
-        ${hasFiba&&isLive?`<button class="mo-tab active" onclick="switchMatchTab(this,'mo-tab-livebox')">📊 LIVE BOX</button>`:''}
-        ${hasFiba&&isLive?`<button class="mo-tab" onclick="switchMatchTab(this,'mo-tab-pbp')">📋 PBP</button>`:''}
-      </div>
-      ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
-      ${boxScore||matchData||isLive?`<div id="mo-tab-box" class="mo-tab-panel" style="display:${matchInfo.status!=='FINISHED'&&!isLive?'none':'block'}"><div class="mo-section" id="mo-box-inner">${boxScore||(isLive?'<div class="empty">Nalagam boxscore...</div>':'')}</div></div>`:''}
+      ${(()=>{
+        // Prej sta bila med zivo tekmo OBA gumba (BOXSCORE in LIVE BOX)
+        // oznacena kot 'active' in obe plosci sta imeli display:block —
+        // izrisali sta se ena pod drugo. Zdaj je privzeto odprt natanko en
+        // zavihek, in sicer boxscore, ostala dva pa sta na izbiro.
+        const _pre = matchInfo.status!=='FINISHED' && !isLive;
+        const _box = !!(boxScore||matchData||isLive);
+        const _priv = _box ? 'box' : (_pre ? 'preview' : (hasFiba ? 'pbp' : ''));
+        const g = (id,ikona,ime)=>`<button class="mo-tab${_priv===id?' active':''}" onclick="switchMatchTab(this,'mo-tab-${id}')">${ikona} ${ime}</button>`;
+        let out='<div class="mo-tabs">';
+        if(_pre)  out+=g('preview','🔮','PREVIEW');
+        if(_box)  out+=g('box','📊','BOXSCORE');
+        // Play-by-play je doslej imel gumb samo med zivo tekmo, ceprav je
+        // plosca nastala tudi pri koncanih — bil je nedosegljiv.
+        if(hasFiba) out+=g('pbp','📋','PLAY-BY-PLAY');
+        if(hasFiba&&isLive) out+=g('livebox','🌐','FIBA LIVE BOX');
+        return out+'</div>';
+      })()}
+      ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel" style="display:${(boxScore||matchData||isLive)?'none':'block'}">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
+      ${boxScore||matchData||isLive?`<div id="mo-tab-box" class="mo-tab-panel" style="display:block"><div class="mo-section" id="mo-box-inner">${boxScore||(isLive?'<div class="empty">Nalagam boxscore...</div>':'')}</div></div>`:''}
       ${(()=>{
         if(!hasFiba||!isLive)return '';
         const _fid=(matchInfo.fibaLiveStatsUrl||'').split('/').filter(Boolean).pop();
-        return `<div id="mo-tab-livebox" class="mo-tab-panel" style="display:block">
+        return `<div id="mo-tab-livebox" class="mo-tab-panel" style="display:none">
           <div style="text-align:center;margin-bottom:8px;font-size:.7rem;color:var(--mut)">
             🔴 Live boxscore via FIBA LiveStats
           </div>
@@ -4922,7 +4934,7 @@ async function openMatch(matchId){
           </iframe>
         </div>`;
       })()}
-      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:none"><div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div></div>`:''}
+      ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:${(boxScore||matchData||isLive)||(matchInfo.status!=='FINISHED'&&!isLive)?'none':'block'}"><div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div></div>`:''}
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
@@ -4945,6 +4957,7 @@ async function openMatch(matchId){
       pbpSection.innerHTML = events.length
         ? renderPbpFeed(events, t1, t2, c1, c2, ls)
         : fibaFallbackHtml(matchInfo);
+      pbpSection.dataset.filled = '1';
     }
 
     // Auto-refresh PBP every 20s for live matches
@@ -10381,6 +10394,33 @@ function switchMatchTab(btn,panelId){
   btn.classList.add('active');
   const panel=document.getElementById(panelId);
   if(panel)panel.style.display='block';
+  if(panelId==='mo-tab-pbp') ensurePbpPanel();
+}
+
+// Play-by-play napolnimo sele ob kliku. openMatch() ga pripravi samo, kadar
+// boxscorea ni; pri koncanih tekmah je boxscore tam, gumb pa zdaj obstaja —
+// brez tega bi plosca ostala na "Nalagam play-by-play...".
+let _pbpPanelBusy=false;
+async function ensurePbpPanel(){
+  const sec=document.getElementById('pbp-section');
+  if(!sec || sec.dataset.filled==='1' || _pbpPanelBusy) return;
+  const mi=(typeof allMatches!=='undefined'&&allMatches)?allMatches.find(m=>m.id===liveMatchId):null;
+  if(!mi) return;
+  _pbpPanelBusy=true;
+  try{
+    let ev=livePbpCache[liveMatchId];
+    if(!ev||!ev.length) ev=await fetchLivePbp(mi);
+    if(ev&&ev.length) livePbpCache[liveMatchId]=ev;
+    const t1=mi.firstTeamName,t2=mi.secondTeamName;
+    const c1=TEAM_COLORS[normalizeTeamName(t1)]||'#f97316';
+    const c2=TEAM_COLORS[normalizeTeamName(t2)]||'#3b82f6';
+    const ls=(typeof liveScores!=='undefined'&&liveScores[liveMatchId])||{};
+    sec.innerHTML = (ev&&ev.length) ? renderPbpFeed(ev,t1,t2,c1,c2,ls) : fibaFallbackHtml(mi);
+    sec.dataset.filled='1';
+  }catch(e){
+    sec.innerHTML = fibaFallbackHtml(mi);
+    sec.dataset.filled='1';
+  }finally{ _pbpPanelBusy=false; }
 }
 function renderEloTable(){
   const wrap=document.getElementById('elo-wrap');
