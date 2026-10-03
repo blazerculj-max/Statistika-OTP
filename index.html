@@ -465,6 +465,35 @@ th:hover .th-q{opacity:.7}
 .nerd-sub{font-size:.63rem;color:var(--mut);font-family:var(--fm);text-align:right}
 .nerd-bar-wrap{width:100%;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
 .nerd-bar{height:100%;border-radius:2px}
+/* Slovarček oznak */
+#gloss-overlay{display:none;position:fixed;inset:0;z-index:1300;background:rgba(0,0,0,.72);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.gloss-box{background:var(--card);border:1px solid var(--border2);border-radius:var(--r-lg);
+  width:100%;max-width:560px;max-height:82vh;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.7)}
+.gloss-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:18px 20px;border-bottom:1px solid var(--border)}
+.gloss-title{font-family:var(--fh);font-weight:800;font-size:1.15rem;letter-spacing:-.02em}
+.gloss-sub{font-family:var(--fm);font-size:.72rem;color:var(--mut);margin-top:3px}
+.gloss-x{background:none;border:none;color:var(--sub);font-size:1.5rem;line-height:1;cursor:pointer;
+  padding:0 4px;transition:color .2s}
+.gloss-x:hover{color:var(--text)}
+.gloss-body{overflow-y:auto;padding:4px 20px 20px}
+.gloss-grp{font-family:var(--fm);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mut);font-weight:700;margin:18px 0 8px;padding-top:10px;border-top:1px solid var(--border)}
+.gloss-grp:first-child{border-top:none;margin-top:10px;padding-top:0}
+.gloss-item{display:grid;grid-template-columns:72px 1fr;gap:12px;padding:7px 0;align-items:baseline}
+.gloss-k{font-family:var(--fs);font-weight:700;font-size:.88rem;color:var(--acc)}
+.gloss-n{font-family:var(--fh);font-size:.86rem;font-weight:600;line-height:1.3}
+.gloss-d{font-family:var(--fm);font-size:.7rem;color:var(--mut);line-height:1.5;margin-top:2px}
+.gloss-foot{margin-top:20px;padding-top:14px;border-top:1px solid var(--border);
+  font-family:var(--fm);font-size:.68rem;color:var(--mut);line-height:1.55}
+@media(max-width:640px){
+  .gloss-box{max-height:88vh}
+  .gloss-item{grid-template-columns:60px 1fr;gap:10px}
+  .gloss-body{padding:4px 16px 16px}
+  .gloss-head{padding:15px 16px}
+}
 /* BFF — par podajalec → strelec */
 .bff-pair{display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
 .bff-arrow{color:#f472b6;font-weight:700;flex-shrink:0}
@@ -2043,10 +2072,27 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
       <span class="pwa-lbl">Namesti</span>
     </button>
+    <button class="hdr-icon-btn" onclick="openGlossary()" title="Kaj pomenijo oznake?" style="font-weight:800">?</button>
     <button id="theme-toggle" class="hdr-icon-btn" onclick="toggleTheme()" title="Preklopi temo">🌙</button>
     <button class="hdr-icon-btn hdr-cache" onclick="cacheClear()" title="Počisti predpomnilnik" style="font-size:.85rem">♻️</button>
   </div>
 </header>
+
+<!-- Slovarcek oznak. Vsebine ne pisemo tu: sestavi se ob odprtju iz COLS[].tip
+     in METRIC_INFO, torej iz istih besedil, ki jih stran ze uporablja za
+     namige. Tako se razlaga ne more raziti s tem, kar tabele dejansko kazejo. -->
+<div id="gloss-overlay" onclick="if(event.target===this)closeGlossary()">
+  <div class="gloss-box">
+    <div class="gloss-head">
+      <div>
+        <div class="gloss-title">Kaj pomenijo oznake</div>
+        <div class="gloss-sub">Kratice, ki jih najdes v tabelah in na karticah</div>
+      </div>
+      <button class="gloss-x" onclick="closeGlossary()" aria-label="Zapri">×</button>
+    </div>
+    <div class="gloss-body" id="gloss-body"></div>
+  </div>
+</div>
 
 <nav class="nav">
   <div class="nav-row">
@@ -3169,6 +3215,80 @@ const METRIC_INFO = {
   mvp: 'MVP indeks oceni, kdo je najkoristnejši igralec — kombinira statistiko, učinkovitost in vpliv na zmage ekipe.',
   napovedi: 'Napovedi ocenijo verjetnost izida prihodnjih tekem na podlagi moči ekip (bElo) in dosedanjih rezultatov.',
 };
+// ═══════════════════════════════════════════════════
+// SLOVARCEK OZNAK
+// ═══════════════════════════════════════════════════
+// Razlage ze obstajajo na dveh mestih: COLS[].tip (24 stolpcev, z obrazcem in
+// mejami) in METRIC_INFO (napredne ocene). Slovarcek jih samo zbere — ce se
+// razlaga v tabeli popravi, se popravi tudi tu.
+const GLOSS_SKUPINE = [
+  {ime:'Osnovno',  kljuci:['T','MIN','TOČ','SK','NAP','OBR','POD','STO','IZG','PŽ','BLK']},
+  {ime:'Met',      kljuci:['2T%','3T%','MET%','PM%','TS%']},
+  {ime:'Napredno', kljuci:['EFE','PER','USG%','A/T','+/−','PiP','FB']},
+];
+// Oznake, ki jih v COLS ni, ker ne nastopajo kot stolpec.
+const GLOSS_DODATNO = [
+  {lbl:'bElo',  kljuc:'belo'},
+  {lbl:'Power', kljuc:'power'},
+  {lbl:'MVP',   kljuc:'mvp'},
+  {lbl:'Napovedi', kljuc:'napovedi'},
+];
+
+function renderGlossary(){
+  const poLbl = {};
+  (typeof COLS!=='undefined'?COLS:[]).forEach(c=>{ if(c.tip) poLbl[c.lbl]=c.tip; });
+  const esc = t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const vnos = (lbl, tip)=>{
+    // Namigi so oblike "LBL — Ime\nObrazec\nMeje". Prva vrstica je naslov,
+    // ostalo pojasnilo; kratki namigi (npr. "Minute") imajo samo eno vrstico.
+    const vrstice = String(tip).split('\n').map(x=>x.trim()).filter(Boolean);
+    let naslov = vrstice[0]||'';
+    // Oznako pred pomisljajem odrezemo SAMO, ce je res ta oznaka ("EFE — ...").
+    // Besedila v METRIC_INFO so prosta proza in imajo pomisljaj sredi stavka;
+    // slepo rezanje je stavek pri Power in MVP prerezalo na pol.
+    const dash = naslov.indexOf('—');
+    if(dash>0 && naslov.slice(0,dash).trim().toLowerCase()===String(lbl).toLowerCase()){
+      naslov = naslov.slice(dash+1).trim();
+    }
+    const ostalo = vrstice.slice(1);
+    return `<div class="gloss-item">
+      <div class="gloss-k">${esc(lbl)}</div>
+      <div class="gloss-v">
+        <div class="gloss-n">${esc(naslov)}</div>
+        ${ostalo.map(r=>`<div class="gloss-d">${esc(r)}</div>`).join('')}
+      </div>
+    </div>`;
+  };
+
+  let html='';
+  GLOSS_SKUPINE.forEach(g=>{
+    const vnosi = g.kljuci.filter(k=>poLbl[k]).map(k=>vnos(k, poLbl[k])).join('');
+    if(vnosi) html += `<div class="gloss-grp">${g.ime}</div>${vnosi}`;
+  });
+  const nap = GLOSS_DODATNO.filter(d=>METRIC_INFO[d.kljuc])
+    .map(d=>vnos(d.lbl, METRIC_INFO[d.kljuc])).join('');
+  if(nap) html += `<div class="gloss-grp">Ocene in modeli</div>${nap}`;
+
+  html += `<div class="gloss-foot">Podatki so uradni, s KZS. Ocene (bElo, Power, MVP, napovedi) so lastni izračuni te strani in niso uradne lestvice.</div>`;
+  return html;
+}
+
+function openGlossary(){
+  const ov=document.getElementById('gloss-overlay');
+  const body=document.getElementById('gloss-body');
+  if(!ov||!body)return;
+  body.innerHTML=renderGlossary();
+  ov.style.display='flex';
+  document.body.style.overflow='hidden';
+  gcEvent('slovarcek','Slovarček oznak');
+}
+function closeGlossary(){
+  const ov=document.getElementById('gloss-overlay');
+  if(ov)ov.style.display='none';
+  document.body.style.overflow='';
+}
+
 function infoTip(key){
   const txt = METRIC_INFO[key];
   if(!txt) return '';
@@ -6501,6 +6621,7 @@ document.addEventListener('keydown',e=>{
 // Vsi modalni overlayi + njihova close funkcija. Centralizirano, da
 // Escape in klik-na-ozadje delujeta enako povsod.
 const _MODALS=[
+  {id:'gloss-overlay',   close:'closeGlossary'},
   {id:'player-overlay',  close:'closePlayer'},
   {id:'team-overlay',    close:'closeTeamProfile'},
   {id:'match-overlay',   close:'closeMatch'},
