@@ -2408,6 +2408,12 @@ const GITHUB_RAW = 'https://raw.githubusercontent.com/blazerculj-max/Statistika-
 // zato je ob prehodu na lastno domeno treba popraviti samo ti dve vrstici.
 // SITE_LABEL je brez "https://" in brez koncne posevnice — na kartici se bere
 // kot napis, ne kot povezava.
+// Lasten posrednik (Cloudflare Worker) za FIBA LiveStats. FIBA ne poslje
+// glave access-control-allow-origin, zato je brskalnik ne sme brati
+// neposredno; vsi brezplacni javni posredniki, ki smo jih preizkusili, pa so
+// mrtvi (codetabs 522, allorigins 500, corsproxy 401, cors.lol 429 ...).
+// Preko tega gresta zivi boxscore IN zivi play-by-play.
+const FIBA_PROXY = 'https://floral-bush-24fe.blazerculj.workers.dev/?id=';
 const SITE_URL   = 'https://blazerculj-max.github.io/Statistika-OTP/';
 const SITE_LABEL = 'blazerculj-max.github.io/Statistika-OTP';
 const GITHUB_MAX_AGE = 6 * 3600 * 1000;
@@ -4676,10 +4682,10 @@ async function fetchLivePbp(matchInfo) {
   const fibaId = matchInfo.fibaLiveStatsUrl.match(/\/([0-9]+)\/?$/)?.[1];
   if(!fibaId) return [];
   try {
-    // Add timestamp to bust codetabs cache
-    const proxy = 'https://api.codetabs.com/v1/proxy?quest=';
-    const url = `https://fibalivestats.dcd.shared.geniussports.com/data/${fibaId}/data.json?t=${Date.now()}`;
-    const res = await fetch(proxy + encodeURIComponent(url));
+    // Prej je sel ta zajem prek api.codetabs.com, ki je padel (522) in s tem
+    // tiho ubil lasten play-by-play med zivimi tekmami — ostal je le FIBA
+    // okvir. Zdaj gre prek istega posrednika kot boxscore.
+    const res = await fetch(FIBA_PROXY + fibaId + '&t=' + Date.now());
     const d = await res.json();
     if(!d.pbp) return [];
     // Parse PBP events
@@ -5040,7 +5046,69 @@ function drawMomentum(changes,c1,c2,t1,t2){
 // mogoče preveriti — ob pisanju ni tekla nobena tekma. Če vrne prazno, se
 // tiho ohrani FIBA okvir, ki je bil tu prej.
 let liveBoxTimer = null;
+
+// FIBA ima druga imena polj kot KZS. Namesto da bi pisali drug izris, podatke
+// preslikamo v obliko, ki jo drawBoxScore ze pozna — tako sta zivi in koncni
+// boxscore videti enako in se ne moreta razsti.
+function _fibaMin(s){                       // "8:00" -> 8
+  if(!s) return 0;
+  const [m,sec]=String(s).split(':');
+  return (parseInt(m)||0) + (parseInt(sec)||0)/60;
+}
+function _fibaToBox(d){
+  const najdi = (typeof makePlayerFinder==='function' && typeof P!=='undefined' && P && P.length)
+    ? makePlayerFinder() : null;
+  const ekipa = (t)=>({
+    teamName: t.name || '',
+    playerStats: Object.values(t.pl||{}).map(p=>{
+      // KZS pid ni v FIBA podatkih; poiscemo ga po imenu z istim iskalnikom
+      // kot BFF, da je igralec klikljiv tudi med tekmo.
+      let pid = 0;
+      if(najdi){ const f=najdi({familyName:p.familyName, firstName:p.firstName}); if(f) pid=f.p[F.pid]; }
+      const zgresenimMeti=(p.sFieldGoalsAttempted-p.sFieldGoalsMade)+(p.sFreeThrowsAttempted-p.sFreeThrowsMade);
+      const pir=(p.sPoints+p.sReboundsTotal+p.sAssists+p.sSteals+p.sBlocks+p.sFoulsOn)
+               -(zgresenimMeti+p.sTurnovers+p.sBlocksReceived+p.sFoulsPersonal);
+      return {
+        playerId: pid,
+        matchTeamPlayerFirstname: p.firstName||'',
+        matchTeamPlayerLastname: p.familyName||'',
+        played: true,
+        startingLineup: !!p.starter,
+        minutes: _fibaMin(p.sMinutes),
+        points: p.sPoints||0,
+        offensiveRebounds: p.sReboundsOffensive||0,
+        defensiveRebounds: p.sReboundsDefensive||0,
+        assists: p.sAssists||0,
+        twoPM: p.sTwoPointersMade||0,   twoPA: p.sTwoPointersAttempted||0,
+        threePM: p.sThreePointersMade||0, threePA: p.sThreePointersAttempted||0,
+        fTM: p.sFreeThrowsMade||0,      fTA: p.sFreeThrowsAttempted||0,
+        steals: p.sSteals||0, turnovers: p.sTurnovers||0,
+        efficiencyCustom: pir
+      };
+    })
+  });
+  const tm=d.tm||{};
+  if(!tm['1']||!tm['2']) return null;
+  return { firstTeam: ekipa(tm['1']), secondTeam: ekipa(tm['2']) };
+}
 async function _fetchLiveBox(matchId){
+  // 1) FIBA prek lastnega posrednika — edini vir, ki MED tekmo res zivi.
+  //    Preverjeno 3.10.2026 sredi tekme: KZS je takrat vracal status
+  //    SCHEDULED, 0 igralcev in same nicle, FIBA pa polno statistiko.
+  const mi = (typeof allMatches!=='undefined'&&allMatches) ? allMatches.find(m=>m.id===matchId) : null;
+  const fid = mi && (mi.fibaLiveStatsUrl||'').match(/\/([0-9]+)\/?$/)?.[1];
+  if(fid){
+    try{
+      const r = await fetch(FIBA_PROXY+fid+'&t='+Date.now());
+      if(r.ok){
+        const d = await r.json();
+        const box = _fibaToBox(d);
+        const n = box ? (box.firstTeam.playerStats.length + box.secondTeam.playerStats.length) : 0;
+        if(n) return box;
+      }
+    }catch(e){}
+  }
+  // 2) KZS — deluje sele po koncu tekme, a takrat je natancnejsi (pravi pid).
   try{
     const r = await fetch(`${API}/matches/${matchId}/stats?t=`+Date.now());
     if(!r.ok) return null;
