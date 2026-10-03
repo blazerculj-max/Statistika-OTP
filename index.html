@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.3/chart.umd.min.js"></script>
+  <!-- Chart.js je bil tu, a je naslov vracal 404 ob vsakem obisku (od tod
+       "An unknown error occurred when fetching the script" v konzoli) in se
+       ni uporabljal nikjer — vsi grafi so risani rocno. GSAP je tehtal 72 KB
+       za dve animaciji, ki sta zdaj v CSS. Obe skripti sta bili blokirajoci
+       in v glavi, torej sta zavirali prvi izris. -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Space Grotesk (naslovi, besedilo) + Space Mono (stevilke) sta pisavi,
        za kateri je bil CSS napisan — a se nista nikoli nalozili, zato je vse
@@ -718,6 +721,11 @@ body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22
 /* Smooth tab content fade-in */
 .tab.active{animation:tabIn .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes tabIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* Pojav z zamikom in spustni meni — prej GSAP, zdaj CSS. */
+@keyframes staggerIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.stagger-in{animation:staggerIn .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--sd,0ms)}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.drop-in{animation:dropIn .18s cubic-bezier(.2,.8,.2,1) both}
 
 /* Card hover polish — applies broadly */
 .lc,.nerd-card,.att-card,.fstat,.live-card,.pbseries,.q-card,.group-card{will-change:transform}
@@ -1772,6 +1780,22 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
   .ml-ppg{font-size:.88rem}
   .ml-prof-stats{gap:6px}
   .ml-prof-stat b{font-size:1.2rem}
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ZMANJSANO GIBANJE — kdor ima to vklopljeno v sistemu (pogosto pri
+   migrenah in vrtoglavici), naj dobi mirno stran. Pri 30 animacijah
+   dve posamezni pravili nista bili dovolj, zato ustavimo vse naenkrat.
+   Prehodov ne izklopimo povsem, le skrajsamo — barva gumba ob dotiku
+   se mora se vedno spremeniti, sicer se zdi, da klik ni deloval.
+   ══════════════════════════════════════════════════════════════════ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.08s!important;
+    scroll-behavior:auto!important}
+  .stagger-in,.drop-in{animation:none!important;opacity:1!important;transform:none!important}
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -2992,13 +3016,19 @@ function activateCounters(root){
 }
 
 // Stagger-reveal direct children of a container (GSAP if present, else CSS).
+// Zamik med elementi podamo kot --sd, animacijo pa odigra CSS (.stagger-in).
+// Prej je to delal GSAP — 72 KB za eno samo animacijo.
 function staggerReveal(container, sel='.lc, .nerd-card, .att-card, .mvp-card, .rec-card'){
   if(!container) return;
   const items = container.querySelectorAll(sel);
   if(!items.length) return;
-  if(window.gsap){
-    gsap.fromTo(items, {opacity:0, y:14}, {opacity:1, y:0, duration:.45, stagger:.04, ease:'power2.out', overwrite:true});
-  }
+  items.forEach((el,i)=>{
+    el.classList.remove('stagger-in');
+    // Zamik omejimo: pri 50 karticah bi zadnja cakala dve sekundi.
+    el.style.setProperty('--sd', Math.min(i*40, 520)+'ms');
+    void el.offsetWidth;            // znova sprozi animacijo ob ponovnem izrisu
+    el.classList.add('stagger-in');
+  });
 }
 
 
@@ -9422,10 +9452,10 @@ function renderPregled(){
             <div class="hero-card-cta">2K kartica →</div>
           </div>
           <div class="hero-stats">
-            <div class="hero-stat"><span class="hs-v" style="color:${tc}">${toc}</span><span class="hs-l">Točk</span></div>
-            <div class="hero-stat"><span class="hs-v">${sk}</span><span class="hs-l">Skokov</span></div>
-            <div class="hero-stat"><span class="hs-v">${as}</span><span class="hs-l">Asistenc</span></div>
-            <div class="hero-stat"><span class="hs-v">${efe}</span><span class="hs-l">EFE</span></div>
+            <div class="hero-stat"><span class="hs-v" style="color:${tc}" data-count="${toc}" data-dec="1">0</span><span class="hs-l">Točk</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${sk}" data-dec="1">0</span><span class="hs-l">Skokov</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${as}" data-dec="1">0</span><span class="hs-l">Asistenc</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${efe}" data-dec="1">0</span><span class="hs-l">EFE</span></div>
           </div>
         </div>
       </div>
@@ -9518,7 +9548,7 @@ function renderPregled(){
       const av=ph?`<img src="${ph}" class="pstat-img" onerror="_ppPhotoErr(this,'${ini}',38)">`:`<div class="pstat-fb" style="background:${tc}33;color:${tc}">${ini}</div>`;
       html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
         <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span></div>
-        <div class="pstat-val" style="color:${L.col}">${L.fmt(L.get.v)}</div>
+        <div class="pstat-val" style="color:${L.col}" data-count="${L.fmt(L.get.v)}" data-dec="1">0</div>
         <div class="pstat-pl">${av}<span class="pstat-name"><span class="nm-full">${p[F.name]}</span><span class="nm-short">${kratkoIme(p[F.name])}</span></span></div>
       </div>`;
     });
@@ -9550,6 +9580,12 @@ function renderPregled(){
   }
 
   wrap.innerHTML=html;
+  // Pregled stevcev doslej ni sprozil, zato so se najbolj vidne stevilke na
+  // strani — kartica MVP in statisticni poudarki — izrisale takoj in mirno.
+  requestAnimationFrame(()=>{
+    activateCounters(wrap);
+    staggerReveal(wrap,'.pregled-card, .pregled-stat, .pregled-res');
+  });
 }
 function drawTeamEloChart(topTeams){
   const e=computeElo();
@@ -12239,9 +12275,7 @@ function toggleAnalyticsMenu(e){
     d.style.top=(rect.bottom+4)+'px';
     d.style.left=rect.left+'px';
     d.style.display='block';
-    if(window.gsap){
-      gsap.fromTo(d,{opacity:0,y:-6},{opacity:1,y:0,duration:.18,ease:'power2.out'});
-    }
+    d.classList.remove('drop-in'); void d.offsetWidth; d.classList.add('drop-in');
   } else {
     d.style.display='none';
   }
