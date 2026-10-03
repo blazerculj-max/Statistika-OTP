@@ -4714,6 +4714,7 @@ async function openMatch(matchId){
   if(!matchInfo)return;
 
   liveMatchId=matchId;
+  if(!window._moLiveRerendered) window._moLiveRerendered=false;  // velja na odprtje
   pbpQuarterTab=0; // reset to latest quarter
   const overlay=document.getElementById('match-overlay');
   overlay.style.display='flex';
@@ -4868,7 +4869,7 @@ async function openMatch(matchId){
   }
 }
 
-function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;}}
+function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;}window._moLiveRerendered=false;}
 
 function drawMomentum(changes,c1,c2,t1,t2){
   const w=600,h=140,pad=30;
@@ -8002,6 +8003,13 @@ function handleLiveScore(msg) {
   if (liveMatchId === msg.matchId) {
     const el = document.getElementById('mo-score');
     if (el && msg.score1 !== undefined) el.textContent = `${msg.score1} : ${msg.score2}`;
+    // Kdor odpre tekmo PRED zacetkom, dobi okno brez zivega boxscorea — takrat
+    // isLive se ni veljal in zavihek sploh ni bil izrisan. Ob prvem zivem
+    // rezultatu okno enkrat osvezimo, da zavihek nastane.
+    if (!liveBoxTimer && !window._moLiveRerendered) {
+      window._moLiveRerendered = true;
+      try{ openMatch(msg.matchId); }catch(e){}
+    }
   }
 }
 
