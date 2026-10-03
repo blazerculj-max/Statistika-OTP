@@ -364,14 +364,39 @@ th:hover .th-q{opacity:.7}
 .hero-cta:active{transform:translateY(0) scale(1)}
 .hero-cta svg{transition:transform .3s}
 .hero-cta:hover svg{transform:translateX(3px)}
-.hero-leagues{display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-8);flex-wrap:wrap}
-.hero-lg{display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:transparent;border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-3) var(--sp-4);cursor:pointer;transition:border-color .2s,background .2s,transform .2s;min-width:120px}
-.hero-lg:hover{border-color:var(--border2);background:var(--card);transform:translateY(-3px)}
+/* Lige so glavna izbira: kartice so dovolj velike, da jih oko prebere kot
+   gumbe, in nosijo barvo svoje lige. */
+.hero-leagues{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);margin-top:var(--sp-6)}
+.hero-lg{display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);
+  padding:18px 18px 16px;cursor:pointer;text-align:left;position:relative;overflow:hidden;
+  transition:border-color .2s,background .2s,transform .2s,box-shadow .2s}
+.hero-lg::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--lgc)}
+.hero-lg:hover{border-color:var(--lgc);transform:translateY(-4px);
+  box-shadow:0 14px 34px -14px var(--lgc)}
 .hero-lg:active{transform:translateY(-1px)}
-.hero-lg-dot{width:8px;height:8px;border-radius:50%;margin-bottom:2px;transition:box-shadow .25s,transform .25s}
-.hero-lg:hover .hero-lg-dot{transform:scale(1.25);box-shadow:0 0 12px 2px currentColor}
-.hero-lg-name{font-family:var(--fh);font-weight:800;font-size:var(--t-base);color:var(--text)}
-.hero-lg-desc{font-family:var(--fm);font-size:var(--t-xs);color:var(--mut)}
+.hero-lg-top{display:flex;align-items:center;gap:8px}
+.hero-lg-dot{width:9px;height:9px;border-radius:50%;background:var(--lgc);color:var(--lgc);
+  flex:0 0 auto;transition:box-shadow .25s,transform .25s}
+.hero-lg:hover .hero-lg-dot{transform:scale(1.3);box-shadow:0 0 12px 2px currentColor}
+.hero-lg-name{font-family:var(--fh);font-weight:800;font-size:1.25rem;color:var(--text);letter-spacing:-.02em}
+.hero-lg-desc{font-family:var(--fh);font-size:.9rem;color:var(--sub);font-weight:500}
+.hero-lg-note{font-family:var(--fm);font-size:.68rem;color:var(--mut);line-height:1.35}
+
+/* Kaj je na strani — kratko, pod izbiro, ne kot okno cez vsebino. */
+.hero-what{margin-top:var(--sp-6);font-family:var(--fm);font-size:.78rem;color:var(--mut);line-height:1.6}
+.hero-what b{color:var(--sub);font-weight:600}
+.hero-all{display:block;margin:12px auto 0;background:none;border:none;cursor:pointer;
+  font-family:var(--fm);font-size:.78rem;color:var(--sub);text-decoration:underline;
+  text-underline-offset:3px;transition:color .2s}
+.hero-all:hover{color:var(--text)}
+
+@media(max-width:640px){
+  .hero-leagues{grid-template-columns:1fr;gap:var(--sp-2)}
+  .hero-lg{flex-direction:row;align-items:center;gap:10px;padding:14px 16px}
+  .hero-lg-note{display:none}          /* na telefonu bi tretja vrstica razbila vrsto */
+  .hero-lg-desc{margin-left:auto;text-align:right}
+}
 .hero-foot{position:absolute;bottom:var(--sp-5);left:0;right:0;text-align:center;font-family:var(--fm);font-size:var(--t-xs);color:var(--mut);z-index:1;letter-spacing:.02em}
 @media(max-width:560px){
   .hero-leagues{flex-direction:column;align-items:stretch}
@@ -621,22 +646,6 @@ th:hover .th-q{opacity:.7}
 
 /* ═══ SHARE CARD MODAL ═══ */
 #share-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1200;align-items:center;justify-content:center;padding:20px;flex-direction:column;gap:16px}
-#onboard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:1300;align-items:center;justify-content:center;padding:20px;animation:obFade .25s ease}
-@keyframes obFade{from{opacity:0}to{opacity:1}}
-.onboard-box{position:relative;background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:32px 26px 26px;max-width:420px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.5);animation:obPop .3s cubic-bezier(.2,.9,.3,1.3)}
-@keyframes obPop{from{transform:scale(.92) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-.onboard-x{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--mut);font-size:1.6rem;cursor:pointer;line-height:1;padding:4px}
-.onboard-x:hover{color:var(--text)}
-.onboard-emoji{font-size:2.6rem;text-align:center;margin-bottom:6px}
-.onboard-title{font-family:var(--fh);font-weight:800;font-size:1.5rem;text-align:center;margin:0 0 6px}
-.onboard-sub{text-align:center;color:var(--sub);font-size:.9rem;line-height:1.5;margin:0 0 22px}
-.onboard-tips{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
-.onboard-tip{display:flex;gap:12px;align-items:flex-start;font-size:.86rem;line-height:1.45;color:var(--sub)}
-.onboard-tip b{color:var(--text)}
-.onboard-tip-ico{font-size:1.3rem;flex-shrink:0;line-height:1.2}
-.onboard-cta{width:100%;background:linear-gradient(135deg,var(--acc),#ff8c42);color:#fff;border:none;border-radius:12px;padding:14px;font-family:var(--fh);font-weight:700;font-size:.95rem;cursor:pointer;transition:transform .15s,filter .15s}
-.onboard-cta:hover{filter:brightness(1.08)}
-.onboard-cta:active{transform:scale(.97)}
 .info-tip{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);color:var(--mut);font-size:.68rem;font-weight:700;font-family:var(--fm);cursor:pointer;margin-left:6px;vertical-align:middle;position:relative;flex-shrink:0;user-select:none}
 .info-tip:hover{color:var(--text);border-color:var(--acc)}
 .info-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:240px;max-width:78vw;background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:10px 12px;font-size:.76rem;font-weight:400;line-height:1.45;color:var(--sub);text-align:left;box-shadow:0 12px 32px rgba(0,0,0,.45);opacity:0;visibility:hidden;transition:opacity .15s;z-index:1000;pointer-events:none}
@@ -759,8 +768,8 @@ body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22
 .hero-eyebrow{animation:heroFade .7s .1s both}
 .hero-title{animation:heroFade .7s .2s both}
 .hero-sub{animation:heroFade .7s .32s both}
-.hero-cta{animation:heroFade .7s .44s both}
-.hero-leagues{animation:heroFade .7s .56s both}
+.hero-leagues{animation:heroFade .7s .44s both}
+.hero-what{animation:heroFade .7s .58s both}
 @keyframes heroFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @media(prefers-reduced-motion:reduce){.hero-eyebrow,.hero-title,.hero-sub,.hero-cta,.hero-leagues,.hero-wrap{animation:none}}
 
@@ -1944,28 +1953,34 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
          za hip pokazala lansko sezono, preden se je naložil seasons.json. -->
     <div class="hero-eyebrow">&nbsp;</div>
     <h1 class="hero-title">Slovenska<br><span>košarka</span></h1>
-    <p class="hero-sub">Vsa statistika treh slovenskih lig na enem mestu.</p>
-    <button class="hero-cta" onclick="enterApp()">
-      Vstopi
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    </button>
+    <p class="hero-sub">Izberi ligo in začni.</p>
 
+    <!-- Prej je bil tu velik bel gumb "Vstopi", kartice lig pa drobne pod
+         njim — izgledale so kot legenda, ne kot izbira, zato je vsak kliknil
+         "Vstopi" in pristal v 1. SKL, ne glede na to, kaj ga zanima.
+         Zdaj so lige glavna poteza, "vse naenkrat" pa drobna povezava. -->
     <div class="hero-leagues">
-      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga1')">
-        <span class="hero-lg-dot" style="background:var(--acc);color:var(--acc)"></span>
-        <span class="hero-lg-name">1. SKL</span>
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga1')" style="--lgc:var(--acc)">
+        <span class="hero-lg-top"><span class="hero-lg-dot"></span><span class="hero-lg-name">1. SKL</span></span>
         <span class="hero-lg-desc">Liga OTP banka</span>
+        <span class="hero-lg-note">Najvišja slovenska liga</span>
       </button>
-      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga2')">
-        <span class="hero-lg-dot" style="background:var(--blue);color:var(--blue)"></span>
-        <span class="hero-lg-name">2. SKL</span>
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga2')" style="--lgc:var(--blue)">
+        <span class="hero-lg-top"><span class="hero-lg-dot"></span><span class="hero-lg-name">2. SKL</span></span>
         <span class="hero-lg-desc">Druga liga</span>
+        <span class="hero-lg-note">Drugi kakovostni razred</span>
       </button>
-      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga3')">
-        <span class="hero-lg-dot" style="background:var(--purple);color:var(--purple)"></span>
-        <span class="hero-lg-name">3. SKL</span>
+      <button class="hero-lg" onclick="event.stopPropagation();selectLeague('liga3')" style="--lgc:var(--purple)">
+        <span class="hero-lg-top"><span class="hero-lg-dot"></span><span class="hero-lg-name">3. SKL</span></span>
         <span class="hero-lg-desc">Tretja liga</span>
+        <span class="hero-lg-note">Tretji kakovostni razred</span>
       </button>
+    </div>
+
+    <div class="hero-what">
+      Tudi <b>mladinske lige</b> štirih držav, <b>3x3</b>, arhiv sezon,
+      žive tekme in play-by-play.
+      <button class="hero-all" onclick="enterApp()">ali kar pokaži vse →</button>
     </div>
   </div>
   <div class="hero-foot">Podatki: KZS · Posodobljeno samodejno</div>
@@ -3161,26 +3176,16 @@ function infoTip(key){
   return `<span class="info-tip" tabindex="0" onclick="event.stopPropagation();this.classList.toggle('open')" data-tip="${safe}">?</span>`;
 }
 
-function maybeShowOnboard(){
-  // pokaži samo ob prvem obisku
-  try{ if(localStorage.getItem('skl-onboarded')==='1') return; }catch(e){}
-  const ov=document.getElementById('onboard-overlay');
-  if(ov) ov.style.display='flex';
-}
-function closeOnboard(){
-  const ov=document.getElementById('onboard-overlay');
-  if(ov) ov.style.display='none';
-  try{ localStorage.setItem('skl-onboarded','1'); }catch(e){}
-}
-
 function enterApp(){
   // Razmerje med ogledi strani in tem dogodkom pove, koliko ljudi obstane
   // na vstopni strani in nikoli ne pride do podatkov.
   gcEvent('vstop', 'Vstop v aplikacijo');
   // Glavni vstop — naloži 1. SKL, ostali dve se preloadata v ozadju
   selectLeague('liga1');
-  // onboarding ob prvem obisku (po kratkem zamiku, da se Pregled prikaže)
-  setTimeout(maybeShowOnboard, 1800);
+  // Pojavno okno "Dobrodošli!" je odpadlo: prikazalo se je 1,8 s PO vstopu,
+  // torej cez ze nalozeno vsebino, pokazalo se je enkrat v zivljenju in brez
+  // poti nazaj, razlozilo pa je tri stvari od petindvajsetih zavihkov.
+  // Kaj je na strani, zdaj pise na vstopnem zaslonu, preden karkoli klikneš.
 }
 
 function selectLeague(lg) {
@@ -14068,29 +14073,7 @@ function closeMlModal(){
   <button class="nb adg-item" onclick="showTab('obisk');closeAnalyticsMenu()">Obisk tekem</button>
 </div>
 
-<div id="onboard-overlay" onclick="if(event.target===this)closeOnboard()">
-  <div class="onboard-box">
-    <button class="onboard-x" onclick="closeOnboard()">×</button>
-    <div class="onboard-emoji">🏀</div>
-    <h2 class="onboard-title">Dobrodošli!</h2>
-    <p class="onboard-sub">Statistika slovenske košarke na enem mestu — lige, igralci, mladi in 3x3.</p>
-    <div class="onboard-tips">
-      <div class="onboard-tip">
-        <span class="onboard-tip-ico">📊</span>
-        <div><b>Pregled</b> ti pokaže utrip lige — vodilni za MVP, zadnji rezultati, naslednje tekme.</div>
-      </div>
-      <div class="onboard-tip">
-        <span class="onboard-tip-ico">🔍</span>
-        <div><b>Iskanje</b> najde kateregakoli igralca ali ekipo. Klikni igralca za njegovo statistiko.</div>
-      </div>
-      <div class="onboard-tip">
-        <span class="onboard-tip-ico">📈</span>
-        <div><b>Analitika</b> (zgoraj desno) skriva napredne poglede — Power Ranking, napovedi, bElo.</div>
-      </div>
-    </div>
-    <button class="onboard-cta" onclick="closeOnboard()">Razumem, gremo!</button>
-  </div>
-</div>
+
 
 <div id="share-overlay" onclick="if(event.target===this)closeShare()">
   <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
