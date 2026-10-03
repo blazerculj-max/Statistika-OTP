@@ -4958,6 +4958,11 @@ async function openMatch(matchId){
           pbpRefreshTimer = null;
           return;
         }
+        if(document.hidden) return;            // glej opombo pri boxscoreu
+        // Po koncu tekme se play-by-play ne spreminja vec.
+        if(typeof liveScores!=='undefined' && liveScores[matchId] && liveScores[matchId].ended){
+          clearInterval(pbpRefreshTimer); pbpRefreshTimer = null; return;
+        }
         try {
           const newEvents = await fetchLivePbp(matchInfo);
           if(newEvents && newEvents.length > 0) livePbpCache[matchId] = newEvents;
@@ -5124,6 +5129,14 @@ async function startLiveBoxScore(matchId, c1, c2){
   const paint = async ()=>{
     // Modal je lahko medtem zaprt ali odprt na drugi tekmi.
     if(liveMatchId !== matchId){ if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;} return; }
+    // Kvota posrednika je 100.000 zahtevkov na dan. Zavihek, pozabljen v
+    // ozadju, bi brez tega porabil 5 zahtevkov na minuto celo noc — vec kot
+    // vsi pravi gledalci skupaj. Ko se uporabnik vrne, osvezimo takoj
+    // (poslusalec na visibilitychange spodaj).
+    if(document.hidden) return;
+    // Tekme je konec: izrisi se zadnjic in ugasni.
+    const ls = (typeof liveScores!=='undefined' && liveScores[matchId]) || null;
+    const konec = ls && ls.ended;
     const el = document.getElementById('mo-box-inner');
     if(!el) return;
     const d = await _fetchLiveBox(matchId);
@@ -5133,9 +5146,15 @@ async function startLiveBoxScore(matchId, c1, c2){
     }
     el.innerHTML = drawBoxScore(d, c1, c2);
     el.dataset.filled = '1';
+    if(konec && liveBoxTimer){ clearInterval(liveBoxTimer); liveBoxTimer=null; }
   };
   await paint();
   liveBoxTimer = setInterval(paint, 30000);   // tekma se spreminja počasi
+  // Ob vrnitvi na zavihek osvezimo takoj, da uporabnik ne caka do 30 s.
+  if(!window._liveVisHook){
+    window._liveVisHook = true;
+    document.addEventListener('visibilitychange',()=>{ if(!document.hidden && liveBoxTimer) paint(); });
+  }
 }
 
 // Odpre profil igralca po stabilnem pid. Med živo tekmo igralca, ki nastopa
