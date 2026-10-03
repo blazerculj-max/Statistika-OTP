@@ -426,6 +426,11 @@ th:hover .th-q{opacity:.7}
 .nerd-sub{font-size:.63rem;color:var(--mut);font-family:var(--fm);text-align:right}
 .nerd-bar-wrap{width:100%;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
 .nerd-bar{height:100%;border-radius:2px}
+/* BFF — par podajalec → strelec */
+.bff-pair{display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.2}
+.bff-arrow{color:#f472b6;font-weight:700;flex-shrink:0}
+.bff-back{color:var(--sub);margin-left:6px}
+.bff-note{padding:10px 14px;border-top:1px solid var(--border);font-size:.67rem;color:var(--mut);font-family:var(--fm);line-height:1.5}
 .nerd-section-title{font-family:var(--fh);font-size:1.4rem;letter-spacing:.04em;color:var(--sub);margin:20px 0 12px}
 .clutch-def{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:.75rem;color:var(--mut);margin-bottom:16px;font-family:var(--fm)}
 .q-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
@@ -2243,6 +2248,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
         <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">🔥 SCORING RUNS</button>
         <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">❌ IZGUBE ŽOGE</button>
         <button class="tb" id="nerd-reb-btn" onclick="setNerdView('rebounds')">💪 SKOKI</button>
+        <button class="tb" id="nerd-bff-btn" onclick="setNerdView('bff')">💞 BFF</button>
       </div>
       <select id="nerd-min-sel" onchange="renderNerd()" style="width:140px">
         <option value="1">Min 1 tekma</option>
@@ -8494,7 +8500,7 @@ async function renderAttendance(){
 
 function setNerdView(v){
   nerdView=v;
-  ['clutch','quarters','shots','runs','turnovers','rebounds'].forEach(x=>{
+  ['clutch','quarters','shots','runs','turnovers','rebounds','bff'].forEach(x=>{
     const b=document.getElementById('nerd-'+x+'-btn');
     if(b)b.classList.toggle('active',x===v);
   });
@@ -8556,7 +8562,94 @@ const shotEmoji={
   hookshot:'🪝',fadeaway:'⬅️',turnaroundjumpshot:'🔄',alleyoop:'🙌'
 };
 
-function computeNerdStats(){
+// ═══════════════════════════════════════════════════
+// BFF — kdo komu podaja (Stockton–Malone)
+// ═══════════════════════════════════════════════════
+// PBP asistence ne nosi podatka, komu je bila podana. Povezavo je bilo treba
+// ugotoviti iz zaporedja: dogodek "assist" ima TAKOJ ZA SABO zadet met iste
+// ekipe ob isti uri (gt). Preverjeno na vseh tekmah obeh lig: 318 asistenc se
+// tako poveze, 0 pa z dogodkom PRED seboj — pravilo je torej enoznacno.
+//
+// Priblizno vsaka deseta asistenca ostane brez para (v obeh ligah ~10 %):
+// FIBA jih vcasih zapise med dva prosta meta, kjer zadetega meta iz igre ni.
+// Teh ne stejemo in to tudi povemo v opombi pod lestvico — raje manj parov kot
+// izmisljeni.
+function computeBff(){
+  const findPlayer=makePlayerFinder();
+  const pairs={};        // "podajalecIdx>strelecIdx" -> {a, s, n, pts}
+  let skupaj=0, brezPara=0;
+
+  Object.values(pbpData).forEach(md=>{
+    const ev=md.pbp||[];
+    for(let i=0;i<ev.length;i++){
+      const e=ev[i];
+      if(e.actionType!=='assist') continue;
+      skupaj++;
+      const shot=ev[i+1];
+      const ujema = shot && (shot.actionType==='2pt'||shot.actionType==='3pt')
+                    && shot.success===1 && shot.tno===e.tno && shot.gt===e.gt;
+      if(!ujema){ brezPara++; continue; }
+      const a=findPlayer(e), s=findPlayer(shot);
+      if(!a||!s||a.idx===s.idx){ brezPara++; continue; }
+      const k=a.idx+'>'+s.idx;
+      if(!pairs[k]) pairs[k]={a:a.idx,s:s.idx,n:0,pts:0};
+      pairs[k].n++;
+      pairs[k].pts += (shot.actionType==='3pt'?3:2);
+    }
+  });
+  return {pairs, skupaj, brezPara};
+}
+
+function renderBff(){
+  const {pairs,skupaj,brezPara}=computeBff();
+  const list=Object.values(pairs).sort((x,y)=>y.n-x.n||y.pts-x.pts);
+  if(!list.length) return '<div class="empty">Ni dovolj play-by-play podatkov za pare.</div>';
+
+  const obratno=(a,s)=>(pairs[s+'>'+a]||{}).n||0;
+  const max=list[0].n;
+  const rows=list.slice(0,15).map((pr,r)=>{
+    const pa=P[pr.a], ps=P[pr.s];
+    if(!pa||!ps) return '';
+    const tc=TEAM_COLORS[pa[F.team]]||'#888';
+    const teamShort=TEAM_SHORT[pa[F.team]]||pa[F.team];
+    const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+    const back=obratno(pr.a,pr.s);
+    // Obojestranska naveza je redka in pove vec kot enosmerna — oznacimo jo.
+    const vzajemno = back>0
+      ? `<span class="bff-back" title="Toliko podaj v obratni smeri">↔ ${back} nazaj</span>` : '';
+    return '<div class="nerd-row">'+
+      '<div class="nerd-rank">'+rk+'</div>'+
+      '<div class="nerd-info">'+
+        '<div class="bff-pair">'+
+          '<span class="nerd-name pname-link" onclick="showPlayer('+pr.a+')">'+pa[F.name]+'</span>'+
+          '<span class="bff-arrow">→</span>'+
+          '<span class="nerd-name pname-link" onclick="showPlayer('+pr.s+')">'+ps[F.name]+'</span>'+
+        '</div>'+
+        '<div class="nerd-team" style="color:'+tc+'">'+teamShort+' '+vzajemno+'</div>'+
+        '<div class="nerd-bar-wrap"><div class="nerd-bar" style="width:'+Math.round(pr.n/max*100)+'%;background:#f472b6"></div></div>'+
+      '</div>'+
+      '<div class="nerd-right">'+
+        '<div class="nerd-val" style="color:#f472b6">'+pr.n+' <small>podaj</small></div>'+
+        '<div class="nerd-sub">'+pr.pts+' točk</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  const pct=skupaj?Math.round((skupaj-brezPara)/skupaj*100):0;
+  return '<div class="nerd-card">'+
+    '<div class="nerd-card-title" style="color:#f472b6">💞 Kdo komu podaja</div>'+rows+
+    '<div class="bff-note">Podajalec → strelec. Povezava je izpeljana iz '+
+    'play-by-playa: asistenci sledi zadet met iste ekipe ob isti uri. '+
+    'Povezanih '+(skupaj-brezPara)+' od '+skupaj+' asistenc ('+pct+' %); '+
+    'ostalih FIBA ne zapiše tako, da bi se dalo ugotoviti prejemnika.</div>'+
+  '</div>';
+}
+
+// Iskalnik igralca iz PBP dogodka — izvlecen iz computeNerdStats(), da ga
+// uporablja tudi BFF. Ce bi vsak razdelek imel svojo kopijo, bi se pravila
+// ujemanja imen scasoma razsla in isti igralec bi se v dveh razdelkih stel
+// drugace. Vrne {p, idx} ali null.
+function makePlayerFinder(){
   const normalizeKey=s=>s.toLowerCase()
     .replace(/[čć]/g,'c').replace(/š/g,'s').replace(/ž/g,'z').replace(/đ/g,'d')
     .replace(/[àáâã]/g,'a').replace(/[èéêë]/g,'e').replace(/[ìíîï]/g,'i')
@@ -8574,7 +8667,7 @@ function computeNerdStats(){
     keysToAdd.forEach(k=>{if(!nameMap[k])nameMap[k]=[];if(!nameMap[k].find(x=>x.idx===idx))nameMap[k].push({p,idx});});
   });
 
-  function findPlayer(ev){
+  return function findPlayer(ev){
     if(!ev.familyName)return null;
     const rawName=ev.internationalFamilyName||ev.familyName||'';
     if(!rawName)return null;
@@ -8591,7 +8684,11 @@ function computeNerdStats(){
     if(candidates.length===1)return candidates[0];
     const fi=(ev.internationalFirstName||ev.firstName||'')[0]||'';
     return candidates.find(c=>c.p[F.name][0].toLowerCase()===fi.toLowerCase())||candidates[0];
-  }
+  };
+}
+
+function computeNerdStats(){
+  const findPlayer=makePlayerFinder();
 
   const stats={};
   const scoringRuns=[];
@@ -8860,6 +8957,9 @@ function renderNerd(){
   else if(nerdView==='runs')wrap.innerHTML=renderRuns(filtered);
   else if(nerdView==='turnovers')wrap.innerHTML=renderTurnovers(filtered);
   else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds();
+  // BFF ne filtriramo po odigranih tekmah: prag velja za igralca, par pa ima
+  // svoj naravni prag — stevilo podaj med njima.
+  else if(nerdView==='bff')wrap.innerHTML=renderBff();
 }
 
 // ═══════════════════════════════════════════════════
