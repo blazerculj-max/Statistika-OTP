@@ -4760,8 +4760,11 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
          Q${ls.quarter||'?'} · ${ls.time||''}
        </div>` : '';
 
-  // Live tab for live matches (newest events first)
-  const liveTab = liveScore ? `<button onclick="pbpQuarterTab='live';document.getElementById('pbp-section').innerHTML=renderPbpFeed(events,t1,t2,c1,c2,liveScore)"
+  // Prej je bil pogoj le "liveScore", klicatelji pa podajo liveScores[id]||{}
+  // — prazen objekt je resnicen, zato sta se oznaka 🔴 LIVE in opomba o
+  // osvezevanju prikazali tudi pri koncanih tekmah, kjer se nic ne dogaja.
+  const _zivo = !!(liveScore && (liveScore.isLive || liveScore.started) && !liveScore.ended);
+  const liveTab = _zivo ? `<button onclick="pbpQuarterTab='live';document.getElementById('pbp-section').innerHTML=renderPbpFeed(events,t1,t2,c1,c2,liveScore)"
     style="background:${pbpQuarterTab==='live'?'#ef4444':'var(--card2)'};color:${pbpQuarterTab==='live'?'#fff':'var(--sub)'};border:1px solid ${pbpQuarterTab==='live'?'#ef4444':'var(--border2)'};border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.72rem;font-weight:700">
     🔴 LIVE</button>` : '';
 
@@ -4812,7 +4815,7 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
   return `${scoreHtml}
     <div style="padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
       <div style="display:flex;gap:5px;flex-wrap:wrap">${liveTab}${tabs}</div>
-      <span style="font-size:.6rem;color:var(--mut)">↻ 20s</span>
+      <span style="font-size:.6rem;color:var(--mut)">${_zivo?'↻ 20s':'končano'}</span>
     </div>
     <div id="pbp-list-wrap" style="max-height:440px;overflow-y:auto">
       ${rows||'<div class="empty" style="padding:20px">Ni eventov</div>'}
