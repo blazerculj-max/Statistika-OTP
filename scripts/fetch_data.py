@@ -30,8 +30,13 @@ LEAGUES = {
               'category': 'ABSOLUTE', 'rank': 'FIRST',  'type': 'LEAGUE'},
     'liga2': {'name': '2. SKL',         'gender': 'MALE',
               'category': 'ABSOLUTE', 'rank': 'SECOND', 'type': 'LEAGUE'},
+    # 3. SKL ni na FIBA LiveStats: tekme imajo v KZS zapisan fibaLiveStatsUrl,
+    # a je nominalen — feed vrne 403 za letosnje in lanske tekme, liga3_pbp.json
+    # ima 0 tekem v obeh sezonah. Zapisnike vnasajo samo v KZS. Brez tega bi
+    # zajem PBP vsak ponedeljek zaman trkal na 180 tekem.
     'liga3': {'name': '3. SKL',         'gender': 'MALE',
-              'category': 'ABSOLUTE', 'rank': 'THIRD',  'type': 'LEAGUE'},
+              'category': 'ABSOLUTE', 'rank': 'THIRD',  'type': 'LEAGUE',
+              'fiba': False},
 }
 
 SEASON_LABELS = {22:'2021/22',23:'2022/23',24:'2023/24',25:'2024/25',26:'2025/26',
@@ -446,6 +451,8 @@ def process_league(key, lg):
             if not os.path.exists(pbp_file):
                 with open(pbp_file, 'w') as f:
                     json.dump({'updatedAt': now, 'seasonId': SEASON_ID, 'pbp': {}}, f)
+        elif cfg.get('fiba') is False:
+            print(f"  PBP preskocen: {cfg['name']} ni na FIBA LiveStats")
         else:
             existing_pbp = load_existing_pbp(key)
             pbp = fetch_pbp_incremental(matches, existing_pbp)

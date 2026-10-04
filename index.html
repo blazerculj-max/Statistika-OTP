@@ -2874,6 +2874,12 @@ const LEAGUES = {
     name: '3. SKL',
     short: '3. SKL',
     color: '#a855f7',
+    // 3. SKL ni na FIBA LiveStats. Tekme imajo v KZS podatkih sicer zapisan
+    // fibaLiveStatsUrl, a je nominalen — preverjeno 4.10.2026: feed vrne 403
+    // za letosnje IN lanske tekme, liga3_pbp.json pa ima 0 tekem v obeh
+    // sezonah. Zapisnike vnasajo samo v KZS. Brez te zastavice bi stran
+    // ponujala zavihka PLAY-BY-PLAY in FIBA LIVE BOX, ki sta prazna.
+    fiba: false,
     statsUrl: GITHUB_RAW + '/liga3_stats.json',
     cacheStats: 'liga3_stats_v1',
     cachePbp:   'liga3_pbp_v1',
@@ -5011,8 +5017,10 @@ async function openMatch(matchId){
     boxScore=drawBoxScore(matchData,c1,c2);
   }
 
-  // PBP za live in finished tekme
-  const hasFiba = !!matchInfo.fibaLiveStatsUrl;
+  // PBP za live in finished tekme. Zastavica lige pove, ali je FIBA feed za to
+  // ligo sploh zapolnjen — sama prisotnost povezave ne zadosca (glej liga3).
+  const _lgFiba = (typeof getLg==='function' ? getLg() : null);
+  const hasFiba = !!matchInfo.fibaLiveStatsUrl && (!_lgFiba || _lgFiba.fiba !== false);
 
   // Score display
   let scoreDisplay;
@@ -5355,48 +5363,93 @@ function _boxShot(m,a){
 function drawBoxScore(matchData,c1,c2){
   const teams=[matchData.firstTeam,matchData.secondTeam];
   const colors=[c1,c2];
+  const vsi=teams.flatMap(t=>(t.playerStats||[]));
+  const kje=(f)=>vsi.some(p=>(p[f]||0)>0);
+
+  // KZS za 3. SKL vodi skrajsan zapisnik: tocke, zadete mete (BREZ poskusov),
+  // proste mete s poskusi in osebne napake — minut, skokov in asistenc ni.
+  // Prej je izris filtriral igralce po "minutes>0", zato je pri 3. SKL odpadel
+  // cisto vsak in ostala je prazna tabela s samo vrstico Skupaj. Zdaj stolpce
+  // izpeljemo iz tega, kar tekma dejansko ima — isti izris tako sluzi polnemu
+  // in skrajsanemu zapisniku, brez posebnega pravila za ligo.
+  const ima = {
+    min:  kje('minutes'),
+    sk:   vsi.some(p=>((p.offensiveRebounds||0)+(p.defensiveRebounds||0))>0),
+    ast:  kje('assists'),
+    dva:  kje('twoPA')   || kje('twoPM'),
+    tri:  kje('threePA') || kje('threePM'),
+    pm:   kje('fTA')     || kje('fTM'),
+    stoizg: kje('steals') || kje('turnovers'),
+    pz:   kje('foulCommited'),
+    efe:  vsi.some(p=>(p.efficiencyCustom||p.efficiency||0)!==0),
+  };
+  // Ce poskusov ni zabelezenih, je "7/0" in "—%" nesmisel: pokazemo le zadete.
+  const samoZadeti = {dva:!kje('twoPA'), tri:!kje('threePA'), pm:!kje('fTA')};
+
+  const celicaMet=(m,a,leZadeti)=>{
+    if(leZadeti) return `<td>${m||0}</td>`;
+    return _boxShot(m,a);
+  };
+
   const sections=teams.map((team,ti)=>{
-    const played=team.playerStats.filter(ps=>ps.played&&ps.minutes>0).sort((a,b)=>b.points-a.points);
+    const played=(team.playerStats||[])
+      .filter(ps=>ps.played && ((ps.minutes||0)>0 || (ps.points||0)>0 ||
+                 (ps.fgM||0)>0 || (ps.fTA||0)>0 || (ps.foulCommited||0)>0 ||
+                 ((ps.offensiveRebounds||0)+(ps.defensiveRebounds||0))>0 || (ps.assists||0)>0))
+      .sort((a,b)=>b.points-a.points);
     const rows=played.map(ps=>{
-      const nm=`${ps.matchTeamPlayerFirstname.trim()} ${ps.matchTeamPlayerLastname}`;
+      const nm=`${(ps.matchTeamPlayerFirstname||'').trim()} ${ps.matchTeamPlayerLastname||''}`;
       return `<tr>
       <td style="font-family:var(--fs)"><span class="box-player" onclick="openPlayerByPid(${ps.playerId||0})">${nm}</span> <span style="font-size:.65rem;color:var(--mut)">${ps.startingLineup?'●':''}</span></td>
-      <td>${fmt(ps.minutes,0)}'</td>
+      ${ima.min?`<td>${fmt(ps.minutes,0)}'</td>`:''}
       <td style="color:${colors[ti]};font-weight:600">${ps.points}</td>
-      <td>${ps.offensiveRebounds+ps.defensiveRebounds}</td>
-      <td>${ps.assists}</td>
-      ${_boxShot(ps.twoPM,ps.twoPA)}
-      ${_boxShot(ps.threePM,ps.threePA)}
-      ${_boxShot(ps.fTM,ps.fTA)}
-      <td>${ps.steals}/${ps.turnovers}</td>
-      <td style="color:${(ps.efficiencyCustom||0)>0?'var(--green)':'var(--red)'}">${ps.efficiencyCustom||ps.efficiency||0}</td>
+      ${ima.sk?`<td>${(ps.offensiveRebounds||0)+(ps.defensiveRebounds||0)}</td>`:''}
+      ${ima.ast?`<td>${ps.assists||0}</td>`:''}
+      ${ima.dva?celicaMet(ps.twoPM,ps.twoPA,samoZadeti.dva):''}
+      ${ima.tri?celicaMet(ps.threePM,ps.threePA,samoZadeti.tri):''}
+      ${ima.pm?celicaMet(ps.fTM,ps.fTA,samoZadeti.pm):''}
+      ${ima.stoizg?`<td>${ps.steals||0}/${ps.turnovers||0}</td>`:''}
+      ${ima.pz?`<td>${ps.foulCommited||0}</td>`:''}
+      ${ima.efe?`<td style="color:${(ps.efficiencyCustom||0)>0?'var(--green)':'var(--red)'}">${ps.efficiencyCustom||ps.efficiency||0}</td>`:''}
     </tr>`;}).join('');
-    // Ekipni seštevek metov — brez njega je treba stolpce seštevati na roko.
+
     const sum=(f)=>played.reduce((s,p)=>s+(p[f]||0),0);
     const tot=`<tr class="box-total">
       <td style="font-family:var(--fs);font-weight:700">Skupaj</td>
-      <td></td>
+      ${ima.min?'<td></td>':''}
       <td style="color:${colors[ti]};font-weight:700">${sum('points')}</td>
-      <td>${sum('offensiveRebounds')+sum('defensiveRebounds')}</td>
-      <td>${sum('assists')}</td>
-      ${_boxShot(sum('twoPM'),sum('twoPA'))}
-      ${_boxShot(sum('threePM'),sum('threePA'))}
-      ${_boxShot(sum('fTM'),sum('fTA'))}
-      <td>${sum('steals')}/${sum('turnovers')}</td>
-      <td></td>
+      ${ima.sk?`<td>${sum('offensiveRebounds')+sum('defensiveRebounds')}</td>`:''}
+      ${ima.ast?`<td>${sum('assists')}</td>`:''}
+      ${ima.dva?celicaMet(sum('twoPM'),sum('twoPA'),samoZadeti.dva):''}
+      ${ima.tri?celicaMet(sum('threePM'),sum('threePA'),samoZadeti.tri):''}
+      ${ima.pm?celicaMet(sum('fTM'),sum('fTA'),samoZadeti.pm):''}
+      ${ima.stoizg?`<td>${sum('steals')}/${sum('turnovers')}</td>`:''}
+      ${ima.pz?`<td>${sum('foulCommited')}</td>`:''}
+      ${ima.efe?'<td></td>':''}
     </tr>`;
+
+    const glava = `<th style="text-align:left;padding-left:8px;min-width:140px">IGRALEC</th>`
+      + (ima.min?'<th>MIN</th>':'') + '<th>TOČ</th>'
+      + (ima.sk?'<th>SK</th>':'') + (ima.ast?'<th>AST</th>':'')
+      + (ima.dva?'<th>2T</th>':'') + (ima.tri?'<th>3T</th>':'') + (ima.pm?'<th>PM</th>':'')
+      + (ima.stoizg?'<th>STO/IZG</th>':'') + (ima.pz?'<th>PŽ</th>':'')
+      + (ima.efe?'<th>EFE</th>':'');
+
     return `<div style="margin-bottom:16px">
       <div class="mo-section-title" style="color:${colors[ti]}">${team.teamName}</div>
       <div style="overflow-x:auto"><table class="st" style="font-size:.72rem">
-        <thead><tr>
-          <th style="text-align:left;padding-left:8px;min-width:140px">IGRALEC</th>
-          <th>MIN</th><th>TOČ</th><th>SK</th><th>AST</th><th>2T</th><th>3T</th><th>PM</th><th>STO/IZG</th><th>EFE</th>
-        </tr></thead>
+        <thead><tr>${glava}</tr></thead>
         <tbody>${rows}${tot}</tbody>
       </table></div>
     </div>`;
   }).join('');
-  return sections;
+
+  // Pri skrajsanem zapisniku povejmo, zakaj stolpcev ni — sicer je videti,
+  // kot da podatki manjkajo po nasi krivdi.
+  const opomba = (!ima.min && !ima.sk && !ima.ast)
+    ? `<div class="bff-note" style="border-top:none;padding-top:0">V tej ligi se v zapisnik vnašajo le točke, zadeti meti, prosti meti in osebne napake — minut, skokov in asistenc KZS ne beleži.</div>`
+    : '';
+  return sections + opomba;
 }
 
 // ═══════════════════════════════════════════════════
@@ -9304,9 +9357,15 @@ function renderNerd(){
   if(!pbpLoaded){wrap.innerHTML='<div class="empty">Nalagam PBP...</div>';return;}
   if(!Object.keys(pbpData).length){
     const odigranih=(typeof allMatches!=='undefined'&&allMatches)?allMatches.filter(m=>m.status==='FINISHED').length:0;
-    wrap.innerHTML='<div class="empty">'+(odigranih
-      ? 'Play-by-play za to ligo še ni obdelan. Zajem tece ob ponedeljkih zjutraj.'
-      : 'Play-by-play bo na voljo po prvih odigranih tekmah.')+'</div>';
+    const lg=(typeof getLg==='function')?getLg():null;
+    // Ce liga ni na FIBA LiveStats, PBP ne bo nikoli — ne pustimo uporabnika
+    // cakati na nekaj, cesar ne bo.
+    const brezFibe = lg && lg.fiba===false;
+    wrap.innerHTML='<div class="empty">'+(brezFibe
+      ? 'Za '+(lg.short||'to ligo')+' play-by-play ne obstaja — tekme se ne beležijo v FIBA LiveStats, zapisniki se vnašajo le v sistem KZS. Statistika tekem je na voljo v zavihkih Igralci in Tekme.'
+      : (odigranih
+        ? 'Play-by-play za to ligo še ni obdelan. Zajem teče ob ponedeljkih zjutraj.'
+        : 'Play-by-play bo na voljo po prvih odigranih tekmah.'))+'</div>';
     return;
   }
   const minT=parseInt(document.getElementById('nerd-min-sel')?.value||5);
