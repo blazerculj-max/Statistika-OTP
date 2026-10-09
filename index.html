@@ -10648,6 +10648,8 @@ function renderSeznum(){
   wrap.innerHTML=html;
   requestAnimationFrame(()=>activateCounters(wrap));
 }
+// Prednost domacega igrisca v ELO tockah (izmerjena, glej predictWinProb).
+const HOME_ELO = 60;
 function eloWinProb(r1,r2){return 1/(1+10**((r2-r1)/400));}
 function liveWinProb(r1,r2,s1,s2,elapsed){
   const eloP=eloWinProb(r1,r2),remaining=Math.max(0,2400-elapsed),tF=remaining/2400;
@@ -10740,8 +10742,46 @@ function predictWinProb(t1,t2){
   // Blend: 60% ELO + 40% bElo (če bElo na voljo za obe), sicer čisti ELO
   let s1=e1,s2=e2;
   if(b1!=null&&b2!=null){s1=0.6*e1+0.4*b1; s2=0.6*e2+0.4*b2;}
-  const p1=eloWinProb(s1,s2);
+  // Prednost domacega igrisca. Model je prej napovedoval brez nje in je
+  // domace dosledno podcenjeval: pri napovedi 55 % so dejansko zmagali v
+  // 73 % primerov, pri 74 % celo v 96 %. Vrednost ni ugibana — iz 58,5 %
+  // domacih zmag v sezoni 2025/26 sledi 60 tock ELO, in prav pri 60 je bil
+  // Brier na 383 tekmah najnizji (0.2070 -> 0.1991, zadetost 68,4 % -> 70,8 %).
+  // Glej scripts/backtest_napovedi.py.
+  const p1=eloWinProb(s1+HOME_ELO, s2);
   return {p1:Math.round(p1*100),p2:Math.round((1-p1)*100),e1:Math.round(e1),e2:Math.round(e2),b1,b2,blended:(b1!=null&&b2!=null)};
+}
+
+// Natancnost modela beremo iz data/napovedi_tocnost.json, ki ga ob vsakem
+// zagonu zapise scripts/backtest_napovedi.py. Tako stevilka ne zastara in je
+// ni treba vzdrzevati rocno.
+let _tocnost;
+async function nalozoTocnost(){
+  const el = () => document.getElementById('nap-tocnost');
+  if(_tocnost === undefined){
+    try{
+      const r = await fetch(GITHUB_RAW+'/napovedi_tocnost.json',{cache:'no-cache'});
+      _tocnost = r.ok ? await r.json() : null;
+    }catch(e){ _tocnost = null; }
+  }
+  const d = _tocnost, t = el();
+  if(!t || !d) return;
+  t.innerHTML = `<div class="pregled-card" style="--pc:#a855f7;cursor:default;margin-bottom:18px">
+    <div class="pregled-card-h">📐 Kako dober je ta model</div>
+    <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end">
+      <div><div style="font-family:var(--fs);font-size:1.9rem;font-weight:700;color:#a855f7">${d.zadetost}%</div>
+        <div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">zadetih napovedi</div></div>
+      <div><div style="font-family:var(--fs);font-size:1.9rem;font-weight:700">${d.brier}</div>
+        <div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">Brier (0,25 = kovanec)</div></div>
+      <div><div style="font-family:var(--fs);font-size:1.9rem;font-weight:700;color:var(--sub)">${d.domacihZmag}%</div>
+        <div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">zmag domačih</div></div>
+    </div>
+    <div style="font-size:.68rem;color:var(--mut);font-family:var(--fm);margin-top:12px;line-height:1.5">
+      Preverjeno na ${d.tekem} tekmah sezone ${d.sezona}. Vsaka napoved je bila izračunana
+      samo iz tekem, odigranih pred njo — torej tako, kot bi jo model dal takrat.
+      Za primerjavo: kdor bi vedno tipal na domače, bi zadel ${d.domacihZmag} %.
+    </div>
+  </div>`;
 }
 
 function renderNapovedi(){
@@ -10755,8 +10795,12 @@ function renderNapovedi(){
 
   let html=`<div class="sec-head" style="--sh-c:#a855f7">🔮 Napovedi tekem</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
-      Verjetnost zmage za prihajajoče tekme. Model združuje <strong>ekipni ELO</strong> (kdo je zmagoval) in <strong>bElo moč postave</strong> (kakovost igralcev). Ni stava — le statistična ocena.
-    </div>`;
+      Verjetnost zmage za prihajajoče tekme. Model združuje <strong>ekipni ELO</strong> (kdo je zmagoval) in <strong>bElo moč postave</strong> (kakovost igralcev), upošteva pa tudi prednost domačega igrišča. Ni stava — le statistična ocena.
+    </div>
+    <div id="nap-tocnost"></div>`;
+  // Koliko je model vreden — izmerjeno na odigrani sezoni. Doslej je stran
+  // napovedovala, nikoli pa ni povedala, ali se je izslo.
+  nalozoTocnost();
 
   if(!upcoming.length){
     // Pokaži zadnje 3 odigrane kot kontekst (poletni premor / med fazami)

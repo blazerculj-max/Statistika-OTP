@@ -77,6 +77,14 @@ jobs:
         run: python scripts/verify_boxscore.py
         continue-on-error: true
 
+      # ── Koliko je model napovedi vreden ──
+      # Zapise data/napovedi_tocnost.json, ki ga zavihek Napovedi prikaze.
+      # Tece kronolosko: vsaka napoved samo iz tekem pred njo.
+      - name: Preveri natancnost napovedi
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: python scripts/backtest_napovedi.py --sezona 26
+        continue-on-error: true
+
       # ── Sestavi (prijavljeni igralci) ──
       # Klubi prijavljajo igralce postopoma, zato osvezujemo ob vsakem zagonu.
       # Tece PRED prenosom slik: rosters.json prinese photoUuid tudi za igralce,
