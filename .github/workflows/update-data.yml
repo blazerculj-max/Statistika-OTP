@@ -82,7 +82,10 @@ jobs:
       # Tece kronolosko: vsaka napoved samo iz tekem pred njo.
       - name: Preveri natancnost napovedi
         if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
-        run: python scripts/backtest_napovedi.py --sezona 26
+        # Brez --sezona: vzame vse razpolozljive sezone, tudi tekoco. Z vsako
+        # odigrano tekmo je vzorec vecji, prednost domacega igrisca pa znova
+        # izmerjena — model se uci naprej sam.
+        run: python scripts/backtest_napovedi.py
         continue-on-error: true
 
       # ── Sestavi (prijavljeni igralci) ──

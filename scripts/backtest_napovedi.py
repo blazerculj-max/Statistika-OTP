@@ -35,7 +35,8 @@ START = 1500
 # Prednost domacega igrisca v ELO tockah. Ni ugibana: iz 58,5 % domacih zmag
 # sledi 60, in prav pri 60 je Brier na 383 tekmah najnizji. Ista vrednost je v
 # aplikaciji (HOME_ELO).
-HOME = 60
+HOME_PRIVZETO = 60
+HOME = HOME_PRIVZETO
 
 
 def arg(name, default=None):
@@ -52,7 +53,7 @@ def elo_p(r1, r2, h=0):
 
 def nalozi(liga, sezona):
     """Vrne odigrane tekme rednega dela, urejene po času."""
-    pot = f"data/{liga}_stats.json" if sezona is None else f"data/{liga}_stats_s{sezona}.json"
+    pot = f"data/{liga}_stats.json" if sezona in (None, 'tekoca') else f"data/{liga}_stats_s{sezona}.json"
     if not os.path.exists(pot):
         return None, pot
     d = json.load(open(pot, encoding='utf-8'))
@@ -71,7 +72,7 @@ def nalozi(liga, sezona):
     return ms, pot
 
 
-def backtest(ms, min_tekem=3):
+def backtest(ms, min_tekem=3, home=None):
     """Kronološki sprehod: napovej, nato posodobi ocene."""
     r = {}
     odigranih = {}
@@ -86,7 +87,7 @@ def backtest(ms, min_tekem=3):
         # njena ocena se vedno zacetnih 1500 in napoved ni nic vredna —
         # taksnih tekem ne stejemo, sicer bi si sami pokvarili meritev.
         if odigranih[t1] >= min_tekem and odigranih[t2] >= min_tekem:
-            p1 = elo_p(r[t1], r[t2], HOME)
+            p1 = elo_p(r[t1], r[t2], HOME if home is None else home)
             zmagal1 = 1 if m['firstTeamScore'] > m['secondTeamScore'] else 0
             izidi.append((p1, zmagal1, m))
 
@@ -127,32 +128,86 @@ def porocaj(ime, izidi):
     return {'n': n, 'zadetost': zadetih/n, 'brier': brier, 'domaci': domaci}
 
 
+def oceni(izidi):
+    n = len(izidi)
+    if not n:
+        return None
+    return {
+        'n': n,
+        'zadetost': sum(1 for p, w, _ in izidi if (p >= 0.5) == (w == 1)) / n,
+        'brier': sum((p - w) ** 2 for p, w, _ in izidi) / n,
+        'domaci': sum(w for _, w, _ in izidi) / n,
+    }
+
+
+def poisci_home(sezone, lige, min_tekem=150):
+    """Poisce prednost domacega igrisca, ki da najnizji Brier.
+
+    Vrednost ni fiksna: z vsako odigrano tekmo je vzorec vecji in ocena
+    natancnejsa. Pod min_tekem se ne odlocamo — pri majhnem vzorcu bi
+    optimizacija lovila sum in bi se stevilka divje premetavala iz tedna v
+    teden. Takrat ostane privzeta.
+    """
+    skupaj = 0
+    for sez in sezone:
+        for lg in lige:
+            ms, _ = nalozi(lg, sez)
+            skupaj += len(ms or [])
+    if skupaj < min_tekem:
+        return HOME_PRIVZETO, None, skupaj
+
+    najb = None
+    for h in range(0, 161, 10):
+        izidi = []
+        for sez in sezone:
+            for lg in lige:
+                ms, _ = nalozi(lg, sez)
+                if ms:
+                    izidi += backtest(ms, home=h)[0]
+        o = oceni(izidi)
+        if o and (najb is None or o['brier'] < najb[1]['brier']):
+            najb = (h, o)
+    return najb[0], najb[1], skupaj
+
+
 def main():
-    sezona = arg('--sezona', '26')
-    sezona = None if sezona in ('current', 'zdaj') else sezona
+    global HOME
     lige = [arg('--liga')] if arg('--liga') else ['liga1', 'liga2', 'liga3']
+    # Privzeto vzamemo VSE razpolozljive sezone — z vsako odigrano tekmo je
+    # vzorec vecji in ocena natancnejsa. Model se tako ucи naprej sam.
+    if arg('--sezona'):
+        sezone = [None if arg('--sezona') in ('current', 'zdaj') else arg('--sezona')]
+    else:
+        sezone = [s for s in ('26',) if os.path.exists(f"data/liga1_stats_s{s}.json")] + [None]
+
+    HOME, _o, n_vseh = poisci_home(sezone, lige)
+    oznaka = ', '.join(str(x or 'tekoca') for x in sezone)
 
     print("=" * 62)
-    print(f"Preveritev napovedi — sezona {sezona or 'tekoca'}")
+    print(f"Preveritev napovedi — sezone: {oznaka}")
     print("Napovedujemo samo iz tekem, odigranih PRED vsako tekmo.")
+    print(f"Prednost domacega igrisca: {HOME} tock ELO "
+          f"({'izmerjena na ' + str(n_vseh) + ' tekmah' if _o else 'privzeta, premalo tekem'})")
     print("=" * 62)
 
     vse = []
-    for lg in lige:
-        ms, pot = nalozi(lg, sezona)
-        if ms is None:
-            print(f"\n  {lg}: {pot} ne obstaja")
-            continue
-        izidi, _ = backtest(ms)
-        porocaj(f"{lg} ({len(ms)} odigranih)", izidi)
-        vse += izidi
+    for sez in sezone:
+        for lg in lige:
+            ms, pot = nalozi(lg, sez)
+            if ms is None:
+                continue
+            if not ms:
+                continue
+            izidi, _ = backtest(ms)
+            porocaj(f"{lg} · sezona {sez or 'tekoca'} ({len(ms)} odigranih)", izidi)
+            vse += izidi
 
-    if len(lige) > 1:
+    if len(vse) > 1:
         print("\n" + "-" * 62)
         porocaj("SKUPAJ", vse)
 
     # Zapis za stran: da lahko pove, koliko je model vreden.
-    if vse and len(lige) > 1:
+    if vse:
         n = len(vse)
         zad = sum(1 for p, w, _ in vse if (p >= 0.5) == (w == 1)) / n
         br = sum((p - w) ** 2 for p, w, _ in vse) / n
@@ -160,7 +215,7 @@ def main():
         with open('data/napovedi_tocnost.json', 'w', encoding='utf-8') as f:
             json.dump({
                 'preverjeno': datetime.now().strftime('%Y-%m-%d'),
-                'sezona': sezona or 'tekoca',
+                'sezone': oznaka,
                 'tekem': n,
                 'zadetost': round(zad * 100, 1),
                 'brier': round(br, 4),

@@ -10648,8 +10648,12 @@ function renderSeznum(){
   wrap.innerHTML=html;
   requestAnimationFrame(()=>activateCounters(wrap));
 }
-// Prednost domacega igrisca v ELO tockah (izmerjena, glej predictWinProb).
-const HOME_ELO = 60;
+// Prednost domacega igrisca v ELO tockah. Ni trdo zapisana: ob vsakem zagonu
+// Akcije jo scripts/backtest_napovedi.py znova izmeri na VSEH odigranih
+// tekmah (tudi tekoce sezone) in zapise v napovedi_tocnost.json. Z vsako
+// odigrano tekmo je vzorec vecji in ocena natancnejsa — model se uci naprej.
+// Spodnja vrednost velja le, dokler se datoteka ne nalozi.
+let HOME_ELO = 60;
 function eloWinProb(r1,r2){return 1/(1+10**((r2-r1)/400));}
 function liveWinProb(r1,r2,s1,s2,elapsed){
   const eloP=eloWinProb(r1,r2),remaining=Math.max(0,2400-elapsed),tF=remaining/2400;
@@ -10758,12 +10762,16 @@ function predictWinProb(t1,t2){
 let _tocnost;
 async function nalozoTocnost(){
   const el = () => document.getElementById('nap-tocnost');
-  if(_tocnost === undefined){
+  if(_tocnost === undefined || _tocnost === null){
     try{
       const r = await fetch(GITHUB_RAW+'/napovedi_tocnost.json',{cache:'no-cache'});
       _tocnost = r.ok ? await r.json() : null;
     }catch(e){ _tocnost = null; }
   }
+  // renderNapovedi() poklice to funkcijo se PREDEN zapise svoj html, zato
+  // #nap-tocnost takrat se ne obstaja. Prej je to resevala zamuda pri zajemu;
+  // odkar je podatek ze nalozen, zamude ni vec — pocakamo en obrat zanke.
+  await Promise.resolve();
   const d = _tocnost, t = el();
   if(!t || !d) return;
   t.innerHTML = `<div class="pregled-card" style="--pc:#a855f7;cursor:default;margin-bottom:18px">
@@ -12820,6 +12828,12 @@ document.addEventListener('DOMContentLoaded', ()=>{try{initTheme();}catch(e){}tr
   // zastarala). Manifest je majhen in se tako ali tako prenese.
   (async()=>{
     try{await loadSeasonsManifest();refreshSeasonLabels();}catch(e){}
+    // Naucena prednost domacega igrisca — napovedi so tudi v Pregledu, zato
+    // je ne smemo cakati sele na zavihek Napovedi.
+    try{
+      const r=await fetch(GITHUB_RAW+'/napovedi_tocnost.json',{cache:'no-cache'});
+      if(r.ok){ _tocnost=await r.json(); if(_tocnost&&_tocnost.homeElo>=0) HOME_ELO=_tocnost.homeElo; }
+    }catch(e){}
     // Šele za manifestom, da zna povezava z ?s=26 odpreti arhivsko sezono.
     try{routeBoot();}catch(e){console.warn('routeBoot:',e);}
   })();
