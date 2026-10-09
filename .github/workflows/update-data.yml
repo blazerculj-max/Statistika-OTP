@@ -2,7 +2,13 @@ name: Posodobi podatke (vse 3 SKL)
 
 on:
   schedule:
-    - cron: '0 */6 * * *'    # vsake 6 ur — stats (hiter, ~3 min) + slike (incremental)
+    - cron: '0 */6 * * *'    # vsake 6 ur — stats + sestave + prestopi + slike
+    # Tekme se koncajo zvecer, podatki pa so prej prisli sele z naslednjim
+    # 6-urnim zagonom: izmerjeno 3.10.2026 je tekma koncala ob 17:15 UTC,
+    # statistika pa se je pojavila ob 20:54 — 3,5 ure zamika. V tem oknu zato
+    # tecemo vsako uro, a SAMO stats (sestave, prestopi in slike se tedensko
+    # ne spremenijo in bi zagon po nepotrebnem podaljsali).
+    - cron: '20 15-23 * * *' # vsako uro 15:00-23:00 UTC — samo stats
     - cron: '0 2 * * 1'      # vsak ponedeljek ob 2:00 — PBP za nove tekme
   workflow_dispatch:
     inputs:
@@ -60,12 +66,23 @@ jobs:
         run: python scripts/fetch_data.py --full --pbp
         timeout-minutes: 120
 
+      # ── Preveritev: ali se uradni zapisnik ujema s FIBA LiveStats ──
+      # Stran po koncu tekme takoj pokaze boxscore iz FIBA, ker uradni zapisnik
+      # pride kasneje. Ko pride, preverimo, ali se ujemata — sicer bi lahko
+      # nekaj casa kazali napacne stevilke, pa tega nikoli ne bi izvedeli.
+      # Odstopanje je opozorilo v dnevniku, ne razlog za padec zagona; pri
+      # urnem zagonu preskocimo, da ostane hiter.
+      - name: Preveri boxscore proti FIBA
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: python scripts/verify_boxscore.py
+        continue-on-error: true
+
       # ── Sestavi (prijavljeni igralci) ──
       # Klubi prijavljajo igralce postopoma, zato osvezujemo ob vsakem zagonu.
       # Tece PRED prenosom slik: rosters.json prinese photoUuid tudi za igralce,
       # ki se niso odigrali nobene tekme, in je pred zacetkom sezone edini vir.
       - name: Posodobi sestave
-        if: github.event.inputs.mode != 'archive'
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
         run: python scripts/fetch_rosters.py
         continue-on-error: true
 
@@ -74,7 +91,7 @@ jobs:
       # predpomnjen v data/_registrations_s{N}.json, zato zagon bere samo
       # letosnjo sezono (~2 min namesto ~5).
       - name: Posodobi prestope
-        if: github.event.inputs.mode != 'archive'
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
         run: python scripts/fetch_transfers.py
         continue-on-error: true
 
@@ -82,7 +99,7 @@ jobs:
       # Tece vedno; inkrementalno je hitro (samo HEAD za obstojece).
       # Pri 'full' modu uporabi --force za popolno osvezitev slik.
       - name: Prenesi slike (inkrementalno)
-        if: github.event.inputs.mode != 'full' && github.event.inputs.mode != 'full+pbp' && github.event.inputs.mode != 'archive'
+        if: github.event.inputs.mode != 'full' && github.event.inputs.mode != 'full+pbp' && github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
         run: python scripts/download_images.py
         continue-on-error: true    # ce KZS blokira, ne ustavi workflowa
 

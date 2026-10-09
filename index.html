@@ -5021,6 +5021,8 @@ async function openMatch(matchId){
   // ligo sploh zapolnjen — sama prisotnost povezave ne zadosca (glej liga3).
   const _lgFiba = (typeof getLg==='function' ? getLg() : null);
   const hasFiba = !!matchInfo.fibaLiveStatsUrl && (!_lgFiba || _lgFiba.fiba !== false);
+  // Koncana, a brez shranjene statistike -> podatke vzamemo iz FIBA.
+  const _svezeKoncana = !matchData && !isLive && matchInfo.status==='FINISHED' && hasFiba;
 
   // Score display
   let scoreDisplay;
@@ -5077,7 +5079,7 @@ async function openMatch(matchId){
         // izrisali sta se ena pod drugo. Zdaj je privzeto odprt natanko en
         // zavihek, in sicer boxscore, ostala dva pa sta na izbiro.
         const _pre = matchInfo.status!=='FINISHED' && !isLive;
-        const _box = !!(boxScore||matchData||isLive);
+        const _box = !!(boxScore||matchData||isLive||_svezeKoncana);
         const _priv = _box ? 'box' : (_pre ? 'preview' : (hasFiba ? 'pbp' : ''));
         const g = (id,ikona,ime)=>`<button class="mo-tab${_priv===id?' active':''}" onclick="switchMatchTab(this,'mo-tab-${id}')">${ikona} ${ime}</button>`;
         let out='<div class="mo-tabs">';
@@ -5090,7 +5092,7 @@ async function openMatch(matchId){
         return out+'</div>';
       })()}
       ${matchInfo.status!=='FINISHED'&&!isLive?`<div id="mo-tab-preview" class="mo-tab-panel" style="display:${(boxScore||matchData||isLive)?'none':'block'}">${renderMatchPreview(matchInfo,c1,c2)}</div>`:''}
-      ${boxScore||matchData||isLive?`<div id="mo-tab-box" class="mo-tab-panel" style="display:block"><div class="mo-section" id="mo-box-inner">${boxScore||(isLive?'<div class="empty">Nalagam boxscore...</div>':'')}</div></div>`:''}
+      ${boxScore||matchData||isLive||_svezeKoncana?`<div id="mo-tab-box" class="mo-tab-panel" style="display:block"><div class="mo-section" id="mo-box-inner">${boxScore||'<div class="empty">Nalagam boxscore...</div>'}</div></div>`:''}
       ${(()=>{
         if(!hasFiba||!isLive)return '';
         const _fid=(matchInfo.fibaLiveStatsUrl||'').split('/').filter(Boolean).pop();
@@ -5109,6 +5111,12 @@ async function openMatch(matchId){
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
+
+  // Tekma je koncana, uradnega zapisnika pa se ni v nasih podatkih. FIBA ima
+  // koncni boxscore ze ob zadnjem pisku, mi pa smo doslej cakali na Akcijo —
+  // izmerjeno 3.10.2026: tekma se je koncala ob 17:15 UTC, podatki so prisli
+  // ob 20:54, torej 3,5 ure praznega boxscorea. Zdaj ga pokazemo takoj.
+  if(_svezeKoncana) startLiveBoxScore(matchId, c1, c2, true);
 
   // Živa tekma: lasten boxscore namesto FIBA okvirja. V okvir ne moremo seči,
   // zato v njem ni mogoče klikniti na igralca — KZS pa ima na
@@ -5308,11 +5316,24 @@ async function _fetchLiveBox(matchId){
     return n ? d : null;
   }catch(e){ return null; }
 }
-async function startLiveBoxScore(matchId, c1, c2){
+// enkrat=true: tekma je koncana, podatek se ne spreminja vec — izrisemo ga en
+// sam cas in ne postavljamo casovnika.
+async function startLiveBoxScore(matchId, c1, c2, enkrat){
   if(liveBoxTimer){ clearInterval(liveBoxTimer); liveBoxTimer=null; }
   const paint = async ()=>{
     // Modal je lahko medtem zaprt ali odprt na drugi tekmi.
     if(liveMatchId !== matchId){ if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;} return; }
+    if(enkrat){
+      const el0=document.getElementById('mo-box-inner');
+      const d0=await _fetchLiveBox(matchId);
+      if(!el0) return;
+      el0.innerHTML = d0
+        ? drawBoxScore(d0, c1, c2) +
+          '<div class="bff-note" style="border-top:none">Podatki so z uradnega sistema FIBA LiveStats, zajeti takoj po tekmi. '+
+          'Ko KZS objavi zapisnik, jih zamenja uradna statistika.</div>'
+        : '<div class="empty">Statistika še ni na voljo.</div>';
+      return;
+    }
     // Kvota posrednika je 100.000 zahtevkov na dan. Zavihek, pozabljen v
     // ozadju, bi brez tega porabil 5 zahtevkov na minuto celo noc — vec kot
     // vsi pravi gledalci skupaj. Ko se uporabnik vrne, osvezimo takoj
@@ -5333,6 +5354,7 @@ async function startLiveBoxScore(matchId, c1, c2){
     if(konec && liveBoxTimer){ clearInterval(liveBoxTimer); liveBoxTimer=null; }
   };
   await paint();
+  if(enkrat) return;                          // koncana tekma — brez osvezevanja
   liveBoxTimer = setInterval(paint, 30000);   // tekma se spreminja počasi
   // Ob vrnitvi na zavihek osvezimo takoj, da uporabnik ne caka do 30 s.
   if(!window._liveVisHook){
