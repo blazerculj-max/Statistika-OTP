@@ -4246,8 +4246,21 @@ async function _routeApply(r){
       const sel=document.getElementById('season-select');
       if(sel) sel.value=String(wantSeason);
     }
-    if(r.liga && r.liga !== currentLeague && (LEAGUES[r.liga] || r.liga==='3x3')){
-      await switchLeague(r.liga);
+    // Dokler stoji vstopni zaslon, nobena liga se ni nalozena — currentLeague
+    // je takrat se privzeti 'liga1'. Primerjava z njim bi zato pri povezavi na
+    // 1. SKL preskocila nalaganje in pustila prazno stran, vstopni zaslon
+    // (z-index 3000) pa bi ostal cez vse. Sem pridemo brez routeBoot() vedno,
+    // kadar se naslov zamenja na ze odprti strani: prilepljena povezava, gumb
+    // nazaj. Takrat gremo skozi isti vstop kot ob kliku na ligo.
+    const hero = document.getElementById('hero-overlay');
+    const naVstopu = hero && getComputedStyle(hero).display !== 'none';
+    if(r.liga && (LEAGUES[r.liga] || r.liga==='3x3')){
+      if(naVstopu && r.liga !== '3x3' && typeof selectLeague==='function'){
+        selectLeague(r.liga);              // nalozi ligo in skrije vstopni zaslon
+      } else if(r.liga !== currentLeague){
+        await switchLeague(r.liga);
+      }
+      if(hero) hero.style.display='none';  // 3x3 nima selectLeague()
     }
     if(r.liga === '3x3') return;
     await _routeWaitData();
@@ -5097,6 +5110,7 @@ async function openMatch(matchId){
       })()}
     </div>
     <div class="mo-body">
+      <div class="mo-section" id="mo-facts"></div>
       ${momentumSVG?`<div class="mo-section"><div class="mo-section-title">POTEK TEKME</div><div class="momentum-wrap">${momentumSVG}</div></div>`:''}
       ${(()=>{
         // Prej sta bila med zivo tekmo OBA gumba (BOXSCORE in LIVE BOX)
@@ -5136,6 +5150,8 @@ async function openMatch(matchId){
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
+
+  renderMatchFacts(matchId, c1, c2);
 
   // Tekma je koncana, uradnega zapisnika pa se ni v nasih podatkih. FIBA ima
   // koncni boxscore ze ob zadnjem pisku, mi pa smo doslej cakali na Akcijo —
@@ -5257,6 +5273,166 @@ function drawMomentum(changes,c1,c2,t1,t2){
   </svg>`;
 }
 
+// ── Potek tekme na enem mestu: cetrtine, najdaljsi niz, najvecja prednost ──
+// Viri po zanesljivosti:
+//   cetrtine   KZS scoreChanges (kumulativni rezultat po minutah) — edini, ki
+//              deluje tudi za 3. SKL; med zivo tekmo FIBA pN_score
+//   niz        PBP (natancno do meta). Kjer PBP ni, niza ne pokazemo.
+//   prednost   scoreChanges oziroma FIBA — povsod
+function _cetrtineIzScoreChanges(sc, konA, konB){
+  if(!sc || !sc.length) return null;
+  const pri = m => (sc.find(x=>x.minute===m) || null);
+  const meje = [10,20,30,40].map(pri);
+  if(meje.some(x=>!x)) return null;
+  const out=[]; let p1=0,p2=0;
+  meje.forEach((x,i)=>{ out.push({ime:'Q'+(i+1), a:x.score1-p1, b:x.score2-p2}); p1=x.score1; p2=x.score2; });
+
+  // scoreChanges zabelezi minute 1-40, zato se vsota cetrtin pri dveh vrstah
+  // tekem ne ujema s koncnim rezultatom. Razliko znamo pripisati nedvoumno:
+  //   p1===p2  po 40. minuti je bilo izenaceno -> sledil je podaljsek, ki ga
+  //            KZS ne zapisuje (preverjeno: ZKK Maribor 78:78 -> 93:88)
+  //   drugace  podaljska ni moglo biti, torej so manjkajoce tocke padle v
+  //            zadnji minuti rednega dela, se vedno v Q4 (Hidria 93:97 -> 98:97)
+  // Brez tega bi stolpec SKUPAJ nasprotoval rezultatu v naslovu tekme.
+  if(typeof konA==='number' && typeof konB==='number'){
+    const dA=konA-p1, dB=konB-p2;
+    if(dA||dB){
+      if(p1===p2) out.push({ime:'POD', a:dA, b:dB});
+      else { out[3].a+=dA; out[3].b+=dB; }
+    }
+  }
+  return out;
+}
+function _cetrtineIzFibe(d){
+  const t1=((d||{}).tm||{})['1']||{}, t2=((d||{}).tm||{})['2']||{};
+  const out=[];
+  for(let i=1;i<=8;i++){
+    const a=t1['p'+i+'_score'], b=t2['p'+i+'_score'];
+    if(a===undefined||b===undefined) break;
+    if(i>4 && !a && !b) break;              // podaljska ni bilo
+    out.push({ime:i<=4?('Q'+i):('P'+(i-4)), a:a||0, b:b||0});
+  }
+  return out.length?out:null;
+}
+// Najdaljsi niz zaporednih tock ene ekipe. Gremo KRONOLOSKO: zapis PBP je
+// obrnjen (najnovejsi dogodek prvi), zato bi sicer zabelezili konec niza
+// namesto zacetka.
+function _najdaljsiNiz(pbp){
+  if(!pbp||!pbp.length) return null;
+  let naj=null, tek={tno:null,pts:0,od:null,period:null};
+  const koncaj=()=>{ if(tek.tno!==null && (!naj || tek.pts>naj.pts)) naj={...tek}; };
+  [...pbp].reverse().forEach(ev=>{
+    if(!['2pt','3pt','freethrow'].includes(ev.actionType) || ev.success!==1) return;
+    const p = ev.actionType==='3pt'?3:ev.actionType==='2pt'?2:1;
+    if(tek.tno===null || tek.tno===ev.tno){
+      // period zabelezimo ob ZACETKU niza in ga ne posodabljamo: niz pogosto
+      // sega cez konec cetrtine (preverjeno: 13:0 Ilirije se je zacel 38 s
+      // pred koncem Q3), zato bi sicer pisalo, da se je zgodil v naslednji.
+      if(tek.tno===null) tek={tno:ev.tno,pts:0,od:ev.gt,period:ev.period};
+      tek.pts+=p;
+    } else {
+      koncaj();
+      tek={tno:ev.tno,pts:p,od:ev.gt,period:ev.period};
+    }
+  });
+  koncaj();
+  return (naj && naj.pts>=6) ? naj : null;
+}
+function _najvecjaPrednost(sc, konA, konB){
+  if(!sc||!sc.length) return null;
+  let a=0,b=0;
+  const vzemi=(x,y)=>{ const d=(x||0)-(y||0); if(d>a)a=d; if(-d>b)b=-d; };
+  sc.forEach(x=>vzemi(x.score1,x.score2));
+  // scoreChanges se konca pri 40. minuti, zato podaljska ne vidi. Koncni izid
+  // poznamo, zato ga upostevamo — tako prikazana prednost nikoli ni manjsa od
+  // razlike, s katero se je tekma koncala.
+  vzemi(konA,konB);
+  return (a||b) ? {a,b} : null;
+}
+
+function _factsHtml(t1,t2,c1,c2,cetrtine,niz,prednost){
+  if(!cetrtine && !niz && !prednost) return '';
+  const kratko = n => TEAM_SHORT[normalizeTeamName(n)] || n;
+  let h = '<div class="mo-section-title">REZULTAT PO ČETRTINAH</div>';
+  if(cetrtine){
+    const vsotaA=cetrtine.reduce((s,q)=>s+q.a,0), vsotaB=cetrtine.reduce((s,q)=>s+q.b,0);
+    h += '<div style="overflow-x:auto"><table class="st" style="font-size:.76rem">'
+      + '<thead><tr><th style="text-align:left;padding-left:8px">EKIPA</th>'
+      + cetrtine.map(q=>`<th>${q.ime}</th>`).join('') + '<th>SKUPAJ</th></tr></thead><tbody>'
+      + `<tr><td style="text-align:left;padding-left:8px;color:${c1};font-weight:600">${kratko(t1)}</td>`
+      + cetrtine.map(q=>`<td style="${q.a>q.b?'font-weight:700':'opacity:.6'}">${q.a}</td>`).join('')
+      + `<td style="font-weight:700;font-family:var(--fs)">${vsotaA}</td></tr>`
+      + `<tr><td style="text-align:left;padding-left:8px;color:${c2};font-weight:600">${kratko(t2)}</td>`
+      + cetrtine.map(q=>`<td style="${q.b>q.a?'font-weight:700':'opacity:.6'}">${q.b}</td>`).join('')
+      + `<td style="font-weight:700;font-family:var(--fs)">${vsotaB}</td></tr>`
+      + '</tbody></table></div>';
+  }
+  const kosi=[];
+  if(niz){
+    const ekipa = niz.tno===1 ? t1 : t2;
+    const barva = niz.tno===1 ? c1 : c2;
+    kosi.push(`<div><div style="font-family:var(--fs);font-size:1.5rem;font-weight:700;color:${barva}">${niz.pts}:0</div>`
+      + `<div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">najdaljši niz · ${kratko(ekipa)} · Q${niz.period}</div></div>`);
+  }
+  if(prednost){
+    kosi.push(`<div><div style="font-family:var(--fs);font-size:1.5rem;font-weight:700;color:${c1}">+${prednost.a}</div>`
+      + `<div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">največ ${kratko(t1)}</div></div>`);
+    kosi.push(`<div><div style="font-family:var(--fs);font-size:1.5rem;font-weight:700;color:${c2}">+${prednost.b}</div>`
+      + `<div style="font-size:.62rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">največ ${kratko(t2)}</div></div>`);
+  }
+  if(kosi.length) h += `<div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">${kosi.join('')}</div>`;
+  return h;
+}
+
+// Koncana tekma: vse iz nasih podatkov.
+function renderMatchFacts(matchId, c1, c2){
+  const el=document.getElementById('mo-facts'); if(!el) return;
+  const mi=allMatches.find(m=>m.id===matchId); if(!mi) return;
+  const md=matchStatsCache[matchId]||{};
+  const cetrtine=_cetrtineIzScoreChanges(md.scoreChanges, mi.firstTeamScore, mi.secondTeamScore);
+  const prednost=_najvecjaPrednost(md.scoreChanges, mi.firstTeamScore, mi.secondTeamScore);
+  const niz=_najdaljsiNiz((pbpData[matchId]||{}).pbp);
+  el.innerHTML=_factsHtml(mi.firstTeamName,mi.secondTeamName,c1,c2,cetrtine,niz,prednost);
+
+  // Niz potrebuje PBP, ki ga ob odprtju tekme se ni — nalozi ga sele zavihek
+  // Nerd stats. Cetrtin ne zadrzujemo zaradi tega: izrisemo jih takoj, niz pa
+  // dopolnimo, ko podatki pridejo. Datoteka je navadno ze v predpomnilniku,
+  // zato je to pogosto trenutno.
+  const lg=(typeof getLg==='function')?getLg():null;
+  if(!niz && !pbpLoaded && !(lg && lg.fiba===false)){
+    try{
+      loadPBPData();
+      let n=0;
+      const t=setInterval(()=>{
+        if(++n>40){ clearInterval(t); return; }
+        if(!pbpLoaded) return;
+        clearInterval(t);
+        if(liveMatchId!==matchId) return;          // uporabnik je medtem zaprl
+        const nov=_najdaljsiNiz((pbpData[matchId]||{}).pbp);
+        if(nov && document.getElementById('mo-facts'))
+          document.getElementById('mo-facts').innerHTML=
+            _factsHtml(mi.firstTeamName,mi.secondTeamName,c1,c2,cetrtine,nov,prednost);
+      },200);
+    }catch(e){}
+  }
+}
+
+// Ziva tekma: cetrtine in niz iz FIBA payloada, ki ga boxscore ze prinese.
+function renderMatchFactsLive(matchId, c1, c2, d){
+  const el=document.getElementById('mo-facts'); if(!el||!d) return;
+  const mi=allMatches.find(m=>m.id===matchId); if(!mi) return;
+  const cetrtine=_cetrtineIzFibe(d);
+  const niz=_najdaljsiNiz(d.pbp);
+  // Prednost iz tekocega rezultata v PBP (s1/s2) — scoreChanges med tekmo ni.
+  let prednost=null;
+  if(d.pbp && d.pbp.length){
+    let a=0,b=0;
+    d.pbp.forEach(e=>{ const x=(e.s1||0)-(e.s2||0); if(x>a)a=x; if(-x>b)b=-x; });
+    if(a||b) prednost={a,b};
+  }
+  el.innerHTML=_factsHtml(mi.firstTeamName,mi.secondTeamName,c1,c2,cetrtine,niz,prednost);
+}
+
 // ── Živi boxscore ──────────────────────────────────────────────────────────
 // Med tekmo smo doslej prikazovali FIBA okvir (bs.html). Ta deluje, a je tuja
 // stran v iframeu: vanjo ne moremo poseči, zato v njej ni mogoče klikniti na
@@ -5326,7 +5502,9 @@ async function _fetchLiveBox(matchId){
         const d = await r.json();
         const box = _fibaToBox(d);
         const n = box ? (box.firstTeam.playerStats.length + box.secondTeam.playerStats.length) : 0;
-        if(n) return box;
+        // Surovi payload pripnemo: cetrtine in niz sta v njem, drugega zajema
+        // zanju ne delamo.
+        if(n){ box._fiba = d; return box; }
       }
     }catch(e){}
   }
@@ -5376,6 +5554,8 @@ async function startLiveBoxScore(matchId, c1, c2, enkrat){
     }
     el.innerHTML = drawBoxScore(d, c1, c2);
     el.dataset.filled = '1';
+    // Isti zajem nosi tudi cetrtine in tekoci rezultat, zato osvezimo se potek.
+    try{ if(d && d._fiba) renderMatchFactsLive(matchId, c1, c2, d._fiba); }catch(e){}
     if(konec && liveBoxTimer){ clearInterval(liveBoxTimer); liveBoxTimer=null; }
   };
   await paint();
