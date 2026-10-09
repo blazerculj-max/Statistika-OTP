@@ -88,15 +88,6 @@ jobs:
         run: python scripts/backtest_napovedi.py
         continue-on-error: true
 
-      # ── Prevod med ligami ──
-      # Iz igralcev, ki so med sezonama zamenjali ligo. Dokler vzorec ni dovolj
-      # velik, skripta ne zapise nicesar in to pove v dnevniku — ocena se bo
-      # pojavila sama sredi sezone.
-      - name: Prevod med ligami
-        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
-        run: python scripts/prevod_lig.py
-        continue-on-error: true
-
       # ── Sestavi (prijavljeni igralci) ──
       # Klubi prijavljajo igralce postopoma, zato osvezujemo ob vsakem zagonu.
       # Tece PRED prenosom slik: rosters.json prinese photoUuid tudi za igralce,
