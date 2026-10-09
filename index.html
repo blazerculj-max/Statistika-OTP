@@ -2233,6 +2233,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
       </select>
     </div>
     <div id="standings-wrap"></div>
+    <div id="tempo-wrap"></div>
     <div id="playoff-wrap" style="margin-top:24px"></div>
     <div id="h2h-wrap" style="margin-top:16px"></div>
     <div style="margin-top:28px">
@@ -4363,7 +4364,7 @@ function showTab(t){
   if(t==='liga')renderLeaders();
   if(t==='starost')renderAge();
   if(t==='iskanje')doSearch();
-  if(t==='lestvica'){renderStandings();renderEloTable();}
+  if(t==='lestvica'){renderStandings();renderTempo();renderEloTable();}
   if(t==='obisk')renderAttendance();
   if(t==='compare')renderPlayerCompare();
   if(t==='mvp')renderMVP();
@@ -13087,6 +13088,95 @@ function renderH2H(){
       </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// TEMPO IN UČINKOVITOST NA 100 POSESTI
+// ═══════════════════════════════════════════════════
+// Surove številke na tekmo so odvisne od tempa: ekipa, ki igra hitro, ima
+// vec posesti in zato vec tock, ne da bi bila boljsa. Normalizacija na 100
+// posesti to odpravi.
+//
+//   posesti = meti iz igre − napadalni skoki + izgube + 0,44 × prosti meti
+//
+// Koeficient 0,44 je ustaljena ocena, koliko prostih metov konca posest
+// (del jih je iz prekrskov v napadu in tehnicnih, ki je ne koncajo).
+//
+// 3. SKL tega nima: KZS tam ne belezi poskusov metov, napadalnih skokov in
+// izgub, FIBA pa te lige ne pokriva, zato ni od kod dopolniti.
+function computeTeamPace(){
+  const t = {};
+  const vzemi = n => t[n] || (t[n] = {tekme:0, poss:0, toc:0, tocPrejete:0, possNasprotnik:0, manjka:false});
+  Object.entries(matchStatsCache||{}).forEach(([mid, md])=>{
+    if(!md || !md.firstTeam || !md.secondTeam) return;
+    const strani = ['firstTeam','secondTeam'].map(k=>{
+      const ps = md[k].playerStats || [];
+      const v = f => ps.reduce((s,p)=>s+(p[f]||0),0);
+      const fga = v('twoPA') + v('threePA');
+      return {
+        ime: md[k].teamName,
+        toc: v('points'),
+        poss: fga - v('offensiveRebounds') + v('turnovers') + 0.44*v('fTA'),
+        celo: fga > 0,
+      };
+    });
+    strani.forEach((a,i)=>{
+      const b = strani[1-i];
+      const e = vzemi(a.ime);
+      e.tekme++;
+      if(!a.celo || !b.celo){ e.manjka = true; return; }
+      e.poss += a.poss; e.possNasprotnik += b.poss;
+      e.toc += a.toc;   e.tocPrejete += b.toc;
+    });
+  });
+  return Object.entries(t).map(([ime,e])=>{
+    if(e.manjka || e.poss <= 0) return null;
+    const ort = e.toc/e.poss*100, drt = e.tocPrejete/e.possNasprotnik*100;
+    return {ime, tekme:e.tekme, tempo:e.poss/e.tekme, ort, drt, net:ort-drt};
+  }).filter(Boolean).sort((a,b)=>b.net-a.net);
+}
+
+function renderTempo(){
+  const wrap = document.getElementById('tempo-wrap');
+  if(!wrap) return;
+  const lg = (typeof getLg==='function') ? getLg() : null;
+  const vrstice = computeTeamPace();
+  if(!vrstice.length){
+    // Pri 3. SKL ni smiselno obljubljati, da bo kdaj prislo.
+    wrap.innerHTML = (lg && lg.fiba === false)
+      ? `<div class="empty" style="font-size:.78rem">Za ${lg.short} tempa ni mogoče izračunati — v zapisnik se ne vnašajo poskusi metov, napadalni skoki in izgube.</div>`
+      : '';
+    return;
+  }
+  const maxT = Math.max(...vrstice.map(r=>r.tempo));
+  const minT = Math.min(...vrstice.map(r=>r.tempo));
+  const barva = v => v>0 ? 'var(--green)' : 'var(--red)';
+  wrap.innerHTML = `
+    <div class="pregled-sec-h" style="margin-top:28px">Tempo in učinkovitost</div>
+    <div style="font-size:.74rem;color:var(--mut);font-family:var(--fm);margin-bottom:12px;line-height:1.5">
+      Na 100 posesti — tako hitre in počasne ekipe postanejo primerljive.
+      <b>NAP</b> je koliko točk ekipa doseže, <b>OBR</b> koliko jih prejme, <b>NETO</b> razlika.
+    </div>
+    <div style="overflow-x:auto;border-radius:var(--r-lg);border:1px solid var(--border)">
+    <table class="standings-table"><thead><tr>
+      <th style="text-align:left;padding-left:14px">EKIPA</th>
+      <th>TEMPO</th><th>NAP</th><th>OBR</th><th>NETO</th>
+    </tr></thead><tbody>
+    ${vrstice.map(r=>{
+      const tc = TEAM_COLORS[normalizeTeamName(r.ime)] || 'var(--sub)';
+      const delez = maxT>minT ? (r.tempo-minT)/(maxT-minT) : 0.5;
+      return `<tr>
+        <td style="text-align:left;padding-left:14px">
+          <span class="std-team-name team-clickable" onclick="showTeamProfile('${r.ime.replace(/'/g,"\\'")}')"
+            style="color:${tc};cursor:pointer">${r.ime}</span></td>
+        <td><span style="font-family:var(--fs)">${r.tempo.toFixed(1)}</span>
+          <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.07);margin-top:3px">
+            <div style="height:100%;width:${Math.round(delez*100)}%;background:${tc};border-radius:2px"></div></div></td>
+        <td style="font-family:var(--fs)">${r.ort.toFixed(1)}</td>
+        <td style="font-family:var(--fs)">${r.drt.toFixed(1)}</td>
+        <td style="font-family:var(--fs);font-weight:700;color:${barva(r.net)}">${r.net>0?'+':''}${r.net.toFixed(1)}</td>
+      </tr>`;}).join('')}
+    </tbody></table></div>`;
 }
 
 function renderStandings(){
