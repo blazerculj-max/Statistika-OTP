@@ -9422,21 +9422,46 @@ function renderNerd(){
         : 'Play-by-play bo na voljo po prvih odigranih tekmah.'))+'</div>';
     return;
   }
-  const minT=parseInt(document.getElementById('nerd-min-sel')?.value||5);
+  const sel=document.getElementById('nerd-min-sel');
+  let minT=parseInt(sel?.value||5);
+  if(sel) sel.dataset.zeljeni = sel.dataset.zeljeni || String(minT);
   const nd=computeNerdStats();
-  const e=Object.entries(nd.stats).filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
+  let e=Object.entries(nd.stats).filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
+
+  // Privzeti prag je 5 tekem, kar je sredi sezone prav, na zacetku pa skrije
+  // cisto vse: po treh krogih ni nihce odigral petih tekem. Uporabnik je
+  // takrat videl stiri prazne kartice in sklepal, da podatkov ni — ceprav so
+  // bili tam. Zato prag znizamo na najvisjega, pri katerem se kdo pojavi, in
+  // to povemo.
+  // Padec gre do 1, ne do najvisjega stevila tekem: vecina teh kartic so
+  // SESTEVKI (clutch tocke, asistence, izgube), ne povprecja. Kdor je zadel
+  // zmagoviti kos, ga je zadel — tudi ce je odigral eno samo tekmo. Pri
+  // odstotkih sample varuje svoj lastni prag (npr. FG% zahteva vsaj 3 mete).
+  let znizano=null;
+  if(!e.length){
+    const kdorkoli=Object.keys(nd.stats).some(i=>P[i]);
+    if(kdorkoli){
+      znizano=1;
+      minT=1;
+      e=Object.entries(nd.stats).filter(([idx])=>P[idx]&&P[idx][F.T]>=minT);
+      if(sel) sel.value=String(minT);   // "Min 1 tekma" v izbirniku ze obstaja
+    }
+  }
   const filtered={stats:Object.fromEntries(e),scoringRuns:nd.scoringRuns};
+  const opozorilo = znizano
+    ? `<div class="clutch-def" style="border-color:var(--acc);color:var(--sub)">⚠ Za prag ${nTekem(parseInt(sel?.dataset.zeljeni||5))} je odigranih premalo tekem, zato so prikazani <b>vsi igralci</b>. Seštevki (točke, asistence) držijo, razlike v odstotkih pa so pri tako majhnem vzorcu večinoma naključje.</div>`
+    : '';
   if(statusEl&&!statusEl.textContent.includes('PBP'))
     statusEl.textContent=`📊 ${Object.keys(pbpData).length} tekem`;
-  if(nerdView==='clutch')wrap.innerHTML=renderClutch(filtered);
-  else if(nerdView==='quarters')wrap.innerHTML=renderQuarters(filtered);
-  else if(nerdView==='shots')wrap.innerHTML=renderShotTypes(filtered);
-  else if(nerdView==='runs')wrap.innerHTML=renderRuns(filtered);
-  else if(nerdView==='turnovers')wrap.innerHTML=renderTurnovers(filtered);
-  else if(nerdView==='rebounds')wrap.innerHTML=renderRebounds();
+  if(nerdView==='clutch')wrap.innerHTML=opozorilo+renderClutch(filtered);
+  else if(nerdView==='quarters')wrap.innerHTML=opozorilo+renderQuarters(filtered);
+  else if(nerdView==='shots')wrap.innerHTML=opozorilo+renderShotTypes(filtered);
+  else if(nerdView==='runs')wrap.innerHTML=opozorilo+renderRuns(filtered);
+  else if(nerdView==='turnovers')wrap.innerHTML=opozorilo+renderTurnovers(filtered);
+  else if(nerdView==='rebounds')wrap.innerHTML=opozorilo+renderRebounds();
   // BFF ne filtriramo po odigranih tekmah: prag velja za igralca, par pa ima
   // svoj naravni prag — stevilo podaj med njima.
-  else if(nerdView==='bff')wrap.innerHTML=renderBff();
+  else if(nerdView==='bff')wrap.innerHTML=opozorilo+renderBff();
 }
 
 // ═══════════════════════════════════════════════════
