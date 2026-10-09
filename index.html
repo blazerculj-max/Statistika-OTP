@@ -9161,13 +9161,15 @@ function computeNerdStats(){
   function isClutch(ev){
     if((ev.period||0)<4)return false;
     if(ev.periodType==='OVERTIME')return Math.abs(ev.lead||0)<=8;
-    // FIBA gt = elapsed time (ne remaining!)
-    // 10-min četrtine: zadnje 3 min = elapsed >= 7:00 (420s)
-    const gt=ev.gt||'00:00';
-    const parts=gt.split(':');
-    const elapsed=parseInt(parts[0]||0)*60+(parseFloat(parts[1]||0));
-    const remaining=600-elapsed;
-    return remaining<=180&&Math.abs(ev.lead||0)<=5;
+    // POZOR: FIBA gt je PREOSTALI cas cetrtine, ne pretecen. Preverjeno na
+    // vseh 88 cetrtinah obeh lig: gt pada od ~10:00 na zacetku do 00:00 ob
+    // koncu, brez izjeme. Prejsnja koda je predpostavila nasprotno in iz gt
+    // racunala "remaining = 600 - gt", s cimer je clutch zajemal prvih 48
+    // sekund cetrte cetrtine namesto zadnjih treh minut. Pri tekmi
+    // Perspektiva Ilirija 82:83 Krka je tako izpadel zmagoviti met.
+    const parts=(ev.gt||'00:00').split(':');
+    const preostalo=parseInt(parts[0]||0)*60+(parseFloat(parts[1]||0));
+    return preostalo<=180&&Math.abs(ev.lead||0)<=5;
   }
 
   function initStats(idx){
@@ -9276,7 +9278,11 @@ function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
 
 function renderClutch({stats}){
   const e=Object.entries(stats);
-  return '<div class="nerd-grid">'+
+  // Doslej ni nikjer pisalo, kaj clutch sploh meri — razred .clutch-def je bil
+  // v slogu, a neuporabljen. Brez tega je stevilka brez pomena.
+  return '<div class="clutch-def">⏱ <b>Clutch</b> = zadnje 3 minute 4. četrtine '+
+    'pri razliki do 5 točk, in celotni podaljški pri razliki do 8 točk.</div>'+
+    '<div class="nerd-grid">'+
     mkCard('Clutch točke','#ef4444','🎯',e,s=>s.clutch.pts,v=>v+' <small>pts</small>')+
     mkCard('Clutch FG%','#f97316','🏀',e.filter(([,s])=>s.clutch.fga>=3),
       s=>s.clutch.fga>0?Math.round(s.clutch.fgm/s.clutch.fga*100):0,v=>v+'%')+
