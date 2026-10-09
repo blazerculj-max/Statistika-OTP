@@ -3991,6 +3991,24 @@ function initUI() {
 // ═══════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════
+// ── Cas tekme ─────────────────────────────────────────────────────────────
+// KZS ob objavi koledarja ure pogosto nima nastavljene in zapise 00:00Z.
+// Lokalno se to izrise kot "02:00" (poleti) oziroma "01:00" (pozimi) — torej
+// izmisljena nocna ura. Izmerjeno 9.10.2026: 86 od 180 tekem 3. SKL in 31 od
+// 132 tekem 2. SKL. Varovalka je prej obstajala samo v Pregledu, drugod pa ne.
+function brezUre(dt){ return /T00:00(:00)?(\.000)?Z?$/.test(dt||''); }
+// Vrne uro ali prazno, kadar je ni. Nikoli ne vrne izmisljene.
+function uraTekme(dt){
+  if(!dt || brezUre(dt)) return '';
+  return new Date(dt).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
+}
+// Datum (+ ura, ce obstaja).
+function datumTekme(dt, opt){
+  const o = Object.assign({day:'numeric',month:'short'}, opt||{});
+  if(!brezUre(dt)) { o.hour='2-digit'; o.minute='2-digit'; }
+  return new Date(dt).toLocaleDateString('sl-SI', o);
+}
+
 function pct(m,a){return a>0?Math.round(m/a*1000)/10:null}
 function fmt(v,dec=1){return v===null||v===undefined?'—':(dec===0?Math.round(v):v.toFixed(dec))}
 function pctCls(v){if(v===null)return '';if(v>=55)return 'phi';if(v>=40)return 'pmd';return 'plo'}
@@ -4865,8 +4883,11 @@ async function fetchLivePbp(matchInfo) {
         success: ev.success,
         player:  (ev.firstName||'') + ' ' + (ev.familyName||''),
         tno:     ev.tno, // 1=home, 2=away
-        s1:      ev.lead >= 0 ? (ev.lead + (ev.tno===2?(parseInt(ev.gt)||0):0)) : 0,
-        s2:      ev.lead < 0  ? (Math.abs(ev.lead) + (ev.tno===1?(parseInt(ev.gt)||0):0)) : 0,
+        // FIBA poslje pravi tekoci rezultat v s1/s2. Prej je bil tu izracun
+        // iz "lead" plus minut z ure — nesmisel, ki pa ga nihce ni bral,
+        // ker rezultata v izpisu sploh ni bilo. Zdaj ga pokazemo.
+        s1:      ev.s1,
+        s2:      ev.s2,
       }));
   } catch(e) { return []; }
 }
@@ -4974,7 +4995,10 @@ function renderPbpFeed(events, t1, t2, c1, c2, liveScore) {
         </div>
         <div style="font-size:.65rem;color:var(--mut)">${name} · ${ev.gt}</div>
       </div>
-      ${pts?`<div style="font-family:var(--fh);font-size:.9rem;color:#22c55e;flex-shrink:0">${pts}</div>`:''}
+      ${pts?`<div style="flex-shrink:0;text-align:right">
+        <div style="font-family:var(--fh);font-size:.9rem;color:#22c55e">${pts}</div>
+        ${(ev.s1!==undefined&&ev.s1!==null)?`<div style="font-family:var(--fs);font-size:.62rem;color:var(--mut);letter-spacing:-.02em">${ev.s1}:${ev.s2}</div>`:''}
+      </div>`:''}
     </div>`;
   }).join('');
 
@@ -6791,7 +6815,7 @@ function renderFeaturedMatch(){
   }
 
   const dt=new Date(m.dateTime);
-  const dateStr=dt.toLocaleDateString('sl-SI',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+  const dateStr=datumTekme(m.dateTime,{month:'long'});
 
   el.innerHTML=`<div class="fmatch" style="--fm-grad:${grad}" onclick="openMatch(${m.id})">
     <div class="fmatch-label">${label}</div>
@@ -8238,10 +8262,11 @@ function formatMatchTime(dateTime) {
   const diff = now - d;
   const isToday = d.toDateString() === now.toDateString();
   const isTomorrow = new Date(now.getTime() + 86400000).toDateString() === d.toDateString();
-  const time = d.toLocaleTimeString('sl', {hour:'2-digit', minute:'2-digit'});
-  if(isToday) return 'Danes · ' + time;
-  if(isTomorrow) return 'Jutri · ' + time;
-  return d.toLocaleDateString('sl', {day:'numeric', month:'short'}) + ' · ' + time;
+  const time = uraTekme(dateTime);
+  const pr = time ? ' · ' + time : '';
+  if(isToday) return 'Danes' + pr;
+  if(isTomorrow) return 'Jutri' + pr;
+  return d.toLocaleDateString('sl', {day:'numeric', month:'short'}) + pr;
 }
 
 function buildLiveCard(m, lgKey) {
@@ -9662,10 +9687,7 @@ function preseasonHtml(){
   // sicer se "Perspektiva Ilirija" odreže na "Perspek...".
   const ozko = window.matchMedia('(max-width:640px)').matches;
   const ime = n => ozko ? (TEAM_SHORT[normalizeTeamName(n)] || n) : n;
-  const brezUre = m => /T00:00(:00)?Z?$/.test(m.dateTime||'');
-  const datum = m => new Date(m.dateTime).toLocaleDateString('sl-SI',
-    brezUre(m) ? {day:'numeric',month:'short'}
-               : {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  const datum = m => datumTekme(m.dateTime);   // skupna varovalka, glej uraTekme()
 
   let odst = '';
   if(prva){
@@ -9857,7 +9879,7 @@ function renderPregled(){
     const c1=TEAM_COLORS[normalizeTeamName(t1)]||'#f97316', c2=TEAM_COLORS[normalizeTeamName(t2)]||'#3b82f6';
     let pr={p1:50,p2:50}; try{pr=predictWinProb(t1,t2);}catch(e){}
     const dstr=new Date(next.dateTime).toLocaleDateString('sl',{weekday:'short',day:'numeric',month:'short'});
-    const tstr=new Date(next.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
+    const tstr=uraTekme(next.dateTime)||'—';
     html+=`<div class="pregled-card" onclick="showTab('napovedi')" style="--pc:#a855f7">
       <div class="pregled-card-h">🔮 Naslednja tekma</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -10654,6 +10676,18 @@ async function ensurePbpPanel(){
   _pbpPanelBusy=true;
   try{
     let ev=livePbpCache[liveMatchId];
+    // Za koncane tekme imamo PBP shranjen pri sebi (liga*_pbp.json). Prej smo
+    // tudi zanje hodili na FIBA prek posrednika — pocasneje, porablja kvoto in
+    // odpove, kadar posrednik ni dosegljiv. Shranjeni vir je isti podatek.
+    if((!ev||!ev.length) && mi.status==='FINISHED'){
+      if(!pbpLoaded) await new Promise(r=>{ loadPBPData(); const t=setInterval(()=>{ if(pbpLoaded){clearInterval(t);r();} },150); setTimeout(()=>{clearInterval(t);r();},8000); });
+      const shr=(pbpData[liveMatchId]||{}).pbp;
+      if(shr&&shr.length) ev=shr.map(e=>({
+        period:e.period, gt:e.gt||'', action:e.actionType, sub:e.subType||'',
+        success:e.success, player:((e.firstName||'')+' '+(e.familyName||'')).trim(),
+        tno:e.tno, s1:e.s1, s2:e.s2
+      }));
+    }
     if(!ev||!ev.length) ev=await fetchLivePbp(mi);
     if(ev&&ev.length) livePbpCache[liveMatchId]=ev;
     const t1=mi.firstTeamName,t2=mi.secondTeamName;
@@ -10762,7 +10796,7 @@ function renderNapovedi(){
       const c2=TEAM_COLORS[normalizeTeamName(t2)]||'#3b82f6';
       const pr=predictWinProb(t1,t2);
       const fav=pr.p1>=pr.p2;
-      const time=new Date(m.dateTime).toLocaleTimeString('sl',{hour:'2-digit',minute:'2-digit'});
+      const time=uraTekme(m.dateTime);
       const conf=Math.abs(pr.p1-50); // 0=izenačeno, 50=zanesljivo
       const confLbl=conf<8?'Izenačeno':conf<20?'Rahla prednost':conf<33?'Jasen favorit':'Velik favorit';
       html+=`<div class="napoved-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer" onclick="openMatch('${m.id}')">

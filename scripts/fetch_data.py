@@ -365,10 +365,15 @@ def dopolni_iz_fibe(matches, stats):
 
 
 def fetch_pbp_incremental(matches, existing_pbp):
+    def brez_rezultata(mid):
+        ev = existing_pbp.get(mid) or []
+        return bool(ev) and 's1' not in (ev[0] or {})
+
     needs = [m for m in matches
              if m['status'] == 'FINISHED'
              and m.get('fibaLiveStatsUrl')
-             and str(m['id']) not in existing_pbp]
+             and (str(m['id']) not in existing_pbp
+                  or brez_rezultata(str(m['id'])))]   # enkratna dopolnitev s s1/s2
 
     if not needs:
         print(f"  PBP: vse shranjeno ({len(existing_pbp)})")
@@ -381,8 +386,12 @@ def fetch_pbp_incremental(matches, existing_pbp):
         d = fetch_json(f"{FIBA_BASE}/{fid}/data.json")
         if d and d.get('pbp'):
             pbp[str(m['id'])] = [
+                # s1/s2 = pravi tekoci rezultat ob dogodku. Prej ju nismo
+                # shranjevali, zato ga aplikacija ni mogla pokazati in si ga
+                # je izracunavala iz "lead" — napacno.
                 {k: ev.get(k,'') for k in
-                 ('gt','period','periodType','lead','tno','actionType','subType','success','firstName','familyName')}
+                 ('gt','period','periodType','lead','tno','actionType','subType',
+                  'success','firstName','familyName','s1','s2')}
                 for ev in d['pbp']
                 if ev.get('actionType') in ('2pt','3pt','freethrow','turnover','assist','rebound','block','steal')
             ]
