@@ -15,7 +15,7 @@ SEZONA IN ID-ji SE ODKRIJEJO SAMI:
   ničesar ročno posodabljati.
 """
 
-import json, time, urllib.request, os, sys
+import json, time, re, urllib.request, os, sys
 from datetime import datetime, timezone, timedelta
 
 API_BASE  = "https://api.kzs.si/api/v1/public"
@@ -247,6 +247,123 @@ def fetch_stats_incremental(matches, existing_stats):
         time.sleep(0.1)
     return stats
 
+# ════════════════════════════════════════════════════════════
+# DOPOLNJEVANJE IZ FIBA
+# ════════════════════════════════════════════════════════════
+# KZS zapisnik ni vedno poln. Izmerjeno 9.10.2026 je bila tekma 108335
+# (LTH Castings 65:59 Grosuplje) v KZS zabelezena samo s tockami — nic skokov,
+# asistenc in minut — medtem ko je FIBA imela vse. Preveritev vseh ostalih
+# tekem je pokazala, da se vira do zadnje stevilke ujemata, zato je FIBA
+# zanesljiv vir za zapolnitev vrzeli.
+#
+# MEJA, KI JE NE PRESTOPIMO: tocke in zadeti meti (2PM, 3PM, FTM) dolocajo
+# koncni rezultat in ostanejo taki, kot jih je zapisal KZS. Dopolnjujemo samo
+# tisto, cesar KZS ni zabelezil. Tako se ekipni sestevek ne more raziti z
+# uradnim izidom.
+FIBA_FILL = {
+    'minutes':           ('sMinutes', 'min'),
+    'offensiveRebounds': ('sReboundsOffensive', None),
+    'defensiveRebounds': ('sReboundsDefensive', None),
+    'totalRebounds':     ('sReboundsTotal', None),
+    'assists':           ('sAssists', None),
+    'steals':            ('sSteals', None),
+    'turnovers':         ('sTurnovers', None),
+    'blocksInFavor':     ('sBlocks', None),
+    'blocksAgainst':     ('sBlocksReceived', None),
+    'twoPA':             ('sTwoPointersAttempted', None),
+    'threePA':           ('sThreePointersAttempted', None),
+    'fgA':               ('sFieldGoalsAttempted', None),
+    'fTA':               ('sFreeThrowsAttempted', None),
+    'foulCommited':      ('sFoulsPersonal', None),
+    'foulReceived':      ('sFoulsOn', None),
+    'plusMinus':         ('sPlusMinusPoints', None),
+}
+
+
+def _norm(s):
+    s = (s or '').lower()
+    for a, b in (('č','c'),('ć','c'),('š','s'),('ž','z'),('đ','d')):
+        s = s.replace(a, b)
+    return re.sub(r'[^a-z]', '', s)
+
+
+def _kljuc(ime, priimek):
+    return f"{_norm(priimek)}|{_norm(ime)[:1]}"
+
+
+def _fiba_min(v):
+    """'28:13' -> 28.2"""
+    try:
+        mm, ss = str(v).split(':')
+        return round(int(mm) + int(ss) / 60.0, 1)
+    except Exception:
+        return 0
+
+
+def dopolni_iz_fibe(matches, stats):
+    """Zapolni vrzeli v KZS zapisniku s podatki iz FIBA LiveStats."""
+    kandidati = []
+    for m in matches:
+        if m.get('status') != 'FINISHED' or not m.get('fibaLiveStatsUrl'):
+            continue
+        md = stats.get(str(m['id']))
+        if not md or md.get('_fibaCheck'):
+            continue                      # ze pregledano ob prejsnjem zagonu
+        kandidati.append(m)
+    if not kandidati:
+        return stats, 0
+
+    print(f"  FIBA dopolnitev: pregledujem {len(kandidati)} tekem...")
+    dopolnjenih = 0
+    for m in kandidati:
+        md = stats[str(m['id'])]
+        fid = m['fibaLiveStatsUrl'].rstrip('/').split('/')[-1]
+        d = fetch_json(f"{FIBA_BASE}/{fid}/data.json")
+        time.sleep(0.4)
+        tm = (d or {}).get('tm') or {}
+        if not tm.get('1') or not tm.get('2'):
+            md['_fibaCheck'] = 'ni'       # ni na FIBA (npr. 3. SKL)
+            continue
+
+        polj = 0
+        for ti, kzs_key in enumerate(('firstTeam', 'secondTeam')):
+            fib = {}
+            for pl in ((tm.get(str(ti + 1)) or {}).get('pl') or {}).values():
+                fib[_kljuc(pl.get('firstName'), pl.get('familyName'))] = pl
+            for ps in ((md.get(kzs_key) or {}).get('playerStats') or []):
+                f = fib.get(_kljuc(ps.get('matchTeamPlayerFirstname'),
+                                   ps.get('matchTeamPlayerLastname')))
+                if not f:
+                    continue
+                for kzs_f, (fiba_f, kind) in FIBA_FILL.items():
+                    if ps.get(kzs_f):          # KZS ima vrednost -> ne diramo
+                        continue
+                    v = _fiba_min(f.get(fiba_f)) if kind == 'min' else (f.get(fiba_f) or 0)
+                    if v:
+                        ps[kzs_f] = v
+                        polj += 1
+                # PIR izracunamo sami sele, ko so podatki popolni; KZS ga pri
+                # skrajsanem zapisniku pusti na 0.
+                if not ps.get('efficiencyCustom') and ps.get('totalRebounds'):
+                    zgreseni = ((ps.get('fgA') or 0) - (ps.get('fgM') or 0)) + \
+                               ((ps.get('fTA') or 0) - (ps.get('fTM') or 0))
+                    ps['efficiencyCustom'] = (
+                        (ps.get('points') or 0) + (ps.get('totalRebounds') or 0)
+                        + (ps.get('assists') or 0) + (ps.get('steals') or 0)
+                        + (ps.get('blocksInFavor') or 0) + (ps.get('foulReceived') or 0)
+                    ) - (zgreseni + (ps.get('turnovers') or 0)
+                         + (ps.get('blocksAgainst') or 0) + (ps.get('foulCommited') or 0))
+        md['_fibaCheck'] = 'dopolnjeno' if polj else 'ok'
+        if polj:
+            dopolnjenih += 1
+            print(f"    + {m['id']} {m.get('firstTeamName')} vs {m.get('secondTeamName')}: {polj} polj")
+    if dopolnjenih:
+        print(f"  FIBA dopolnitev: {dopolnjenih} tekem dopolnjenih")
+    else:
+        print("  FIBA dopolnitev: vrzeli ni bilo")
+    return stats, dopolnjenih
+
+
 def fetch_pbp_incremental(matches, existing_pbp):
     needs = [m for m in matches
              if m['status'] == 'FINISHED'
@@ -397,6 +514,10 @@ def process_league(key, lg):
 
     existing_stats = existing.get('matchStats', {}) if existing else {}
     stats = fetch_stats_incremental(matches, existing_stats)
+    # Kjer KZS zapisnik ni poln, vrzeli zapolnimo iz FIBA (tocke in zadetih
+    # metov ne diramo — ti dolocajo uradni izid).
+    if LEAGUES.get(key, {}).get('fiba') is not False:
+        stats, _ = dopolni_iz_fibe(matches, stats)
 
     now = datetime.now(timezone.utc).isoformat()
     payload = {'updatedAt': now, 'league': lg['name'], 'seasonId': SEASON_ID,
@@ -451,8 +572,8 @@ def process_league(key, lg):
             if not os.path.exists(pbp_file):
                 with open(pbp_file, 'w') as f:
                     json.dump({'updatedAt': now, 'seasonId': SEASON_ID, 'pbp': {}}, f)
-        elif cfg.get('fiba') is False:
-            print(f"  PBP preskocen: {cfg['name']} ni na FIBA LiveStats")
+        elif LEAGUES.get(key, {}).get('fiba') is False:
+            print(f"  PBP preskocen: {lg['name']} ni na FIBA LiveStats")
         else:
             existing_pbp = load_existing_pbp(key)
             pbp = fetch_pbp_incremental(matches, existing_pbp)
