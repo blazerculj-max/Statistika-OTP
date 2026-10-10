@@ -4891,7 +4891,7 @@ function renderTeam(){
   let players=P.filter(p=>p[F.team]===team);
   if(minT>0)players=players.filter(p=>p[F.T]>=minT);
 
-  const qual=players.filter(p=>p[F.T]>=5);
+  const qual=players.filter(p=>p[F.T]>=pragTekem(5));
   let lPts=-1,lReb=-1,lAst=-1,lEfe=-1;
   let lpPlayer=null,lrPlayer=null,laPlayer=null,lePlayer=null;
   qual.forEach(p=>{
@@ -5953,6 +5953,16 @@ function bEloToOvr(be){
   return Math.max(40,Math.min(99,ovr));
 }
 // Percentil igralčeve vrednosti proti ligi (0..1)
+// Prag tekem za primerjalno skupino lige. Fiksni prag (10 oz. 5 tekem) na
+// zacetku sezone nikogar ne zajame: po 3 kolih je skupina prazna in primerjava
+// se sesuje — radar je imel lestvico 0,1 (vsak igralec "najboljsi v ligi",
+// negativna EFE je odletela cez graf, povprecje 0/0), atributi pa so vsem
+// igralcem dali isti 50. percentil. Prag zato sledi sezoni: polovica najvec
+// odigranih tekem, najmanj 1, najvec polni prag.
+function pragTekem(polni){
+  const maxT=Math.max(0,...getLeaguePlayers().map(p=>p[F.T]||0));
+  return Math.max(1, Math.min(polni, Math.ceil(maxT/2)));
+}
 function _pctlRank(value,allValues){
   if(value==null||!allValues.length)return 0.5;
   const valid=allValues.filter(v=>v!=null).sort((a,b)=>a-b);
@@ -5963,7 +5973,7 @@ function _pctlRank(value,allValues){
 // 6 atributov, vsak 0-99, normaliziran proti ligi (igralci z >=5 tekem)
 function computePlayerAttributes(merged){
   const t=Math.max(merged[F.T],1);
-  const pool=getLeaguePlayers().filter(p=>p[F.T]>=5);
+  const pool=getLeaguePlayers().filter(p=>p[F.T]>=pragTekem(5));
   const per=(fn)=>pool.map(fn);
   const tt=p=>Math.max(p[F.T],1);
 
@@ -7519,7 +7529,7 @@ function renderLeaders(){
       entries=entries.filter(p=>p[F.MIN]>=10);
       vals=entries.map(p=>{const tm=getTmAgg(p[F.team].split(' / ')[0]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];const v=((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));return{p,v:Math.round(v*1000)/10};});
     }else if(cat.per){
-      entries=entries.filter(p=>p[F.T]>=5);
+      entries=entries.filter(p=>p[F.T]>=pragTekem(5));
       vals=entries.map(p=>({p,v:perOf(p)||0}));
     }else{
       const calc=cat.calc||(p=>p[cat.fi]);
@@ -7905,9 +7915,9 @@ function showPlayer(idx){
   const atVal=p[F.izg]>0?Math.round(p[F.pod]/p[F.izg]*100)/100:null;
   const flrVal=fgm>=5?Math.round(p[F.pod]/(p[F.pod]+fgm)*1000)/10:null;
 
-  const leagueQual=getLeaguePlayers().filter(x=>x[F.T]>=10);
+  const leagueQual=getLeaguePlayers().filter(x=>x[F.T]>=pragTekem(10));
   function leagueMax(fn){return Math.max(...leagueQual.map(fn),0.1);}
-  function leagueAvg(fn){const v=leagueQual.map(fn);return v.reduce((a,b)=>a+b,0)/v.length;}
+  function leagueAvg(fn){const v=leagueQual.map(fn);return v.length?v.reduce((a,b)=>a+b,0)/v.length:0;}
   const axes=[
     {lbl:'TOČ',val:t>0?p[F.toc]/t:0,max:leagueMax(x=>x[F.toc]/x[F.T])},
     {lbl:'SK',val:t>0?totalSk/t:0,max:leagueMax(x=>(x[F.nap]+x[F.obr])/x[F.T])},
@@ -8585,17 +8595,20 @@ function ppCompare(idx2){
 // ═══════════════════════════════════════════════════
 function drawRadar(axes,avgVals,color){
   const N=axes.length,cx=140,cy=130,r=95,angleStep=(Math.PI*2)/N,startAngle=-Math.PI/2;
+  // Delez med 0 in 1. Negativna vrednost (EFE) bi sicer tocko poslala cez
+  // sredisce na nasprotno stran grafa, NaN pa bi prekinil poligon.
+  const delez=(v,max)=>{const d=v/max;return isFinite(d)?Math.max(0,Math.min(d,1)):0;};
   function pt(i,ratio){const a=startAngle+i*angleStep;return[cx+Math.cos(a)*r*ratio,cy+Math.sin(a)*r*ratio];}
-  let svg=`<svg viewBox="0 0 280 260" style="width:100%;max-width:280px;display:block;margin:0 auto">`;
+  let svg=`<svg viewBox="0 0 280 278" style="width:100%;max-width:280px;display:block;margin:0 auto">`;
   [.25,.5,.75,1].forEach(ring=>{const pts=axes.map((_,i)=>pt(i,ring).join(',')).join(' ');svg+=`<polygon points="${pts}" fill="none" stroke="${ring===1?'#2a2a40':'#1a1a30'}" stroke-width="${ring===1?1.5:.5}"/>`;});
   axes.forEach((_,i)=>{const[x,y]=pt(i,1);svg+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#1e1e35" stroke-width="1"/>`;});
-  const avgPts=axes.map((ax,i)=>{const ratio=Math.min((avgVals[i]||0)/ax.max,1);return pt(i,ratio).join(',');}).join(' ');
+  const avgPts=axes.map((ax,i)=>{return pt(i,delez(avgVals[i]||0,ax.max)).join(',');}).join(' ');
   svg+=`<polygon points="${avgPts}" fill="rgba(148,163,184,.08)" stroke="rgba(148,163,184,.4)" stroke-width="1.5" stroke-dasharray="4,3"/>`;
-  const playerPts=axes.map((ax,i)=>{const ratio=Math.min(ax.val/ax.max,1);return pt(i,ratio).join(',');}).join(' ');
+  const playerPts=axes.map((ax,i)=>pt(i,delez(ax.val,ax.max)).join(',')).join(' ');
   svg+=`<polygon class="radar-poly" points="${playerPts}" fill="${color}33" stroke="${color}" stroke-width="2.5" style="transform-origin:140px 130px;filter:drop-shadow(0 0 6px ${color}66)"/>`;
-  axes.forEach((ax,i)=>{const ratio=Math.min(ax.val/ax.max,1);const[x,y]=pt(i,ratio);svg+=`<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`;});
+  axes.forEach((ax,i)=>{const[x,y]=pt(i,delez(ax.val,ax.max));svg+=`<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`;});
   axes.forEach((ax,i)=>{const[x,y]=pt(i,1.22);const anchor=x<cx-5?'end':x>cx+5?'start':'middle';svg+=`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" font-family="DM Sans,sans-serif" fill="#94a3b8" dominant-baseline="middle">${ax.lbl}</text>`;});
-  svg+=`<line x1="10" y1="248" x2="28" y2="248" stroke="${color}" stroke-width="2"/><circle cx="19" cy="248" r="3" fill="${color}"/><text x="32" y="248" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Igralec</text><line x1="85" y1="248" x2="103" y2="248" stroke="rgba(148,163,184,.6)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="107" y="248" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Povp. lige</text>`;
+  svg+=`<line x1="10" y1="268" x2="28" y2="268" stroke="${color}" stroke-width="2"/><circle cx="19" cy="268" r="3" fill="${color}"/><text x="32" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Igralec</text><line x1="85" y1="268" x2="103" y2="268" stroke="rgba(148,163,184,.6)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="107" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Povp. lige</text>`;
   svg+=`</svg>`;return svg;
 }
 
