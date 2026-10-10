@@ -2200,6 +2200,84 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
   .hero-card-cta{align-self:flex-start;padding:6px 12px!important;font-size:.75rem!important}
   .hero-top{gap:8px!important}
 }
+
+/* ── Smer A: Lestvica ── */
+.std-pos{background:none!important;box-shadow:none!important;color:var(--mut)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1rem!important;width:22px!important}
+.std-pos.p1,.std-pos.p2,.std-pos.p3{color:var(--text)!important}
+.std-pos.zone-cl::before,.std-pos.zone-rel::before{width:3px!important;height:22px!important;left:-10px!important}
+.std-tc{font-family:var(--fd);font-weight:700;font-size:1.1rem}
+.standings-table td{border-bottom:1px solid var(--border)!important}
+.standings-table th{text-transform:none!important;letter-spacing:0!important;font-weight:500!important;color:var(--mut)!important}
+.form-dot{background:none!important;box-shadow:none!important;width:auto!important;height:auto!important;font-size:.75rem!important;font-weight:700!important;padding:0 1px}
+.form-dot.w{color:#22c55e!important}
+.form-dot.l{color:var(--mut)!important}
+.std-legend{font-size:.75rem!important}
+
+.vrst-tabela{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.vrst{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--border)}
+.vrst:first-child{border-top:none}
+.vrst .rang{width:20px;text-align:center}
+.vrst-ime{flex:1;min-width:0;font-weight:600;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vrst-bar{width:140px;height:6px;background:var(--card2);border-radius:3px;overflow:hidden;flex-shrink:0}
+.vrst-bar .elo-bar-fill{height:100%;background:var(--sub);border-radius:3px}
+.vrst:first-child .vrst-bar .elo-bar-fill{background:var(--acc)}
+.vrst .vr{min-width:46px;text-align:right}
+.vrst-op{font-size:.75rem;color:var(--mut);min-width:96px;text-align:right}
+@media(max-width:640px){.vrst-bar{width:60px}.vrst-op{display:none}}
+/* Aktivni zavihek v glavnem meniju: bel tekst in crta pod njim, ne oranzna tabletka */
+.nav-row .nb.active{background:transparent!important;color:var(--text)!important;border-color:transparent!important;box-shadow:none!important}
+
+/* ── Smer A: kartica tekme ── */
+.live-card.lc-a{background:var(--card)!important;padding:0 0 4px}
+.live-card.lc-a:hover{transform:none!important;border-color:var(--border2)!important}
+.live-card.lc-a.is-live{border-color:rgba(239,68,68,.45)!important;box-shadow:none!important}
+.live-card.lc-a.is-today{border-color:var(--border2)!important}
+.lc-glava{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px 6px;font-size:.75rem;color:var(--mut)}
+.lc-glava>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lc-st{flex-shrink:0;font-weight:600;color:var(--sub)}
+.lc-ura{font-family:var(--fd);font-size:1rem;color:var(--text)}
+.lc-zivo{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;color:#ef4444;font-weight:700}
+.lc-zivo i{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.4s ease infinite}
+.lc-vrsta{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:.92rem;color:var(--sub)}
+.lc-vrsta.zm{color:var(--text);font-weight:600}
+.lc-vrsta.po .lc-ime,.lc-vrsta.po .lc-rez{color:var(--mut)}
+.lc-vrsta img,.lc-vrsta .live-team-logo,.lc-vrsta .logo-fallback{width:26px!important;height:26px!important;flex-shrink:0}
+.lc-ime{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lc-rez{font-family:var(--fd);font-weight:700;font-size:1.45rem;line-height:1;color:var(--text)}
+.lc-noga{padding:6px 14px 8px;font-size:.75rem;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── Smer A: izpostavljena tekma in krogi ── */
+.fmatch{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--r-lg)!important}
+.fmatch::before,.fmatch::after{display:none!important}
+.fmatch:hover{transform:none!important;box-shadow:none!important;border-color:var(--border2)!important}
+.fmatch-label{letter-spacing:.01em!important;text-transform:none!important;font-size:.8rem!important;font-weight:600!important}
+.fmatch-tname{font-family:var(--fm)!important;font-weight:600!important;font-size:1.05rem!important;letter-spacing:-.01em!important;color:var(--text)}
+.fmatch-cd{font-family:var(--fd)!important;font-weight:700!important;font-size:2rem!important;color:var(--text)!important}
+.fmatch-cd-lbl{text-transform:none!important;letter-spacing:0!important;font-size:.75rem!important}
+.fmatch-meta{font-size:.78rem!important}
+.round-title{font-family:var(--fd)!important;font-weight:700;font-size:1.25rem!important;letter-spacing:.01em!important;color:var(--text)!important;text-transform:uppercase;border-bottom:none!important}
+
+/* ── Smer A: Vodilni ── */
+.fstat::before{display:none!important}
+.fstat:hover{transform:none!important;box-shadow:none!important;border-color:var(--border2)!important}
+.fstat-lbl{text-transform:none!important;letter-spacing:0!important;font-size:.78rem!important}
+.fstat-val{color:var(--text)!important;font-size:2rem!important}
+.hcard{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--r-lg)!important}
+.hcard::before,.hcard::after{display:none!important}
+.hcard:hover{transform:none!important;border-color:var(--border2)!important}
+.hcard-rank{color:var(--border2)!important;font-family:var(--fd)!important;font-weight:700!important}
+.hcard-cat{color:var(--acc)!important;text-transform:none!important;letter-spacing:.01em!important;font-size:.78rem!important;font-weight:600}
+.hcard-val{text-shadow:none!important;color:var(--text)!important;font-size:3.2rem!important}
+.hcard-name{color:var(--text)!important;font-family:var(--fd)!important;text-transform:uppercase;font-size:1.25rem!important;letter-spacing:.01em!important}
+.hcard-team{color:var(--sub)!important}
+.hcard-photo{-webkit-mask-image:none!important;mask-image:none!important;opacity:1!important;filter:none!important;border-radius:12px;margin-bottom:12px}
+/* seznami vodilnih: vrednost bela, ekipa siva, rang brez zlate */
+.lrv{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.15rem!important}
+.lrtm{color:var(--mut)!important}
+.lrk{color:var(--mut)!important;font-family:var(--fd)!important;font-weight:700!important}
+.lrk.g{color:var(--acc)!important}
+.hcard-share{background:var(--card2)!important;border-color:var(--border2)!important;backdrop-filter:none!important}
+.lct{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700;text-transform:uppercase;font-size:1.05rem!important;letter-spacing:.01em!important}
 </style>
 </head>
 <body>
@@ -2490,7 +2568,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
     <!-- Primerjalnik je bil nad tabelo in je na telefonu zasedel prvi zaslon,
          lestvica pa se je zacela sele pod njim. Zdaj je pri svojem izpisu. -->
     <div style="margin-top:28px">
-      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">MEDSEBOJNO</div>
+      <div class="sec-head">Medsebojno</div>
       <div class="ctrls">
         <!-- Placeholder je bil "Head-to-head: Ekipa 1" in se je na telefonu
              odrezal v "Head-to-hea". Vmesni "vs" že pove, da gre za dvoboj. -->
@@ -2505,7 +2583,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
       <div id="h2h-wrap"></div>
     </div>
     <div style="margin-top:28px">
-      <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">⚡ ELO RATING — MOČ EKIP</div>
+      <div class="sec-head">ELO — moč ekip</div>
       <div id="elo-wrap"></div>
     </div>
   </div>
@@ -2515,8 +2593,8 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 
     <div class="ctrls" style="flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <div class="tgl">
-        <button class="tb active" id="mt-rd" onclick="setMatchTab('rd')">📅 Redni del</button>
-        <button class="tb" id="mt-pf" onclick="setMatchTab('playoff')">🏆 Končnica</button>
+        <button class="tb active" id="mt-rd" onclick="setMatchTab('rd')">Redni del</button>
+        <button class="tb" id="mt-pf" onclick="setMatchTab('playoff')">Končnica</button>
       </div>
       <select id="team-filter-m" onchange="renderMatches()" style="margin-left:auto">
         <option value="">Vse ekipe</option>
@@ -4795,8 +4873,19 @@ function showTab(t){
   }
   _showTab(t);
 }
+// Naslov strani (smer A) — vstavi se na vrh zavihka, ce ga se ni. Samo za
+// zavihke, ki so ze predelani; Pregled ima svojega.
+const STRAN_NASLOV={lestvica:'Lestvica',tekme:'Tekme',liga:'Vodilni'};
+function _stranGlava(t){
+  const el=document.getElementById('tab-'+t); if(!el||!STRAN_NASLOV[t])return;
+  let h=el.querySelector(':scope > .stran-h');
+  if(!h){h=document.createElement('div');h.className='stran-h';el.prepend(h);}
+  const sez=typeof _currentSeason==='number'?` · ${_currentSeason+1999}/${String(_currentSeason+2000).slice(-2)}`:'';
+  h.innerHTML=`<h1>${STRAN_NASLOV[t]}</h1><div class="stran-sub">${(getLg()||{}).name||''}${sez}</div>`;
+}
 function _showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
+  try{_stranGlava(t);}catch(e){}
   _routeWrite([currentLeague, t], true);
   // Zapri morebitne odprte modale (profil/ekipa/tekma...) ob menjavi zavihka
   _MODALS.forEach(({id,close})=>{
@@ -7470,13 +7559,13 @@ function renderFeaturedMatch(){
 
   let centerHtml,label;
   if(isLive){
-    label='🔴 V živo zdaj';
+    label='<i class="live-pika"></i>V živo';
     centerHtml=`<div class="fmatch-score live-glow" style="padding:4px 10px;border-radius:10px">${m.firstTeamScore||0} : ${m.secondTeamScore||0}</div>`;
   }else if(isUpcoming){
-    label='⏳ Naslednja tekma';
+    label='Naslednja tekma';
     centerHtml=`<div id="fmatch-countdown"><div class="fmatch-cd">—</div><div class="fmatch-cd-lbl">do začetka</div></div>`;
   }else{
-    label='✓ Zadnja tekma';
+    label='Zadnja tekma';
     const s1=m.firstTeamScore||0,s2=m.secondTeamScore||0;
     centerHtml=`<div class="fmatch-score"><span style="color:${s1>s2?'var(--text)':'var(--mut)'}">${s1}</span> <span style="color:var(--mut);font-size:1.6rem">:</span> <span style="color:${s2>s1?'var(--text)':'var(--mut)'}">${s2}</span></div>`;
   }
@@ -7489,12 +7578,12 @@ function renderFeaturedMatch(){
     <div class="fmatch-teams">
       <div class="fmatch-team">
         <div style="display:flex;justify-content:center;margin-bottom:8px">${teamLogoHtml(m.firstTeamName,46)}</div>
-        <div class="fmatch-tname" style="color:${c1}">${m.firstTeamName}</div>
+        <div class="fmatch-tname">${m.firstTeamName}</div>
       </div>
       <div class="fmatch-vs">${centerHtml}</div>
       <div class="fmatch-team">
         <div style="display:flex;justify-content:center;margin-bottom:8px">${teamLogoHtml(m.secondTeamName,46)}</div>
-        <div class="fmatch-tname" style="color:${c2}">${m.secondTeamName}</div>
+        <div class="fmatch-tname">${m.secondTeamName}</div>
       </div>
     </div>
     <div class="fmatch-meta">${dateStr} · ${m.sportHallName||''}${phaseName?' · '+phaseName:''}</div>
@@ -8990,36 +9079,26 @@ function buildLiveCard(m, lgKey) {
     `<div class="live-ticker-item"><span class="live-ticker-time">${ev.time}</span><span>${ev.text}</span></div>`
   ).join('') : '';
 
-  // Winner emphasis for finished games
+  // Smer A: dve vrstici (logotip, ime, rezultat) kot na sportnih portalih.
+  // Zmagovalec bel in odebeljen, porazenec siv; barve ekip le v logotipu.
   let w1=false,w2=false;
-  if(isFinished){const s1=m.firstTeamScore??0,s2=m.secondTeamScore??0;w1=s1>s2;w2=s2>s1;}
-  const _barCol = isFinished ? (w1?c1:(w2?c2:'var(--border2)')) : 'var(--border2)';
-  const accentBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${_barCol};opacity:${isFinished?.7:.35}"></div>`;
-  return `<div class="live-card ${isLive?'is-live':''} ${isUpcoming&&new Date(m.dateTime).toDateString()===new Date().toDateString()?'is-today':''}"
+  if(isFinished){const a=m.firstTeamScore??0,b=m.secondTeamScore??0;w1=a>b;w2=b>a;}
+  const s1=isLive?(liveData.score1??m.firstTeamScore??0):(m.firstTeamScore??'');
+  const s2=isLive?(liveData.score2??m.secondTeamScore??0):(m.secondTeamScore??'');
+  let stanje;
+  if(isLive) stanje=`<span class="lc-zivo"><i></i>V živo · Q${liveData.quarter||'?'} ${liveData.time||''}</span>`;
+  else if(isFinished) stanje=`<span class="lc-st">Končano</span>`;
+  else stanje=`<span class="lc-st lc-ura">${formatMatchTime(m.dateTime)}</span>`;
+  const vrsta=(ime,rez,zmaga,poraz,id)=>`<div class="lc-vrsta${zmaga?' zm':''}${poraz?' po':''}">
+      ${teamLogoHtml(ime,26,'')}<span class="lc-ime">${ime}</span>
+      ${isUpcoming?'':`<span class="lc-rez" id="${id}">${rez}</span>`}
+    </div>`;
+  return `<div class="live-card lc-a ${isLive?'is-live':''} ${isUpcoming&&new Date(m.dateTime).toDateString()===new Date().toDateString()?'is-today':''}"
     onclick="openMatch(${m.id})">
-    ${accentBar}
-    <div class="live-header">
-      <span style="color:${lg.color};font-weight:700">${lg.short}</span>
-      <span style="color:var(--mut)">${getRoundLabel(m)} · ${phaseName}${groupTag}</span>
-      ${headerRight}
-    </div>
-    <div class="live-teams">
-      <div class="live-team-name home" style="color:${c1};opacity:${isFinished&&!w1?.55:1}">
-        ${w1?'<span style="font-size:.7rem;color:#22c55e">▸</span>':''}
-        <span class="tn-txt">${m.firstTeamName}</span>
-        ${teamLogoHtml(m.firstTeamName,30,'')}
-      </div>
-      ${scoreHtml}
-      <div class="live-team-name away" style="color:${c2};opacity:${isFinished&&!w2?.55:1}">
-        ${teamLogoHtml(m.secondTeamName,30,'')}
-        <span class="tn-txt">${m.secondTeamName}</span>
-        ${w2?'<span style="font-size:.7rem;color:#22c55e">◂</span>':''}
-      </div>
-    </div>
-    <div class="live-footer">
-      <span>${m.sportHallName || ''}</span>
-      ${m.attendance>0 ? `<span>👥 ${m.attendance}</span>` : ''}
-    </div>
+    <div class="lc-glava"><span>${getRoundLabel(m)} · ${phaseName}${groupTag}</span>${stanje}</div>
+    ${vrsta(m.firstTeamName,s1,w1,w2,'lscore-'+m.id+'-1')}
+    ${vrsta(m.secondTeamName,s2,w2,w1,'lscore-'+m.id+'-2')}
+    ${(m.sportHallName||m.attendance>0)?`<div class="lc-noga">${m.sportHallName||''}${m.attendance>0?` · ${m.attendance} gledalcev`:''}</div>`:''}
     ${isLive && ticker ? `<div class="live-ticker">${ticker}</div>` : ''}
   </div>`;
 }
@@ -9133,12 +9212,14 @@ function handleLiveScore(msg) {
   if(countBadge) { countBadge.style.display = 'flex'; countBadge.textContent = liveCount; }
 
   // Update score in live tab if visible
-  const scoreEl = document.getElementById('lscore-' + msg.matchId);
-  if(scoreEl && msg.score1 !== undefined) {
-    scoreEl.textContent = `${msg.score1} : ${msg.score2}`;
-    scoreEl.classList.add('score-updated','num-pop');
-    setTimeout(() => scoreEl.classList.remove('score-updated','num-pop'), 500);
-  }
+  // Kartica ima rezultat v dveh vrsticah (lscore-ID-1 / -2)
+  [[1,msg.score1],[2,msg.score2]].forEach(([k,v])=>{
+    const el=document.getElementById('lscore-'+msg.matchId+'-'+k);
+    if(!el||v===undefined||String(v)===el.textContent)return;
+    el.textContent=v;
+    el.classList.add('score-updated','num-pop');
+    setTimeout(()=>el.classList.remove('score-updated','num-pop'),500);
+  });
 
   // Update match card in TEKME tab
   const card = document.getElementById('mc-' + msg.matchId);
@@ -11433,22 +11514,19 @@ function renderEloTable(){
   const {ratings}=computeElo();
   const sorted=Object.entries(ratings).sort((a,b)=>b[1]-a[1]);
   const maxE=sorted[0]?.[1]||1700,minE=sorted[sorted.length-1]?.[1]||1300;
-  const medals=['🥇','🥈','🥉'];
-  wrap.innerHTML=sorted.map(([team,elo],i)=>{
-    const tc=TEAM_COLORS[team]||'#888';
+  // Smer A: brez medalj in barv ekip — ekipo pove logotip, poudarek ima le prvi.
+  wrap.innerHTML='<div class="vrst-tabela">'+sorted.map(([team,elo],i)=>{
     const pct=Math.round((elo-minE)/(Math.max(maxE-minE,1))*100);
     const wp=Math.round(eloWinProb(elo,1500)*100);
-    const tc2=_shade(tc,30);
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s" onmouseover="this.style.background=\'rgba(255,255,255,.02)\'" onmouseout="this.style.background=\'\'">'
-      +'<span style="font-family:var(--fh);width:28px;text-align:center;font-size:'+(i<3?'1.1rem':'.9rem')+'">'+(medals[i]||i+1+'.')+'</span>'
-      +'<span style="width:9px;height:9px;border-radius:50%;background:'+tc+';box-shadow:0 0 8px '+tc+'66;flex-shrink:0"></span>'
-      +'<span style="color:'+tc+';font-weight:600;font-size:.88rem;flex:1">'+team+'</span>'
-      +'<div style="width:140px;height:8px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden">'
-        +'<div class="elo-bar-fill" style="width:'+pct+'%;height:100%;background:linear-gradient(90deg,'+tc+','+tc2+');border-radius:4px;box-shadow:0 0 10px '+tc+'55"></div></div>'
-      +'<span style="font-family:var(--fs);font-size:1rem;color:'+tc+';min-width:48px;text-align:right;font-weight:800" data-count="'+elo+'">'+elo+'</span>'
-      +'<span style="font-size:.6875rem;color:var(--mut);min-width:70px;text-align:right">vs avg: '+wp+'%</span>'
+    return '<div class="vrst">'
+      +'<span class="rang'+(i===0?' prvi':'')+'">'+(i+1)+'</span>'
+      +teamLogoHtml(team,22)
+      +'<span class="vrst-ime team-clickable" onclick="showTeamProfile(\''+team.replace(/'/g,"\\'")+'\')">'+team+'</span>'
+      +'<div class="vrst-bar"><div class="elo-bar-fill" style="width:'+pct+'%"></div></div>'
+      +'<span class="vr" data-count="'+elo+'">'+elo+'</span>'
+      +'<span class="vrst-op">'+wp+' % proti povp.</span>'
       +'</div>';
-  }).join('');
+  }).join('')+'</div>';
   requestAnimationFrame(()=>activateCounters(wrap));
 }
 // ═══════════════════════════════════════════════════
@@ -13768,13 +13846,13 @@ function buildStandingsTable(data, sort, title, color){
     let zone = i<clCount?'zone-cl':(i>=N-relCount && relCount>0)?'zone-rel':'';
     return `<tr>
       <td><span class="std-pos ${posCls} ${zone}">${i+1}</span></td>
-      <td><div class="std-team-cell"><span class="std-team-bar" style="background:${tc}"></span>${teamLogoHtml(t.name,26)}<span class="std-team-name team-clickable" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
+      <td><div class="std-team-cell">${teamLogoHtml(t.name,26)}<span class="std-team-name team-clickable" onclick="showTeamProfile('${t.name.replace(/'/g,"\\'")}')">${t.name}</span></div></td>
       <td>${t.T}</td>
-      <td style="color:#22c55e;font-weight:700">${t.W}</td>
-      <td style="color:#ef4444">${t.L}</td>
-      <td style="font-weight:800;font-size:.95rem">${euPts}</td>
+      <td style="font-weight:600">${t.W}</td>
+      <td style="color:var(--sub)">${t.L}</td>
+      <td class="std-tc">${euPts}</td>
       <td class="col-sec" style="color:var(--mut)">${gb}</td>
-      <td class="col-sec" style="color:${winPct>=50?'#22c55e':'#ef4444'};font-weight:600">${winPct}%</td>
+      <td class="col-sec">${winPct}%</td>
       <td class="col-sec">${pA}</td><td class="col-sec" style="color:var(--mut)">${pAga}</td>
       <td class="col-sec" style="color:${diff>=0?'#22c55e':'#ef4444'};font-weight:700">${diff>=0?'+':''}${diff}</td>
       <td class="col-sec" style="font-size:.75rem">${t.homeW||0}-${t.homeL||0}</td>
@@ -13945,10 +14023,10 @@ function renderTempo(){
       return `<tr>
         <td style="text-align:left;padding-left:14px">
           <span class="std-team-name team-clickable" onclick="showTeamProfile('${r.ime.replace(/'/g,"\\'")}')"
-            style="color:${tc};cursor:pointer">${r.ime}</span></td>
+            style="cursor:pointer;font-weight:600">${r.ime}</span></td>
         <td><span style="font-family:var(--fs)">${r.tempo.toFixed(1)}</span>
           <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.07);margin-top:3px">
-            <div style="height:100%;width:${Math.round(delez*100)}%;background:${tc};border-radius:2px"></div></div></td>
+            <div style="height:100%;width:${Math.round(delez*100)}%;background:var(--sub);border-radius:2px"></div></div></td>
         <td style="font-family:var(--fs)">${r.ort.toFixed(1)}</td>
         <td style="font-family:var(--fs)">${r.drt.toFixed(1)}</td>
         <td style="font-family:var(--fs);font-weight:700;color:${barva(r.net)}">${r.net>0?'+':''}${r.net.toFixed(1)}</td>
@@ -13991,7 +14069,7 @@ function renderStandings(){
     html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
     html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
   } else {
-    html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'🏆 LESTVICA — REDNI DEL',lg.color||'#22c55e');
+    html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'Redni del',lg.color||'#22c55e');
     if(currentLeague==='liga1'){
       // Brez tega bralec ne more razumeti, zakaj se v končnico uvrsti prvih 7
       // in od kod v pajku Cedevita, ki je na lestvici sploh ni.
