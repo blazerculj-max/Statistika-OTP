@@ -2278,6 +2278,41 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .lrk.g{color:var(--acc)!important}
 .hcard-share{background:var(--card2)!important;border-color:var(--border2)!important;backdrop-filter:none!important}
 .lct{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700;text-transform:uppercase;font-size:1.05rem!important;letter-spacing:.01em!important}
+
+/* ── Smer A: profil igralca ── */
+.pp-hero{background:var(--card)!important;border-bottom:1px solid var(--border)}
+.pp-hero::before,.pp-hero::after{display:none!important}
+.pp-hero-name{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;text-shadow:none!important;color:var(--text)!important;line-height:.92!important}
+.pp-hero-meta{color:var(--sub)!important}
+.pp-hero-signature .sv{font-family:var(--fd)!important;font-weight:700!important;color:var(--text)!important;text-shadow:none!important;letter-spacing:0!important}
+.pp-hero-signature .sl{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important;font-size:.78rem!important}
+.pp-hs{background:var(--card2)!important;border:1px solid var(--border)!important}
+.pp-hs-v{color:var(--text)!important;font-size:1.9rem!important}
+.pp-hs-l{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important;font-size:.75rem!important}
+.pp-hero-share{background:transparent!important;border:1px solid var(--border2)!important;color:var(--text)!important;backdrop-filter:none!important}
+.pp-photo{border:none!important;box-shadow:none!important;border-radius:12px!important}
+.adv-val{color:var(--text);font-family:var(--fd)!important;font-weight:700!important;font-size:1rem!important}
+.adv-bar-wrap{height:6px!important;background:var(--card2)!important}
+
+.pp-section-title{font-family:var(--fd)!important;font-weight:700;font-size:1.15rem!important;letter-spacing:.01em!important;color:var(--text)!important}
+.pp-table td:first-child{font-family:var(--fm)!important;font-size:.8rem!important}
+.pp-table td{border-bottom:1px solid var(--border)!important;font-size:.82rem}
+.pp-table th{text-transform:none!important;letter-spacing:0!important;font-weight:500}
+
+/* ── Smer A: stran tekme ── */
+.mo-hero{background:var(--card)}
+.mo-hero::before{display:none!important}
+.mo-hero-tname{font-family:var(--fm)!important;font-weight:600!important;font-size:1.15rem!important;color:var(--text)}
+.mo-hero-score{font-size:4.6rem}
+.mo-hero-wlabel{background:none!important;border:none!important;padding:0!important;color:var(--acc)!important;text-transform:none!important;letter-spacing:.01em!important;font-size:.78rem!important;font-weight:600}
+.mo-hero-meta{font-size:.8rem!important}
+@media(max-width:640px){.mo-hero-score{font-size:3.2rem!important}.mo-hero-tname{font-size:.95rem!important}}
+
+.box-toc{font-family:var(--fd);font-weight:700;font-size:1.05rem;color:var(--text)}
+.box-player{border-bottom-color:var(--border2)!important}
+
+/* Imena v prvem stolpcu tabel v berljivi pisavi (prej stevilska) */
+.st th:first-child,.st td:first-child,.at td:first-child{font-family:var(--fm)!important}
 </style>
 </head>
 <body>
@@ -5617,7 +5652,7 @@ async function openMatch(matchId){
       <div class="mo-hero-row">
         <div class="mo-hero-team home">
           ${teamLogoHtml(t1,56)}
-          <div class="mo-hero-tname" style="color:${c1}">${t1}</div>
+          <div class="mo-hero-tname">${t1}</div>
           ${matchInfo.status==='FINISHED'&&s1>s2?'<span class="mo-hero-wlabel">Zmaga</span>':''}
         </div>
         ${isLive
@@ -5627,12 +5662,12 @@ async function openMatch(matchId){
             : `<div class="mo-hero-score"><span class="sep" style="font-size:2.4rem">VS</span></div>`}
         <div class="mo-hero-team away">
           ${teamLogoHtml(t2,56)}
-          <div class="mo-hero-tname" style="color:${c2}">${t2}</div>
+          <div class="mo-hero-tname">${t2}</div>
           ${matchInfo.status==='FINISHED'&&s2>s1?'<span class="mo-hero-wlabel">Zmaga</span>':''}
         </div>
       </div>
       ${isLive?'<div style="text-align:center;margin-top:8px"><span style="font-size:.7rem;color:#ef4444;font-family:var(--fm);font-weight:700">🔴 V ŽIVO</span></div>':''}
-      <div class="mo-hero-meta">${date} · ${matchInfo.sportHallName||''} · ${getRoundLabel(matchInfo)}${matchInfo.attendance>0?' · 👥 '+matchInfo.attendance+' gledalcev':''}</div>
+      <div class="mo-hero-meta">${date} · ${matchInfo.sportHallName||''} · ${getRoundLabel(matchInfo)}${matchInfo.attendance>0?' · '+matchInfo.attendance+' gledalcev':''}</div>
       ${(()=>{
         const yt=matchInfo.streams?.find(s=>s.type==='YOUTUBE'&&s.url);
         if(!yt)return '';
@@ -5901,10 +5936,10 @@ function _factsHtml(t1,t2,c1,c2,cetrtine,niz,prednost){
       + cetrtine.map(q=>`<th>${q.ime}</th>`).join('') + '<th>SKUPAJ</th></tr></thead><tbody>'
       + `<tr><td style="text-align:left;padding-left:8px;color:${c1};font-weight:600">${kratko(t1)}</td>`
       + cetrtine.map(q=>`<td style="${q.a>q.b?'font-weight:700':'opacity:.6'}">${q.a}</td>`).join('')
-      + `<td style="font-weight:700;font-family:var(--fs)">${vsotaA}</td></tr>`
+      + `<td style="font-weight:700;font-family:var(--fd);font-size:1.15rem">${vsotaA}</td></tr>`
       + `<tr><td style="text-align:left;padding-left:8px;color:${c2};font-weight:600">${kratko(t2)}</td>`
       + cetrtine.map(q=>`<td style="${q.b>q.a?'font-weight:700':'opacity:.6'}">${q.b}</td>`).join('')
-      + `<td style="font-weight:700;font-family:var(--fs)">${vsotaB}</td></tr>`
+      + `<td style="font-weight:700;font-family:var(--fd);font-size:1.15rem">${vsotaB}</td></tr>`
       + '</tbody></table></div>';
   }
   const kosi=[];
@@ -6167,9 +6202,9 @@ function drawBoxScore(matchData,c1,c2){
     const rows=played.map(ps=>{
       const nm=`${(ps.matchTeamPlayerFirstname||'').trim()} ${ps.matchTeamPlayerLastname||''}`;
       return `<tr>
-      <td style="font-family:var(--fs)"><span class="box-player" onclick="openPlayerByPid(${ps.playerId||0})">${nm}</span> <span style="font-size:.6875rem;color:var(--mut)">${ps.startingLineup?'●':''}</span></td>
+      <td style="font-weight:500"><span class="box-player" onclick="openPlayerByPid(${ps.playerId||0})">${nm}</span> <span style="font-size:.6875rem;color:var(--mut)">${ps.startingLineup?'●':''}</span></td>
       ${ima.min?`<td>${fmt(ps.minutes,0)}'</td>`:''}
-      <td style="color:${colors[ti]};font-weight:600">${ps.points}</td>
+      <td class="box-toc">${ps.points}</td>
       ${ima.sk?`<td>${(ps.offensiveRebounds||0)+(ps.defensiveRebounds||0)}</td>`:''}
       ${ima.ast?`<td>${ps.assists||0}</td>`:''}
       ${ima.dva?celicaMet(ps.twoPM,ps.twoPA,samoZadeti.dva):''}
@@ -6177,14 +6212,14 @@ function drawBoxScore(matchData,c1,c2){
       ${ima.pm?celicaMet(ps.fTM,ps.fTA,samoZadeti.pm):''}
       ${ima.stoizg?`<td>${ps.steals||0}/${ps.turnovers||0}</td>`:''}
       ${ima.pz?`<td>${ps.foulCommited||0}</td>`:''}
-      ${ima.efe?`<td style="color:${(ps.efficiencyCustom||0)>0?'var(--green)':'var(--red)'}">${ps.efficiencyCustom||ps.efficiency||0}</td>`:''}
+      ${ima.efe?`<td style="${(ps.efficiencyCustom||ps.efficiency||0)<0?'color:var(--mut)':''}">${ps.efficiencyCustom||ps.efficiency||0}</td>`:''}
     </tr>`;}).join('');
 
     const sum=(f)=>played.reduce((s,p)=>s+(p[f]||0),0);
     const tot=`<tr class="box-total">
-      <td style="font-family:var(--fs);font-weight:700">Skupaj</td>
+      <td style="font-weight:700">Skupaj</td>
       ${ima.min?'<td></td>':''}
-      <td style="color:${colors[ti]};font-weight:700">${sum('points')}</td>
+      <td class="box-toc">${sum('points')}</td>
       ${ima.sk?`<td>${sum('offensiveRebounds')+sum('defensiveRebounds')}</td>`:''}
       ${ima.ast?`<td>${sum('assists')}</td>`:''}
       ${ima.dva?celicaMet(sum('twoPM'),sum('twoPA'),samoZadeti.dva):''}
@@ -8272,15 +8307,19 @@ function showPlayer(idx){
   ];
   const axesAvg=[leagueAvg(x=>x[F.toc]/x[F.T]),leagueAvg(x=>(x[F.nap]+x[F.obr])/x[F.T]),leagueAvg(x=>x[F.pod]/x[F.T]),leagueAvg(x=>x[F.sto]/x[F.T]),leagueAvg(x=>x[F.blk]/x[F.T]),leagueAvg(x=>x[F.efe]/x[F.T])];
 
-  const radarSVG=drawRadar(axes,axesAvg,color);
+  // radar v barvi lige (smer A: barve ekip le kot oznaka, ne kot povrsina)
+  const radarSVG=drawRadar(axes,axesAvg,currentLeague==='liga2'?'#3b82f6':currentLeague==='liga3'?'#a855f7':'#f97316');
   const scoringSVG=drawScoring(p[F.fg2m]*2,p[F.fg3m]*3,p[F.ftm],p[F.toc],color,t);
   const trendSVG=drawTrendChart(p[F.pid],color,'pts');
 
   function advBar(lbl,val,min,max,suf,tip,goodHigh=true){
     if(val===null)return '';
     const pctV=Math.max(0,Math.min(100,(val-min)/(max-min)*100));
-    const barColor=goodHigh?(pctV>66?'#34d399':pctV>33?'#facc15':'#f87171'):(pctV<33?'#34d399':pctV<66?'#facc15':'#f87171');
-    return `<div class="adv-row"><div class="adv-lbl stat-tip" data-tip="${tip}" style="cursor:help">${lbl} <span style="font-size:.6875rem;color:var(--mut)">?</span></div><div class="adv-bar-wrap"><div class="adv-bar" style="width:${pctV}%;background:${barColor}"></div></div><div class="adv-val" style="color:${barColor}">${val}${suf}</div></div>`;
+    // Smer A: namesto semaforja (zelena/rumena/rdeca) siva vrstica, v barvi
+    // lige le, kadar je igralec v zgornji tretjini (pri "manj je bolje" v spodnji).
+    const dober=goodHigh?pctV>66:pctV<33;
+    const barColor=dober?'var(--acc)':'var(--sub)';
+    return `<div class="adv-row"><div class="adv-lbl stat-tip" data-tip="${tip}" style="cursor:help">${lbl} <span style="font-size:.6875rem;color:var(--mut)">?</span></div><div class="adv-bar-wrap"><div class="adv-bar" style="width:${pctV}%;background:${barColor}"></div></div><div class="adv-val">${val}${suf}</div></div>`;
   }
 
   window._ppPlayer=p;window._ppIdx=idx;
@@ -8311,7 +8350,7 @@ function showPlayer(idx){
         </div>
       </div>
       <div class="pp-hero-stats">
-        ${(()=>{const be=computeBElo().ratings[p[F.pid]];if(!be)return '';const tier=be>=1700?'ELITA':be>=1620?'ODLIČEN':be>=1550?'DOBER':be>=1490?'POVPREČEN':'POD POVP.';return `<div class="pp-hs" style="background:rgba(251,191,36,.22);border:1px solid rgba(251,191,36,.4)"><div class="pp-hs-v" style="color:#fbbf24" data-count="${be}">0</div><div class="pp-hs-l">bElo ★ · ${tier}</div></div>`;})()}
+        ${(()=>{const be=computeBElo().ratings[p[F.pid]];if(!be)return '';const tier=be>=1700?'ELITA':be>=1620?'ODLIČEN':be>=1550?'DOBER':be>=1490?'POVPREČEN':'POD POVP.';return `<div class="pp-hs"><div class="pp-hs-v" data-count="${be}">0</div><div class="pp-hs-l">bElo · ${tier.toLowerCase()}</div></div>`;})()}
         ${leagueHasFullStats()?`<div class="pp-hs"><div class="pp-hs-v" data-count="${(totalSk/t).toFixed(1)}" data-dec="1">0</div><div class="pp-hs-l">Skoki</div></div>
         <div class="pp-hs"><div class="pp-hs-v" data-count="${(p[F.pod]/t).toFixed(1)}" data-dec="1">0</div><div class="pp-hs-l">Asist.</div></div>
         <div class="pp-hs"><div class="pp-hs-v" data-count="${(p[F.efe]/t).toFixed(1)}" data-dec="1">0</div><div class="pp-hs-l">EFE</div></div>
