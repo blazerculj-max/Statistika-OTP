@@ -2462,7 +2462,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
     </div>
 
     <div class="hero-what">
-      Tudi slovenske <b>mladinske lige</b>, <b>3x3</b>, arhiv sezon,
+      Tudi slovenske <b>mladinske lige</b>, arhiv sezon,
       žive tekme in play-by-play.
       <button class="hero-all" onclick="enterApp()">ali kar pokaži vse →</button>
     </div>
@@ -2515,7 +2515,9 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
       <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
       <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
       <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')">3. SKL</button>
-      <button class="tb" id="lg-btn-3x3" onclick="switchLeague('3x3')">3x3</button>
+      <!-- 3x3 skrit (10.10.2026): podatki so iz lanske sezone in se ne posodabljajo.
+           Vklop: odstrani "hidden" tukaj in nastavi TRI_X_TRI = true. -->
+      <button class="tb" id="lg-btn-3x3" onclick="switchLeague('3x3')" hidden>3x3</button>
     </div>
     <select id="season-select" class="hdr-select" onchange="switchSeason(parseInt(this.value))" style="display:none"></select>
     <span id="live-badge" class="hdr-live" style="display:none">● LIVE</span>
@@ -4838,7 +4840,11 @@ async function _routeWaitData(ms){
   return false;   // po izteku vseeno izrišemo, kar imamo
 }
 
+// 3x3 je skrit (lanski podatki, se ne posodablja). Stare povezave #/3x3 gredo
+// na obicajen vstop namesto na zastarelo stran.
+var TRI_X_TRI = false;   // var: routeBoot se lahko poklice pred to vrstico
 async function _routeApply(r){
+  if(r && r.liga==='3x3' && !TRI_X_TRI) return;
   if(!r) return;
   _routeRestoring = true;
   try{
@@ -4893,7 +4899,7 @@ async function _routeApply(r){
 function routeBoot(){
   const r = _routeParse(location.hash);
   if(!r) return false;
-  const lg = (LEAGUES[r.liga] || r.liga==='3x3') ? r.liga : null;
+  const lg = (LEAGUES[r.liga] || (r.liga==='3x3' && TRI_X_TRI)) ? r.liga : null;
   if(!lg) return false;
   _routeLast = location.hash;
   (async()=>{
