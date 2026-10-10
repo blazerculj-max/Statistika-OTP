@@ -75,8 +75,10 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 .hdr-right{display:flex;flex-direction:row;align-items:center;gap:var(--sp-2);flex-wrap:wrap;justify-content:flex-end}
 .hdr-select{background:transparent;border:1px solid var(--border);color:var(--text);border-radius:var(--r-sm);padding:8px 12px;font-family:var(--fh);font-size:var(--t-sm);font-weight:600;cursor:pointer;transition:border-color .2s}
 .hdr-select:hover{border-color:var(--border2)}
-.hdr-live{background:var(--green);color:#fff;padding:6px 12px;border-radius:100px;font-family:var(--fh);font-size:var(--t-xs);font-weight:700;letter-spacing:.04em;animation:livePulse 2s infinite}
-@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.6}}
+.hdr-live{background:var(--green);color:#fff;padding:6px 12px;border-radius:100px;font-family:var(--fh);font-size:var(--t-xs);font-weight:700;letter-spacing:.04em;animation:hdrLivePulse 2s infinite}
+/* Lastno ime: livePulse je spodaj definiran se enkrat (s pomanjsanjem za piko
+   v kartici tekme) in je to povozil — znacka LIVE se je krcila na 80 %. */
+@keyframes hdrLivePulse{0%,100%{opacity:1}50%{opacity:.6}}
 .hdr-install{display:inline-flex;align-items:center;gap:6px;background:var(--text);border:none;color:var(--bg);border-radius:var(--r-sm);padding:8px 14px;font-family:var(--fh);font-size:.78rem;font-weight:700;cursor:pointer;transition:transform .1s}
 .hdr-install:active{transform:scale(.96)}
 .hdr-cache{opacity:.5}
@@ -98,9 +100,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-u
 
 .content{padding:var(--sp-6) var(--sp-5);max-width:1500px;margin:0 auto;min-height:calc(100vh - 120px)}
 .tab{display:none}
-.tab.active{display:block;animation:tabFadeUp .35s cubic-bezier(.2,.8,.2,1)}
-@keyframes tabFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-@media(prefers-reduced-motion:reduce){.tab.active{animation:none}}
+.tab.active{display:block}
 .ctrls{display:flex;gap:var(--sp-2);align-items:center;margin-bottom:var(--sp-5);flex-wrap:wrap}
 select{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:7px 34px 7px 12px;border-radius:7px;font-family:var(--fs);font-size:.82rem;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23475569' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;background-size:20px}
 select:focus{outline:none;border-color:var(--acc)}
@@ -1031,7 +1031,6 @@ html{scroll-behavior:smooth}
 .toast{background:var(--card);border:1px solid var(--border2);border-radius:12px;padding:12px 20px;font-family:var(--fh);font-size:.85rem;font-weight:600;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;align-items:center;gap:10px;animation:toastIn .35s cubic-bezier(.2,.8,.2,1);backdrop-filter:blur(12px);pointer-events:auto}
 .toast.out{animation:toastOut .3s ease forwards}
 .toast-icon{font-size:1.1rem}
-@keyframes toastIn{from{opacity:0;transform:translateY(20px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes toastOut{to{opacity:0;transform:translateY(20px) scale(.9)}}
 
 /* ═══ MAGNETIC CARD TILT ═══ */
@@ -1830,6 +1829,111 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 }
 
 /* ══════════════════════════════════════════════════════════════════
+   GIBANJE — en sistem namesto kupa posameznih animacij.
+
+   Trajanja in krivulje so na enem mestu, da se vse giblje enako. Vzmet je
+   izracunana (dusena vzmet, zeta 0,72 -> 3,8 % preseganja) in zapisana kot
+   linear(); brskalnik brez podpore vzame obicajno krivuljo.
+
+   Kar je novo v brskalnikih 2024-25 in tu uporabljeno:
+     View Transitions   prehod med zavihki, zapiranje modalov, vstop v ligo
+     animation-timeline kartice se razkrijejo ob drsenju, brez JS
+     linear()           vzmet brez knjiznice
+   Vse je napredna izboljsava: kjer podpore ni, stran deluje kot prej.
+   ══════════════════════════════════════════════════════════════════ */
+:root{
+  --ease-out:cubic-bezier(.2,.8,.2,1);
+  --ease-in:cubic-bezier(.4,0,1,1);
+  --ease-spring:var(--ease-out);
+  --dur-hitro:.16s;--dur:.26s;--dur-pocasi:.42s;
+}
+@supports (transition-timing-function:linear(0,1)){
+  :root{--ease-spring:linear(0, 0.031, 0.11, 0.216, 0.335, 0.455, 0.569, 0.672, 0.761, 0.836, 0.897, 0.944, 0.98, 1.005, 1.022, 1.032, 1.037, 1.038, 1.037, 1.034, 1.03, 1.025, 1.02, 1.016, 1.012, 1.009, 1.006, 1.004, 1)}
+}
+
+/* ── Modali: enoten vstop. Prej je imel vsak svojega, modal tekme nobenega. ── */
+.ov-anim{animation:ovIn var(--dur) var(--ease-out) both}
+.ov-anim > *{animation:panelIn var(--dur-pocasi) var(--ease-spring) both}
+@keyframes ovIn{from{opacity:0}}
+@keyframes panelIn{from{opacity:0;translate:0 18px;scale:.975}}
+@media(max-width:640px){
+  /* Na telefonu je modal cez cel zaslon — prihaja od spodaj kot list. */
+  @keyframes panelIn{from{opacity:0;translate:0 40px}}
+}
+/* Zapiranje: modal je ze skrit, View Transition odigra njegovo zadnjo sliko. */
+::view-transition-old(*.ovp){animation:panelOut .2s var(--ease-in) both}
+::view-transition-new(*.ovp){animation:none}
+@keyframes panelOut{to{opacity:0;translate:0 14px;scale:.98}}
+@media(max-width:640px){@keyframes panelOut{to{opacity:0;translate:0 48px}}}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.22s}
+
+/* ── Zavihki: smer prehoda sledi vrstnemu redu v meniju ──
+   Glava in navigacija dobita ime le med prehodom zavihka. Stalno ime bi ju
+   pri zapiranju modala dvignilo nad temno ozadje modala. */
+html[data-vt^="tab"] .hdr{view-transition-name:vt-glava}
+html[data-vt^="tab"] .nav{view-transition-name:vt-nav}
+html[data-vt^="tab"] #mobile-nav{view-transition-name:vt-mnav}
+html[data-vt^="tab"]::view-transition-old(root){animation:vtVen .14s var(--ease-in) both}
+html[data-vt="tab-naprej"]::view-transition-new(root){animation:vtNotDesno .3s var(--ease-out) both}
+html[data-vt="tab-nazaj"]::view-transition-new(root){animation:vtNotLevo .3s var(--ease-out) both}
+@keyframes vtVen{to{opacity:0}}
+@keyframes vtNotDesno{from{opacity:0;translate:22px 0}}
+@keyframes vtNotLevo{from{opacity:0;translate:-22px 0}}
+/* Kjer prehod obstaja, ga ne podvajamo s starim vstopom zavihka. */
+@supports (view-transition-name:none){.tab.active{animation:none}}
+
+/* ── Vstop: izbira lige se odpre "skozi" vstopni zaslon ── */
+html[data-vt="vstop"] #hero-overlay{view-transition-name:vt-hero}
+html[data-vt="vstop"]::view-transition-old(vt-hero){animation:vtHeroVen .5s var(--ease-out) both}
+@keyframes vtHeroVen{to{opacity:0;scale:1.06;filter:blur(8px)}}
+html[data-vt="nalozeno"] #loading-overlay{view-transition-name:vt-nalaganje}
+html[data-vt="nalozeno"]::view-transition-old(vt-nalaganje){animation:vtVen .3s var(--ease-out) both}
+html[data-vt="nalozeno"]::view-transition-new(root){animation:vtGor .45s var(--ease-out) both}
+@keyframes vtGor{from{opacity:0;translate:0 14px}}
+
+/* ── Kartice se razkrijejo ob drsenju — samo CSS, brez opazovalcev v JS ──
+   :where() ima nicno specificnost, zato .stagger-in, kjer je, prevlada.
+   translate/scale namesto transform, da ostanejo obstojeci hover dvigi. */
+@supports (animation-timeline:view()){
+  @media (prefers-reduced-motion:no-preference){
+    :where(.live-card,.match-card,.nerd-card,.h2h-card,.group-card,.att-card,.pcard,.scard,.t3-card,.q-card,.pregled-card,.pregled-res,.fstat,.ac){
+      animation:vtRazkrij linear both;
+      animation-timeline:view();
+      animation-range:entry 0% entry 60%;
+    }
+  }
+}
+@keyframes vtRazkrij{from{opacity:0;translate:0 18px;scale:.985}}
+
+/* ── Spodnja navigacija na telefonu: ikona v "tabletki" ── */
+.mbn-icon .ic{width:22px;height:22px}
+.mm-ic .ic{width:26px;height:26px}
+.ic{display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:768px){
+  .mbn-btn{transition:color var(--dur-hitro) ease,scale var(--dur-hitro) var(--ease-out)}
+  .mbn-btn:active{transform:none;scale:.92}
+  .mbn-icon{position:relative;display:grid;place-items:center;width:52px;height:30px;border-radius:999px}
+  .mbn-icon::before{content:'';position:absolute;inset:0;border-radius:inherit;background:color-mix(in srgb,var(--acc) 18%,transparent);scale:.4 1;opacity:0;transition:scale .38s var(--ease-spring),opacity .18s ease}
+  .mbn-btn.active .mbn-icon::before{scale:1;opacity:1}
+  .mbn-icon .ic{position:relative}
+  .mbn-lbl{font-size:.64rem}
+  .mbn-btn.active .mbn-lbl{font-weight:700}
+}
+/* Svetla tema: spodnja vrstica je imela trdo zapisano temno ozadje in bele
+   ikone, zato je ostala crna sredi svetle strani. */
+:root[data-theme="light"] #mobile-nav{background:rgba(255,255,255,.9);border-top-color:rgba(0,0,0,.08)}
+:root[data-theme="light"] .mbn-btn{color:rgba(15,15,30,.45)}
+:root[data-theme="light"] .mbn-btn.active{color:var(--acc)}
+#mobile-more.open .mm-item{animation:panelIn .4s var(--ease-spring) both;animation-delay:calc(var(--i,0) * 18ms + 60ms)}
+html[data-vt="list"] #mobile-more .mm-sheet{view-transition-name:vt-list}
+html[data-vt="list"]::view-transition-old(vt-list){animation:vtListDol .24s var(--ease-in) both}
+@keyframes vtListDol{to{translate:0 100%}}
+
+/* ── Drobnarije, ki jih brskalniki znajo sele od nedavnega ── */
+h1,h2,h3,.sec-head,.mo-section-title{text-wrap:balance}
+p{text-wrap:pretty}
+
+/* ══════════════════════════════════════════════════════════════════
    ZMANJSANO GIBANJE — kdor ima to vklopljeno v sistemu (pogosto pri
    migrenah in vrtoglavici), naj dobi mirno stran. Pri 30 animacijah
    dve posamezni pravili nista bili dovolj, zato ustavimo vse naenkrat.
@@ -1840,6 +1944,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
   *,*::before,*::after{
     animation-duration:.01ms!important;
     animation-iteration-count:1!important;
+    animation-delay:0s!important;
     transition-duration:.08s!important;
     scroll-behavior:auto!important}
   .stagger-in,.drop-in{animation:none!important;opacity:1!important;transform:none!important}
@@ -1980,6 +2085,33 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/></symbol>
+  <symbol id="i-pokal" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5.5a2.8 2.8 0 0 0 3 4M16 6h2.5a2.8 2.8 0 0 1-3 4M12 13v3.5M8.5 20h7M10 16.5h4V20h-4z"/></symbol>
+  <symbol id="i-koledar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-oder" viewBox="0 0 24 24"><path d="M3.5 20v-6h5v6M8.5 20V9h7v11M15.5 20v-8h5v8M3 20h18"/></symbol>
+  <symbol id="i-vec" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pregled" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.8"/><rect x="13" y="4" width="7" height="7" rx="1.8"/><rect x="4" y="13" width="7" height="7" rx="1.8"/><rect x="13" y="13" width="7" height="7" rx="1.8"/></symbol>
+  <symbol id="i-zoga" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5v17M6.2 5.8a9 9 0 0 1 0 12.4M17.8 5.8a9 9 0 0 0 0 12.4"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3.5 17 9 11.5l4 4 7.5-8"/><path d="M15 7.5h5.5V13"/></symbol>
+  <symbol id="i-zvezda" viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></symbol>
+  <symbol id="i-isci" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-kamera" viewBox="0 0 24 24"><rect x="3.5" y="6.5" width="17" height="13" rx="3"/><circle cx="12" cy="13" r="3.5"/><path d="M8.5 6.5 10 4h4l1.5 2.5"/></symbol>
+  <symbol id="i-nagrada" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5"/><path d="m8.6 13.3-1.6 7.2 5-2.6 5 2.6-1.6-7.2"/></symbol>
+  <symbol id="i-tehtnica" viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7.5h14"/><path d="M5 7.5 2.5 13a2.5 2.5 0 0 0 5 0zM19 7.5 16.5 13a2.5 2.5 0 0 0 5 0z"/></symbol>
+  <symbol id="i-dvoboj" viewBox="0 0 24 24"><path d="M4 4l9.5 9.5M20 4l-9.5 9.5M7.5 15.5 4.5 18.5M16.5 15.5l3 3M8 12l4 4M16 12l-4 4"/></symbol>
+  <symbol id="i-strela" viewBox="0 0 24 24"><path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/></symbol>
+  <symbol id="i-iskre" viewBox="0 0 24 24"><path d="M11 4.5 12.6 9 17 10.5l-4.4 1.6L11 16.5l-1.6-4.4L5 10.5 9.4 9z"/><path d="m18 14.5.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></symbol>
+  <symbol id="i-merilnik" viewBox="0 0 24 24"><path d="M4 16.5a8 8 0 1 1 16 0"/><path d="m12 16.5 4-5"/><circle cx="12" cy="16.5" r="1.3" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-lojtra" viewBox="0 0 24 24"><path d="M9.5 4 7.5 20M16.5 4l-2 16M4.5 9h15.5M4 15h15.5"/></symbol>
+  <symbol id="i-tabla" viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16" rx="2.5"/><path d="M9 3.5h6v3H9zM8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
+  <symbol id="i-koda" viewBox="0 0 24 24"><path d="m8.5 8-4 4 4 4M15.5 8l4 4-4 4M13.5 5.5l-3 13"/></symbol>
+  <symbol id="i-pescena" viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5V6a4 4 0 0 0 1.6 3.2L12 12l2.4 2.8A4 4 0 0 1 16 18v2.5M16 3.5V6a4 4 0 0 1-1.6 3.2L12 12l-2.4 2.8A4 4 0 0 0 8 18v2.5"/></symbol>
+  <symbol id="i-ljudje" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M3 19.5a6 6 0 0 1 12 0M15.5 5.3a3.5 3.5 0 0 1 0 6.4M17.5 14a6 6 0 0 1 3.5 5.5"/></symbol>
+  <symbol id="i-piscalka" viewBox="0 0 24 24"><path d="M3.5 13.5a5 5 0 0 0 9.6 2H20V11h-8.6a5 5 0 0 0-7.9 2.5z"/><path d="M14.5 11V8.5h3"/><circle cx="8.5" cy="13.8" r="1.4"/></symbol>
+  <symbol id="i-prestop" viewBox="0 0 24 24"><path d="M4 8.5h14L14.5 5M20 15.5H6L9.5 19"/></symbol>
+  <symbol id="i-kalcek" viewBox="0 0 24 24"><path d="M12 20.5V12"/><path d="M12 12C12 8 9 6 5 6c0 4 3 6 7 6zM12 10.5c0-3 2.5-5 6.5-5 0 3.5-2.5 5-6.5 5z"/></symbol>
+</svg>
 
 <!-- HERO PAGE -->
 <div id="hero-overlay">
@@ -2031,9 +2163,9 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
   <div class="load-detail" id="load-detail">Pridobivam seznam tekem...</div>
 </div>
 
-<div id="player-overlay" onclick="if(event.target===this)closePlayer()"></div>
-<div id="team-overlay" onclick="if(event.target===this)closeTeamProfile()"></div>
-<div id="roundcard-overlay" onclick="if(event.target===this)closeRoundCard()">
+<div id="player-overlay" class="ov-anim" onclick="if(event.target===this)closePlayer()"></div>
+<div id="team-overlay" class="ov-anim" onclick="if(event.target===this)closeTeamProfile()"></div>
+<div id="roundcard-overlay" class="ov-anim" onclick="if(event.target===this)closeRoundCard()">
   <div class="rc-modal">
     <div class="rc-controls">
       <div class="rc-format-toggle">
@@ -2051,14 +2183,14 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 </div>
 <div id="toast-wrap"></div>
 <canvas id="confetti-canvas"></canvas>
-<div id="cmdk-overlay" onclick="if(event.target===this)closeCmdK()">
+<div id="cmdk-overlay" class="ov-anim" onclick="if(event.target===this)closeCmdK()">
   <div class="cmdk-box">
     <input id="cmdk-input" type="text" placeholder="Išči igralca ali ekipo..." autocomplete="off" oninput="cmdkSearch(this.value)" onkeydown="cmdkKey(event)">
     <div id="cmdk-results"></div>
     <div class="cmdk-hint">↑↓ za navigacijo · ↵ za izbiro · ESC za zapri</div>
   </div>
 </div>
-<div id="match-overlay" onclick="if(event.target===this)closeMatch()"></div>
+<div id="match-overlay" class="ov-anim" onclick="if(event.target===this)closeMatch()"></div>
 
 <header class="hdr">
   <div class="hdr-title" id="hdr-title">LIGA <span>OTP BANKA</span></div>
@@ -2088,7 +2220,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
 <!-- Slovarcek oznak. Vsebine ne pisemo tu: sestavi se ob odprtju iz COLS[].tip
      in METRIC_INFO, torej iz istih besedil, ki jih stran ze uporablja za
      namige. Tako se razlaga ne more raziti s tem, kar tabele dejansko kazejo. -->
-<div id="gloss-overlay" onclick="if(event.target===this)closeGlossary()">
+<div id="gloss-overlay" class="ov-anim" onclick="if(event.target===this)closeGlossary()">
   <div class="gloss-box">
     <div class="gloss-head">
       <div>
@@ -2470,7 +2602,7 @@ table.ml-table tbody tr:hover{background:rgba(20,184,166,.07)}
     <div id="ml-wrap"></div>
   </div>
 
-  <div id="ml-modal" onclick="if(event.target===this)closeMlModal()">
+  <div id="ml-modal" class="ov-anim" onclick="if(event.target===this)closeMlModal()">
     <div class="ml-modal-inner">
       <button class="ml-close" onclick="closeMlModal()">×</button>
       <div id="ml-modal-body"></div>
@@ -3294,18 +3426,79 @@ function renderGlossary(){
   return html;
 }
 
+// ═══ GIBANJE: View Transitions ═══
+// Brskalnik posname sliko strani pred spremembo in po njej ter ju animira
+// (CSS: ::view-transition-*). Kjer API ni na voljo ali ima uporabnik vklopljeno
+// zmanjsano gibanje, se sprememba zgodi takoj — kot prej.
+// POZOR: posodobi() tece ASINHRONO (ob naslednjem okvirju), zato tega ne
+// uporabljamo tam, kjer koda za klicem pricakuje ze spremenjen DOM.
+var _vtStevec = 0;   // var: funkcije se lahko poklicejo pred to vrstico
+function _vtOk(){
+  return !!document.startViewTransition
+    && !matchMedia('(prefers-reduced-motion: reduce)').matches
+    && document.visibilityState === 'visible';
+}
+function _vt(vrsta, posodobi){
+  if(!_vtOk()){ posodobi(); return null; }
+  const html = document.documentElement, moj = ++_vtStevec;
+  html.dataset.vt = vrsta;
+  let t;
+  try{ t = document.startViewTransition(posodobi); }
+  catch(e){ delete html.dataset.vt; posodobi(); return null; }
+  // Preskocen prehod (prekine ga novejsi, zavihek je skrit) zavrne `ready` —
+  // to ni napaka, sprememba se zgodi vseeno. Brez catch bi to pisalo v konzolo.
+  t.ready.catch(()=>{});
+  // Novejsi prehod prekine starejsega; oznako pobrise le zadnji.
+  t.finished.catch(()=>{}).finally(()=>{ if(_vtStevec===moj) delete html.dataset.vt; });
+  return t;
+}
+// Modali: odpiranje sproži CSS (.ov-anim), zapiranje pa View Transition, ker
+// element z display:none ne more odigrati izhodne animacije.
+// Stevec preprecuje, da bi zapiranje, ki se caka na okvir, skrilo modal, ki ga
+// je vmes ze nekdo znova odprl (npr. klik na drugo tekmo).
+function pokaziOverlay(el, display){
+  if(typeof el==='string') el=document.getElementById(el);
+  if(!el) return;
+  el._ovTok = (el._ovTok||0) + 1;
+  el.style.display = display || 'flex';
+}
+function skrijOverlay(el){
+  if(typeof el==='string') el=document.getElementById(el);
+  if(!el) return;
+  const moj = el._ovTok = (el._ovTok||0) + 1;
+  const skrij = ()=>{ if(el._ovTok===moj) el.style.display='none'; };
+  if(getComputedStyle(el).display==='none' || !_vtOk()){ skrij(); return; }
+  const panel = el.firstElementChild;
+  if(panel){
+    panel.style.setProperty('view-transition-name','vt-'+el.id);
+    panel.style.setProperty('view-transition-class','ovp');
+  }
+  const t = _vt('modal', skrij);
+  const pocisti = ()=>{ if(panel){ panel.style.removeProperty('view-transition-name'); panel.style.removeProperty('view-transition-class'); } };
+  if(t) t.finished.catch(()=>{}).finally(pocisti); else pocisti();
+}
+
+// Nalaganje se razblini, vsebina pride od spodaj. Isti stevec kot pri modalih:
+// ce se med cakanjem zacne novo nalaganje (menjava lige), ga ne skrijemo.
+function _skrijNalaganje(){
+  const lo=document.getElementById('loading-overlay');
+  if(!lo||getComputedStyle(lo).display==='none')return;
+  const moj = lo._ovTok = (lo._ovTok||0) + 1;
+  _vt('nalozeno', ()=>{ if(lo._ovTok===moj) lo.style.display='none'; });
+}
+
 function openGlossary(){
   const ov=document.getElementById('gloss-overlay');
   const body=document.getElementById('gloss-body');
   if(!ov||!body)return;
   body.innerHTML=renderGlossary();
-  ov.style.display='flex';
+  pokaziOverlay(ov);
   document.body.style.overflow='hidden';
   gcEvent('slovarcek','Slovarček oznak');
 }
 function closeGlossary(){
   const ov=document.getElementById('gloss-overlay');
-  if(ov)ov.style.display='none';
+  skrijOverlay(ov);
   document.body.style.overflow='';
 }
 
@@ -3341,9 +3534,11 @@ function selectLeague(lg) {
   // Iz istega razloga tu zapišemo tudi naslov vstopnega zaslona — sicer bi
   // uporabnik po vstopu ostal na golem naslovu brez lojtre.
   _routeWrite([lg, 'pregled']);
-  // Hide hero, show loading
-  document.getElementById('hero-overlay').style.display = 'none';
-  document.getElementById('loading-overlay').style.display = 'flex';
+  // Vstopni zaslon se odmakne (poveca in zabrise), za njim je nalaganje.
+  _vt('vstop', ()=>{
+    document.getElementById('hero-overlay').style.display = 'none';
+    pokaziOverlay('loading-overlay');
+  });
   currentLeague = lg;
   _eloRatings = null;
   const l = getLg();
@@ -3505,7 +3700,7 @@ async function switchSeason(seasonId){
   _SRB_MANIFEST=null;_clear(_SRB_AGES);
   _BG_MANIFEST=null;_clear(_BG_AGES);
   _t3Loaded=false;
-  document.getElementById('loading-overlay').style.display='flex';
+  pokaziOverlay('loading-overlay');
   document.getElementById('load-bar').style.width='0%';
   const sname=seasonLabel(seasonId);
   refreshSeasonLabels();
@@ -3541,7 +3736,7 @@ async function switchLeague(lg) {
   _eloRatings = null; _bEloRatings = null; playerGameLog = {}; _leagueFullStats=null;
   sortCol = -1;
   // Show loading and reload
-  document.getElementById('loading-overlay').style.display = 'flex';
+  pokaziOverlay('loading-overlay');
   document.getElementById('load-bar').style.width = '0%';
   document.getElementById('load-detail').textContent = 'Nalagam ' + l.name + '...';
   await loadAllData();
@@ -3596,7 +3791,7 @@ async function preloadOtherLeagues(){
 async function loadAllData() {
   window._fullDataLoaded = false;
   try {
-    document.getElementById('loading-overlay').style.display = 'flex';
+    pokaziOverlay('loading-overlay');
     setProgress(0, 'Pripravljam...');
     // Skeleton v glavni tabeli (občutek hitrosti)
     const stEl=document.getElementById('st');
@@ -3611,7 +3806,7 @@ async function loadAllData() {
       setProgress(96, 'Agregiram...');
       aggregatePlayers('all'); initUI();
       setProgress(100, '⚡ Naloženo iz predpomnilnika (' + age + ')');
-      setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
+      setTimeout(_skrijNalaganje, 300);
       initWebSocket();
     startLiveRefresh();
       preloadOtherLeagues();
@@ -3636,7 +3831,7 @@ async function loadAllData() {
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
           setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
-          setTimeout(() => document.getElementById('loading-overlay').style.display='none', 300);
+          setTimeout(_skrijNalaganje, 300);
           initWebSocket();
           return;
         }
@@ -3708,7 +3903,7 @@ async function loadAllData() {
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
     setProgress(100, '✅ Naloženo iz API');
-    setTimeout(() => document.getElementById('loading-overlay').style.display='none', 400);
+    setTimeout(_skrijNalaganje, 400);
     initWebSocket();
     startLiveRefresh();
     preloadOtherLeagues();
@@ -4350,7 +4545,38 @@ window.addEventListener('resize',()=>{
   try{initSeasonSelector();}catch(e){}
 });
 
+// Prehod med zavihki odigramo SAMO, ko uporabnik klikne v meniju. Prehod
+// izvede spremembo asinhrono (okvir kasneje); klici iz kode (povezave, gumb
+// nazaj, nalaganje) pa pricakujejo, da je zavihek zamenjan takoj, ko se
+// showTab() vrne — zato tam ostane sinhrono kot prej.
+var _vtKlik = false;
+document.addEventListener('click', e=>{
+  if(e.target.closest && e.target.closest('.nb,.mbn-btn')){
+    _vtKlik = true;
+    setTimeout(()=>{ _vtKlik = false; }, 0);
+  }
+}, true);
+// Smer: zavihek desno v meniju pride z desne, levo z leve — kot v aplikaciji.
+function _smerZavihka(t){
+  const mob = document.getElementById('mobile-nav');
+  const sel = (mob && getComputedStyle(mob).display!=='none') ? '.mbn-btn, .mm-item' : '.nav .nb';
+  const vrstni = [...document.querySelectorAll(sel)].map(b=>{
+    const m=(b.getAttribute('onclick')||'').match(/(?:showTab|mmGo)\('([^']+)'/); return m&&m[1];
+  });
+  const zdaj = ((document.querySelector('.tab.active')||{}).id||'').replace('tab-','');
+  const a=vrstni.indexOf(zdaj), b=vrstni.indexOf(t);
+  return (a>=0 && b>=0 && b<a) ? 'nazaj' : 'naprej';
+}
 function showTab(t){
+  const zdaj = ((document.querySelector('.tab.active')||{}).id||'').replace('tab-','');
+  if(_vtKlik && t!==zdaj){
+    _vtKlik = false;
+    _vt('tab-'+_smerZavihka(t), ()=>_showTab(t));
+    return;
+  }
+  _showTab(t);
+}
+function _showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
   _routeWrite([currentLeague, t], true);
   // Zapri morebitne odprte modale (profil/ekipa/tekma...) ob menjavi zavihka
@@ -5036,7 +5262,7 @@ async function openMatch(matchId){
   if(!window._moLiveRerendered) window._moLiveRerendered=false;  // velja na odprtje
   pbpQuarterTab=0; // reset to latest quarter
   const overlay=document.getElementById('match-overlay');
-  overlay.style.display='flex';
+  pokaziOverlay(overlay);
   document.body.style.overflow='hidden';
 
   const t1=matchInfo.firstTeamName,t2=matchInfo.secondTeamName;
@@ -5150,6 +5376,9 @@ async function openMatch(matchId){
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
+  // Okno je ze odprto (osvezitev ob zacetku zive tekme) — vsebino zamenjamo
+  // brez ponovne vstopne animacije, sicer bi modal poskocil.
+  if(window._moTiho){ window._moTiho=false; const pn=overlay.firstElementChild; if(pn) pn.style.animation='none'; }
 
   renderMatchFacts(matchId, c1, c2);
 
@@ -5219,7 +5448,7 @@ async function openMatch(matchId){
   }
 }
 
-function closeMatch(){document.getElementById('match-overlay').style.display='none';document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;}window._moLiveRerendered=false;}
+function closeMatch(){skrijOverlay('match-overlay');document.body.style.overflow='';_routeWrite([currentLeague,_routeTab()]);liveMatchId=null;if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}if(liveBoxTimer){clearInterval(liveBoxTimer);liveBoxTimer=null;}window._moLiveRerendered=false;}
 
 function drawMomentum(changes,c1,c2,t1,t2){
   const w=600,h=140,pad=30;
@@ -5844,7 +6073,7 @@ function open2KCard(pIdx){
     photoLocal:playerPhotoLocal(merged[F.pid])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_')+'_2K';
-  document.getElementById('share-overlay').style.display='flex';document.body.style.overflow='hidden';
+  pokaziOverlay('share-overlay');document.body.style.overflow='hidden';
 }
 
 async function draw2KCard(d){
@@ -6016,7 +6245,7 @@ function openShareCard(pIdx){
     photoLocal:playerPhotoLocal(merged[F.pid])
   });
   _shareName=merged[F.name].replace(/\s+/g,'_');
-  document.getElementById('share-overlay').style.display='flex';document.body.style.overflow='hidden';
+  pokaziOverlay('share-overlay');document.body.style.overflow='hidden';
 }
 
 async function drawShareCard(d){
@@ -6176,7 +6405,7 @@ function downloadShare(){
     toast('Slike se ne dajo izvoziti. Poskusi screenshot.','⚠️');
   }
 }
-function closeShare(){document.getElementById('share-overlay').style.display='none';}
+function closeShare(){skrijOverlay('share-overlay');}
 
 // ═══════════════════════════════════════════════════
 // ROUND CARD GENERATOR (IG Post 1:1 + Story 9:16)
@@ -6258,10 +6487,10 @@ function openRoundCard(mode){
     sel.innerHTML=rounds.map(r=>`<option value="${r}">Krog ${r}</option>`).join('');
     _rcRound=rounds[0];
   }
-  document.getElementById('roundcard-overlay').style.display='flex';document.body.style.overflow='hidden';
+  pokaziOverlay('roundcard-overlay');document.body.style.overflow='hidden';
   renderRoundCard();
 }
-function closeRoundCard(){document.getElementById('roundcard-overlay').style.display='none';}
+function closeRoundCard(){skrijOverlay('roundcard-overlay');}
 function setRoundCardFormat(fmt){
   _rcFormat=fmt;
   document.getElementById('rc-fmt-post').classList.toggle('active',fmt==='post');
@@ -6632,12 +6861,12 @@ function showTeamProfile(teamName){
       <div>${rosterHtml||'<div class="empty">Ni igralcev</div>'}</div>
     </div>
   </div>`;
-  overlay.style.display='flex';
+  pokaziOverlay(overlay);
   document.body.style.overflow='hidden';
   requestAnimationFrame(()=>activateCounters(overlay));
 }
 function closeTeamProfile(){
-  document.getElementById('team-overlay').style.display='none';
+  skrijOverlay('team-overlay');
   document.body.style.overflow='';
   _routeWrite([currentLeague,_routeTab()]);
 }
@@ -6718,11 +6947,15 @@ function openMobileMore(){
 }
 function closeMobileMore(){
   const el=document.getElementById('mobile-more');
-  if(el)el.classList.remove('open');
+  if(!el||!el.classList.contains('open'))return;
+  _vt('list', ()=>el.classList.remove('open'));
 }
+// List se spusti in zavihek se zamenja v ISTEM prehodu — dva zaporedna bi se
+// med seboj prekinila.
 function mmGo(tab){
-  closeMobileMore();
-  showTab(tab);
+  const el=document.getElementById('mobile-more');
+  const zdaj=((document.querySelector('.tab.active')||{}).id||'').replace('tab-','');
+  _vt('list', ()=>{ if(el)el.classList.remove('open'); if(tab!==zdaj)_showTab(tab); });
 }
 
 // ═══ TOAST NOTIFICATIONS ═══
@@ -6834,13 +7067,13 @@ function applyTilt(selector){
 let _cmdkResults=[],_cmdkActive=0;
 function openCmdK(){
   const ov=document.getElementById('cmdk-overlay');
-  ov.style.display='flex';
+  pokaziOverlay(ov);
   const inp=document.getElementById('cmdk-input');
   inp.value='';inp.focus();
   cmdkSearch('');
 }
 function closeCmdK(){
-  document.getElementById('cmdk-overlay').style.display='none';
+  skrijOverlay('cmdk-overlay');
 }
 function cmdkSearch(q){
   const res=document.getElementById('cmdk-results');
@@ -7664,7 +7897,7 @@ function showPlayer(idx){
   window._ppByTeam=_rows.length>1?_rows:null; // za razčlenitev po ekipah
   const color=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||'#f97316';
   const overlay=document.getElementById('player-overlay');
-  overlay.style.display='flex';document.body.style.overflow='hidden';
+  pokaziOverlay(overlay);document.body.style.overflow='hidden';
   const t=p[F.T];
   const fgm=p[F.fg2m]+p[F.fg3m],fga=p[F.fg2a]+p[F.fg3a];
   const totalSk=p[F.nap]+p[F.obr];
@@ -8278,7 +8511,7 @@ function hideTrendTip(){
 }
 
 function closePlayer(){
-  document.getElementById('player-overlay').style.display='none';
+  skrijOverlay('player-overlay');
   document.body.style.overflow='';
   // Profil se pogosto odpre iz boxscorea; tekma ostane odprta pod njim, zato
   // se naslov vrne nanjo in ne na zavihek v ozadju.
@@ -8659,6 +8892,8 @@ function handleLiveScore(msg) {
     // rezultatu okno enkrat osvezimo, da zavihek nastane.
     if (!liveBoxTimer && !window._moLiveRerendered) {
       window._moLiveRerendered = true;
+      // Okno je ze odprto — osvezimo vsebino, ne odigramo znova vstopa.
+      window._moTiho = true;
       try{ openMatch(msg.matchId); }catch(e){}
     }
   }
@@ -9650,7 +9885,7 @@ function renderNerd(){
 // reset live state
 
 async function closeMatchOverlay(){
-  document.getElementById('match-overlay').style.display='none';
+  skrijOverlay('match-overlay');
   document.body.style.overflow='';
   liveMatchId=null;
   if(pbpRefreshTimer){clearInterval(pbpRefreshTimer);pbpRefreshTimer=null;}
@@ -14048,7 +14283,7 @@ function boxProfile(country, name, team){
     <div class="ml-note" style="margin-top:-6px">Vse tekme po vrsti: datum, rezultat, točke.</div>
     <div class="ml-games">${gamesHtml}</div>
   `;
-  document.getElementById('ml-modal').style.display='flex';
+  pokaziOverlay('ml-modal');
 }
 
 /* ===== SHORTLIST (priljubljeni, localStorage) ===== */
@@ -14232,7 +14467,7 @@ function mlRenderCompare(){
     </div>
     ${inner}
   `;
-  document.getElementById('ml-modal').style.display='flex';
+  pokaziOverlay('ml-modal');
 }
 function mlCmpPick(slot, idx){
   const list = mlGetShortlist();
@@ -14607,7 +14842,7 @@ function mlProfile(pid){
 
     ${boxHtml}
   `;
-  document.getElementById('ml-modal').style.display='flex';
+  pokaziOverlay('ml-modal');
 }
 
 function mlTrendSvg(trend){
@@ -14635,26 +14870,26 @@ function mlTrendSvg(trend){
 }
 
 function closeMlModal(){
-  document.getElementById('ml-modal').style.display='none';
+  skrijOverlay('ml-modal');
 }
 
 </script>
 
 <div id="mobile-nav" style="display:none">
   <button class="mbn-btn active" id="mbn-live" onclick="showTab('live')">
-    <span class="mbn-icon">🔴</span><span class="mbn-lbl">Live</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-live"/></svg></span><span class="mbn-lbl">Live</span>
   </button>
   <button class="mbn-btn" id="mbn-lestvica" onclick="showTab('lestvica')">
-    <span class="mbn-icon">🏆</span><span class="mbn-lbl">Lestvica</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-pokal"/></svg></span><span class="mbn-lbl">Lestvica</span>
   </button>
   <button class="mbn-btn" id="mbn-tekme" onclick="showTab('tekme')">
-    <span class="mbn-icon">📅</span><span class="mbn-lbl">Tekme</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-koledar"/></svg></span><span class="mbn-lbl">Tekme</span>
   </button>
   <button class="mbn-btn" id="mbn-liga" onclick="showTab('liga')">
-    <span class="mbn-icon">🏅</span><span class="mbn-lbl">Liga</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-oder"/></svg></span><span class="mbn-lbl">Liga</span>
   </button>
   <button class="mbn-btn" id="mbn-more" onclick="openMobileMore()">
-    <span class="mbn-icon">⋯</span><span class="mbn-lbl">Več</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-vec"/></svg></span><span class="mbn-lbl">Več</span>
   </button>
 </div>
 
@@ -14664,23 +14899,26 @@ function closeMlModal(){
     <div class="mm-handle"></div>
     <div class="mm-title">Vse strani</div>
     <div class="mm-grid">
-      <button class="mm-item" onclick="mmGo('ekipe')"><span class="mm-ic">🏀</span><span>Ekipe</span></button>
-      <button class="mm-item" onclick="mmGo('race')"><span class="mm-ic">📈</span><span>Sezona</span></button>
-      <button class="mm-item" onclick="mmGo('mvp')"><span class="mm-ic">⭐</span><span>MVP</span></button>
-      <button class="mm-item" onclick="mmGo('iskanje')"><span class="mm-ic">🔍</span><span>Iskanje</span></button>
-      <button class="mm-item" onclick="mmGo('social')"><span class="mm-ic">📸</span><span>Social</span></button>
-      <button class="mm-item" onclick="mmGo('rekordi')"><span class="mm-ic">📊</span><span>Rekordi</span></button>
-      <button class="mm-item" onclick="mmGo('compare')"><span class="mm-ic">⚖️</span><span>Primerjava</span></button>
-      <button class="mm-item" onclick="mmGo('h2h')"><span class="mm-ic">⚔️</span><span>H2H</span></button>
-      <button class="mm-item" onclick="mmGo('power')"><span class="mm-ic">⚡</span><span>Power Ranking</span></button>
-      <button class="mm-item" onclick="mmGo('napovedi')"><span class="mm-ic">🔮</span><span>Napovedi</span></button>
-      <button class="mm-item" onclick="mmGo('belo')"><span class="mm-ic">★</span><span>bElo</span></button>
-      <button class="mm-item" onclick="mmGo('seznum')"><span class="mm-ic">📅</span><span>Sezona v št.</span></button>
-      <button class="mm-item" onclick="mmGo('teamstats')"><span class="mm-ic">📋</span><span>Ekipna stat.</span></button>
-      <button class="mm-item" onclick="mmGo('nerd')"><span class="mm-ic">🤓</span><span>Nerd</span></button>
-      <button class="mm-item" onclick="mmGo('starost')"><span class="mm-ic">👶</span><span>Starost</span></button>
-      <button class="mm-item" onclick="mmGo('obisk')"><span class="mm-ic">👥</span><span>Obisk</span></button>
-      <button class="mm-item" onclick="mmGo('sodniki')"><span class="mm-ic">🦓</span><span>Sodniki</span></button>
+      <button class="mm-item" style="--i:0" onclick="mmGo('pregled')"><span class="mm-ic"><svg class="ic"><use href="#i-pregled"/></svg></span><span>Pregled</span></button>
+      <button class="mm-item" style="--i:1" onclick="mmGo('ekipe')"><span class="mm-ic"><svg class="ic"><use href="#i-zoga"/></svg></span><span>Ekipe</span></button>
+      <button class="mm-item" style="--i:2" onclick="mmGo('transferji')"><span class="mm-ic"><svg class="ic"><use href="#i-prestop"/></svg></span><span>Prestopi</span></button>
+      <button class="mm-item" style="--i:3" onclick="mmGo('mladi')"><span class="mm-ic"><svg class="ic"><use href="#i-kalcek"/></svg></span><span>Mladi</span></button>
+      <button class="mm-item" style="--i:4" onclick="mmGo('race')"><span class="mm-ic"><svg class="ic"><use href="#i-trend"/></svg></span><span>Sezona</span></button>
+      <button class="mm-item" style="--i:5" onclick="mmGo('mvp')"><span class="mm-ic"><svg class="ic"><use href="#i-zvezda"/></svg></span><span>MVP</span></button>
+      <button class="mm-item" style="--i:6" onclick="mmGo('iskanje')"><span class="mm-ic"><svg class="ic"><use href="#i-isci"/></svg></span><span>Iskanje</span></button>
+      <button class="mm-item" style="--i:7" onclick="mmGo('social')"><span class="mm-ic"><svg class="ic"><use href="#i-kamera"/></svg></span><span>Social</span></button>
+      <button class="mm-item" style="--i:8" onclick="mmGo('rekordi')"><span class="mm-ic"><svg class="ic"><use href="#i-nagrada"/></svg></span><span>Rekordi</span></button>
+      <button class="mm-item" style="--i:9" onclick="mmGo('compare')"><span class="mm-ic"><svg class="ic"><use href="#i-tehtnica"/></svg></span><span>Primerjava</span></button>
+      <button class="mm-item" style="--i:10" onclick="mmGo('h2h')"><span class="mm-ic"><svg class="ic"><use href="#i-dvoboj"/></svg></span><span>H2H</span></button>
+      <button class="mm-item" style="--i:11" onclick="mmGo('power')"><span class="mm-ic"><svg class="ic"><use href="#i-strela"/></svg></span><span>Power Ranking</span></button>
+      <button class="mm-item" style="--i:12" onclick="mmGo('napovedi')"><span class="mm-ic"><svg class="ic"><use href="#i-iskre"/></svg></span><span>Napovedi</span></button>
+      <button class="mm-item" style="--i:13" onclick="mmGo('belo')"><span class="mm-ic"><svg class="ic"><use href="#i-merilnik"/></svg></span><span>bElo</span></button>
+      <button class="mm-item" style="--i:14" onclick="mmGo('seznum')"><span class="mm-ic"><svg class="ic"><use href="#i-lojtra"/></svg></span><span>Sezona v št.</span></button>
+      <button class="mm-item" style="--i:15" onclick="mmGo('teamstats')"><span class="mm-ic"><svg class="ic"><use href="#i-tabla"/></svg></span><span>Ekipna stat.</span></button>
+      <button class="mm-item" style="--i:16" onclick="mmGo('nerd')"><span class="mm-ic"><svg class="ic"><use href="#i-koda"/></svg></span><span>Nerd</span></button>
+      <button class="mm-item" style="--i:17" onclick="mmGo('starost')"><span class="mm-ic"><svg class="ic"><use href="#i-pescena"/></svg></span><span>Starost</span></button>
+      <button class="mm-item" style="--i:18" onclick="mmGo('obisk')"><span class="mm-ic"><svg class="ic"><use href="#i-ljudje"/></svg></span><span>Obisk</span></button>
+      <button class="mm-item" style="--i:19" onclick="mmGo('sodniki')"><span class="mm-ic"><svg class="ic"><use href="#i-piscalka"/></svg></span><span>Sodniki</span></button>
     </div>
   </div>
 </div>
@@ -14713,7 +14951,7 @@ function closeMlModal(){
 
 
 
-<div id="share-overlay" onclick="if(event.target===this)closeShare()">
+<div id="share-overlay" class="ov-anim" onclick="if(event.target===this)closeShare()">
   <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
   <div class="share-actions">
     <button class="share-btn primary" onclick="downloadShare()">⬇ Prenesi sliko</button>
