@@ -8,8 +8,7 @@ on:
     # statistika pa se je pojavila ob 20:54 — 3,5 ure zamika. V tem oknu zato
     # tecemo vsako uro, a SAMO stats (sestave, prestopi in slike se tedensko
     # ne spremenijo in bi zagon po nepotrebnem podaljsali).
-    - cron: '20 15-23 * * *' # vsako uro 15:00-23:00 UTC — samo stats
-    - cron: '0 2 * * 1'      # vsak ponedeljek ob 2:00 — PBP za nove tekme
+    - cron: '20 15-23 * * *' # vsako uro 15:00-23:00 UTC — samo stats (+ PBP novih tekem)
   workflow_dispatch:
     inputs:
       mode:
@@ -49,12 +48,16 @@ jobs:
         if: github.event.inputs.mode == 'archive'
         run: python scripts/archive_season.py ${{ github.event.inputs.season }}
 
-      - name: Incremental (stats only)
-        if: github.event.inputs.mode == 'incremental' || github.event.inputs.mode == ''
-        run: python scripts/fetch_data.py
+      # Ob vsakem samodejnem zagonu tudi PBP — pobere SAMO nove odigrane tekme,
+      # zato je brez novih tekem takojsen. Prej je PBP tekel le ob ponedeljkih
+      # in clutch, nizi ter nerd statistika so za zadnjim kolom zaostajali do
+      # 7 dni, ceprav je boxscore prisel v eni uri.
+      - name: Incremental (stats + PBP novih tekem)
+        if: github.event_name == 'schedule' || github.event.inputs.mode == 'incremental' || github.event.inputs.mode == ''
+        run: python scripts/fetch_data.py ${{ github.event_name == 'schedule' && '--pbp' || '' }}
 
       - name: Incremental + PBP
-        if: github.event.inputs.mode == 'incremental+pbp' || github.event_name == 'schedule' && github.event.schedule == '0 2 * * 1'
+        if: github.event.inputs.mode == 'incremental+pbp'
         run: python scripts/fetch_data.py --pbp
 
       - name: Full fetch
