@@ -91,7 +91,8 @@ def backtest(ms, min_tekem=3, home=None):
             zmagal1 = 1 if m['firstTeamScore'] > m['secondTeamScore'] else 0
             izidi.append((p1, zmagal1, m))
 
-        # Posodobitev po tekmi (enako kot computeElo v aplikaciji)
+        # Posodobitev po tekmi (enako kot computeElo v aplikaciji). Brez
+        # domacega igrisca: preizkuseno, z njim je Brier slabsi (0,1995 : 0,1991).
         e1 = elo_p(r[t1], r[t2])
         s1 = 1 if m['firstTeamScore'] > m['secondTeamScore'] else 0
         r[t1] = round(r[t1] + K * (s1 - e1))

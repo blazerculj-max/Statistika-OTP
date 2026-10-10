@@ -3393,7 +3393,7 @@ const METRIC_INFO = {
   belo: 'bElo je ocena moči igralca po sistemu Elo (kot v šahu). Igralec dobi ali izgubi točke glede na nastope; višji bElo pomeni boljšega igralca po tem modelu.',
   power: 'Power Ranking razvrsti ekipe po skupni moči — upošteva rezultate, formo in razmerje zmag, ne le mesto na lestvici.',
   efe: 'EFE (učinkovitost) je skupna ocena prispevka igralca: točke, skoki, asistence, ukradene žoge in bloki, zmanjšana za zgrešene mete in izgubljene žoge.',
-  mvp: 'MVP indeks oceni, kdo je najkoristnejši igralec — kombinira statistiko, učinkovitost in vpliv na zmage ekipe.',
+  mvp: 'MVP indeks = Game Score na tekmo (točke, podaje, skoki, ukradene žoge in blokade, minus zgrešeni meti, izgube in osebne napake) × uspeh ekipe na tekmah, ki jih je igral: od −20 % pri samih porazih do +20 % pri samih zmagah.',
   napovedi: 'Napovedi ocenijo verjetnost izida prihodnjih tekem na podlagi moči ekip (bElo) in dosedanjih rezultatov.',
 };
 // ═══════════════════════════════════════════════════
@@ -4009,17 +4009,23 @@ function aggregatePlayers(phaseFilter) {
 
         // Game log for trend — deduplicate by matchId
         if (!playerGameLog[ps.playerId]) playerGameLog[ps.playerId] = [];
-        const alreadyLogged = playerGameLog[ps.playerId].some(g => g.matchId === matchData.matchId);
-        if (!alreadyLogged) {
-          playerGameLog[ps.playerId].push({
-            round, matchId: matchData.matchId, team: teamName,
-            pts: ps.points,
-            reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
-            ast: ps.assists || 0,
-            efe: ps.efficiencyCustom || ps.efficiency || 0,
-            min: ps.minutes
-          });
-        }
+        // Zapis iz hitrega pregleda (prej nalozen) nadomestimo s polnim —
+        // sicer ostane brez polj, ki jih rabi Game Score v MVP kola.
+        const vnos = {
+          round, matchId: matchData.matchId, team: teamName,
+          pts: ps.points,
+          reb: (ps.offensiveRebounds || 0) + (ps.defensiveRebounds || 0),
+          ast: ps.assists || 0,
+          efe: ps.efficiencyCustom || ps.efficiency || 0,
+          min: ps.minutes,
+          fgm: (ps.twoPM || 0) + (ps.threePM || 0), fga: (ps.twoPA || 0) + (ps.threePA || 0),
+          ftm: ps.fTM || 0, fta: ps.fTA || 0,
+          orb: ps.offensiveRebounds || 0, drb: ps.defensiveRebounds || 0,
+          stl: ps.steals || 0, blk: ps.blocksInFavor || 0, pf: ps.foulCommited || 0, tov: ps.turnovers || 0
+        };
+        const gl = playerGameLog[ps.playerId];
+        const ix = gl.findIndex(g => g.matchId === matchData.matchId);
+        if (ix < 0) gl.push(vnos); else gl[ix] = vnos;
       });
     });
   });
@@ -4381,7 +4387,7 @@ const COLS=[
   {k:'blk',lbl:'BLK',fmt:(p,m)=>m==='avg'?fmt(p[F.blk]/p[F.T]):p[F.blk],tip:'BLK — Blokade\nBLK = blokirani meti nasprotnikov (dal)\nPRE = lastni meti ki so bili blokirani (prejel)'},
   {k:'pm_p',lbl:'+/−',fmt:(p,m)=>m==='avg'?fmt(p[F.pm]/p[F.T]):(p[F.pm]>0?'+':'')+p[F.pm],tip:'+/− — Plus/Minus\nRazlika v rezultatu ko je ta igralec na igrišču.\nPozitivno = ekipa vodi ko igra, negativno = zaostaja.'},
   {k:'efe',lbl:'EFE',fmt:(p,m)=>m==='avg'?fmt(p[F.efe]/p[F.T]):p[F.efe],tip:'EFE — Efektivnost (KZS formula)\nTOČ + SK + POD + STO + BLK - zgrešeni meti - IZG - napake\nUradno merilo KZS. Povprečje ≈ 10-15/tekmo.'},
-  {k:'ts',lbl:'TS%',fmt:(p,m)=>{const fga=p[F.fg2a]+p[F.fg3a],denom=2*(fga+0.44*p[F.fta]);if(denom<4||fga+p[F.fta]<20)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=Math.round(p[F.toc]/denom*1000)/10;const cls=v>=60?'phi':v>=50?'pmd':'plo';return `<div class="td-pct"><span class="${cls}">${v.toFixed(1)}%</span><span class="td-pct-sub">${fga+p[F.fta]} psk</span></div>`},tip:'TS% — True Shooting %\nNajboljši pokazatelj strelske učinkovitosti.\nUpošteva 2T, 3T in proste mete skupaj.\nFormula: Točke / (2 × (FGA + 0.44 × FTA))\nPovprečje lige ≈ 55%, odlično ≥ 60%'},
+  {k:'ts',lbl:'TS%',fmt:(p,m)=>{const fga=p[F.fg2a]+p[F.fg3a],denom=2*(fga+0.44*p[F.fta]);if(!leagueHasFullStats()||denom<4||fga+p[F.fta]<20)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const v=Math.round(p[F.toc]/denom*1000)/10;const cls=v>=60?'phi':v>=50?'pmd':'plo';return `<div class="td-pct"><span class="${cls}">${v.toFixed(1)}%</span><span class="td-pct-sub">${fga+p[F.fta]} psk</span></div>`},tip:'TS% — True Shooting %\nNajboljši pokazatelj strelske učinkovitosti.\nUpošteva 2T, 3T in proste mete skupaj.\nFormula: Točke / (2 × (FGA + 0.44 × FTA))\nPovprečje lige ≈ 55%, odlično ≥ 60%'},
   {k:'at',lbl:'A/T',fmt:(p,m)=>{if(p[F.izg]===0)return p[F.pod]>0?'∞':'—';return fmt(p[F.pod]/p[F.izg],2)},tip:'A/T — Assist/Turnover razmerje\nPOD / IZG — koliko asistenc na vsako izgubo.\n2.0+ = dober razdeljevalec\nPod 1.0 = preveč izgub'},
   {k:'usg',lbl:'USG%',fmt:(p,m)=>{if(p[F.MIN]<10)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];const v=((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));const pv=Math.round(v*1000)/10;const cls=pv>=30?'phi':pv>=20?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+pv.toFixed(1)+'%</span></div>'},tip:'USG% — Usage Rate\n% ekipnih napadov ki gre skozi tega igralca\n(met, prosti met ali izguba žoge).\n30%+ = zvezda ekipe\n15-20% = role player'},
   {k:'per',lbl:'PER',fmt:(p,m)=>{const v=perOf(p);if(v===null)return '<span style="color:var(--mut);font-size:.7rem">min</span>';const cls=v>=20?'phi':v>=12?'pmd':'plo';return '<div class="td-pct"><span class="'+cls+'">'+v.toFixed(1)+'</span></div>'},tip:'PER — Player Efficiency Rating (Hollinger)\nVrednost igralca na minuto, prilagojena tempu ekipe.\nPovprečje lige je vedno 15, odlično ≥ 20, zvezdniško ≥ 25.\nPrikazan od 10 min na tekmo naprej.'},
@@ -4400,7 +4406,7 @@ function sortVal(p,k){
   if(k==='fg2')return pct(p[F.fg2m],p[F.fg2a])??-1;if(k==='fg3')return pct(p[F.fg3m],p[F.fg3a])??-1;
   if(k==='met')return pct(p[F.fg2m]+p[F.fg3m],p[F.fg2a]+p[F.fg3a])??-1;
   if(k==='pm')return pct(p[F.ftm],p[F.fta])??-1;
-  if(k==='ts'){const fga=p[F.fg2a]+p[F.fg3a],d=2*(fga+0.44*p[F.fta]);return(d>0&&fga+p[F.fta]>=20)?p[F.toc]/d*100:-1;}
+  if(k==='ts'){const fga=p[F.fg2a]+p[F.fg3a],d=2*(fga+0.44*p[F.fta]);return(leagueHasFullStats()&&d>0&&fga+p[F.fta]>=20)?p[F.toc]/d*100:-1;}
   if(k==='at')return p[F.izg]>0?p[F.pod]/p[F.izg]:-1;
   if(k==='usg'){if(p[F.MIN]<10)return-1;const tm=getTmAgg(p[F.team]),tmMP=tm.T*5*40,fga=p[F.fg2a]+p[F.fg3a];return((fga+0.44*p[F.fta]+p[F.izg])*tmMP/5)/(p[F.MIN]*(tm.fga+0.44*tm.fta+tm.izg));}
   if(k==='per'){const v=perOf(p);return v===null?-999:v;}
@@ -4902,6 +4908,9 @@ function sklon(n,forms){
 }
 function sklonTujec(n){return sklon(n,['Tujec','Tujca','Tujci','Tujcev']);}
 function nTekem(n){return `${n} ${sklon(n,['tekma','tekmi','tekme','tekem'])}`;}
+// "iz 3 tekem" — ob povprecjih, da je jasno, iz kolikšnega vzorca so. Po treh
+// kolih je 24,7 tocke na tekmo nekaj drugega kot po dvajsetih.
+function izTekem(n){return n===1?'iz 1 tekme':`iz ${n} tekem`;}
 function nIgralcev(n){return `${n} ${sklon(n,['igralec','igralca','igralci','igralcev'])}`;}
 // Prvo ime skrčimo na začetnico, priimek ostane cel: "S. Knežević".
 // Za ozke kartice, kjer bi polno ime odrezal tritočkovnik.
@@ -6897,7 +6906,7 @@ function openSeasonCard(){
   if(LPa.length<3)LPa=allLP.filter(p=>p[F.T]>=Math.max(Math.ceil(maxGames*0.5),5));
   if(!LPa.length){toast('Premalo podatkov','⏳');return;}
   const isLiga3=currentLeague==='liga3';
-  const score=p=>{const t=Math.max(p[F.T],1);return isLiga3?(p[F.toc]/t+p[F.fg3m]/t*1.2):(p[F.toc]/t+(p[F.nap]+p[F.obr])/t*0.7+p[F.pod]/t*0.8+p[F.sto]/t*1.5+p[F.blk]/t*1.5-p[F.izg]/t*0.8+p[F.efe]/t*0.3);};
+  const score=calcMvpScore;   // isti izbor kot MVP
   const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
   const pIdx=P.findIndex(x=>x[F.pid]===best[F.pid]);
   if(pIdx>=0)openShareCard(pIdx);
@@ -7508,14 +7517,7 @@ function renderSpotlight(){
   if(!LPa.length){el.innerHTML='';return;}
   // MVP-style score to pick player of the season
   const isLiga3=currentLeague==='liga3';
-  const score=p=>{
-    const t=Math.max(p[F.T],1);
-    if(isLiga3){
-      // 3.SKL: rely on points + threes only (reliable)
-      return p[F.toc]/t*1.0 + p[F.fg3m]/t*1.2;
-    }
-    return p[F.toc]/t*1.0 + (p[F.nap]+p[F.obr])/t*0.7 + p[F.pod]/t*0.8 + p[F.sto]/t*1.5 + p[F.blk]/t*1.5 - p[F.izg]/t*0.8 + p[F.efe]/t*0.3;
-  };
+  const score=calcMvpScore;   // isti izbor kot MVP (Game Score x uspeh ekipe)
   const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
   const t=Math.max(best[F.T],1);
   const tc=TEAM_COLORS[(best[F.team]||'').split(' / ')[0]]||'#f97316';
@@ -7566,17 +7568,18 @@ function renderLigaFeatured(){
 
   // Featured strip — 5 quick stats with count-up
   const fstats=[
-    {lbl:'NAJVEČ TOČK',v:_lpAvg(ptsL,F.toc),dec:1,name:ptsL[F.name],color:'#f97316'},
-    {lbl:'NAJVEČ SKOKOV',v:_lpReb(rebL)/Math.max(rebL[F.T],1),dec:1,name:rebL[F.name],color:'#3b82f6'},
-    {lbl:'NAJVEČ ASIST.',v:_lpAvg(astL,F.pod),dec:1,name:astL[F.name],color:'#10b981'},
-    {lbl:'NAJVEČ TROJK',v:_lpAvg(trojkeL,F.fg3m),dec:1,name:trojkeL[F.name],color:'#a855f7'},
-    {lbl:'NAJVIŠJI EFE',v:_lpAvg(efeL,F.efe),dec:1,name:efeL[F.name],color:'#22c55e'},
+    {lbl:'NAJVEČ TOČK',v:_lpAvg(ptsL,F.toc),dec:1,name:ptsL[F.name],t:ptsL[F.T],color:'#f97316'},
+    {lbl:'NAJVEČ SKOKOV',v:_lpReb(rebL)/Math.max(rebL[F.T],1),dec:1,name:rebL[F.name],t:rebL[F.T],color:'#3b82f6'},
+    {lbl:'NAJVEČ ASIST.',v:_lpAvg(astL,F.pod),dec:1,name:astL[F.name],t:astL[F.T],color:'#10b981'},
+    {lbl:'NAJVEČ TROJK',v:_lpAvg(trojkeL,F.fg3m),dec:1,name:trojkeL[F.name],t:trojkeL[F.T],color:'#a855f7'},
+    {lbl:'NAJVIŠJI EFE',v:_lpAvg(efeL,F.efe),dec:1,name:efeL[F.name],t:efeL[F.T],color:'#22c55e'},
   ];
   strip.innerHTML=fstats.map(s=>`
     <div class="fstat" style="--fs-color:${s.color}">
       <div class="fstat-lbl">${s.lbl}</div>
       <div class="fstat-val" data-count="${s.v}" data-dec="${s.dec}">0</div>
       <div class="fstat-name">${s.name}</div>
+      <div style="font-size:.6875rem;color:var(--mut);font-family:var(--fm)">${izTekem(s.t)}</div>
     </div>`).join('');
 
   // Hero cards — top 3 scorers as big visual cards
@@ -10073,6 +10076,10 @@ function computeElo(){
     const t1=m.firstTeamName,t2=m.secondTeamName;
     if(!ratings[t1]){ratings[t1]=PRESET[t1]||1500;history[t1]=[];}
     if(!ratings[t2]){ratings[t2]=PRESET[t2]||1500;history[t2]=[];}
+    // Pricakovani izid ob POSODOBITVI je namenoma BREZ domacega igrisca (ta je
+    // samo v napovedi, eloWinProb + HOME_ELO). Preverjeno 10.10.2026 na 383
+    // tekmah: z domacim tudi pri posodobitvi je Brier 0,1995, brez 0,1991 —
+    // teoreticno "pravilnejsa" razlicica ne izboljsa napovedi, zato ostane.
     const e1=1/(1+10**((ratings[t2]-ratings[t1])/400));
     const s1=m.firstTeamScore>m.secondTeamScore?1:0;
     ratings[t1]=Math.round(ratings[t1]+K*(s1-e1));
@@ -10557,7 +10564,7 @@ function renderPregled(){
       const tc=TEAM_COLORS[p[F.team]]||L.col;
       const av=ph?`<img src="${ph}" class="pstat-img" onerror="_ppPhotoErr(this,'${ini}',38)">`:`<div class="pstat-fb" style="background:${tc}33;color:${tc}">${ini}</div>`;
       html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
-        <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span></div>
+        <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span><span style="margin-left:auto;font-size:.6875rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">${izTekem(p[F.T])}</span></div>
         <div class="pstat-val" style="color:${L.col}" data-count="${L.fmt(L.get.v)}" data-dec="1">0</div>
         <div class="pstat-pl">${av}<span class="pstat-name"><span class="nm-full">${p[F.name]}</span><span class="nm-short">${kratkoIme(p[F.name])}</span></span></div>
       </div>`;
@@ -11578,9 +11585,38 @@ function renderMatchPreview(matchInfo,c1,c2){
 // ═══════════════════════════════════════════════════
 // MVP TRACKER
 // ═══════════════════════════════════════════════════
+// ═══ MVP ═══
+// Ocena = Game Score na tekmo (John Hollinger) x uspeh ekipe na njegovih tekmah.
+// Prej: tocke + 0,7 skoka + 0,8 podaje + ... + 0,3 x EFE. EFE ze vsebuje tocke,
+// skoke, podaje, ukradene, blokade in izgube — vse se je stelo dvakrat; zgresene
+// mete je formula kaznovala le posredno (0,3 x EFE), zmag ekipe pa sploh ne.
+//   Game Score = PTS + 0,4 FG - 0,7 FGA - 0,4 (FTA-FT) + 0,7 OR + 0,3 DR
+//                + STL + 0,7 AST + 0,7 BLK - 0,4 PF - TOV
+//   Uspeh ekipe = 0,8 + 0,4 x delez zmag na tekmah, ki jih je IGRAL (0,8 - 1,2)
+// Ista formula je v scripts/fetch_data.py (mvp_score) za hitri Pregled.
+function gameScore(x){
+  return x.pts+0.4*x.fgm-0.7*x.fga-0.4*(x.fta-x.ftm)+0.7*x.orb+0.3*x.drb
+    +x.stl+0.7*x.ast+0.7*x.blk-0.4*x.pf-x.tov;
+}
+var _mvpTekme=null;
+function _zmagaEkipe(matchId,team){
+  if(!_mvpTekme||_mvpTekme.src!==allMatches)_mvpTekme={src:allMatches,m:new Map(allMatches.map(m=>[m.id,m]))};
+  const m=_mvpTekme.m.get(matchId);
+  if(!m||m.status!=='FINISHED')return null;
+  if(m.firstTeamName===team)return m.firstTeamScore>m.secondTeamScore;
+  if(m.secondTeamName===team)return m.secondTeamScore>m.firstTeamScore;
+  return null;
+}
+function mvpUspehEkipe(p){
+  let w=0,n=0;
+  (playerGameLog[p[F.pid]]||[]).forEach(g=>{const z=_zmagaEkipe(g.matchId,g.team);if(z!==null){n++;if(z)w++;}});
+  return n?0.8+0.4*(w/n):1;
+}
 function calcMvpScore(p){
   const t=Math.max(p[F.T],1);
-  return (p[F.toc]/t)*1.0+((p[F.nap]+p[F.obr])/t)*0.7+(p[F.pod]/t)*0.8+(p[F.sto]/t)*1.5+(p[F.blk]/t)*1.5-(p[F.izg]/t)*0.8+(p[F.efe]/t)*0.3;
+  const gs=gameScore({pts:p[F.toc],fgm:p[F.fg2m]+p[F.fg3m],fga:p[F.fg2a]+p[F.fg3a],ftm:p[F.ftm],fta:p[F.fta],
+    orb:p[F.nap],drb:p[F.obr],stl:p[F.sto],ast:p[F.pod],blk:p[F.blk],pf:p[F.pz],tov:p[F.izg]})/t;
+  return gs*mvpUspehEkipe(p);
 }
 
 function getMvpByRound(round){
@@ -11592,7 +11628,12 @@ function getMvpByRound(round){
     if(!log)return;
     const game=log.find(g=>roundMatchIds.has(g.matchId));
     if(!game)return;
-    const s=game.pts*1.0+game.reb*0.7+game.ast*0.8+(game.stl||0)*1.5+(game.blk||0)*1.5-(game.tov||0)*0.8+game.efe*0.3;
+    // Prej se je bralo game.stl/blk/tov, ki jih dnevnik ni imel — MVP kola ni
+    // poznal ukradenih zog, blokad in izgub. Zmaga doda 10 %.
+    const g0=k=>game[k]||0;
+    const gs=gameScore({pts:g0('pts'),fgm:g0('fgm'),fga:g0('fga'),ftm:g0('ftm'),fta:g0('fta'),orb:g0('orb'),
+      drb:g0('drb'),stl:g0('stl'),ast:g0('ast'),blk:g0('blk'),pf:g0('pf'),tov:g0('tov')});
+    const s=gs*(_zmagaEkipe(game.matchId,game.team)?1.1:1);
     scores.push({p,pi,s,game});
   });
   return scores.sort((a,b)=>b.s-a.s).slice(0,3);

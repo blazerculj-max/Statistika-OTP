@@ -469,7 +469,15 @@ def build_pregled(matches, stats):
                         'reb':ps.get('offensiveRebounds',0)+ps.get('defensiveRebounds',0),
                         'ast':ps.get('assists',0),
                         'efe':ps.get('efficiencyCustom') or ps.get('efficiency') or 0,
-                        'min':ps.get('minutes',0)
+                        'min':ps.get('minutes',0),
+                        # za Game Score (MVP kola) — prej jih ni bilo in MVP kola
+                        # ni poznal ukradenih zog, blokad ne izgub
+                        'fgm':(ps.get('twoPM') or 0)+(ps.get('threePM') or 0),
+                        'fga':(ps.get('twoPA') or 0)+(ps.get('threePA') or 0),
+                        'ftm':ps.get('fTM') or 0,'fta':ps.get('fTA') or 0,
+                        'orb':ps.get('offensiveRebounds') or 0,'drb':ps.get('defensiveRebounds') or 0,
+                        'stl':ps.get('steals') or 0,'blk':ps.get('blocksInFavor') or 0,
+                        'pf':ps.get('foulCommited') or 0,'tov':ps.get('turnovers') or 0,
                     })
 
     # tekme — samo polja, ki jih Pregled rabi (rezultati, imena, datum, faza)
@@ -496,10 +504,23 @@ def build_pregled(matches, stats):
             for fld in ('T','MIN','fg2m','fg2a','fg3m','fg3a','ftm','fta','toc','nap','obr',
                         'pod','sto','izs','izg','pz','blk','pre','pm','efe','pip','fb','sc'):
                 grouped[k][fld] += p[fld]
+    # Zrcali calcMvpScore v index.html: Game Score na tekmo x uspeh ekipe
+    # (0,8 + 0,4 x delez zmag na tekmah, ki jih je igral).
+    rez = {m['id']: m for m in matches if m['status']=='FINISHED'}
+    def zmaga(mid, team):
+        m = rez.get(mid)
+        if not m: return None
+        if m['firstTeamName']==team: return (m.get('firstTeamScore') or 0) > (m.get('secondTeamScore') or 0)
+        if m['secondTeamName']==team: return (m.get('secondTeamScore') or 0) > (m.get('firstTeamScore') or 0)
+        return None
     def mvp_score(p):
         t = max(p['T'],1)
-        return (p['toc']/t)*1.0+((p['nap']+p['obr'])/t)*0.7+(p['pod']/t)*0.8+ \
-               (p['sto']/t)*1.5+(p['blk']/t)*1.5-(p['izg']/t)*0.8+(p['efe']/t)*0.3
+        gs = (p['toc'] + 0.4*(p['fg2m']+p['fg3m']) - 0.7*(p['fg2a']+p['fg3a'])
+              - 0.4*(p['fta']-p['ftm']) + 0.7*p['nap'] + 0.3*p['obr'] + p['sto']
+              + 0.7*p['pod'] + 0.7*p['blk'] - 0.4*p['pz'] - p['izg']) / t
+        z = [zmaga(g['matchId'], g['team']) for g in gamelog.get(p['pid'], [])]
+        z = [x for x in z if x is not None]
+        return gs * ((0.8 + 0.4*sum(z)/len(z)) if z else 1)
     elig = [p for p in grouped.values() if p['T']>=min_t]
     mvp_pid = max(elig, key=mvp_score)['pid'] if elig else None
 
