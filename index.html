@@ -1951,6 +1951,28 @@ select{max-width:100%;min-width:0}
   html.hdr-skrita .hdr{translate:0 -100%}
 }
 
+/* Glavna vrstica ima 11 gumbov; med 769 in 1100 px ji zmanjsamo razmike. */
+@media(min-width:769px) and (max-width:1100px){.nav-row .nb{padding:8px 10px}}
+/* Znacka s stevilom zivih tekem je absolutno v desnem kotu — rabi prostor. */
+#live-nav-btn{padding-right:24px!important}
+
+/* ── Meni Vec: skupine ── */
+.mm-sk{font-family:var(--fm);font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:18px 2px 8px}
+.mm-title + .mm-sk{margin-top:4px}
+/* S skupinami so ploscice krajse seznamov — tri v vrsto tudi na ozkem telefonu
+   (prej dve, 20 velikih ploscic je pomenilo dolgo drsenje). */
+#mobile-more .mm-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#mobile-more .mm-item{padding:12px 4px;gap:6px;text-align:center;line-height:1.2}
+#mobile-more .mm-ic .ic{width:22px;height:22px}
+.mm-osvezi,.adg-osvezi{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--sub);font-family:var(--fm);font-size:.78rem;cursor:pointer}
+.mm-osvezi{margin:20px auto 4px;padding:10px 14px}
+.mm-osvezi .ic,.adg-osvezi .ic{width:16px;height:16px}
+.adg-osvezi{width:100%;padding:9px 14px;margin-top:6px;border-top:1px solid var(--border)!important;border-radius:0}
+.adg-item{display:flex!important;align-items:center;gap:10px}
+.adg-item .ic{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.hdr-icon-btn .ic{width:17px;height:17px;margin:auto}
+.live-pika{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;margin-right:6px;vertical-align:middle;animation:livePulse 1.6s ease infinite}
+
 /* ── Drobnarije, ki jih brskalniki znajo sele od nedavnega ── */
 h1,h2,h3,.sec-head,.mo-section-title{text-wrap:balance}
 p{text-wrap:pretty}
@@ -2133,6 +2155,12 @@ p{text-wrap:pretty}
   <symbol id="i-piscalka" viewBox="0 0 24 24"><path d="M3.5 13.5a5 5 0 0 0 9.6 2H20V11h-8.6a5 5 0 0 0-7.9 2.5z"/><path d="M14.5 11V8.5h3"/><circle cx="8.5" cy="13.8" r="1.4"/></symbol>
   <symbol id="i-prestop" viewBox="0 0 24 24"><path d="M4 8.5h14L14.5 5M20 15.5H6L9.5 19"/></symbol>
   <symbol id="i-kalcek" viewBox="0 0 24 24"><path d="M12 20.5V12"/><path d="M12 12C12 8 9 6 5 6c0 4 3 6 7 6zM12 10.5c0-3 2.5-5 6.5-5 0 3.5-2.5 5-6.5 5z"/></symbol>
+  <symbol id="i-luna" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-sonce" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-osvezi" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3.5h3.5M4 13a8 8 0 0 0 14.6 4.5M20 20v-3.5h-3.5"/></symbol>
+  <symbol id="i-tarca" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-skok" viewBox="0 0 24 24"><path d="M12 20V6M6.5 11.5 12 6l5.5 5.5M5 3.5h14"/></symbol>
+  <symbol id="i-podaja" viewBox="0 0 24 24"><path d="M4 17c3.5-8 10-10 16-9"/><path d="M16 4.5 20 8l-4 3.5"/></symbol>
 </svg>
 
 <!-- HERO PAGE -->
@@ -2234,8 +2262,9 @@ p{text-wrap:pretty}
       <span class="pwa-lbl">Namesti</span>
     </button>
     <button class="hdr-icon-btn" onclick="openGlossary()" title="Kaj pomenijo oznake?" style="font-weight:800">?</button>
-    <button id="theme-toggle" class="hdr-icon-btn" onclick="toggleTheme()" title="Preklopi temo">🌙</button>
-    <button class="hdr-icon-btn hdr-cache" onclick="cacheClear()" title="Počisti predpomnilnik" style="font-size:.85rem">♻️</button>
+    <button id="theme-toggle" class="hdr-icon-btn" onclick="toggleTheme()" title="Preklopi temo" aria-label="Preklopi temo"><svg class="ic"><use href="#i-luna"/></svg></button>
+    <!-- ♻️ (osvezi) je v meniju Vec: v glavi se je ob znacki LIVE prelomil v
+         drugo vrstico, uporablja pa se redko. -->
   </div>
 </header>
 
@@ -2259,20 +2288,24 @@ p{text-wrap:pretty}
   <div class="nav-row">
     <span class="nav-ind" id="nav-ind" aria-hidden="true"></span>
     <button class="nb" id="live-nav-btn" onclick="showTab('live')" style="position:relative">
-      🔴 LIVE
+      <span class="live-pika" aria-hidden="true"></span>LIVE
       <span id="live-count-badge" style="display:none;position:absolute;top:6px;right:6px;background:#ef4444;color:white;border-radius:50%;width:16px;height:16px;font-size:.6875rem;font-family:var(--fm);font-weight:700;display:flex;align-items:center;justify-content:center">0</span>
     </button>
+    <!-- Vrstni red sledi spodnji vrstici na telefonu (Live, Lestvica, Tekme,
+         Vodilni). "Vodilni" je bil prej "Liga" in skrit pod "Drugo", na
+         telefonu pa eden od stirih glavnih zavihkov. -->
     <button class="nb" onclick="showTab('pregled')">Pregled</button>
-    <button class="nb" onclick="showTab('ekipe')">Ekipe</button>
     <button class="nb" onclick="showTab('lestvica')">Lestvica</button>
     <button class="nb" onclick="showTab('tekme')">Tekme</button>
-    <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
+    <button class="nb" onclick="showTab('liga')">Vodilni</button>
+    <button class="nb" onclick="showTab('ekipe')">Ekipe</button>
     <button class="nb" onclick="showTab('mvp')">MVP</button>
+    <button class="nb" onclick="showTab('iskanje')">Iskanje</button>
     <button class="nb" onclick="showTab('transferji')">Prestopi</button>
-    <button class="nb" id="mladi-nav-btn" onclick="showTab('mladi')" style="color:var(--teal2)">🌱 Mladi</button>
+    <button class="nb" id="mladi-nav-btn" onclick="showTab('mladi')" style="color:var(--teal2)">Mladi</button>
     <button class="nb" id="analytics-btn" onclick="toggleAnalyticsMenu(event)"
         style="display:flex;align-items:center;gap:5px;border:1px solid var(--border);border-radius:8px;padding:6px 12px">
-        Analitika
+        Več
         <svg id="analytics-arrow" width="10" height="10" viewBox="0 0 10 10" fill="none" style="transition:transform .2s;opacity:.6">
           <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
@@ -2497,7 +2530,7 @@ p{text-wrap:pretty}
     <div id="race-wrap" style="position:relative;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 16px 8px">
     </div></div>
   <div id="tab-social" class="tab">
-    <div class="sec-head" style="--sh-c:var(--acc)">📸 Social — deljive kartice</div>
+    <div class="sec-head" style="--sh-c:var(--acc)">Social — deljive kartice</div>
     <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-bottom:20px">Generiraj profesionalne kartice za Instagram in X — po krogih rednega dela ali končnice.</div>
     <div class="social-grid">
       <div class="social-card" onclick="openRoundCard('rd')">
@@ -2570,7 +2603,7 @@ p{text-wrap:pretty}
     <div id="rekordi-wrap"></div>
   </div>
   <div id="tab-iskanje" class="tab">
-    <div class="sec-head" style="--sh-c:var(--acc)">🔍 Iskanje igralcev</div>
+    <div class="sec-head" style="--sh-c:var(--acc)">Iskanje igralcev</div>
     <div class="search-panel">
       <div class="search-top">
         <div class="search-input-wrap">
@@ -3347,12 +3380,16 @@ function cacheInfo(key) {
   } catch(e) { return null; }
 }
 
-function cacheClear() {
+// Prej je le pobrisal shranjene podatke in pokazal alert — strani ni
+// osvezil in predpomnilnika (service worker) ni izpraznil. Na telefonu, kjer
+// trde osvezitve ni, je to edini nacin za svezo stran.
+async function cacheClear() {
   Object.values(LEAGUES).forEach(lg => {
-    localStorage.removeItem(lg.cacheStats);
-    localStorage.removeItem(lg.cachePbp);
+    try{ localStorage.removeItem(lg.cacheStats); localStorage.removeItem(lg.cachePbp); }catch(e){}
   });
-  alert('Cache počiščen za vse lige. Podatki se bodo naložili na novo.');
+  try{ if(window.caches){ const k=await caches.keys(); await Promise.all(k.map(x=>caches.delete(x))); } }catch(e){}
+  toast('Osvežujem podatke …','↻');
+  setTimeout(()=>location.reload(), 350);
 }
 
 async function selectCrossLeague(){
@@ -6977,8 +7014,8 @@ function showTeamProfile(teamName){
     </div>
     <div class="tp-body">
       ${form?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px"><span style="font-size:.7rem;color:var(--mut);font-family:var(--fm);letter-spacing:.08em">FORMA</span><div style="display:flex;gap:4px">${form}</div></div>`:''}
-      ${(()=>{const tt=drawTeamTrend(teamName,color);return tt?`<div class="sec-head" style="--sh-c:${color};margin-top:0">📈 Forma skozi sezono</div>${tt}<div style="height:20px"></div>`:'';})()}
-      <div class="sec-head" style="--sh-c:${color};margin-top:0">👥 Postava (${roster.length})</div>
+      ${(()=>{const tt=drawTeamTrend(teamName,color);return tt?`<div class="sec-head" style="--sh-c:${color};margin-top:0">Forma skozi sezono</div>${tt}<div style="height:20px"></div>`:'';})()}
+      <div class="sec-head" style="--sh-c:${color};margin-top:0">Postava (${roster.length})</div>
       <div>${rosterHtml||'<div class="empty">Ni igralcev</div>'}</div>
     </div>
   </div>`;
@@ -7417,7 +7454,7 @@ function toggleTheme(){
   else root.setAttribute('data-theme','light');
   try{localStorage.setItem('skl-theme',next);}catch(e){}
   const btn=document.getElementById('theme-toggle');
-  if(btn)btn.textContent=next==='light'?'☀️':'🌙';
+  if(btn)btn.innerHTML=`<svg class="ic"><use href="#i-${next==='light'?'sonce':'luna'}"/></svg>`;
   toast(next==='light'?'Svetla tema':'Temna tema', next==='light'?'☀️':'🌙');
 }
 function initTheme(){
@@ -7426,7 +7463,7 @@ function initTheme(){
   if(saved==='light'){
     document.documentElement.setAttribute('data-theme','light');
     const btn=document.getElementById('theme-toggle');
-    if(btn)btn.textContent='☀️';
+    if(btn)btn.innerHTML='<svg class="ic"><use href="#i-sonce"/></svg>';
   }
 }
 
@@ -7705,7 +7742,7 @@ function renderLeaders(){
         </div>
       </div>`;
     }).join('');
-    return `<div class="lc"><div class="lch"><span class="lct" style="color:${cat.color}">${cat.icon} ${cat.lbl}</span>${filterNote}</div><div class="lcb">${rows||'<div class="empty">—</div>'}</div></div>`;
+    return `<div class="lc"><div class="lch"><span class="lct" style="color:${cat.color}">${cat.lbl}</span>${filterNote}</div><div class="lcb">${rows||'<div class="empty">—</div>'}</div></div>`;
   }).join('');
   document.getElementById('ldrs-grid').innerHTML=html;
   renderSpotlight();
@@ -10549,10 +10586,10 @@ function renderPregled(){
   const elig=_lp.filter(p=>p[F.T]>=minT);
   function topBy(fn){return elig.map(p=>({p,v:fn(p)})).sort((a,b)=>b.v-a.v)[0];}
   const leaders=[
-    {ic:'🎯',lab:'Trojke / tekmo',get:topBy(p=>p[F.fg3m]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#a855f7'},
-    {ic:'💪',lab:'Skoki / tekmo',get:topBy(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#10b981'},
-    {ic:'🎩',lab:'Asist. / tekmo',get:topBy(p=>p[F.pod]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#3b82f6'},
-    {ic:'🔥',lab:'Točke / tekmo',get:topBy(p=>p[F.toc]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:lgColor},
+    {ic:'🎯',ik:'tarca',lab:'Trojke / tekmo',get:topBy(p=>p[F.fg3m]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#a855f7'},
+    {ic:'💪',ik:'skok',lab:'Skoki / tekmo',get:topBy(p=>(p[F.nap]+p[F.obr])/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#10b981'},
+    {ic:'🎩',ik:'podaja',lab:'Asist. / tekmo',get:topBy(p=>p[F.pod]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:'#3b82f6'},
+    {ic:'🔥',ik:'zoga',lab:'Točke / tekmo',get:topBy(p=>p[F.toc]/Math.max(p[F.T],1)),fmt:v=>v.toFixed(1),col:lgColor},
   ].filter(x=>x.get);
   if(leaders.length){
     html+=`<div class="pregled-sec-h">Statistični poudarki</div>`;
@@ -10564,7 +10601,7 @@ function renderPregled(){
       const tc=TEAM_COLORS[p[F.team]]||L.col;
       const av=ph?`<img src="${ph}" class="pstat-img" onerror="_ppPhotoErr(this,'${ini}',38)">`:`<div class="pstat-fb" style="background:${tc}33;color:${tc}">${ini}</div>`;
       html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
-        <div class="pstat-top"><span class="pstat-ic">${L.ic}</span><span class="pstat-lab">${L.lab}</span><span style="margin-left:auto;font-size:.6875rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">${izTekem(p[F.T])}</span></div>
+        <div class="pstat-top"><span class="pstat-ic" style="color:${L.col}"><svg class="ic" style="width:15px;height:15px"><use href="#i-${L.ik}"/></svg></span><span class="pstat-lab">${L.lab}</span><span style="margin-left:auto;font-size:.6875rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">${izTekem(p[F.T])}</span></div>
         <div class="pstat-val" style="color:${L.col}" data-count="${L.fmt(L.get.v)}" data-dec="1">0</div>
         <div class="pstat-pl">${av}<span class="pstat-name"><span class="nm-full">${p[F.name]}</span><span class="nm-short">${kratkoIme(p[F.name])}</span></span></div>
       </div>`;
@@ -10882,7 +10919,7 @@ function renderPowerRanking(){
   if(!teams.length){wrap.innerHTML='<div class="empty">Ni dovolj podatkov</div>';return;}
 
   const lgName=getLg().short||'';
-  let html=`<div class="sec-head" style="--sh-c:#10b981">⚡ Power Ranking — ${lgName}${infoTip('power')}</div>
+  let html=`<div class="sec-head" style="--sh-c:#10b981">Power Ranking — ${lgName}${infoTip('power')}</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
       Moč ekip: <strong>65% jakost postave</strong> (bElo igralcev + doprinos) in <strong>35% dejanski rezultati</strong> (ELO). Združi kakovost kadra in to, kdo zares zmaguje.
     </div>`;
@@ -10962,7 +10999,7 @@ function renderBElo(){
   const teams=[...new Set(arr.map(x=>normalizeTeamName(x.team)))];
   const teamStr=teams.map(t=>({team:t,str:predictTeamStrength(t)})).filter(x=>x.str).sort((a,b)=>b.str-a.str);
 
-  let html=`<div class="sec-head" style="--sh-c:#fbbf24">★ bElo — moč igralcev${infoTip('belo')}</div>
+  let html=`<div class="sec-head" style="--sh-c:#fbbf24">bElo — moč igralcev${infoTip('belo')}</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:14px;line-height:1.5">
       <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono (vključno s končnico, ki šteje več). Uporabno za napoved moči ekip.
     </div>
@@ -11060,7 +11097,7 @@ function renderH2HTab(){
 
   const opt=(sel)=>teams.map(t=>`<option value="${t}" ${t===sel?'selected':''}>${t}</option>`).join('');
 
-  let html=`<div class="sec-head" style="--sh-c:var(--acc)">⚔️ Head 2 Head</div>
+  let html=`<div class="sec-head" style="--sh-c:var(--acc)">Head 2 Head</div>
     <div style="display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
       <select id="h2h-a" onchange="_h2hA=this.value;renderH2HTab()" style="background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:11px 16px;color:var(--text);font-family:var(--fh);font-size:.9rem;font-weight:600;cursor:pointer">${opt(_h2hA)}</select>
       <span style="font-family:var(--fh);font-weight:800;color:var(--mut)">VS</span>
@@ -11196,7 +11233,7 @@ function renderSeznum(){
     <div style="font-size:.7rem;color:var(--mut);font-family:var(--fm);margin-top:6px;letter-spacing:.04em">${label}</div>
   </div>`;
 
-  let html=`<div class="sec-head" style="--sh-c:var(--acc)">📅 Sezona v številkah</div>
+  let html=`<div class="sec-head" style="--sh-c:var(--acc)">Sezona v številkah</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:20px">${getLg().name} · ${seasonLabel()} — pregled sezone do zdaj.</div>`;
 
   // Stat grid
@@ -11420,7 +11457,7 @@ function renderNapovedi(){
   const upcoming=allMatches.filter(m=>m.status!=='FINISHED'&&m.status!=='LIVE'&&m.firstTeamName&&m.secondTeamName&&new Date(m.dateTime)>now)
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
 
-  let html=`<div class="sec-head" style="--sh-c:#a855f7">🔮 Napovedi tekem</div>
+  let html=`<div class="sec-head" style="--sh-c:#a855f7">Napovedi tekem</div>
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
       Verjetnost zmage za prihajajoče tekme. Model združuje <strong>ekipni ELO</strong> (kdo je zmagoval) in <strong>bElo moč postave</strong> (kakovost igralcev), upošteva pa tudi prednost domačega igrišča. Ni stava — le statistična ocena.
     </div>
@@ -11795,12 +11832,12 @@ function renderMVP(){
   }
   wrap.innerHTML=
     mvpHero
-    +'<div class="sec-head" style="--sh-c:#fbbf24">🏆 Najožji krog za MVP sezone</div>'
+    +'<div class="sec-head" style="--sh-c:#fbbf24">Najožji krog za MVP sezone</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+mvpSezonaHtml+'</div>'
-    +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">🏅 MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
-    +'<div class="sec-head" style="--sh-c:#3b82f6">🏀 MVP po krogih (zadnjih 5)</div>'
+    +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
+    +'<div class="sec-head" style="--sh-c:#3b82f6">MVP po krogih (zadnjih 5)</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:24px">'+(roundHtml||'<div class="empty">Ni podatkov po krogih</div>')+'</div>'
-    +'<div class="sec-head" style="--sh-c:#10b981">📊 MVP lestvica — top 10</div>'
+    +'<div class="sec-head" style="--sh-c:#10b981">MVP lestvica — top 10</div>'
     +leaderboard
     +'<div style="font-size:.6875rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">MVP Score = PTS×1.0 + SK×0.7 + AS×0.8 + STL×1.5 + BLK×1.5 − TOV×0.8 + EFE×0.3 | Min. tekem: '+minGames+' (K'+maxRd+')</div>';
   requestAnimationFrame(()=>{activateCounters(wrap);staggerReveal(wrap,'.hcard, [onclick^="showPlayer"]');});
@@ -11978,7 +12015,7 @@ function drawRaceStandings(){
       <td style="color:#ef4444">${rdMs.length-W}</td>
       <td style="font-weight:800;color:var(--acc);font-size:.95rem">${s.pts}</td></tr>`;
   }).join('');
-  wrap.innerHTML=`<div class="sec-head" style="--sh-c:var(--acc);margin:0 0 12px">📊 Lestvica — krog ${currentRound}</div>
+  wrap.innerHTML=`<div class="sec-head" style="--sh-c:var(--acc);margin:0 0 12px">Lestvica — krog ${currentRound}</div>
     <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr>
       <th>M</th><th style="text-align:left;padding-left:30px">EKIPA</th><th></th><th>T</th><th>Z</th><th>P</th><th>TČ</th>
     </tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -13432,10 +13469,13 @@ function toggleAnalyticsMenu(e){
   if(!d||!btn)return;
   const open=d.style.display==='block';
   if(!open){
+    // Gumb je zadnji v vrstici; na ozjem zaslonu bi meni padel cez desni rob.
+    btn.scrollIntoView({block:'nearest',inline:'nearest'});
     const rect=btn.getBoundingClientRect();
     d.style.top=(rect.bottom+4)+'px';
-    d.style.left=rect.left+'px';
     d.style.display='block';
+    const sir=d.offsetWidth||240;
+    d.style.left=Math.max(8,Math.min(rect.left, innerWidth-sir-8))+'px';
     d.classList.remove('drop-in'); void d.offsetWidth; d.classList.add('drop-in');
   } else {
     d.style.display='none';
@@ -13670,6 +13710,8 @@ function buildStandingsTable(data, sort, title, color){
     <span><i style="background:#22c55e"></i>Napreduje / Končnica</span>
     ${relCount>0?'<span><i style="background:#ef4444"></i>Cona izpada</span>':''}
   </div>` : '';
+  // Barvna crta pred naslovom (::before) ze nosi poudarek; emoji spredaj odstranimo.
+  title=String(title).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u,'');
   return `<div class="sec-head" style="--sh-c:${color}">${title}</div>
     ${legend}
     <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr>
@@ -15100,7 +15142,7 @@ function closeMlModal(){
     <span class="mbn-icon"><svg class="ic"><use href="#i-koledar"/></svg></span><span class="mbn-lbl">Tekme</span>
   </button>
   <button class="mbn-btn" id="mbn-liga" onclick="showTab('liga')">
-    <span class="mbn-icon"><svg class="ic"><use href="#i-oder"/></svg></span><span class="mbn-lbl">Liga</span>
+    <span class="mbn-icon"><svg class="ic"><use href="#i-oder"/></svg></span><span class="mbn-lbl">Vodilni</span>
   </button>
   <button class="mbn-btn" id="mbn-more" onclick="openMobileMore()">
     <span class="mbn-icon"><svg class="ic"><use href="#i-vec"/></svg></span><span class="mbn-lbl">Več</span>
@@ -15112,28 +15154,42 @@ function closeMlModal(){
   <div class="mm-sheet">
     <div class="mm-handle"></div>
     <div class="mm-title">Vse strani</div>
+    <div class="mm-sk">Glavno</div>
     <div class="mm-grid">
       <button class="mm-item" style="--i:0" onclick="mmGo('pregled')"><span class="mm-ic"><svg class="ic"><use href="#i-pregled"/></svg></span><span>Pregled</span></button>
       <button class="mm-item" style="--i:1" onclick="mmGo('ekipe')"><span class="mm-ic"><svg class="ic"><use href="#i-zoga"/></svg></span><span>Ekipe</span></button>
-      <button class="mm-item" style="--i:2" onclick="mmGo('transferji')"><span class="mm-ic"><svg class="ic"><use href="#i-prestop"/></svg></span><span>Prestopi</span></button>
-      <button class="mm-item" style="--i:3" onclick="mmGo('mladi')"><span class="mm-ic"><svg class="ic"><use href="#i-kalcek"/></svg></span><span>Mladi</span></button>
-      <button class="mm-item" style="--i:4" onclick="mmGo('race')"><span class="mm-ic"><svg class="ic"><use href="#i-trend"/></svg></span><span>Sezona</span></button>
-      <button class="mm-item" style="--i:5" onclick="mmGo('mvp')"><span class="mm-ic"><svg class="ic"><use href="#i-zvezda"/></svg></span><span>MVP</span></button>
-      <button class="mm-item" style="--i:6" onclick="mmGo('iskanje')"><span class="mm-ic"><svg class="ic"><use href="#i-isci"/></svg></span><span>Iskanje</span></button>
-      <button class="mm-item" style="--i:7" onclick="mmGo('social')"><span class="mm-ic"><svg class="ic"><use href="#i-kamera"/></svg></span><span>Social</span></button>
-      <button class="mm-item" style="--i:8" onclick="mmGo('rekordi')"><span class="mm-ic"><svg class="ic"><use href="#i-nagrada"/></svg></span><span>Rekordi</span></button>
-      <button class="mm-item" style="--i:9" onclick="mmGo('compare')"><span class="mm-ic"><svg class="ic"><use href="#i-tehtnica"/></svg></span><span>Primerjava</span></button>
-      <button class="mm-item" style="--i:10" onclick="mmGo('h2h')"><span class="mm-ic"><svg class="ic"><use href="#i-dvoboj"/></svg></span><span>H2H</span></button>
-      <button class="mm-item" style="--i:11" onclick="mmGo('power')"><span class="mm-ic"><svg class="ic"><use href="#i-strela"/></svg></span><span>Power Ranking</span></button>
-      <button class="mm-item" style="--i:12" onclick="mmGo('napovedi')"><span class="mm-ic"><svg class="ic"><use href="#i-iskre"/></svg></span><span>Napovedi</span></button>
-      <button class="mm-item" style="--i:13" onclick="mmGo('belo')"><span class="mm-ic"><svg class="ic"><use href="#i-merilnik"/></svg></span><span>bElo</span></button>
-      <button class="mm-item" style="--i:14" onclick="mmGo('seznum')"><span class="mm-ic"><svg class="ic"><use href="#i-lojtra"/></svg></span><span>Sezona v št.</span></button>
-      <button class="mm-item" style="--i:15" onclick="mmGo('teamstats')"><span class="mm-ic"><svg class="ic"><use href="#i-tabla"/></svg></span><span>Ekipna stat.</span></button>
-      <button class="mm-item" style="--i:16" onclick="mmGo('nerd')"><span class="mm-ic"><svg class="ic"><use href="#i-koda"/></svg></span><span>Nerd</span></button>
-      <button class="mm-item" style="--i:17" onclick="mmGo('starost')"><span class="mm-ic"><svg class="ic"><use href="#i-pescena"/></svg></span><span>Starost</span></button>
-      <button class="mm-item" style="--i:18" onclick="mmGo('obisk')"><span class="mm-ic"><svg class="ic"><use href="#i-ljudje"/></svg></span><span>Obisk</span></button>
-      <button class="mm-item" style="--i:19" onclick="mmGo('sodniki')"><span class="mm-ic"><svg class="ic"><use href="#i-piscalka"/></svg></span><span>Sodniki</span></button>
+      <button class="mm-item" style="--i:2" onclick="mmGo('mvp')"><span class="mm-ic"><svg class="ic"><use href="#i-zvezda"/></svg></span><span>MVP</span></button>
+      <button class="mm-item" style="--i:3" onclick="mmGo('iskanje')"><span class="mm-ic"><svg class="ic"><use href="#i-isci"/></svg></span><span>Iskanje</span></button>
+      <button class="mm-item" style="--i:4" onclick="mmGo('transferji')"><span class="mm-ic"><svg class="ic"><use href="#i-prestop"/></svg></span><span>Prestopi</span></button>
+      <button class="mm-item" style="--i:5" onclick="mmGo('mladi')"><span class="mm-ic"><svg class="ic"><use href="#i-kalcek"/></svg></span><span>Mladi</span></button>
     </div>
+    <div class="mm-sk">Igralci</div>
+    <div class="mm-grid">
+      <button class="mm-item" style="--i:6" onclick="mmGo('compare')"><span class="mm-ic"><svg class="ic"><use href="#i-tehtnica"/></svg></span><span>Primerjava igralcev</span></button>
+      <button class="mm-item" style="--i:7" onclick="mmGo('rekordi')"><span class="mm-ic"><svg class="ic"><use href="#i-nagrada"/></svg></span><span>Rekordi</span></button>
+      <button class="mm-item" style="--i:8" onclick="mmGo('starost')"><span class="mm-ic"><svg class="ic"><use href="#i-pescena"/></svg></span><span>Starost</span></button>
+      <button class="mm-item" style="--i:9" onclick="mmGo('nerd')"><span class="mm-ic"><svg class="ic"><use href="#i-koda"/></svg></span><span>Nerd statistika</span></button>
+    </div>
+    <div class="mm-sk">Ekipe</div>
+    <div class="mm-grid">
+      <button class="mm-item" style="--i:10" onclick="mmGo('teamstats')"><span class="mm-ic"><svg class="ic"><use href="#i-tabla"/></svg></span><span>Ekipna statistika</span></button>
+      <button class="mm-item" style="--i:11" onclick="mmGo('power')"><span class="mm-ic"><svg class="ic"><use href="#i-strela"/></svg></span><span>Power Ranking</span></button>
+      <button class="mm-item" style="--i:12" onclick="mmGo('belo')"><span class="mm-ic"><svg class="ic"><use href="#i-merilnik"/></svg></span><span>bElo</span></button>
+      <button class="mm-item" style="--i:13" onclick="mmGo('h2h')"><span class="mm-ic"><svg class="ic"><use href="#i-dvoboj"/></svg></span><span>Medsebojno</span></button>
+    </div>
+    <div class="mm-sk">Sezona</div>
+    <div class="mm-grid">
+      <button class="mm-item" style="--i:14" onclick="mmGo('race')"><span class="mm-ic"><svg class="ic"><use href="#i-trend"/></svg></span><span>Po krogih</span></button>
+      <button class="mm-item" style="--i:15" onclick="mmGo('seznum')"><span class="mm-ic"><svg class="ic"><use href="#i-lojtra"/></svg></span><span>Sezona v številkah</span></button>
+      <button class="mm-item" style="--i:16" onclick="mmGo('napovedi')"><span class="mm-ic"><svg class="ic"><use href="#i-iskre"/></svg></span><span>Napovedi</span></button>
+    </div>
+    <div class="mm-sk">Okoli lige</div>
+    <div class="mm-grid">
+      <button class="mm-item" style="--i:17" onclick="mmGo('sodniki')"><span class="mm-ic"><svg class="ic"><use href="#i-piscalka"/></svg></span><span>Sodniki</span></button>
+      <button class="mm-item" style="--i:18" onclick="mmGo('obisk')"><span class="mm-ic"><svg class="ic"><use href="#i-ljudje"/></svg></span><span>Obisk tekem</span></button>
+      <button class="mm-item" style="--i:19" onclick="mmGo('social')"><span class="mm-ic"><svg class="ic"><use href="#i-kamera"/></svg></span><span>Social</span></button>
+    </div>
+    <button class="mm-osvezi" onclick="closeMobileMore();cacheClear()"><svg class="ic"><use href="#i-osvezi"/></svg>Osveži podatke</button>
   </div>
 </div>
 
@@ -15143,24 +15199,25 @@ function closeMlModal(){
     border:1px solid var(--border2);
     border-radius:10px;padding:6px;
     z-index:9999;box-shadow:0 20px 48px rgba(0,0,0,.5)">
-  <div class="adg-title">Statistika</div>
-  <button class="nb adg-item" onclick="showTab('rekordi');closeAnalyticsMenu()">🏅 Rekordi</button>
-  <button class="nb adg-item" onclick="showTab('compare');closeAnalyticsMenu()">Primerjava igralcev</button>
-  <button class="nb adg-item" onclick="showTab('race');closeAnalyticsMenu()">Sezona (lestvica MVP)</button>
-  <button class="nb adg-item" onclick="showTab('teamstats');closeAnalyticsMenu()">Ekipna statistika</button>
-  <button class="nb adg-item" onclick="showTab('nerd');closeAnalyticsMenu()">Nerd stats</button>
-  <button class="nb adg-item" onclick="showTab('starost');closeAnalyticsMenu()">Starost</button>
-  <div class="adg-title">Napredna analitika</div>
-  <button class="nb adg-item" onclick="showTab('power');closeAnalyticsMenu()">⚡ Power Ranking</button>
-  <button class="nb adg-item" onclick="showTab('napovedi');closeAnalyticsMenu()">🔮 Napovedi</button>
-  <button class="nb adg-item" onclick="showTab('belo');closeAnalyticsMenu()">★ bElo</button>
-  <button class="nb adg-item" onclick="showTab('h2h');closeAnalyticsMenu()">⚔️ H2H</button>
-  <button class="nb adg-item" onclick="showTab('seznum');closeAnalyticsMenu()">📅 Sezona v številkah</button>
-  <div class="adg-title">Drugo</div>
-  <button class="nb adg-item" onclick="showTab('liga');closeAnalyticsMenu()">Liga</button>
-  <button class="nb adg-item" onclick="showTab('sodniki');closeAnalyticsMenu()">Sodniki</button>
-  <button class="nb adg-item" onclick="showTab('social');closeAnalyticsMenu()">📸 Social</button>
-  <button class="nb adg-item" onclick="showTab('obisk');closeAnalyticsMenu()">Obisk tekem</button>
+  <div class="adg-title">Igralci</div>
+  <button class="nb adg-item" onclick="showTab('compare');closeAnalyticsMenu()"><svg class="ic"><use href="#i-tehtnica"/></svg>Primerjava igralcev</button>
+  <button class="nb adg-item" onclick="showTab('rekordi');closeAnalyticsMenu()"><svg class="ic"><use href="#i-nagrada"/></svg>Rekordi</button>
+  <button class="nb adg-item" onclick="showTab('starost');closeAnalyticsMenu()"><svg class="ic"><use href="#i-pescena"/></svg>Starost</button>
+  <button class="nb adg-item" onclick="showTab('nerd');closeAnalyticsMenu()"><svg class="ic"><use href="#i-koda"/></svg>Nerd statistika</button>
+  <div class="adg-title">Ekipe</div>
+  <button class="nb adg-item" onclick="showTab('teamstats');closeAnalyticsMenu()"><svg class="ic"><use href="#i-tabla"/></svg>Ekipna statistika</button>
+  <button class="nb adg-item" onclick="showTab('power');closeAnalyticsMenu()"><svg class="ic"><use href="#i-strela"/></svg>Power Ranking</button>
+  <button class="nb adg-item" onclick="showTab('belo');closeAnalyticsMenu()"><svg class="ic"><use href="#i-merilnik"/></svg>bElo</button>
+  <button class="nb adg-item" onclick="showTab('h2h');closeAnalyticsMenu()"><svg class="ic"><use href="#i-dvoboj"/></svg>Medsebojno</button>
+  <div class="adg-title">Sezona</div>
+  <button class="nb adg-item" onclick="showTab('race');closeAnalyticsMenu()"><svg class="ic"><use href="#i-trend"/></svg>Po krogih</button>
+  <button class="nb adg-item" onclick="showTab('seznum');closeAnalyticsMenu()"><svg class="ic"><use href="#i-lojtra"/></svg>Sezona v številkah</button>
+  <button class="nb adg-item" onclick="showTab('napovedi');closeAnalyticsMenu()"><svg class="ic"><use href="#i-iskre"/></svg>Napovedi</button>
+  <div class="adg-title">Okoli lige</div>
+  <button class="nb adg-item" onclick="showTab('sodniki');closeAnalyticsMenu()"><svg class="ic"><use href="#i-piscalka"/></svg>Sodniki</button>
+  <button class="nb adg-item" onclick="showTab('obisk');closeAnalyticsMenu()"><svg class="ic"><use href="#i-ljudje"/></svg>Obisk tekem</button>
+  <button class="nb adg-item" onclick="showTab('social');closeAnalyticsMenu()"><svg class="ic"><use href="#i-kamera"/></svg>Social</button>
+  <button class="adg-item adg-osvezi" onclick="closeAnalyticsMenu();cacheClear()"><svg class="ic"><use href="#i-osvezi"/></svg>Osveži podatke</button>
 </div>
 
 
