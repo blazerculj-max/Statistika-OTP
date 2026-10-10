@@ -733,7 +733,7 @@ body{background:var(--bg)}
 .pbracket-inner{display:flex;gap:0;align-items:stretch;min-width:max-content}
 .pbcol{display:flex;flex-direction:column;justify-content:space-around;position:relative;padding:0 30px}
 .pbcol-title{font-family:var(--fh);font-size:.6875rem;letter-spacing:.12em;text-transform:uppercase;text-align:center;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--pbc-c,var(--acc));color:var(--pbc-c,var(--acc))}
-.pbseries{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:13px;overflow:hidden;width:230px;margin:10px 0;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative}
+.pbseries{background:var(--card);border:1px solid var(--border);border-radius:13px;overflow:hidden;width:230px;margin:10px 0;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative}
 .pbseries:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.35);border-color:var(--border2)}
 .pbseries.live{border-color:rgba(239,68,68,.5);box-shadow:0 0 22px rgba(239,68,68,.14)}
 .pbseries.champ{border-color:#fbbf24;box-shadow:0 0 30px rgba(251,191,36,.25)}
@@ -1135,7 +1135,7 @@ html{scroll-behavior:smooth}
 
 /* ═══ SOCIAL TAB ═══ */
 .social-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.social-card{background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:18px;padding:24px;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;position:relative;overflow:hidden}
+.social-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;position:relative;overflow:hidden}
 .social-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4);border-color:var(--border2)}
 .social-card-icon{width:56px;height:56px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:16px;box-shadow:0 6px 18px rgba(0,0,0,.3)}
 .social-card-title{font-family:var(--fh);font-size:1.3rem;font-weight:800;margin-bottom:8px}
@@ -1696,7 +1696,7 @@ td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
 .ml-sl-tab.active{border-color:#f5c518;color:#f5c518}
 .ml-sl-compare-btn{background:var(--card2);border:1px solid var(--border);color:var(--fg);font-weight:700;padding:7px 14px;border-radius:var(--r-md);cursor:pointer;font-size:.82rem;font-family:var(--ff)}
 .ml-sl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ml-sl-card{position:relative;background:var(--card2);border:1px solid var(--border);border-left:3px solid var(--pc,#888);border-radius:var(--r-md);padding:12px;cursor:pointer;transition:transform .12s}
+.ml-sl-card{position:relative;background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;cursor:pointer;transition:transform .12s}
 .ml-sl-card:active{transform:scale(.98)}
 .ml-sl-missing{opacity:.5;border-left-color:var(--mut)}
 .ml-sl-flag{font-size:.6875rem;color:var(--sub);font-weight:700;margin-bottom:3px;font-family:var(--fs)}
@@ -2313,6 +2313,85 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 
 /* Imena v prvem stolpcu tabel v berljivi pisavi (prej stevilska) */
 .st th:first-child,.st td:first-child,.at td:first-child{font-family:var(--fm)!important}
+.stran-h h1{display:flex;align-items:center;gap:8px}
+
+/* ── Smer A: Ekipe ── */
+.team-hdr{background:var(--card)!important;border-color:var(--border)!important;border-radius:var(--r-lg)!important}
+.team-hdr::after{display:none!important}
+.team-hdr .tname{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;color:var(--text)!important;font-size:1.8rem!important;line-height:1}
+.team-hdr .tsv{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important}
+.team-hdr .tsl{text-transform:none!important;letter-spacing:0!important}
+
+/* ── Smer A: MVP ── */
+.mvpk{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;cursor:pointer}
+.mvpk:hover{border-color:var(--border2)}
+.mvpk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.mvpk-lbl{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--mut);margin-bottom:6px}
+.mvpk-ime{font-family:var(--fd);font-weight:700;font-size:1.3rem;text-transform:uppercase;line-height:1;letter-spacing:.005em}
+.mvpk-ek{font-size:.78rem;color:var(--sub);margin-top:4px}
+.mvpk-ocena{font-family:var(--fd);font-weight:700;font-size:2.2rem;line-height:1}
+.mvpk-st{display:flex;gap:16px;flex-wrap:wrap;padding-right:40px}
+.mvpk-v{font-family:var(--fd);font-weight:700;font-size:1.15rem;line-height:1}
+.mvpk-l{font-size:.6875rem;color:var(--mut);margin-top:2px}
+.mvpk-deli{position:absolute;right:14px;bottom:14px;width:30px;height:30px;border-radius:9px;border:1px solid var(--border2);display:grid;place-items:center;color:var(--sub)}
+.mvpk-deli:hover{background:var(--card2);color:var(--text)}
+
+.mvp-hero{background:var(--card)!important;border:1px solid var(--border)!important;border-radius:var(--r-lg)!important}
+.mvp-hero::before,.mvp-hero-glow{display:none!important}
+.mvp-hero:hover{transform:none!important;box-shadow:none!important;border-color:var(--border2)!important}
+.mvp-hero-badge{background:none!important;border:none!important;padding:0!important;color:var(--acc)!important;text-transform:none!important;letter-spacing:.01em!important;font-size:.8rem!important}
+.mvp-hero-name{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;text-shadow:none!important;color:var(--text)!important}
+.mvp-hero-team{color:var(--sub)!important}
+.mvp-hs .v{font-family:var(--fd)!important;font-weight:700!important;color:var(--text)!important;-webkit-text-fill-color:currentColor!important;background:none!important}
+.mvp-hs .l{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important}
+
+/* ── Smer A: kartice brez barvnih crt (Iskanje, ...) ── */
+.scard::before,.match-card::before,.hero-lg::before{display:none!important}
+.scard:hover{transform:none!important;box-shadow:none!important;border-color:var(--border2)!important}
+.scard-team{color:var(--sub)!important}
+.scard-st .v{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.15rem}
+.scard-st .l{text-transform:none;letter-spacing:0}
+.search-panel label,.search-panel .lbl{text-transform:none!important;letter-spacing:0!important}
+
+/* ── Smer A: Mladi ── */
+.ml-seg{border:none!important;border-radius:999px!important}
+.ml-seg button{border-radius:999px!important}
+.ml-seg button.active{background:var(--text)!important;color:var(--bg)!important}
+.ml-hero h2{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;color:var(--text)!important;background:none!important;-webkit-text-fill-color:currentColor!important}
+
+/* ── Smer A: Rekordi ── */
+.rek-t{font-family:var(--fd);font-weight:700;font-size:1.05rem;color:var(--text);margin-bottom:8px}
+.rek-v{font-family:var(--fd);font-weight:700;font-size:1.25rem;color:var(--text)}
+
+/* ── Smer A: nerd kartice ── */
+.nerd-card-title{font-family:var(--fd)!important;font-weight:700!important;font-size:1.1rem!important;text-transform:uppercase;letter-spacing:.01em!important;color:var(--text)!important}
+.nerd-team{color:var(--mut)!important}
+.nerd-val{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.15rem!important}
+.nerd-bar-wrap{background:var(--card2)!important}
+
+/* ── Smer A: analitika ──
+   V tabelah je imel vsak stolpec svojo barvo (oranzna, vijolicna, modra ...),
+   imena ekip so bila v barvah ekip. Besedilo v teh barvah postane belo;
+   zelena in rdeca ostaneta, ker pomenita dobro/slabo (+/−, zmaga/poraz). */
+:is(#tab-sodniki,#tab-napovedi,#tab-teamstats,#tab-belo,#tab-power,#tab-obisk,#tab-compare,#tab-starost,#tab-h2h,#tab-seznum,#tab-race,#tab-nerd) [style*="color:#"]:not([style*="color:#22c55e"]):not([style*="color:#16a34a"]):not([style*="color:#ef4444"]):not([style*="color:#f87171"]):not([style*="color:#dc2626"]):not([style*="color:#34d399"]):not([style*="color:#10b981"]):not([style*="color:#4ade80"]):not(.ek-pika){color:var(--text)!important}
+:is(#tab-sodniki,#tab-napovedi,#tab-teamstats,#tab-belo,#tab-power,#tab-obisk,#tab-compare,#tab-starost,#tab-h2h,#tab-seznum,#tab-race,#tab-nerd) [style*="color:var(--acc)"]{color:var(--text)!important}
+.belo-tier{color:var(--sub)!important;background:var(--card2)!important;border-color:var(--border)!important}
+.belo-pod-rank{color:var(--mut)!important}
+.belo-pod-val{color:var(--text)!important;font-family:var(--fd)!important}
+
+.belo-pod-card::before{display:none!important}
+.belo-pod-card.gold{border-color:var(--border2)!important}
+.belo-pod-card:hover{transform:none!important;box-shadow:none!important}
+.belo-pod-photo{border-color:var(--border2)!important}
+
+/* ── Smer A: profil ekipe ── */
+.tp-hero{background:var(--card)!important;border-bottom:1px solid var(--border)}
+.tp-hero::before,.tp-hero::after{display:none!important}
+.tp-name{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;color:var(--text)!important;text-shadow:none!important}
+.tp-meta,.tp-sub{color:var(--sub)!important}
+.tp-st{background:var(--card2)!important;border:1px solid var(--border)!important}
+.tp-st-v{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.9rem!important}
+.tp-st-l{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important;font-size:.75rem!important}
 </style>
 </head>
 <body>
@@ -2406,14 +2485,14 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
   <div class="rc-modal">
     <div class="rc-controls">
       <div class="rc-format-toggle">
-        <button id="rc-fmt-post" class="rc-fmt active" onclick="setRoundCardFormat('post')">📷 Post (1:1)</button>
-        <button id="rc-fmt-story" class="rc-fmt" onclick="setRoundCardFormat('story')">📱 Story (9:16)</button>
+        <button id="rc-fmt-post" class="rc-fmt active" onclick="setRoundCardFormat('post')">Post (1:1)</button>
+        <button id="rc-fmt-story" class="rc-fmt" onclick="setRoundCardFormat('story')">Story (9:16)</button>
       </div>
       <select id="rc-round-sel" onchange="renderRoundCard()"></select>
     </div>
     <div class="rc-canvas-wrap"><canvas id="rc-canvas"></canvas></div>
     <div class="rc-actions">
-      <button class="share-btn primary" onclick="downloadRoundCard()">⬇ Prenesi sliko</button>
+      <button class="share-btn primary" onclick="downloadRoundCard()">Prenesi sliko</button>
       <button class="share-btn ghost" onclick="closeRoundCard()">Zapri</button>
     </div>
   </div>
@@ -2518,7 +2597,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
         <option value="10">Min 10 tekem</option>
       </select>
       <div class="tgl">
-        <button class="tb" id="btn-hm" onclick="toggleHeatmap()" title="Barvna lestvica">🌡️ HEAT MAP</button>
+        <button class="tb" id="btn-hm" onclick="toggleHeatmap()" title="Barvna lestvica">Toplotna karta</button>
       </div>
       <select id="phase-filter" onchange="renderTeam()" style="width:160px">
         <option value="all">Vse tekme</option>
@@ -2583,7 +2662,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
         style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;background:var(--card2);border:1px solid var(--border2);color:var(--sub);font-size:.78rem;font-family:var(--fs);font-weight:600;text-decoration:none;transition:all .2s"
         onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
         onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--sub)'">
-        📊 Obiski tekem →
+        Obiski tekem →
       </a>
     </div>
     <div id="obisk-wrap"></div>
@@ -2767,13 +2846,13 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
   <div id="tab-nerd" class="tab">
     <div class="ctrls" style="flex-wrap:wrap;gap:10px">
       <div class="tgl">
-        <button class="tb active" id="nerd-clutch-btn" onclick="setNerdView('clutch')">🎯 CLUTCH</button>
-        <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">⏱ ČETRTINE</button>
-        <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">🏹 TIPI METOV</button>
-        <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">🔥 SCORING RUNS</button>
-        <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">❌ IZGUBE ŽOGE</button>
-        <button class="tb" id="nerd-reb-btn" onclick="setNerdView('rebounds')">💪 SKOKI</button>
-        <button class="tb" id="nerd-bff-btn" onclick="setNerdView('bff')">💞 BFF</button>
+        <button class="tb active" id="nerd-clutch-btn" onclick="setNerdView('clutch')">CLUTCH</button>
+        <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">ČETRTINE</button>
+        <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">TIPI METOV</button>
+        <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">SCORING RUNS</button>
+        <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">IZGUBE ŽOGE</button>
+        <button class="tb" id="nerd-reb-btn" onclick="setNerdView('rebounds')">SKOKI</button>
+        <button class="tb" id="nerd-bff-btn" onclick="setNerdView('bff')">BFF</button>
       </div>
       <select id="nerd-min-sel" onchange="renderNerd()" style="width:140px">
         <option value="1">Min 1 tekma</option>
@@ -2790,7 +2869,6 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
     <div id="rekordi-wrap"></div>
   </div>
   <div id="tab-iskanje" class="tab">
-    <div class="sec-head" style="--sh-c:var(--acc)">Iskanje igralcev</div>
     <div class="search-panel">
       <div class="search-top">
         <div class="search-input-wrap">
@@ -4053,12 +4131,12 @@ async function loadAllData() {
     const cached = cacheGet(seasonCacheKey(), TTL_STATS);
     if (cached) {
       const age = cacheInfo(seasonCacheKey());
-      setProgress(85, '⚡ Iz predpomnilnika (' + age + ' star)...');
+      setProgress(85, 'Iz predpomnilnika (' + age + ' star)...');
       allMatches = cached.allMatches;
       matchStatsCache = cached.matchStatsCache;
       setProgress(96, 'Agregiram...');
       aggregatePlayers('all'); initUI();
-      setProgress(100, '⚡ Naloženo iz predpomnilnika (' + age + ')');
+      setProgress(100, 'Naloženo iz predpomnilnika (' + age + ')');
       setTimeout(_skrijNalaganje, 300);
       initWebSocket();
     startLiveRefresh();
@@ -4067,14 +4145,14 @@ async function loadAllData() {
     }
 
     // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
-    setProgress(10, '🐙 Nalagam iz GitHub...');
+    setProgress(10, 'Nalagam iz GitHub...');
     try {
       const ghRes = await fetch(seasonStatsUrl(currentLeague, _currentSeason) + '?t=' + Date.now());
       if (ghRes.ok) {
         const ghData = await ghRes.json();
         const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
         if (ghAge < GITHUB_MAX_AGE) {
-          setProgress(80, '🐙 GitHub podatki (' + Math.round(ghAge/60000) + ' min stari)...');
+          setProgress(80, 'GitHub podatki (' + Math.round(ghAge/60000) + ' min stari)...');
           allMatches = ghData.allMatches;
           // Convert matchStats format from GitHub
           Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
@@ -4083,7 +4161,7 @@ async function loadAllData() {
           cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
-          setProgress(100, '🐙 GitHub (' + Math.round(ghAge/60000) + ' min)');
+          setProgress(100, 'GitHub (' + Math.round(ghAge/60000) + ' min)');
           setTimeout(_skrijNalaganje, 300);
           initWebSocket();
           return;
@@ -4155,7 +4233,7 @@ async function loadAllData() {
     cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
-    setProgress(100, '✅ Naloženo iz API');
+    setProgress(100, 'Naloženo iz API');
     setTimeout(_skrijNalaganje, 400);
     initWebSocket();
     startLiveRefresh();
@@ -4910,13 +4988,22 @@ function showTab(t){
 }
 // Naslov strani (smer A) — vstavi se na vrh zavihka, ce ga se ni. Samo za
 // zavihke, ki so ze predelani; Pregled ima svojega.
-const STRAN_NASLOV={lestvica:'Lestvica',tekme:'Tekme',liga:'Vodilni'};
+// [naslov, kljuc razlage (infoTip), podnaslov — privzeto liga · sezona]
+const STRAN_NASLOV={
+  live:['V živo'], lestvica:['Lestvica'], tekme:['Tekme'], liga:['Vodilni'], ekipe:['Ekipe'],
+  mvp:['MVP','mvp'], iskanje:['Iskanje'], transferji:['Prestopi'], mladi:['Mladi',null,'Slovenske mladinske lige'],
+  compare:['Primerjava igralcev'], rekordi:['Rekordi'], starost:['Starost'], nerd:['Nerd statistika'],
+  teamstats:['Ekipna statistika'], power:['Power Ranking','power'], belo:['bElo','belo'], h2h:['Medsebojno'],
+  race:['Po krogih'], seznum:['Sezona v številkah'], napovedi:['Napovedi'], sodniki:['Sodniki'],
+  obisk:['Obisk tekem'], social:['Social']
+};
 function _stranGlava(t){
-  const el=document.getElementById('tab-'+t); if(!el||!STRAN_NASLOV[t])return;
+  const el=document.getElementById('tab-'+t), d=STRAN_NASLOV[t]; if(!el||!d)return;
   let h=el.querySelector(':scope > .stran-h');
   if(!h){h=document.createElement('div');h.className='stran-h';el.prepend(h);}
   const sez=typeof _currentSeason==='number'?` · ${_currentSeason+1999}/${String(_currentSeason+2000).slice(-2)}`:'';
-  h.innerHTML=`<h1>${STRAN_NASLOV[t]}</h1><div class="stran-sub">${(getLg()||{}).name||''}${sez}</div>`;
+  const sub=d[2]||(((getLg()||{}).name||'')+sez);
+  h.innerHTML=`<h1>${d[0]}${d[1]&&typeof infoTip==='function'?infoTip(d[1]):''}</h1><div class="stran-sub">${sub}</div>`;
 }
 function _showTab(t){
   gcEvent('zavihek/'+t, 'Zavihek: '+t);
@@ -5076,7 +5163,6 @@ function renderTransferji(){
   const tin=lg.teams.reduce((s,t)=>s+t.in.length,0), tout=lg.teams.reduce((s,t)=>s+t.out.length,0);
 
   let html=`<div style="margin-bottom:8px">
-      <h2 style="margin:0">Prestopi <span style="color:${lgColor}">${getLg().short||''}</span></h2>
       <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-top:4px">
         ${prevLbl} → ${curLbl} · ${tin} prišlo, ${tout} odšlo
       </div>
@@ -5666,7 +5752,7 @@ async function openMatch(matchId){
           ${matchInfo.status==='FINISHED'&&s2>s1?'<span class="mo-hero-wlabel">Zmaga</span>':''}
         </div>
       </div>
-      ${isLive?'<div style="text-align:center;margin-top:8px"><span style="font-size:.7rem;color:#ef4444;font-family:var(--fm);font-weight:700">🔴 V ŽIVO</span></div>':''}
+      ${isLive?'<div style="text-align:center;margin-top:8px"><span style="font-size:.7rem;color:#ef4444;font-family:var(--fm);font-weight:700">V ŽIVO</span></div>':''}
       <div class="mo-hero-meta">${date} · ${matchInfo.sportHallName||''} · ${getRoundLabel(matchInfo)}${matchInfo.attendance>0?' · '+matchInfo.attendance+' gledalcev':''}</div>
       ${(()=>{
         const yt=matchInfo.streams?.find(s=>s.type==='YOUTUBE'&&s.url);
@@ -5676,7 +5762,7 @@ async function openMatch(matchId){
           <a href="https://www.youtube.com/watch?v=${yt.url}" target="_blank"
             style="display:inline-flex;align-items:center;gap:6px;background:#ff0000;color:#fff;padding:6px 14px;border-radius:8px;font-size:.75rem;font-weight:600;text-decoration:none">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M23 7s-.3-2-1.2-2.7c-1.1-1.2-2.4-1.2-3-1.3C16.4 3 12 3 12 3s-4.4 0-6.8.1c-.6.1-1.9.1-3 1.3C1.3 5 1 7 1 7S.7 9.1.7 11.2v2c0 2 .3 4.1.3 4.1s.3 2 1.2 2.7c1.1 1.2 2.6 1.1 3.3 1.2C7.2 21.3 12 21.3 12 21.3s4.4 0 6.8-.2c.6-.1 1.9-.1 3-1.3.9-.7 1.2-2.7 1.2-2.7s.3-2.1.3-4.1v-2C23.3 9.1 23 7 23 7z"/><polygon points="10 15 15 12 10 9 10 15" fill="white"/></svg>
-            ${isLive3?'🔴 LIVE prenos na YouTube':'▶ Oglej si posnetek'}
+            ${isLive3?'LIVE prenos na YouTube':'▶ Oglej si posnetek'}
           </a>
         </div>`;
       })()}
@@ -6980,7 +7066,7 @@ async function renderRoundCard(){
     // MVP badge
     x.fillStyle='rgba(255,255,255,.9)';
     x.font='700 26px "Barlow Condensed", sans-serif';
-    x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
+    x.fillText((isPlayoff?'MVP RUNDE':'MVP KROGA'),M+40,y+62);
     // Player photo — big, right side
     const photo=await _loadImg(playerPhotoLocal(p[F.pid]),{w:600});
     const pSize=isStory?280:230, pX=W-pSize-M-20, pY=y+cardH-pSize-25;
@@ -7039,7 +7125,7 @@ async function renderRoundCard(){
   // ══ TOP 3 IGRALCI (po efektivnosti) ══
   if(top3.length){
     x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
-    x.fillText('🏆 NAJBOLJŠI IGRALCI',M,y);
+    x.fillText('NAJBOLJŠI IGRALCI',M,y);
     y+=34;
     for(let i=0;i<top3.length;i++){
       const {p,game:gg}=top3[i];
@@ -7091,7 +7177,7 @@ async function renderRoundCard(){
   // ══ DODATNO (samo Story — isti slog kot zgoraj, da ostane enoten videz) ══
   if(isStory && bigWin){
     x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
-    x.fillText('💥 NAJVEČJA ZMAGA',M,y);y+=34;
+    x.fillText('NAJVEČJA ZMAGA',M,y);y+=34;
     const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
     const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
     const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
@@ -7684,26 +7770,26 @@ function buildTicker(){
 
   // Points leader — reliable in all leagues
   const ptsL=best(p=>p[F.toc]/p[F.T]);
-  items.push(`🏀 <b>${ptsL[F.name]}</b> vodi v točkah — ${(ptsL[F.toc]/ptsL[F.T]).toFixed(1)}/tekmo`);
+  items.push(`<b>${ptsL[F.name]}</b> vodi v točkah — ${(ptsL[F.toc]/ptsL[F.T]).toFixed(1)}/tekmo`);
 
   // Threes — reliable in all leagues
   const trojkeL=best(p=>p[F.fg3m]);
-  items.push(`🌟 <b>${trojkeL[F.name]}</b> — ${trojkeL[F.fg3m]} trojk skupaj`);
+  items.push(`<b>${trojkeL[F.name]}</b> — ${trojkeL[F.fg3m]} trojk skupaj`);
 
   if(!isLiga3){
     // Advanced stats only for 1./2. SKL where data is complete
     const rebL=best(p=>(p[F.nap]+p[F.obr])/p[F.T]);
-    items.push(`💪 <b>${rebL[F.name]}</b> kralj skokov — ${((rebL[F.nap]+rebL[F.obr])/rebL[F.T]).toFixed(1)}/tekmo`);
+    items.push(`<b>${rebL[F.name]}</b> kralj skokov — ${((rebL[F.nap]+rebL[F.obr])/rebL[F.T]).toFixed(1)}/tekmo`);
     const astL=best(p=>p[F.pod]/p[F.T]);
-    items.push(`🎯 <b>${astL[F.name]}</b> največ asistenc — ${(astL[F.pod]/astL[F.T]).toFixed(1)}/tekmo`);
+    items.push(`<b>${astL[F.name]}</b> največ asistenc — ${(astL[F.pod]/astL[F.T]).toFixed(1)}/tekmo`);
     const efeL=best(p=>p[F.efe]/p[F.T]);
-    items.push(`⚡ <b>${efeL[F.name]}</b> najvišji EFE — ${(efeL[F.efe]/efeL[F.T]).toFixed(1)}`);
+    items.push(`<b>${efeL[F.name]}</b> najvišji EFE — ${(efeL[F.efe]/efeL[F.T]).toFixed(1)}`);
   } else {
     // 3. SKL: lean on points-based & team-level stats instead
     const pts2L=[...LPa].sort((a,b)=>(b[F.toc]/b[F.T])-(a[F.toc]/a[F.T]))[1];
-    if(pts2L)items.push(`🔥 <b>${pts2L[F.name]}</b> — ${(pts2L[F.toc]/pts2L[F.T]).toFixed(1)} točk/tekmo`);
+    if(pts2L)items.push(`<b>${pts2L[F.name]}</b> — ${(pts2L[F.toc]/pts2L[F.T]).toFixed(1)} točk/tekmo`);
     const threeTotL=[...LPa].sort((a,b)=>b[F.fg3m]-a[F.fg3m])[1];
-    if(threeTotL)items.push(`🎯 <b>${threeTotL[F.name]}</b> — ${threeTotL[F.fg3m]} trojk`);
+    if(threeTotL)items.push(`<b>${threeTotL[F.name]}</b> — ${threeTotL[F.fg3m]} trojk`);
     // Team with most points scored (from match results)
     const teamPts={};
     allMatches.filter(m=>m.status==='FINISHED').forEach(m=>{
@@ -7711,7 +7797,7 @@ function buildTicker(){
       teamPts[m.secondTeamName]=(teamPts[m.secondTeamName]||0)+(m.secondTeamScore||0);
     });
     const topTeam=Object.entries(teamPts).sort((a,b)=>b[1]-a[1])[0];
-    if(topTeam)items.push(`🏆 <b>${topTeam[0]}</b> — najbolj napadalna ekipa (${topTeam[1]} točk)`);
+    if(topTeam)items.push(`<b>${topTeam[0]}</b> — najbolj napadalna ekipa (${topTeam[1]} točk)`);
   }
 
   // Single-game high score — reliable everywhere
@@ -7724,13 +7810,13 @@ function buildTicker(){
       });
     });
   });
-  if(topGamePts>0)items.push(`🔥 Rekord tekme — <b>${topGameName}</b> ${topGamePts} točk`);
+  if(topGamePts>0)items.push(`Rekord tekme — <b>${topGameName}</b> ${topGamePts} točk`);
 
   // ELO leader — reliable everywhere
   try{
     const {ratings}=computeElo();
     const eloTop=Object.entries(ratings).sort((a,b)=>b[1]-a[1])[0];
-    if(eloTop)items.push(`📊 <b>${eloTop[0]}</b> najmočnejša ekipa — ELO ${eloTop[1]}`);
+    if(eloTop)items.push(`<b>${eloTop[0]}</b> najmočnejša ekipa — ELO ${eloTop[1]}`);
   }catch(e){}
 
   const itemHtml=items.map(t=>`<span class="ticker-item"><span class="ticker-dot"></span>${t}</span>`).join('');
@@ -7770,7 +7856,7 @@ function renderSpotlight(){
     {v:(best[F.efe]/t).toFixed(1),l:'EFE'},
   ];
   el.innerHTML=`<div class="spotlight" style="--sl-grad:${grad}" onclick="showPlayer(${pIdx})">
-    <div class="spotlight-badge">⭐ Igralec sezone</div>
+    <div class="spotlight-badge">Igralec sezone</div>
     <div class="spotlight-body">
       <div style="display:flex;align-items:center;gap:14px">
         ${(()=>{const ph=playerPhotoUrl(best[F.pid]);const ini=best[F.name].split(' ').map(x=>x[0]).join('').slice(0,2);
@@ -7837,7 +7923,7 @@ function renderLigaFeatured(){
     return `<div class="hcard" style="--hc-grad:${grad}" onclick="showPlayer(${pIdx})">
       ${photoUrl?`<img src="${photoUrl}" alt="" loading="lazy" class="hcard-photo" onerror="this.style.display='none'">`:(logoUrl?`<img src="${logoUrl}" alt="" loading="lazy" style="position:absolute;right:14px;bottom:14px;width:42px;height:42px;object-fit:contain;opacity:.32;z-index:1" onerror="this.style.display='none'">`:'')}
       <div class="hcard-rank">${i+1}</div>
-      <div class="hcard-cat">🏀 Najboljši strelec #${i+1}</div>
+      <div class="hcard-cat">Najboljši strelec #${i+1}</div>
       <div>
         <div class="hcard-val"><span data-count="${_lpAvg(p,F.toc)}" data-dec="1">0</span><small>PTS/tm</small></div>
         <div class="hcard-name">${p[F.name]}</div>
@@ -8116,7 +8202,7 @@ function renderAge(){
     const pIdx=P.findIndex(z=>z[F.pid]===p[F.pid]);
     const ph=playerPhotoUrl(p[F.pid]);const ini=p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);
     const av=ph?`<img src="${ph}" class="rec-avatar" style="width:44px;height:50px" onerror="this.outerHTML='<span class=&quot;rec-avatar-fb&quot; style=&quot;width:44px;height:50px;background:${color}33;color:${color}&quot;>${ini}</span>'">`:`<span class="rec-avatar-fb" style="width:44px;height:50px;background:${color}33;color:${color}">${ini}</span>`;
-    return `<div style="background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-left:3px solid ${color};border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="showPlayer(${pIdx})">
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer" onclick="showPlayer(${pIdx})">
       ${av}
       <div style="flex:1"><div style="font-size:.6875rem;color:${color};font-family:var(--fm);letter-spacing:.08em;text-transform:uppercase;font-weight:700">${label}</div>
       <div style="font-weight:700;font-size:1rem;margin-top:3px">${p[F.name]}</div>
@@ -8125,8 +8211,8 @@ function renderAge(){
     </div>`;
   };
   const highlights = `<div class="age-extremes" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-    ${ageCard(youngest,'👶 Najmlajši',' #34d399')}
-    ${ageCard(oldest,'🎓 Najstarejši','#f97316')}
+    ${ageCard(youngest,'Najmlajši',' #34d399')}
+    ${ageCard(oldest,'Najstarejši','#f97316')}
   </div>`;
   wrap.innerHTML = highlights + renderAgeGrid(ligaPlayers, true);
 }
@@ -8421,7 +8507,7 @@ function showPlayer(idx){
         <div id="pp-cmp-wrap" style="margin-top:12px"></div>
         <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
           <div class="pp-section-title" style="display:flex;justify-content:space-between;align-items:center">
-            <span>🏅 KARIERA</span>
+            <span>KARIERA</span>
             <button onclick="loadPlayerCareer()" style="font-size:.6875rem;background:var(--card2);border:1px solid var(--border2);color:var(--mut);padding:3px 8px;border-radius:4px;cursor:pointer">↻ Naloži</button>
           </div>
           <div id="pp-career-wrap"><div class="empty" style="font-size:.72rem">Klikni ↻ za karierne podatke</div></div>
@@ -8469,7 +8555,7 @@ async function renderPlayerSeasonCompare(playerName){
 
   const acc=getLg().color||'#f97316';
   const maxEfe=Math.max(...rows.map(r=>r.efe),1);
-  let html=`<div class="pp-subtitle" style="margin-top:18px">📅 SKOZI SEZONE</div>
+  let html=`<div class="pp-subtitle" style="margin-top:18px">SKOZI SEZONE</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">`;
   rows.forEach(r=>{
     const w=Math.round(r.efe/maxEfe*100);
@@ -9164,7 +9250,7 @@ function renderLiveTab() {
 
   // LIVE section
   if(liveMatches.length) {
-    html += `<div class="live-section-title" style="color:#ef4444">🔴 V ŽIVO (${liveMatches.length})</div>`;
+    html += `<div class="live-section-title" style="color:#ef4444">V ŽIVO (${liveMatches.length})</div>`;
     html += `<div class="live-container" style="margin-bottom:24px">`;
     html += liveMatches.map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -9172,7 +9258,7 @@ function renderLiveTab() {
 
   // TODAY section
   if(todayMatches.length) {
-    html += `<div class="live-section-title" style="color:var(--acc)">📅 Danes</div>`;
+    html += `<div class="live-section-title" style="color:var(--acc)">Danes</div>`;
     html += `<div class="live-container" style="margin-bottom:24px">`;
     html += todayMatches.map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -9189,7 +9275,7 @@ function renderLiveTab() {
 
   // RECENT section
   if(recentMatches.length) {
-    html += `<div class="live-section-title" style="color:var(--sub)">✅ Zadnji rezultati</div>`;
+    html += `<div class="live-section-title" style="color:var(--sub)">Zadnji rezultati</div>`;
     html += `<div class="live-container" style="margin-bottom:24px">`;
     html += recentMatches.slice(0,6).map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -9197,7 +9283,7 @@ function renderLiveTab() {
 
   // UPCOMING section
   if(upcomingMatches.length) {
-    html += `<div class="live-section-title" style="color:var(--mut)">🗓️ Prihajajoče tekme</div>`;
+    html += `<div class="live-section-title" style="color:var(--mut)">Prihajajoče tekme</div>`;
     html += `<div class="live-container">`;
     html += upcomingMatches.slice(0,8).map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -9813,15 +9899,15 @@ function loadPBPData(){
       if(Date.now()-p.ts < TTL_PBP && !manjka && !prazen) cached=p.data;
     }
   }catch(e){}
-  if(cached){processPbp(cached);if(el)el.textContent='🐙 PBP iz cache';renderNerd();return;}
+  if(cached){processPbp(cached);if(el)el.textContent='PBP iz cache';renderNerd();return;}
   fetch(seasonFileUrl(currentLeague+'_pbp')+'?t='+Date.now())
     .then(r=>r.json())
     .then(d=>{
       try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
       processPbp(d);
-      if(el)el.textContent='✅ PBP naložen';
+      if(el)el.textContent='PBP naložen';
       renderNerd();
-    }).catch(()=>{if(el)el.textContent='❌ PBP ni dosegljiv';});
+    }).catch(()=>{if(el)el.textContent='PBP ni dosegljiv';});
 }
 
 const shotEmoji={
@@ -9880,7 +9966,7 @@ function renderBff(){
     if(!pa||!ps) return '';
     const tc=TEAM_COLORS[pa[F.team]]||'#888';
     const teamShort=TEAM_SHORT[pa[F.team]]||pa[F.team];
-    const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+    const rk='<span class="rang'+(r===0?' prvi':'')+'">'+(r+1)+'</span>';
     const back=obratno(pr.a,pr.s);
     // Obojestranska naveza je redka in pove vec kot enosmerna — oznacimo jo.
     const vzajemno = back>0
@@ -9905,7 +9991,7 @@ function renderBff(){
 
   const pct=skupaj?Math.round((skupaj-brezPara)/skupaj*100):0;
   return '<div class="nerd-card">'+
-    '<div class="nerd-card-title" style="color:#f472b6">💞 Kdo komu podaja</div>'+rows+
+    '<div class="nerd-card-title" style="color:#f472b6">Kdo komu podaja</div>'+rows+
     '<div class="bff-note">Podajalec → strelec. Povezava je izpeljana iz '+
     'play-by-playa: asistenci sledi zadet met iste ekipe ob isti uri. '+
     'Povezanih '+(skupaj-brezPara)+' od '+skupaj+' asistenc ('+pct+' %); '+
@@ -10060,22 +10146,22 @@ function mkCard(title,color,icon,entries,valFn,dispFn,subFn){
     const p=P[idx];if(!p)return '';
     const v=valFn(s);const tc=TEAM_COLORS[p[F.team]]||'#888';
     const teamShort=TEAM_SHORT[p[F.team]]||p[F.team];
-    const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+    const rk='<span class="rang'+(r===0?' prvi':'')+'">'+(r+1)+'</span>';
     const barPct=maxV>0?Math.round(v/maxV*100):0;
     return '<div class="nerd-row">'+
       '<div class="nerd-rank">'+rk+'</div>'+
       '<div class="nerd-info">'+
         '<div class="nerd-name pname-link" onclick="showPlayer('+idx+')">'+p[F.name]+'</div>'+
-        '<div class="nerd-team" style="color:'+tc+'">'+teamShort+'</div>'+
-        '<div class="nerd-bar-wrap"><div class="nerd-bar" style="width:'+barPct+'%;background:'+color+'"></div></div>'+
+        '<div class="nerd-team">'+teamShort+'</div>'+
+        '<div class="nerd-bar-wrap"><div class="nerd-bar" style="width:'+barPct+'%;background:'+(r===0?'var(--acc)':'var(--sub)')+'"></div></div>'+
       '</div>'+
       '<div class="nerd-right">'+
-        '<div class="nerd-val" style="color:'+color+'">'+dispFn(v,s)+'</div>'+
+        '<div class="nerd-val">'+dispFn(v,s)+'</div>'+
         (subFn?'<div class="nerd-sub">'+subFn(v,s)+'</div>':'')+
       '</div>'+
     '</div>';
   }).join('');
-  return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+  return '<div class="nerd-card"><div class="nerd-card-title">'+title+'</div>'+
     (rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
 }
 
@@ -10159,7 +10245,7 @@ function renderRebounds(){
       const p=P[i];const v=getVal(p);
       const tc=TEAM_COLORS[p[F.team]]||'#888';
       const teamShort=TEAM_SHORT[p[F.team]]||p[F.team];
-      const rk=r<3?['🥇','🥈','🥉'][r]:(r+1);
+      const rk='<span class="rang'+(r===0?' prvi':'')+'">'+(r+1)+'</span>';
       const barPct=maxV>0?Math.round(v/maxV*100):0;
       const sub=subFn?subFn(p):'';
       return '<div class="nerd-row">'+
@@ -10175,7 +10261,7 @@ function renderRebounds(){
         '</div>'+
       '</div>';
     }).join('');
-    return '<div class="nerd-card"><div class="nerd-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+    return '<div class="nerd-card"><div class="nerd-card-title">'+title+'</div>'+
       (rows||'<div class="empty">Premalo podatkov</div>')+'</div>';
   }
   return '<div class="nerd-grid">'+
@@ -10204,7 +10290,7 @@ function renderRuns({scoringRuns}){
       '<div style="font-family:var(--fh);font-size:1.3rem;color:var(--mut)">K'+m.round+'</div>'+
     '</div>';
   }).join('');
-  return '<div class="nerd-section-title">🔥 NAJVEČJI SCORING RUNS SEZONE</div>'+items;
+  return '<div class="nerd-section-title">NAJVEČJI SCORING RUNS SEZONE</div>'+items;
 }
 
 function renderNerd(){
@@ -10252,10 +10338,10 @@ function renderNerd(){
   }
   const filtered={stats:Object.fromEntries(e),scoringRuns:nd.scoringRuns};
   const opozorilo = znizano
-    ? `<div class="clutch-def" style="border-color:var(--acc);color:var(--sub)">⚠ Za prag ${nTekem(parseInt(sel?.dataset.zeljeni||5))} je odigranih premalo tekem, zato so prikazani <b>vsi igralci</b>. Seštevki (točke, asistence) držijo, razlike v odstotkih pa so pri tako majhnem vzorcu večinoma naključje.</div>`
+    ? `<div class="clutch-def" style="border-color:var(--acc);color:var(--sub)">Za prag ${nTekem(parseInt(sel?.dataset.zeljeni||5))} je odigranih premalo tekem, zato so prikazani <b>vsi igralci</b>. Seštevki (točke, asistence) držijo, razlike v odstotkih pa so pri tako majhnem vzorcu večinoma naključje.</div>`
     : '';
   if(statusEl&&!statusEl.textContent.includes('PBP'))
-    statusEl.textContent=`📊 ${Object.keys(pbpData).length} tekem`;
+    statusEl.textContent=`${Object.keys(pbpData).length} tekem`;
   if(nerdView==='clutch')wrap.innerHTML=opozorilo+renderClutch(filtered);
   else if(nerdView==='quarters')wrap.innerHTML=opozorilo+renderQuarters(filtered);
   else if(nerdView==='shots')wrap.innerHTML=opozorilo+renderShotTypes(filtered);
@@ -10872,7 +10958,7 @@ function drawTeamEloChart(topTeams){
   // legenda
   const leg=series.map(s=>`<span style="display:inline-flex;align-items:center;gap:5px;font-size:.7rem;font-family:var(--fm);color:var(--sub)"><span style="width:10px;height:10px;border-radius:3px;background:${s.color}"></span>${TEAM_SHORT[s.team]||s.team}</span>`).join('');
   return `<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:18px">
-    <div style="font-family:var(--fm);font-size:.6875rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:12px;font-weight:700">📈 Moč (ELO) skozi sezono — top ekipe</div>
+    <div style="font-family:var(--fm);font-size:.6875rem;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-bottom:12px;font-weight:700">Moč (ELO) skozi sezono — top ekipe</div>
     ${svg}
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;justify-content:center">${leg}</div>
   </div>`;
@@ -10926,7 +11012,7 @@ function render3x3(){
 
   let html=`<div style="margin-bottom:18px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <div style="font-family:var(--fh);font-weight:800;font-size:1.8rem;letter-spacing:-.01em">🏀 3x3 Državc</div>
+      <div style="font-family:var(--fh);font-weight:800;font-size:1.8rem;letter-spacing:-.01em">3x3 Državc</div>
       <span style="background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff;font-family:var(--fm);font-size:.6875rem;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:.05em">DRŽAVNO PRVENSTVO · ČLANI</span>
     </div>
     <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-top:4px">Serija turnirjev · sezona ${DRZAVC_3X3.season}</div>
@@ -11114,7 +11200,7 @@ function renderPowerRanking(){
   if(!teams.length){wrap.innerHTML='<div class="empty">Ni dovolj podatkov</div>';return;}
 
   const lgName=getLg().short||'';
-  let html=`<div class="sec-head" style="--sh-c:#10b981">Power Ranking — ${lgName}${infoTip('power')}</div>
+  let html=`
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
       Moč ekip: <strong>65% jakost postave</strong> (bElo igralcev + doprinos) in <strong>35% dejanski rezultati</strong> (ELO). Združi kakovost kadra in to, kdo zares zmaguje.
     </div>`;
@@ -11141,9 +11227,9 @@ function renderPowerRanking(){
     if(!t)return;
     const tc=TEAM_COLORS[t.team]||'#10b981';
     const pm=podMeta[k];
-    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:13px;height:13px;line-height:13px;text-align:center;border-radius:3px;font-size:.6875rem;font-weight:700;font-family:var(--fm);background:${r==='W'?'#10b98133':'#f8717133'};color:${r==='W'?'#10b981':'#f87171'}">${r}</span>`).join(' ');
+    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:13px;height:13px;line-height:13px;text-align:center;border-radius:3px;font-size:.6875rem;font-weight:700;font-family:var(--fm);color:${r==='W'?'#22c55e':'var(--mut)'}">${r==='W'?'Z':'P'}</span>`).join(' ');
     html+=`<div class="belo-pod-card ${pm.cls}" style="--pod-c:${pm.c};--pod-grad:linear-gradient(160deg,${tc},transparent)" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
-      <div class="belo-pod-rank">${k===1?'👑 ':''}${pm.r} MESTO</div>
+      <div class="belo-pod-rank">${pm.r} mesto</div>
       <div style="margin:0 auto 10px;width:56px;height:56px;display:flex;align-items:center;justify-content:center">${teamLogoHtml(t.team,52)}</div>
       <div class="belo-pod-name">${t.team}</div>
       <div class="belo-pod-team" style="justify-content:center">${t.record}</div>
@@ -11159,7 +11245,7 @@ function renderPowerRanking(){
     const i=idx+3;
     const c=TEAM_COLORS[t.team]||'#10b981';
     const oc=ovrColor(Math.round(t.power));
-    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:.6875rem;font-weight:700;font-family:var(--fm);background:${r==='W'?'#10b98133':'#f8717133'};color:${r==='W'?'#10b981':'#f87171'}">${r}</span>`).join(' ');
+    const formHtml=t.last5.map(r=>`<span style="display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:.6875rem;font-weight:700;font-family:var(--fm);color:${r==='W'?'#22c55e':'var(--mut)'}">${r==='W'?'Z':'P'}</span>`).join(' ');
     html+=`<div class="power-card" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;cursor:pointer;display:flex;align-items:center;gap:16px" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
       <div style="font-family:var(--fh);font-weight:800;font-size:1.3rem;min-width:34px;text-align:center;color:var(--mut)">${i+1}</div>
       ${teamLogoHtml(t.team,42)}
@@ -11194,7 +11280,7 @@ function renderBElo(){
   const teams=[...new Set(arr.map(x=>normalizeTeamName(x.team)))];
   const teamStr=teams.map(t=>({team:t,str:predictTeamStrength(t)})).filter(x=>x.str).sort((a,b)=>b.str-a.str);
 
-  let html=`<div class="sec-head" style="--sh-c:#fbbf24">bElo — moč igralcev${infoTip('belo')}</div>
+  let html=`
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:14px;line-height:1.5">
       <strong>bElo</strong> (Blažev ELO) meri prispevek igralca k uspehu ekipe — neodvisno od soigralcev. Zvezda v šibki ekipi je nagrajena, balast v močni ne. Začne pri 1500, gradi se čez sezono (vključno s končnico, ki šteje več). Uporabno za napoved moči ekip.
     </div>
@@ -11266,7 +11352,7 @@ function renderBElo(){
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">';
   teamStr.forEach((t,i)=>{
     const tc=TEAM_COLORS[t.team]||'#888';
-    html+=`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
+    html+=`<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="showTeamProfile('${t.team.replace(/'/g,"\\'")}')">
       <div style="font-family:var(--fh);font-size:1.1rem;font-weight:800;color:var(--mut);min-width:24px">${i+1}</div>
       ${teamLogoHtml(t.team,32)}
       <div style="flex:1"><div style="font-weight:700;font-size:.9rem">${t.team}</div></div>
@@ -11292,7 +11378,7 @@ function renderH2HTab(){
 
   const opt=(sel)=>teams.map(t=>`<option value="${t}" ${t===sel?'selected':''}>${t}</option>`).join('');
 
-  let html=`<div class="sec-head" style="--sh-c:var(--acc)">Head 2 Head</div>
+  let html=`
     <div style="display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:24px">
       <select id="h2h-a" onchange="_h2hA=this.value;renderH2HTab()" style="background:var(--card2);border:1px solid var(--border2);border-radius:11px;padding:11px 16px;color:var(--text);font-family:var(--fh);font-size:.9rem;font-weight:600;cursor:pointer">${opt(_h2hA)}</select>
       <span style="font-family:var(--fh);font-weight:800;color:var(--mut)">VS</span>
@@ -11423,13 +11509,11 @@ function renderSeznum(){
   const topBe=beArr[0];
 
   const stat=(icon,val,label,color)=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;text-align:center">
-    <div style="font-size:1.8rem;margin-bottom:6px">${icon}</div>
-    <div style="font-family:var(--fs);font-size:2rem;font-weight:800;color:${color||'var(--acc)'};line-height:1">${val}</div>
-    <div style="font-size:.7rem;color:var(--mut);font-family:var(--fm);margin-top:6px;letter-spacing:.04em">${label}</div>
+    <div style="font-family:var(--fd);font-size:2.4rem;font-weight:700;line-height:1">${val}</div>
+    <div style="font-size:.78rem;color:var(--mut);margin-top:6px">${label}</div>
   </div>`;
 
-  let html=`<div class="sec-head" style="--sh-c:var(--acc)">Sezona v številkah</div>
-    <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:20px">${getLg().name} · ${seasonLabel()} — pregled sezone do zdaj.</div>`;
+  let html=``;
 
   // Stat grid
   html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:28px">';
@@ -11440,7 +11524,7 @@ function renderSeznum(){
   html+='</div>';
 
   // Highlight cards
-  const hcard=(title,color,content)=>`<div style="background:linear-gradient(155deg,var(--card),var(--card2));border:1px solid var(--border);border-left:3px solid ${color};border-radius:14px;padding:18px 20px;margin-bottom:12px">
+  const hcard=(title,color,content)=>`<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px">
     <div style="font-size:.6875rem;color:${color};font-family:var(--fm);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:10px">${title}</div>
     ${content}</div>`;
 
@@ -11448,7 +11532,7 @@ function renderSeznum(){
 
   if(hi){
     const d=new Date(hi.dateTime).toLocaleDateString('sl',{day:'numeric',month:'short'});
-    html+=hcard('🔥 Najbolj košarkarska tekma','#f97316',
+    html+=hcard('Najbolj košarkarska tekma','#f97316',
       `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;cursor:pointer" onclick="openMatch(${hi.id})">
         ${teamLogoHtml(hi.firstTeamName,28)}<span style="font-weight:700">${hi.firstTeamName}</span>
         <span style="font-family:var(--fs);font-weight:800;color:var(--acc)">${hi.firstTeamScore}:${hi.secondTeamScore}</span>
@@ -11459,7 +11543,7 @@ function renderSeznum(){
   }
   if(bw){
     const win=bw.firstTeamScore>bw.secondTeamScore?bw.firstTeamName:bw.secondTeamName;
-    html+=hcard('💥 Največja razlika','#ef4444',
+    html+=hcard('Največja razlika','#ef4444',
       `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;cursor:pointer" onclick="openMatch(${bw.id})">
         ${teamLogoHtml(win,28)}<span style="font-weight:700">${win}</span>
         <span style="margin-left:auto;font-family:var(--fs);font-weight:800;font-size:1.3rem;color:#ef4444">+${bwD}</span>
@@ -11475,7 +11559,7 @@ function renderSeznum(){
     const pid=p.pid||p[F.pid], name=p.name||p[F.name], team=p.team||p[F.team];
     const ph=playerPhotoUrl(pid);const ini=(name||'').split(' ').map(w=>w[0]).join('').slice(0,2);
     const av=ph?`<img src="${ph}" class="rec-avatar" onerror="this.outerHTML='<span class=&quot;rec-avatar-fb&quot; style=&quot;background:${color}33;color:${color}&quot;>${ini}</span>'">`:`<span class="rec-avatar-fb" style="background:${color}33;color:${color}">${ini}</span>`;
-    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${color};border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer" onclick="showPlayer(${pIdx})">
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer" onclick="showPlayer(${pIdx})">
       ${av}
       <div style="flex:1"><div style="font-weight:700">${name}</div><div style="font-size:.7rem;color:var(--mut)">${label}</div></div>
       <div style="font-family:var(--fs);font-weight:800;font-size:1.3rem;color:${color}">${val}</div>
@@ -11612,7 +11696,7 @@ async function nalozoTocnost(){
   const d = _tocnost, t = el();
   if(!t || !d) return;
   t.innerHTML = `<div class="pregled-card" style="--pc:#a855f7;cursor:default;margin-bottom:18px">
-    <div class="pregled-card-h">📐 Kako dober je ta model</div>
+    <div class="pregled-card-h">Kako dober je ta model</div>
     <div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end">
       <div><div style="font-family:var(--fs);font-size:1.9rem;font-weight:700;color:#a855f7">${d.zadetost}%</div>
         <div style="font-size:.6875rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">zadetih napovedi</div></div>
@@ -11649,7 +11733,7 @@ function renderNapovedi(){
   const upcoming=allMatches.filter(m=>m.status!=='FINISHED'&&m.status!=='LIVE'&&m.firstTeamName&&m.secondTeamName&&new Date(m.dateTime)>now)
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime));
 
-  let html=`<div class="sec-head" style="--sh-c:#a855f7">Napovedi tekem</div>
+  let html=`
     <div style="font-size:.82rem;color:var(--sub);font-family:var(--fm);margin-bottom:18px;line-height:1.5">
       Verjetnost zmage za prihajajoče tekme. Model združuje <strong>ekipni ELO</strong> (kdo je zmagoval) in <strong>bElo moč postave</strong> (kakovost igralcev), upošteva pa tudi prednost domačega igrišča. Ni stava — le statistična ocena.
     </div>
@@ -11717,8 +11801,8 @@ function renderNapovedi(){
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-family:var(--fs);font-weight:800;font-size:1.15rem;color:${c1};min-width:46px">${pr.p1}%</span>
           <div style="flex:1;height:8px;border-radius:4px;overflow:hidden;display:flex;background:rgba(255,255,255,.05)">
-            <div style="height:100%;width:${pr.p1}%;background:${c1}"></div>
-            <div style="height:100%;width:${pr.p2}%;background:${c2}"></div>
+            <div style="height:100%;width:${pr.p1}%;background:${pr.p1>=pr.p2?'var(--acc)':'var(--sub)'}"></div>
+            <div style="height:100%;width:${pr.p2}%;background:${pr.p2>pr.p1?'var(--acc)':'var(--border2)'}"></div>
           </div>
           <span style="font-family:var(--fs);font-weight:800;font-size:1.15rem;color:${c2};min-width:46px;text-align:right">${pr.p2}%</span>
         </div>
@@ -11873,38 +11957,30 @@ function mvpCard(player,score,label,color,rank){
   const pi=P.indexOf(player);
   const t=Math.max(player[F.T],1);
   const tc=TEAM_COLORS[player[F.team]]||'#888';
-  const medals=['🥇','🥈','🥉'];
-  const medal=medals[rank]||((rank+1)+'.');
+  // Smer A: brez medalj in mavricnih stevilk; ekipa kot pika, rang stevilka.
+  // Gumb "Deli" je bil desno zgoraj — cez MVP oceno; zdaj desno spodaj.
   const stats=[
-    {v:(player[F.toc]/t).toFixed(1),l:'PTS',c:'var(--acc)'},
-    {v:((player[F.nap]+player[F.obr])/t).toFixed(1),l:'SK',c:'#60a5fa'},
-    {v:(player[F.pod]/t).toFixed(1),l:'AS',c:'#a855f7'},
-    {v:(player[F.efe]/t).toFixed(1),l:'EFE',c:'#22c55e'},
-    {v:player[F.T],l:'TM',c:'var(--mut)'}
-  ].map(x=>`<div style="text-align:center">
-    <div style="font-family:var(--fh);font-size:.95rem;color:${x.c}">${x.v}</div>
-    <div style="font-size:.6875rem;color:var(--mut)">${x.l}</div>
-  </div>`).join('');
-  return `<div onclick="showPlayer(${pi})"
-    style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:14px;padding:16px 18px;cursor:pointer;transition:transform .18s;position:relative"
-    onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-      <div>
-        <div style="font-size:.6875rem;color:var(--mut);letter-spacing:.08em;margin-bottom:4px">${label}</div>
-        <div style="font-size:1.3rem;margin-bottom:2px">${medal}</div>
-        <div style="font-weight:700;font-size:.95rem">${player[F.name]}</div>
-        <div style="font-size:.72rem;color:${tc};margin-top:2px">${player[F.team]}</div>
+    {v:(player[F.toc]/t).toFixed(1),l:'točk'},
+    {v:((player[F.nap]+player[F.obr])/t).toFixed(1),l:'skokov'},
+    {v:(player[F.pod]/t).toFixed(1),l:'podaj'},
+    {v:(player[F.efe]/t).toFixed(1),l:'EFE'},
+    {v:player[F.T],l:'tekem'}
+  ].map(x=>`<div><div class="mvpk-v">${x.v}</div><div class="mvpk-l">${x.l}</div></div>`).join('');
+  return `<div class="mvpk" onclick="showPlayer(${pi})">
+    <div class="mvpk-top">
+      <div style="min-width:0">
+        <div class="mvpk-lbl"><span class="rang${rank===0?' prvi':''}">${rank+1}</span>${String(label).replace(/^\p{Extended_Pictographic}️?\s*/u,'')}</div>
+        <div class="mvpk-ime">${player[F.name]}</div>
+        <div class="mvpk-ek"><i class="ek-pika" style="background:${tc}"></i>${player[F.team]}</div>
       </div>
-      <div style="text-align:right">
-        <div class="mvp-score-num" style="font-family:var(--fh);font-size:2rem;font-weight:800;color:${color};line-height:1" data-count="${score.toFixed(1)}" data-dec="1">0</div>
-        <div style="font-size:.6875rem;color:var(--mut)">MVP SCORE</div>
+      <div style="text-align:right;flex-shrink:0">
+        <div class="mvpk-ocena" data-count="${score.toFixed(1)}" data-dec="1">0</div>
+        <div class="mvpk-l">MVP ocena</div>
       </div>
     </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">${stats}</div>
-    <div onclick="event.stopPropagation();openShareCard(${pi})" title="Deli kartico"
-      style="position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s"
-      onmouseover="this.style.background='rgba(255,255,255,.14)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${tc}" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
+    <div class="mvpk-st">${stats}</div>
+    <div class="mvpk-deli" onclick="event.stopPropagation();openShareCard(${pi})" title="Deli kartico">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
     </div>
   </div>`;
 }
@@ -11950,28 +12026,28 @@ function renderMVP(){
     if(top&&top.length)roundMvps.push({round:r,top});
   }
 
-  const mvpSezonaHtml=ranked.slice(0,3).map(({p,score},i)=>mvpCard(p,score,'🏆 MVP SEZONE — #'+(i+1),'#fbbf24',i)).join('');
-  const pfMvpHtml=pfRanked.slice(0,3).map(({p,score},i)=>mvpCard(p,score,'🏅 MVP KONČNICE — #'+(i+1),'#a855f7',i)).join('');
+  const mvpSezonaHtml=ranked.slice(0,3).map(({p,score},i)=>mvpCard(p,score,'MVP sezone','#fbbf24',i)).join('');
+  const pfMvpHtml=pfRanked.slice(0,3).map(({p,score},i)=>mvpCard(p,score,'MVP končnice','#a855f7',i)).join('');
 
   const roundHtml=roundMvps.map(({round,top})=>{
     const best=top[0];
     const tc=TEAM_COLORS[best.p[F.team]]||'#888';
-    return '<div onclick="showPlayer('+best.pi+')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer">'
-      +'<div style="font-size:.6875rem;color:var(--mut);letter-spacing:.08em;margin-bottom:8px">🏀 MVP KROGA '+round+'</div>'
+    return '<div class="mvpk" onclick="showPlayer('+best.pi+')">'
+      +'<div class="mvpk-lbl">MVP '+round+'. kroga</div>'
       +'<div style="display:flex;align-items:center;gap:12px">'
-      +'<div style="flex:1"><div style="font-weight:700;color:'+tc+'">'+best.p[F.name]+'</div>'
-      +'<div style="font-size:.7rem;color:var(--mut)">'+(TEAM_SHORT[best.p[F.team]]||best.p[F.team])+'</div></div>'
-      +'<div style="display:flex;gap:10px;font-family:var(--fh)">'
-      +'<div style="text-align:center"><div style="color:var(--acc);font-size:1.1rem">'+best.game.pts+'</div><div style="font-size:.6875rem;color:var(--mut)">PTS</div></div>'
-      +'<div style="text-align:center"><div style="font-size:1.1rem">'+best.game.reb+'</div><div style="font-size:.6875rem;color:var(--mut)">SK</div></div>'
-      +'<div style="text-align:center"><div style="font-size:1.1rem">'+best.game.ast+'</div><div style="font-size:.6875rem;color:var(--mut)">AS</div></div>'
-      +'<div style="text-align:center"><div style="color:#22c55e;font-size:1.1rem">'+best.game.efe.toFixed(0)+'</div><div style="font-size:.6875rem;color:var(--mut)">EFE</div></div>'
+      +'<div style="flex:1;min-width:0"><div class="mvpk-ime" style="font-size:1.15rem">'+best.p[F.name]+'</div>'
+      +'<div class="mvpk-ek"><i class="ek-pika" style="background:'+tc+'"></i>'+(TEAM_SHORT[best.p[F.team]]||best.p[F.team])+'</div></div>'
+      +'<div class="mvpk-st" style="padding:0;gap:12px">'
+      +'<div><div class="mvpk-v">'+best.game.pts+'</div><div class="mvpk-l">točk</div></div>'
+      +'<div><div class="mvpk-v">'+best.game.reb+'</div><div class="mvpk-l">skokov</div></div>'
+      +'<div><div class="mvpk-v">'+best.game.ast+'</div><div class="mvpk-l">podaj</div></div>'
+      +'<div><div class="mvpk-v">'+best.game.efe.toFixed(0)+'</div><div class="mvpk-l">EFE</div></div>'
       +'</div></div></div>';
   }).join('');
 
   const leaderboard='<div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border)"><table class="standings-table"><thead><tr>'
     +'<th>M</th><th>IGRALEC</th><th>EKIPA</th><th>T</th>'
-    +'<th style="color:var(--acc)">PTS</th><th>SK</th><th>AS</th><th style="color:#22c55e">EFE</th><th style="color:#fbbf24">MVP ★</th>'
+    +'<th>TOČ</th><th>SK</th><th>POD</th><th>EFE</th><th>MVP</th>'
     +'</tr></thead><tbody>'
     +ranked.slice(0,10).map(({p,score},i)=>{
       const t=Math.max(p[F.T],1),tc=TEAM_COLORS[p[F.team]]||'#888';
@@ -11980,15 +12056,15 @@ function renderMVP(){
       const ini=p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2);
       const av=ph?'<img src="'+ph+'" class="rec-avatar" style="width:28px;height:32px" onerror="this.outerHTML=\'<span class=&quot;rec-avatar-fb&quot; style=&quot;width:28px;height:32px;background:'+tc+'33;color:'+tc+'&quot;>'+ini+'</span>\'">':'<span class="rec-avatar-fb" style="width:28px;height:32px;background:'+tc+'33;color:'+tc+'">'+ini+'</span>';
       return '<tr onclick="showPlayer('+P.indexOf(p)+')" style="cursor:pointer">'
-        +'<td>'+(medals[i]||i+1+'.')+'</td>'
+        +'<td><span class="rang'+(i===0?' prvi':'')+'">'+(i+1)+'</span></td>'
         +'<td><div style="display:flex;align-items:center;gap:8px">'+av+'<span style="font-weight:600">'+p[F.name]+'</span></div></td>'
-        +'<td style="color:'+tc+';font-size:.72rem"><div style="display:flex;align-items:center;gap:6px">'+teamLogoHtml(p[F.team],20)+(TEAM_SHORT[p[F.team]]||p[F.team])+'</div></td>'
+        +'<td style="color:var(--sub);font-size:.75rem"><div style="display:flex;align-items:center;gap:6px">'+teamLogoHtml(p[F.team],20)+(TEAM_SHORT[p[F.team]]||p[F.team])+'</div></td>'
         +'<td>'+p[F.T]+'</td>'
-        +'<td style="color:var(--acc);font-weight:700">'+(p[F.toc]/t).toFixed(1)+'</td>'
+        +'<td style="font-weight:600">'+(p[F.toc]/t).toFixed(1)+'</td>'
         +'<td>'+((p[F.nap]+p[F.obr])/t).toFixed(1)+'</td>'
         +'<td>'+(p[F.pod]/t).toFixed(1)+'</td>'
-        +'<td style="color:#22c55e">'+(p[F.efe]/t).toFixed(1)+'</td>'
-        +'<td style="color:#fbbf24;font-family:var(--fh);font-weight:700">'+score.toFixed(1)+'</td>'
+        +'<td>'+(p[F.efe]/t).toFixed(1)+'</td>'
+        +'<td style="font-family:var(--fd);font-weight:700;font-size:1.05rem">'+score.toFixed(1)+'</td>'
         +'</tr>';
     }).join('')+'</tbody></table></div>';
 
@@ -12003,7 +12079,7 @@ function renderMVP(){
     const totalSk=p[F.nap]+p[F.obr];
     mvpHero=`<div class="mvp-hero" style="--mvph-grad:${grad}" onclick="showPlayer(${pIdx})">
       <div class="mvp-hero-glow"></div>
-      <div class="mvp-hero-badge">👑 Vodilni kandidat za MVP</div>
+      <div class="mvp-hero-badge">Vodilni kandidat za MVP</div>
       <div class="mvp-hero-body">
         <div style="display:flex;align-items:center;gap:16px">
           ${(()=>{const ph=playerPhotoUrl(p[F.pid]);const ini=p[F.name].split(' ').map(x=>x[0]).join('').slice(0,2);
@@ -12014,7 +12090,7 @@ function renderMVP(){
           </div>
         </div>
         <div class="mvp-hero-stats">
-          <div class="mvp-hs"><div class="v shine">${score.toFixed(1)}</div><div class="l">MVP Score</div></div>
+          <div class="mvp-hs"><div class="v">${score.toFixed(1)}</div><div class="l">MVP ocena</div></div>
           <div class="mvp-hs"><div class="v">${(p[F.toc]/t).toFixed(1)}</div><div class="l">Točk</div></div>
           <div class="mvp-hs"><div class="v">${(totalSk/t).toFixed(1)}</div><div class="l">Skokov</div></div>
           <div class="mvp-hs"><div class="v">${(p[F.pod]/t).toFixed(1)}</div><div class="l">Asist.</div></div>
@@ -12029,9 +12105,9 @@ function renderMVP(){
     +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
     +'<div class="sec-head" style="--sh-c:#3b82f6">MVP po krogih (zadnjih 5)</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:24px">'+(roundHtml||'<div class="empty">Ni podatkov po krogih</div>')+'</div>'
-    +'<div class="sec-head" style="--sh-c:#10b981">MVP lestvica — top 10</div>'
+    +'<div class="sec-head">Top 10</div>'
     +leaderboard
-    +'<div style="font-size:.6875rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">MVP Score = PTS×1.0 + SK×0.7 + AS×0.8 + STL×1.5 + BLK×1.5 − TOV×0.8 + EFE×0.3 | Min. tekem: '+minGames+' (K'+maxRd+')</div>';
+    +'<div style="font-size:.6875rem;color:var(--mut);margin-top:10px;font-family:var(--fm)">MVP ocena = Game Score na tekmo (točke, podaje, skoki, ukradene, blokade − zgrešeni meti, izgube, osebne) × uspeh ekipe na njegovih tekmah (0,8–1,2) · najmanj '+nTekem(minGames)+' · '+maxRd+'. krog</div>';
   requestAnimationFrame(()=>{activateCounters(wrap);staggerReveal(wrap,'.hcard, [onclick^="showPlayer"]');});
 }
 
@@ -12363,7 +12439,7 @@ function renderCrossObisk(wrap,d1,d2,d3,names,colors){
 
   wrap.innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-      ${attByLeague.map(l=>`<div style="background:var(--card);border:1px solid ${l.color}40;border-left:3px solid ${l.color};border-radius:12px;padding:14px">
+      ${attByLeague.map(l=>`<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${l.name}</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:${l.color};line-height:1">${l.avg.toLocaleString()}</div>
         <div style="font-size:.6875rem;color:var(--mut);margin-top:4px">povp./tekmo · ${nTekem(l.count)}</div>
@@ -12428,12 +12504,12 @@ function renderCrossSodniki(wrap,d1,d2,d3,names,colors){
 
   wrap.innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-      ${[0,1,2].map(li=>`<div style="background:var(--card);border:1px solid ${colors[li]}40;border-left:3px solid ${colors[li]};border-radius:12px;padding:14px">
+      ${[0,1,2].map(li=>`<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${names[li]}</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:${colors[li]}">${allRefs.filter(r=>r.leagues[li]).length}</div>
         <div style="font-size:.6875rem;color:var(--mut)">sodnikov</div>
       </div>`).join('')}
-      <div style="background:var(--card);border:1px solid #fbbf2440;border-left:3px solid #fbbf24;border-radius:12px;padding:14px">
+      <div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">V VEČ LIGAH</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:#fbbf24">${multiRefs.length}</div>
         <div style="font-size:.6875rem;color:var(--mut)">sodnikov</div>
@@ -12451,7 +12527,7 @@ function renderCrossSodniki(wrap,d1,d2,d3,names,colors){
         <tbody>${refRows}</tbody>
       </table>
     </div>
-    <div style="font-size:.6875rem;color:var(--mut);margin-top:8px">🟡 Označeni sodniki sodijo v vsaj 2 ligah</div>`;
+    <div style="font-size:.6875rem;color:var(--mut);margin-top:8px">Označeni sodniki sodijo v vsaj 2 ligah</div>`;
 }
 
 function renderCrossStarost(wrap,d1,d2,d3,names,colors){
@@ -12560,14 +12636,14 @@ function renderCrossStarost(wrap,d1,d2,d3,names,colors){
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
       ${[d1,d2,d3].map((d,li)=>{
         const ms=Object.values(d.matchStats||{});
-        return `<div style="background:var(--card);border:1px solid ${colors[li]}40;border-left:3px solid ${colors[li]};border-radius:12px;padding:14px">
+        return `<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
           <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${names[li]}</div>
           <div style="font-size:.75rem;color:${colors[li]}">${nTekem((d.allMatches||[]).filter(m=>m.status==='FINISHED').length)}</div>
         </div>`;
       }).join('')}
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
-      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);margin-bottom:12px">📊 PRIMERJAVA DVEH EKIP (cross-liga)</div>
+      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);margin-bottom:12px">PRIMERJAVA DVEH EKIP (cross-liga)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <select onchange="window._cxTeam1=this.value;renderCrossLeague()" style="border-color:${colors[0]}60;color:${colors[0]}">
           ${teamOpts(window._cxTeam1)}
@@ -12629,7 +12705,7 @@ function renderCrossStats(wrap,d1,d2,d3,names,colors){
 
   wrap.innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
-      ${statsByLeague.map(s=>`<div style="background:var(--card);border:1px solid ${s.color}40;border-left:3px solid ${s.color};border-radius:12px;padding:14px">
+      ${statsByLeague.map(s=>`<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
         <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${s.name}</div>
         <div style="font-family:var(--fh);font-size:1.8rem;font-weight:800;color:${s.color}">${s.avgPts.toFixed(1)}</div>
         <div style="font-size:.6875rem;color:var(--mut)">točk/tekmo · ${nTekem(s.totalMatches)}</div>
@@ -12675,12 +12751,12 @@ function renderCrossTop(wrap,d1,d2,d3,names,colors){
   }).join('');
 
   wrap.innerHTML=`
-    <div style="background:var(--card2);border:1px solid #fbbf2440;border-radius:12px;padding:14px;margin-bottom:16px;font-size:.78rem;color:var(--mut)">
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;font-size:.78rem;color:var(--mut)">
       ℹ️ Prikazani so igralci trenutno naložene lige. Za primerjavo med ligami odpri vsako ligo posebej.
       Prihodnja nadgradnja: player stats API za vse 3 lige hkrati.
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
-      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);margin-bottom:12px">⭐ TOP 20 IGRALCEV (trenutna liga · min. 5 tekem)</div>
+      <div style="font-family:var(--fh);font-size:.72rem;color:var(--mut);margin-bottom:12px">TOP 20 IGRALCEV (trenutna liga · min. 5 tekem)</div>
       ${rows}
     </div>`;
 }
@@ -12792,9 +12868,9 @@ function renderRekordi(){
       ${avatar}
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p[F.name]}</div>
-        <div style="font-size:.6875rem;color:${tc}">${p[F.team]}</div>
+        <div style="font-size:.75rem;color:var(--sub)">${p[F.team]}</div>
       </div>
-      <div style="font-family:var(--fs);font-weight:800;color:var(--acc);font-size:1.05rem">${val}${suf}</div>
+      <div class="rek-v">${val}${suf}</div>
       <div style="font-size:.6875rem;color:var(--mut);min-width:36px;text-align:right">${p[F.T]} tm</div>
     </div>`;
   }
@@ -12810,13 +12886,13 @@ function renderRekordi(){
         <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${rec.name}</div>
         <div style="font-size:.6875rem;color:var(--mut)">${rec.round} · vs ${rec.opp} · ${rec.date}</div>
       </div>
-      <div style="font-family:var(--fs);font-weight:800;color:var(--acc);font-size:1.05rem">${val}${suf}</div>
+      <div class="rek-v">${val}${suf}</div>
     </div>`;
   }
 
   function card(title,color,icon,rows){
-    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${color};border-radius:12px;padding:14px">
-      <div style="font-family:var(--fh);font-size:.7rem;letter-spacing:.08em;color:${color};margin-bottom:10px">${icon} ${title}</div>
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:14px">
+      <div class="rek-t">${title.charAt(0)+title.slice(1).toLowerCase()}</div>
       ${rows}
     </div>`;
   }
@@ -12912,24 +12988,23 @@ function renderRekordi(){
   ].map(({title,color,icon,rows})=>card(title,color,icon,rows)).join('');
 
   wrap.innerHTML=`
-    <div style="font-family:var(--fh);font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin-bottom:4px">Rekordi sezone</div>
-    <div style="font-size:.78rem;color:var(--mut);margin-bottom:20px">Min. ${minT} tekme · Klikni na tekmo za boxscore</div>
+    <div style="font-size:.8rem;color:var(--mut);margin-bottom:8px">Upoštevani igralci z najmanj ${nTekem(minT).replace('tekma','tekmo').replace('tekmi','tekmama').replace(/tekme$/,'tekmami').replace(/tekem$/,'tekmami')} · klik na tekmo odpre boxscore</div>
 
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--acc);margin-bottom:12px">🏆 SEZONSKI REKORDI</div>
+    <div class="sec-head">Sezonski rekordi</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px">
       ${seasonCards}
     </div>
 
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:#3b82f6;margin-bottom:12px">⚡ REKORDI V POSAMIČNI TEKMI</div>
+    <div class="sec-head">Rekordi v posamični tekmi</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:28px">
       ${gameCards}
     </div>
 
-    <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:#ef4444;margin-bottom:12px">😬 HALL OF SHAME</div>
+    <div class="sec-head">Hall of shame</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
       ${shameCards}
     </div>`;
-  requestAnimationFrame(()=>staggerReveal(wrap,'div[style*="border-left:3px solid"]'));
+  requestAnimationFrame(()=>staggerReveal(wrap,'div[style*="border-left:1px solid var(--border)"]'));
 }
 
 // ═══════════════════════════════════════════════════
@@ -13100,19 +13175,19 @@ function renderTeamStats(){
 
   // League leader cards
   const leaders=[
-    {label:'⚡ NET RATING',col:'netrtg',val:t=>(t.netrtg>0?'+':'')+t.netrtg.toFixed(1),color:'#22c55e'},
-    {label:'🎯 TRUE SHOOTING',col:'ts',val:t=>t.ts.toFixed(1)+'%',color:'#f97316'},
-    {label:'🏃 PACE',col:'pace',val:t=>t.pace.toFixed(1),color:'#60a5fa'},
-    {label:'🎪 AST/TOV',col:'astTov',val:t=>t.astTov.toFixed(2),color:'#a855f7'},
-    {label:'🛡️ DEF RATING',col:'drtg',val:t=>t.drtg.toFixed(1),color:'#60a5fa',low:true},
-    {label:'📊 KONSISTENCA',col:'cons',val:t=>t.stdDev.toFixed(1)+' σ',color:'#fbbf24',low:true},
+    {label:'NET RATING',col:'netrtg',val:t=>(t.netrtg>0?'+':'')+t.netrtg.toFixed(1),color:'#22c55e'},
+    {label:'TRUE SHOOTING',col:'ts',val:t=>t.ts.toFixed(1)+'%',color:'#f97316'},
+    {label:'PACE',col:'pace',val:t=>t.pace.toFixed(1),color:'#60a5fa'},
+    {label:'AST/TOV',col:'astTov',val:t=>t.astTov.toFixed(2),color:'#a855f7'},
+    {label:'DEF RATING',col:'drtg',val:t=>t.drtg.toFixed(1),color:'#60a5fa',low:true},
+    {label:'KONSISTENCA',col:'cons',val:t=>t.stdDev.toFixed(1)+' σ',color:'#fbbf24',low:true},
   ].map(l=>{
     const best=sorted.reduce((b,t)=>{
       const fn=sortFns[l.col];
       return fn(t)>fn(b)?t:b;
     },sorted[0]);
     const tc=TEAM_COLORS[best?.team]||'#888';
-    return `<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${tc};border-radius:12px;padding:12px 14px">
+    return `<div style="background:var(--card);border:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${l.label}</div>
       <div style="font-weight:700;font-size:.82rem;color:${tc}">${best?.team||'—'}</div>
       <div style="font-family:var(--fh);font-size:1.5rem;font-weight:800;color:${l.color};line-height:1.1">${best?l.val(best):'—'}</div>
@@ -13124,7 +13199,7 @@ function renderTeamStats(){
       ${leaders}
     </div>
     <div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:8px">
-      📊 EKIPNA STATISTIKA — klikni naslov za sort · klikni ekipo za dashboard
+      Ekipna statistika — klikni naslov za razvrščanje, ekipo za podrobnosti
     </div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
       <table class="standings-table">
@@ -13203,7 +13278,7 @@ function showTeamDashboard(encodedTeam){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
         <div>
-          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">⚡ ADVANCED METRICS</div>
+          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">ADVANCED METRICS</div>
           ${statRow('Net Rating',t.netrtg,0,'',true)}
           ${statRow('Off Rating',t.ortg,avgOrtg,'',true)}
           ${statRow('Def Rating',t.drtg,avgDrtg,'',false)}
@@ -13212,19 +13287,19 @@ function showTeamDashboard(encodedTeam){
           ${statRow('AST/TOV',t.astTov,avgAstTov,'',true)}
         </div>
         <div>
-          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">🎯 SHOOTING & SPLITS</div>
+          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">SHOOTING & SPLITS</div>
           ${statRow('2PT%',t.fg2pct,data.reduce((s,x)=>s+x.fg2pct,0)/data.length,'%',true)}
           ${statRow('3PT%',t.fg3pct,data.reduce((s,x)=>s+x.fg3pct,0)/data.length,'%',true)}
           ${statRow('FT%',t.ftpct,data.reduce((s,x)=>s+x.ftpct,0)/data.length,'%',true)}
           ${statRow('3PT Rate',t.threePtRate,data.reduce((s,x)=>s+x.threePtRate,0)/data.length,'%',true)}
           <div style="display:flex;gap:12px;margin-top:10px">
             <div style="flex:1;background:var(--card);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:.6875rem;color:var(--mut)">🏠 DOMA</div>
+              <div style="font-size:.6875rem;color:var(--mut)">DOMA</div>
               <div style="font-family:var(--fh);font-size:1.2rem;color:#22c55e;font-weight:700">${t.homeW}-${t.homeL}</div>
               <div style="font-size:.6875rem;color:var(--mut)">${Math.round(t.homeW/(t.homeW+t.homeL||1)*100)}%</div>
             </div>
             <div style="flex:1;background:var(--card);border-radius:8px;padding:10px;text-align:center">
-              <div style="font-size:.6875rem;color:var(--mut)">✈️ GOSTJE</div>
+              <div style="font-size:.6875rem;color:var(--mut)">GOSTJE</div>
               <div style="font-family:var(--fh);font-size:1.2rem;color:#a855f7;font-weight:700">${t.awayW}-${t.awayL}</div>
               <div style="font-size:.6875rem;color:var(--mut)">${Math.round(t.awayW/(t.awayW+t.awayL||1)*100)}%</div>
             </div>
@@ -13356,7 +13431,7 @@ function renderSodniki(){
       {icon:'🎯',label:'NAJVEČ FTA/TEKMO',val:mostFTA?(mostFTA.fta/mostFTA.games).toFixed(1):'—',name:mostFTA?.name,color:'#a855f7',games:mostFTA?.games},
       {icon:'⚖️',label:'NAJVIŠJI FT/PF',val:mostRatio?(mostRatio.fta/mostRatio.pf).toFixed(2):'—',name:mostRatio?.name,color:'#22c55e',games:mostRatio?.games},
     ].map(x=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
-      <div style="font-size:.6875rem;color:var(--mut);margin-bottom:4px">${x.icon} ${x.label}</div>
+      <div style="font-size:.75rem;color:var(--mut);margin-bottom:4px">${x.label.charAt(0)+x.label.slice(1).toLowerCase()}</div>
       <div style="font-weight:700;font-size:.85rem;margin-bottom:2px">${x.name||'—'}</div>
       <div style="font-family:var(--fh);font-size:1.4rem;color:${x.color};line-height:1">${x.val}</div>
       <div style="font-size:.6875rem;color:var(--mut);margin-top:2px">${nTekem(x.games||0)}</div>
@@ -13417,7 +13492,7 @@ function renderSodniki(){
       ${label} <span style="font-size:.6875rem">${arrow}</span></th>`;
   }
 
-  const teamFoulHtml=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">🏀 OSEBNE NAPAKE PO EKIPAH</div>
+  const teamFoulHtml=`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">OSEBNE NAPAKE PO EKIPAH</div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
       <table class="standings-table">
         <thead><tr>
@@ -13447,7 +13522,7 @@ function renderSodniki(){
     </div>`;
 
   wrap.innerHTML=summaryHtml
-    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">📋 SODNIKI — klikni za cross analizo · klikni naslov stolpca za sortiranje</div>
+    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin-bottom:10px">SODNIKI — klikni za cross analizo · klikni naslov stolpca za sortiranje</div>
     <div style="overflow-x:auto;border-radius:12px;border:1px solid var(--border);margin-bottom:24px">
       <table class="standings-table">
         <thead><tr>
@@ -13465,7 +13540,7 @@ function renderSodniki(){
       </table>
     </div>`
     +teamFoulHtml
-    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">🔀 SODNIK × EKIPA CROSS ANALIZA</div>
+    +`<div style="font-family:var(--fh);font-size:.75rem;letter-spacing:.08em;color:var(--mut);margin:20px 0 10px">SODNIK × EKIPA CROSS ANALIZA</div>
     <div class="ctrls" style="margin-bottom:12px">
       <select id="ref-select" onchange="renderRefTeamCross(this.value,window.refTeamStatsGlobal,window.teamStatsGlobal)">
         <option value="">— Izberi sodnika —</option>
@@ -14105,8 +14180,8 @@ function renderStandings(){
     const grpOf=m=>m.competitions?.[0]?.competitionPhaseGroupName||'';
     const VZHOD=new Set(rdM.filter(m=>/vzhod/i.test(grpOf(m)))
                            .flatMap(m=>[m.firstTeamName,m.secondTeamName]));
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'🔵 VZHOD','#60a5fa');
-    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'🔴 ZAHOD','#f97316');
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>VZHOD.has(t.name)),sort,'VZHOD','#60a5fa');
+    html+=buildStandingsTable(computeTeamStats(rdM.filter(m=>!/vzhod/i.test(grpOf(m))),'Redni del').filter(t=>!VZHOD.has(t.name)),sort,'ZAHOD','#f97316');
   } else {
     html+=buildStandingsTable(computeTeamStats(allMatches,'Redni del'),sort,'Redni del',lg.color||'#22c55e');
     if(currentLeague==='liga1'){
@@ -14138,7 +14213,7 @@ function renderStandings(){
         const allObstMatches = [...rdH2H, ...obstMatches];
         const od=computeTeamStats(allObstMatches,'');
         const odFiltered=od.filter(t=>obstTeams.has(t.name));
-        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'⚠️ LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
+        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
       }
     }
   }
@@ -14146,7 +14221,7 @@ function renderStandings(){
   const byPhase={};
   ['Osmina finala','Četrtfinale','Polfinale','Finale'].forEach(p=>{const s=series.filter(x=>x.phase===p);if(s.length)byPhase[p]=s;});
   if(Object.keys(byPhase).length){
-    html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">🏆 KONČNICA</div>`;
+    html+=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:20px 0 10px;color:var(--sub)">KONČNICA</div>`;
     html+=renderBracketHTML(byPhase,{'Osmina finala':'#60a5fa','Četrtfinale':'#a855f7','Polfinale':'#f97316','Finale':'#fbbf24'});
   }
   // ── Liga za obstanek (mini-liga, ne bracket) ──
@@ -14161,7 +14236,7 @@ function renderStandings(){
       if(s1>s2){tbl[t1].w++;tbl[t2].l++;}else{tbl[t2].w++;tbl[t1].l++;}
     });
     const rows=Object.values(tbl).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
-    let html2=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:28px 0 10px;color:#ef4444">🛡️ LIGA ZA OBSTANEK</div>
+    let html2=`<div style="font-family:var(--fh);font-size:1rem;letter-spacing:.06em;margin:28px 0 10px;color:#ef4444">LIGA ZA OBSTANEK</div>
       <div style="overflow-x:auto;border-radius:14px;border:1px solid var(--border)"><table class="standings-table"><thead><tr><th>M</th><th style="text-align:left;padding-left:14px">EKIPA</th><th>T</th><th>Z</th><th>P</th><th>+/−</th></tr></thead><tbody>`;
     rows.forEach((r,i)=>{
       const tc=TEAM_COLORS[r.t]||'#888';const diff=r.pf-r.pa;
@@ -14232,7 +14307,7 @@ function seriesCard(s){
   }).join('');
   const seriesType=s.isAggregate?'SEŠTEVEK':(s.winsNeeded===3?'NA 3 ZMAGE':'NA 2 ZMAGI');
   return `<div class="pbseries ${s.live?'live':''} ${isChamp?'champ':''}">
-    <div class="pbseries-tag">${s.live?'🔴 V ŽIVO':seriesType}</div>
+    <div class="pbseries-tag">${s.live?'V ŽIVO':seriesType}</div>
     <div class="pbteam ${w1?'win':w2?'lose':''}">
       ${teamLogoHtml(s.t1,22)}
       <span class="pbteam-name" style="color:${c1}">${s.t1}</span>
@@ -14548,7 +14623,7 @@ function drawMladiBox(country){
     </div>
 
     <div class="ml-ctrls ml-filter-row">
-      <input type="text" class="ml-search" placeholder="🔍 Išči igralca ali ekipo…" value="${(S.q||'').replace(/"/g,'&quot;')}"
+      <input type="text" class="ml-search" placeholder="Išči igralca ali ekipo…" value="${(S.q||'').replace(/"/g,'&quot;')}"
         oninput="boxSearch('${country}',this.value)">
       ${teams.length>1 ? `
       <select onchange="boxSet('${country}','team',this.value)">
@@ -14774,7 +14849,7 @@ async function mlRenderShortlist(){
   const list = mlGetShortlist();
   if(!list.length){
     wrap.innerHTML = `${mlCountrySeg()}
-      <div class="ml-sl-bar"><button class="ml-sl-tab active">★ Shortlist</button></div>
+      <div class="ml-sl-bar"><button class="ml-sl-tab active">Shortlist</button></div>
       <div class="ml-empty">Tvoj shortlist je prazen.<br><span style="font-size:.72rem;color:var(--mut)">Odpri igralca in klikni ★, da ga dodaš sem.</span></div>`;
     return;
   }
@@ -14797,7 +14872,7 @@ async function mlRenderShortlist(){
   const colorOf = c => BOX_CFG[c]?.c1 || '#3bd6c6';
 
   wrap.innerHTML = `${mlCountrySeg()}
-    <div class="ml-sl-bar"><button class="ml-sl-tab active">★ Shortlist (${list.length})</button>
+    <div class="ml-sl-bar"><button class="ml-sl-tab active">Shortlist (${list.length})</button>
       ${list.length>=2?`<button class="ml-sl-compare-btn" onclick="mlOpenCompare()">⇄ Primerjaj</button>`:''}
     </div>
     <div class="ml-note">Tvoji označeni igralci. Klikni za profil, ali primerjaj dva.</div>
@@ -15070,7 +15145,7 @@ function drawMladi(){
   wrap.innerHTML = `
     ${mlCountrySeg()}
     <div class="ml-hero">
-      <h2>🌱 Mladi — ${c.label}</h2>
+      <h2>${c.label}</h2>
       <p>Kdo izstopa med mladimi. Skozi celo sezono se beležijo predvsem <b>točke</b>, zato so te glavna mera; poln boxscore (skoki, asistence, met) obstaja le na zaključnem turnirju.</p>
     </div>
 
@@ -15417,7 +15492,7 @@ function closeMlModal(){
 <div id="share-overlay" class="ov-anim" onclick="if(event.target===this)closeShare()">
   <div id="share-canvas-wrap"><canvas id="share-canvas" width="1080" height="1080"></canvas></div>
   <div class="share-actions">
-    <button class="share-btn primary" onclick="downloadShare()">⬇ Prenesi sliko</button>
+    <button class="share-btn primary" onclick="downloadShare()">Prenesi sliko</button>
     <button class="share-btn ghost" onclick="closeShare()">Zapri</button>
   </div>
 </div>
