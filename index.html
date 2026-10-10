@@ -9,11 +9,10 @@
        za dve animaciji, ki sta zdaj v CSS. Obe skripti sta bili blokirajoci
        in v glavi, torej sta zavirali prvi izris. -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- Space Grotesk (naslovi, besedilo) + Space Mono (stevilke) sta pisavi,
-       za kateri je bil CSS napisan — a se nista nikoli nalozili, zato je vse
-       izrisovala sistemska pisava, na vsaki napravi druga. Syne, Bebas Neue,
-       DM Mono in DM Sans so se prenasali brez ene same uporabe v slogu. -->
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Vizualna smer A (10.10.2026): Inter za besedilo, Barlow Condensed za
+       stevilke in naslove. Space Grotesk + Space Mono (pisalni stroj na
+       stevilkah, izbirnikih in gumbih) sta dajala videz terminala. -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <!-- Obiskanost: GoatCounter. Brez piškotkov in brez osebnih podatkov, zato
        ne potrebuje privolitvenega okna. Skripta sama ne šteje obiskov z
@@ -54,21 +53,21 @@
 <title>Slovenska košarka — statistika 1., 2. in 3. SKL</title>
 
 <style>
-:root{--bg:#06060f;--card:#0d0d1b;--card2:#111122;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--teal2:#2dd4bf;--text:rgba(255,255,255,.92);--sub:rgba(255,255,255,.66);--mut:rgba(255,255,255,.5);/* bilo .28 = kontrast 2,3:1; zdaj ~5,3:1 (WCAG AA 4,5:1). --sub sorazmerno .5 -> .66 */--fh:'Space Grotesk',system-ui,sans-serif;--fm:'Space Grotesk',system-ui,sans-serif;--fs:'Space Mono',monospace;
+:root{--bg:#0a0a0c;--card:#141417;--card2:#1b1b1f;--border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);--acc:#f97316;--blue:#3b82f6;--purple:#a855f7;--green:#10b981;--red:#ef4444;--teal:#14b8a6;--teal2:#2dd4bf;--text:#f4f4f5;--sub:#a1a1aa;--mut:#8b8b94;/* bilo .28 = kontrast 2,3:1; zdaj ~5,3:1 (WCAG AA 4,5:1). --sub sorazmerno .5 -> .66 */--fh:'Inter',system-ui,sans-serif;--fm:'Inter',system-ui,sans-serif;--fs:'Barlow Condensed','Inter',sans-serif;--fd:'Barlow Condensed','Inter',sans-serif;
   /* Tipografska skala (modularna, ratio ~1.25) */
   --t-xs:.7rem; --t-sm:.82rem; --t-base:.95rem; --t-md:1.1rem; --t-lg:1.4rem; --t-xl:1.85rem; --t-2xl:2.4rem; --t-3xl:3.2rem;
   /* Razmiki (8px sistem) */
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px; --sp-8:64px;
   /* Sence + radiji */
-  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px;
+  --r-sm:8px; --r-md:12px; --r-lg:14px; --r-xl:16px;
   --sh-sm:0 1px 3px rgba(0,0,0,.2); --sh-md:0 4px 16px -4px rgba(0,0,0,.35); --sh-lg:0 12px 40px -12px rgba(0,0,0,.5)}
-:root[data-theme="light"]{--bg:#f4f5f8;--card:#ffffff;--card2:#eef0f4;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);--text:rgba(15,15,30,.92);--sub:rgba(15,15,30,.7);--mut:rgba(15,15,30,.58);--green:#059669;--acc:#ea580c}
-:root[data-theme="light"] body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22,.06),transparent 55%),radial-gradient(ellipse 1000px 700px at 100% 100%,rgba(59,130,246,.05),transparent 50%),var(--bg)}
-:root[data-theme="light"] .hdr{background:rgba(244,245,248,.95)}
+:root[data-theme="light"]{--bg:#f6f6f7;--card:#ffffff;--card2:#f1f1f3;--border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.15);--text:#18181b;--sub:#52525b;--mut:#6b6b74;--green:#059669;--acc:#ea580c}
+:root[data-theme="light"] body{background:var(--bg)}
+:root[data-theme="light"] .hdr{background:rgba(246,246,247,.94)}
 :root[data-theme="light"] .skeleton{background:linear-gradient(90deg,rgba(0,0,0,.04) 25%,rgba(0,0,0,.08) 50%,rgba(0,0,0,.04) 75%);background-size:200% 100%}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',system-ui,sans-serif;min-height:100vh}
-.hdr{background:rgba(6,6,15,.72);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border);padding:var(--sp-3) var(--sp-6);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:var(--sp-4)}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;font-feature-settings:'tnum' 1;-webkit-font-smoothing:antialiased}
+.hdr{background:rgba(10,10,12,.86);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--border);padding:var(--sp-3) var(--sp-6);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;gap:var(--sp-4)}
 .hdr-title{font-family:var(--fh);font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:var(--text);white-space:nowrap;display:flex;align-items:center;gap:8px}
 .hdr-title span{color:var(--acc);font-weight:800}
 .hdr-title::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px var(--acc)}.hdr-title span{color:var(--acc)}
@@ -279,7 +278,7 @@ th:hover .th-q{opacity:.7}
 .mc-teams{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .mc-team{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;flex:1}
 .mc-team.away{text-align:right}
-.mc-score{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;letter-spacing:-.03em;text-align:center;flex-shrink:0}
+.mc-score{font-family:var(--fd);font-size:2rem;font-weight:700;letter-spacing:-.03em;text-align:center;flex-shrink:0}
 .mc-score.win1{color:var(--acc)}
 .mc-score.win2{color:var(--blue)}
 .mc-meta{font-size:.6875rem;color:var(--mut);display:flex;justify-content:space-between}
@@ -296,7 +295,7 @@ th:hover .th-q{opacity:.7}
 .mo-score-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:8px}
 .mo-team{font-family:var(--fh);font-size:1.1rem;font-weight:700;letter-spacing:-.02em;flex:1}
 .mo-team.away{text-align:right}
-.mo-score{font-family:'Space Grotesk',sans-serif;font-size:3.5rem;font-weight:800;letter-spacing:-.04em;color:var(--acc);line-height:1}
+.mo-score{font-family:var(--fd);font-size:3.5rem;font-weight:800;letter-spacing:-.04em;color:var(--acc);line-height:1}
 .mo-meta{font-size:.72rem;color:var(--mut);text-align:center}
 .mo-body{padding:16px 20px}
 .mo-section{margin-bottom:20px}
@@ -714,7 +713,7 @@ th:hover .th-q{opacity:.7}
 .match-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--mc-c1,var(--acc)),var(--mc-c2,var(--blue)))}
 
 /* ═══ GLOBAL DEPTH — subtle gradient bg + glow accents ═══ */
-body{background:radial-gradient(ellipse 1200px 800px at 50% -10%,rgba(249,115,22,.04),transparent 55%),radial-gradient(ellipse 1000px 700px at 100% 100%,rgba(59,130,246,.03),transparent 50%),var(--bg);background-attachment:fixed}
+body{background:var(--bg)}
 .lc,.nerd-card,.att-card,.fstat{transition:transform .2s,border-color .2s,box-shadow .2s}
 .lc:hover,.nerd-card:hover{transform:translateY(-2px);border-color:var(--border2)}
 
@@ -2126,6 +2125,81 @@ p{text-wrap:pretty}
   .fmatch-cd{font-size:1.5rem;white-space:nowrap}
   .fmatch-meta{font-size:.6875rem;margin-top:10px}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   SMER A — "sportni medij" (izbrano 10.10.2026)
+   Nevtralne sive, ena poudarna barva lige, stevilke in naslovi v ozki
+   pisavi Barlow Condensed, besedilo v Inter. Namenoma NA KONCU sloga, da
+   prevlada nad starimi pravili (tudi mobilnimi).
+   ══════════════════════════════════════════════════════════════════ */
+/* Naslovi razdelkov: ozka pisava, velike crke. Barvna crta je odsla —
+   vsak razdelek je imel svojo barvo in zaslon je bil mavricen. */
+.sec-head{font-family:var(--fd)!important;font-weight:700!important;font-size:1.3rem!important;text-transform:uppercase;letter-spacing:.01em!important;color:var(--text)!important;gap:8px}
+.sec-head::before{display:none!important}
+.pregled-sec-h{font-family:var(--fd);font-weight:700;font-size:1.3rem;text-transform:uppercase;letter-spacing:.01em}
+.mo-section-title{font-family:var(--fd)!important;font-weight:700!important;font-size:1.15rem!important;letter-spacing:.01em!important;color:var(--text)!important}
+.hero-title{font-family:var(--fd);text-transform:uppercase;letter-spacing:0;line-height:.86}
+.hdr-title{font-family:var(--fh);font-weight:700;letter-spacing:-.015em}
+
+/* Kontrolniki v berljivi pisavi (prej pisalni stroj) */
+select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
+.tb{text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:600}
+/* Stikala: aktivna moznost je bela "tabletka", ne oranzna ploskev —
+   oranzna ostane za eno stvar na zaslonu (poudarek lige). */
+.tgl{border:none;background:var(--card2);border-radius:999px;padding:3px;gap:2px}
+.tb{background:transparent;border-radius:999px;color:var(--sub)}
+.tb:hover{color:var(--text)}
+.tb.active{background:var(--text);color:var(--bg)}
+
+/* Stevilke: ozka pisava je nizja — malo vec velikosti in teze */
+.pstat-val,.fstat-val,.hcard-val,.sv,.pp-hs-v,.hs-v,.tp-st-v,.live-score,.mo-hero-score,.fmatch-score{font-family:var(--fd)!important;font-weight:700!important;letter-spacing:0!important}
+
+/* Kartice: ravne ploskve brez prelivov in sence, en radij */
+.pregled-card,.hero-card,.lc,.match-card,.live-card,.nerd-card,.h2h-card,.group-card,.att-card,.pcard,.scard,.q-card,.fstat,.pregled-stat,.pregled-res{border-radius:var(--r-lg)!important;box-shadow:none!important}
+
+/* ── Smer A: Pregled ── */
+.stran-h{margin:4px 0 20px}
+.stran-h h1{font-family:var(--fd);font-weight:700;font-size:2.2rem;line-height:1;text-transform:uppercase;letter-spacing:.005em}
+.stran-sub{font-size:.85rem;color:var(--mut);margin-top:6px}
+.hero-bg{display:none}
+.hero-card:hover{border-color:var(--border2)!important;box-shadow:none!important}
+.hero-badge{background:none!important;padding:0!important;color:var(--acc)!important;text-transform:none!important;letter-spacing:.01em!important;font-size:.78rem!important;font-family:var(--fm)!important}
+.hero-name{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;line-height:.95!important}
+.hero-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ek-pika{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hs-l{text-transform:none!important;letter-spacing:0!important;font-size:.75rem!important;font-weight:500!important}
+.hero-card-cta{color:var(--text)!important;background:transparent!important;border:1px solid var(--border2)!important;font-family:var(--fm)!important;font-weight:600!important}
+.hero-card:hover .hero-card-cta{background:var(--card2)!important}
+.pregled-card::before,.pregled-stat::before{display:none!important}
+.pregled-card:hover,.pregled-stat:hover,.pregled-res:hover{transform:none!important;border-color:var(--border2)!important;box-shadow:none!important}
+.pregled-card-h{font-family:var(--fd)!important;font-size:1.05rem!important;letter-spacing:.01em!important;color:var(--text)!important;font-weight:700!important}
+.pregled-card-h span{color:var(--mut);font-family:var(--fm);text-transform:none;font-size:.75rem;font-weight:500;margin-left:6px}
+.verj-st{font-family:var(--fd);font-weight:700;font-size:1.05rem;min-width:44px}
+.verj-tr{flex:1;height:6px;border-radius:3px;overflow:hidden;display:flex;gap:2px;background:transparent}
+.verj-tr div{border-radius:3px}
+.rang{font-family:var(--fd);font-weight:700;font-size:1.05rem;color:var(--mut);min-width:18px}
+.rang.prvi{color:var(--acc)}
+.vr{font-family:var(--fd);font-weight:700;font-size:1.15rem}
+.pstat-ic{color:var(--mut)}
+.pstat-lab{text-transform:none!important;letter-spacing:0!important;font-size:.78rem!important;font-weight:500!important}
+.pstat-val{font-size:2rem!important}
+.pres-date{text-transform:none!important;letter-spacing:0!important;font-weight:500!important}
+.hs-v{font-size:2.5rem}
+.hero-meta{display:block!important}
+.ek-pika{margin-right:6px;vertical-align:1px}
+@media(max-width:640px){
+  .stran-h h1{font-size:1.9rem}
+  /* stiri stevilke v eni vrsti (prej 2x2): kartica je nizja, zato portret
+     v ozkem stolpcu ni vec obrezan na obraz */
+  .hero-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;margin-top:12px!important;padding-top:10px!important}
+  .hero-stat{padding-left:8px!important;border-left:1px solid var(--border)!important}
+  .hero-stat:first-child{padding-left:0!important;border-left:none!important}
+  .hs-v{font-size:1.55rem!important}
+  .hs-l{font-size:.6875rem!important}
+  .hero-img{object-position:center 12%!important}
+  .hero-card-cta{align-self:flex-start;padding:6px 12px!important;font-size:.75rem!important}
+  .hero-top{gap:8px!important}
+}
 </style>
 </head>
 <body>
@@ -2249,7 +2323,7 @@ p{text-wrap:pretty}
       <button class="tb active" id="lg-btn-liga1" onclick="switchLeague('liga1')">1. SKL</button>
       <button class="tb" id="lg-btn-liga2" onclick="switchLeague('liga2')">2. SKL</button>
       <button class="tb" id="lg-btn-liga3" onclick="switchLeague('liga3')">3. SKL</button>
-      <button class="tb" id="lg-btn-3x3" onclick="switchLeague('3x3')" style="background:linear-gradient(135deg,#510861,#7c1fa0);color:#fff">3x3</button>
+      <button class="tb" id="lg-btn-3x3" onclick="switchLeague('3x3')">3x3</button>
     </div>
     <select id="season-select" class="hdr-select" onchange="switchSeason(parseInt(this.value))" style="display:none"></select>
     <span id="live-badge" class="hdr-live" style="display:none">● LIVE</span>
@@ -5644,9 +5718,9 @@ function drawMomentum(changes,c1,c2,t1,t2){
     <path d="${path2}" fill="none" stroke="${c2}" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${c2}66)"/>
     <circle cx="${scaleX(lastC.minute)}" cy="${scaleY(lastC.score1)}" r="4" fill="${c1}"/>
     <circle cx="${scaleX(lastC.minute)}" cy="${scaleY(lastC.score2)}" r="4" fill="${c2}"/>
-    <text x="${pad}" y="${h-4}" font-size="9" fill="${c1}" font-family="DM Sans,sans-serif">${t1.split(' ').pop()}</text>
-    <text x="${w-pad}" y="${h-4}" font-size="9" fill="${c2}" text-anchor="end" font-family="DM Sans,sans-serif">${t2.split(' ').pop()}</text>
-    ${qtrs.map(q=>`<text x="${scaleX(q)}" y="${h-2}" font-size="8" fill="rgba(148,163,184,.5)" text-anchor="middle" font-family="DM Mono,monospace">Q${q/10}</text>`).join('')}
+    <text x="${pad}" y="${h-4}" font-size="9" fill="${c1}" font-family="Inter,sans-serif">${t1.split(' ').pop()}</text>
+    <text x="${w-pad}" y="${h-4}" font-size="9" fill="${c2}" text-anchor="end" font-family="Inter,sans-serif">${t2.split(' ').pop()}</text>
+    ${qtrs.map(q=>`<text x="${scaleX(q)}" y="${h-2}" font-size="8" fill="rgba(148,163,184,.5)" text-anchor="middle" font-family="Inter,sans-serif">Q${q/10}</text>`).join('')}
   </svg>`;
 }
 
@@ -6254,16 +6328,16 @@ async function draw2KCard(d){
   // ── OVERALL blok zgoraj levo ──
   x.fillStyle='#fff';
   x.textAlign='left';
-  x.font='800 200px "Space Mono", monospace';
+  x.font='800 200px "Barlow Condensed", sans-serif';
   x.fillStyle=oc;
   x.fillText(String(d.ovr), 56, 210);
   x.fillStyle='rgba(255,255,255,.85)';
-  x.font='700 38px "Space Grotesk", sans-serif';
+  x.font='700 38px "Inter", sans-serif';
   const ovrW=x.measureText(String(d.ovr)).width;
   x.fillText('OVR', 56, 260);
   // bElo pod OVR
   x.fillStyle='rgba(255,255,255,.5)';
-  x.font='600 26px "Space Mono", monospace';
+  x.font='600 26px "Barlow Condensed", sans-serif';
   x.fillText('bElo '+(d.be||'—'), 150, 258);
 
   // ── Foto igralca desno zgoraj ──
@@ -6293,7 +6367,7 @@ async function draw2KCard(d){
   // ── Ime igralca ──
   x.fillStyle='#fff';
   x.textAlign='left';
-  x.font='800 76px "Space Grotesk", sans-serif';
+  x.font='800 76px "Inter", sans-serif';
   const name=d.name.toUpperCase();
   const parts=name.split(' ');
   let l1=name,l2='';
@@ -6305,10 +6379,10 @@ async function draw2KCard(d){
   x.fillText(l1,56,ny);
   if(l2){ny+=82;x.fillText(l2,56,ny);}
   x.fillStyle=col;
-  x.font='700 36px "Space Grotesk", sans-serif';
+  x.font='700 36px "Inter", sans-serif';
   x.fillText(d.team.split(' / ')[0],56,ny+56);
   x.fillStyle='rgba(255,255,255,.4)';
-  x.font='400 26px "Space Mono", monospace';
+  x.font='400 26px "Barlow Condensed", sans-serif';
   x.fillText(`${d.born} · ${d.games} tekem`,56,ny+96);
 
   // ── Atributni bari (poravnana mreža: label | bar | vrednost) ──
@@ -6330,7 +6404,7 @@ async function draw2KCard(d){
     x.fillStyle='rgba(255,255,255,.72)';
     x.textAlign='left';
     x.textBaseline='middle';
-    x.font='700 30px "Space Grotesk", sans-serif';
+    x.font='700 30px "Inter", sans-serif';
     x.fillText(lbl,colL,cy);
     // bar track (centriran na isto cy)
     const trackH=12, trackY=cy-trackH/2;
@@ -6341,7 +6415,7 @@ async function draw2KCard(d){
     // vrednost (desno poravnana, ista cy)
     x.fillStyle=c;
     x.textAlign='right';
-    x.font='800 36px "Space Mono", monospace';
+    x.font='800 36px "Barlow Condensed", sans-serif';
     x.fillText(String(val),valX,cy);
     ay+=rowH;
   });
@@ -6357,7 +6431,7 @@ async function draw2KCard(d){
       x.font='400 42px sans-serif';
       x.fillText(bg.i,bx,by);
       x.fillStyle='rgba(255,255,255,.85)';
-      x.font='700 27px "Space Grotesk", sans-serif';
+      x.font='700 27px "Inter", sans-serif';
       x.fillText(bg.l,bx+56,by);
       by+=rowH;                                    // isti razmik kot bari → poravnano
     });
@@ -6369,14 +6443,14 @@ async function draw2KCard(d){
   // bila doslej edini podatek o izvoru podpis avtorja — bralec ni imel kam.
   x.fillStyle='rgba(255,255,255,.35)';
   x.textAlign='left';
-  x.font='600 24px "Space Mono", monospace';
+  x.font='600 24px "Barlow Condensed", sans-serif';
   x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · bElo OVERALL',56,H-80);
   x.textAlign='right';
   x.fillStyle=col;
   x.fillText('by Blaž Erčulj',W-56,H-80);
   x.textAlign='left';
   x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 26px "Space Mono", monospace';
+  x.font='600 26px "Barlow Condensed", sans-serif';
   x.fillText(SITE_LABEL,56,H-36);
 }
 
@@ -6433,7 +6507,7 @@ async function drawShareCard(d){
 
   // Header
   x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 26px "Space Mono", monospace';
+  x.font='600 26px "Barlow Condensed", sans-serif';
   x.textAlign='left';
   x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel(), 70, 100);
 
@@ -6467,7 +6541,7 @@ async function drawShareCard(d){
 
   // Player name (wrap if long)
   x.fillStyle='#fff';
-  x.font='800 80px "Space Grotesk", sans-serif';
+  x.font='800 80px "Inter", sans-serif';
   const name=d.name.toUpperCase();
   const parts=name.split(' ');
   let line1=name, line2='';
@@ -6482,19 +6556,19 @@ async function drawShareCard(d){
 
   // Team + games
   x.fillStyle=col;
-  x.font='700 34px "Space Grotesk", sans-serif';
+  x.font='700 34px "Inter", sans-serif';
   x.fillText(d.team, 70, nameBottom);
   x.fillStyle='rgba(255,255,255,.4)';
-  x.font='400 26px "Space Mono", monospace';
+  x.font='400 26px "Barlow Condensed", sans-serif';
   x.fillText(d.games+' tekem', 70, nameBottom+42);
 
   // BIG stat — points
   const bigY=nameBottom+200;
   x.fillStyle='rgba(255,255,255,.5)';
-  x.font='600 28px "Space Mono", monospace';
+  x.font='600 28px "Barlow Condensed", sans-serif';
   x.fillText('TOČKE NA TEKMO', 70, bigY-90);
   x.fillStyle='#fff';
-  x.font='800 220px "Space Mono", monospace';
+  x.font='800 220px "Barlow Condensed", sans-serif';
   x.fillText(d.pts.toFixed(1), 60, bigY+90);
 
   // Stat grid (4 boxes)
@@ -6516,24 +6590,24 @@ async function drawShareCard(d){
     x.strokeStyle='rgba(255,255,255,.1)'; x.lineWidth=1; x.stroke();
     // value
     x.fillStyle='#fff';
-    x.font='800 58px "Space Mono", monospace';
+    x.font='800 58px "Barlow Condensed", sans-serif';
     x.textAlign='center';
     x.fillText(s.v, bx+bw/2, gy+90);
     // label
     x.fillStyle=col;
-    x.font='600 24px "Space Mono", monospace';
+    x.font='600 24px "Barlow Condensed", sans-serif';
     x.fillText(s.l, bx+bw/2, gy+140);
     x.textAlign='left';
   });
 
   // Footer
   x.fillStyle='rgba(255,255,255,.4)';
-  x.font='600 22px "Space Mono", monospace';
+  x.font='600 22px "Barlow Condensed", sans-serif';
   x.textAlign='right';
   x.fillText('by Blaž Erčulj', W-70, H-50);
   x.textAlign='left';
   x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 24px "Space Mono", monospace';
+  x.font='600 24px "Barlow Condensed", sans-serif';
   x.fillText(SITE_LABEL, 70, H-50);
 }
 
@@ -6741,10 +6815,10 @@ async function renderRoundCard(){
   // ══ HEADER ══
   x.textAlign='left';
   x.fillStyle=acc;
-  x.font='700 26px "Space Mono", monospace';
+  x.font='700 26px "Barlow Condensed", sans-serif';
   x.fillText(subtitle+' · '+seasonLabel(),M,95);
   x.fillStyle='#fff';
-  x.font='800 '+(isPlayoff&&title.length>10?78:96)+'px "Space Grotesk", sans-serif';
+  x.font='800 '+(isPlayoff&&title.length>10?78:96)+'px "Inter", sans-serif';
   x.fillText(title,M-2,185);
   // accent underline
   const tw=x.measureText(title).width;
@@ -6781,7 +6855,7 @@ async function renderRoundCard(){
     }
     // MVP badge
     x.fillStyle='rgba(255,255,255,.9)';
-    x.font='700 26px "Space Mono", monospace';
+    x.font='700 26px "Barlow Condensed", sans-serif';
     x.fillText((isPlayoff?'🏆 MVP RUNDE':'⭐ MVP KROGA'),M+40,y+62);
     // Player photo — big, right side
     const photo=await _loadImg(playerPhotoLocal(p[F.pid]),{w:600});
@@ -6796,7 +6870,7 @@ async function renderRoundCard(){
       x.drawImage(photo,(iw-side)/2,0,side,side,pX,pY,pSize,pSize);
     }else{
       x.fillStyle=_shade(col,-30);x.fillRect(pX,pY,pSize,pSize);
-      x.fillStyle='#fff';x.font='800 90px "Space Grotesk",sans-serif';x.textAlign='center';
+      x.fillStyle='#fff';x.font='800 90px "Inter",sans-serif';x.textAlign='center';
       x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),pX+pSize/2,pY+pSize/2+30);x.textAlign='left';
     }
     x.restore();
@@ -6805,7 +6879,7 @@ async function renderRoundCard(){
     x.strokeStyle='rgba(255,255,255,.45)';x.lineWidth=5;x.stroke();
     // Name
     x.fillStyle='#fff';
-    x.font='800 60px "Space Grotesk", sans-serif';
+    x.font='800 60px "Inter", sans-serif';
     const nm=p[F.name].toUpperCase(),parts=nm.split(' ');
     const maxNW=pX-M-60;
     let nl1=nm,nl2='';
@@ -6821,17 +6895,17 @@ async function renderRoundCard(){
     let tx=M+40;
     if(logo){try{x.drawImage(logo,tx,nbot-26,36,36);}catch(e){}tx+=46;}
     x.fillStyle='rgba(255,255,255,.85)';
-    x.font='600 30px "Space Grotesk", sans-serif';
+    x.font='600 30px "Inter", sans-serif';
     x.fillText(tm,tx,nbot);
     // Big stats
     const sy=nbot+(isStory?70:56);
     const stats=[['TČK',gm.pts],['SK',gm.reb],['AS',gm.ast],['EFE',gm.efe]];
     let sx=M+40;
     stats.forEach(([l,v])=>{
-      x.fillStyle='#fff';x.font='800 52px "Space Mono", monospace';
+      x.fillStyle='#fff';x.font='800 52px "Barlow Condensed", sans-serif';
       x.fillText(v+'',sx,sy);
       const vw=x.measureText(v+'').width;
-      x.fillStyle='rgba(255,255,255,.7)';x.font='600 22px "Space Mono", monospace';
+      x.fillStyle='rgba(255,255,255,.7)';x.font='600 22px "Barlow Condensed", sans-serif';
       x.fillText(l,sx,sy+30);
       sx+=Math.max(vw,60)+44;
     });
@@ -6840,7 +6914,7 @@ async function renderRoundCard(){
 
   // ══ TOP 3 IGRALCI (po efektivnosti) ══
   if(top3.length){
-    x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+    x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
     x.fillText('🏆 NAJBOLJŠI IGRALCI',M,y);
     y+=34;
     for(let i=0;i<top3.length;i++){
@@ -6850,14 +6924,14 @@ async function renderRoundCard(){
       x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
       x.fillStyle=col;_roundRect(x,M,y,6,rowH,3);x.fill();
       // rank
-      x.fillStyle=col;x.font='800 42px "Space Grotesk",sans-serif';
+      x.fillStyle=col;x.font='800 42px "Inter",sans-serif';
       x.fillText((i+1)+'',M+28,y+64);
       // player photo (circular)
       const ph=await _loadImg(playerPhotoLocal(p[F.pid]),{w:220});
       const ps=72,px2=M+72,py2=y+(rowH-ps)/2;
       x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
       if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
-      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);x.fillStyle='#fff';x.font='800 28px "Space Grotesk",sans-serif';x.textAlign='center';x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),px2+ps/2,py2+ps/2+10);x.textAlign='left';}
+      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);x.fillStyle='#fff';x.font='800 28px "Inter",sans-serif';x.textAlign='center';x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),px2+ps/2,py2+ps/2+10);x.textAlign='left';}
       x.restore();
       x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=col+'aa';x.lineWidth=3;x.stroke();
       // club logo badge (bottom-right of photo) — za kateri klub igra
@@ -6874,15 +6948,15 @@ async function renderRoundCard(){
       }
       // name + team
       const tx=px2+ps+30;
-      x.fillStyle='#fff';x.font='700 38px "Space Grotesk", sans-serif';
+      x.fillStyle='#fff';x.font='700 38px "Inter", sans-serif';
       x.fillText(p[F.name],tx,y+46);
-      x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Space Mono", monospace';
+      x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Barlow Condensed", sans-serif';
       x.fillText(p[F.team],tx,y+80);
       // stat line: EFE big + pts/reb/ast small
       x.textAlign='right';
-      x.fillStyle=acc;x.font='800 50px "Space Mono", monospace';
+      x.fillStyle=acc;x.font='800 50px "Barlow Condensed", sans-serif';
       x.fillText(gg.efe+'',W-M-30,y+52);
-      x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Space Mono", monospace';
+      x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Barlow Condensed", sans-serif';
       x.fillText('EFE',W-M-30,y+78);
       x.textAlign='left';
       y+=rowH+14;
@@ -6892,7 +6966,7 @@ async function renderRoundCard(){
 
   // ══ DODATNO (samo Story — isti slog kot zgoraj, da ostane enoten videz) ══
   if(isStory && bigWin){
-    x.fillStyle=acc;x.font='800 32px "Space Grotesk", sans-serif';
+    x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
     x.fillText('💥 NAJVEČJA ZMAGA',M,y);y+=34;
     const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
     const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
@@ -6910,14 +6984,14 @@ async function renderRoundCard(){
     x.restore();
     x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=wcol+'aa';x.lineWidth=3;x.stroke();
     const tx=px2+ps+30;
-    x.fillStyle='#fff';x.font='700 38px "Space Grotesk", sans-serif';
+    x.fillStyle='#fff';x.font='700 38px "Inter", sans-serif';
     x.fillText(win,tx,y+46);
-    x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Space Mono", monospace';
+    x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Barlow Condensed", sans-serif';
     x.fillText('proti '+lose,tx,y+80);
     x.textAlign='right';
-    x.fillStyle=acc;x.font='800 50px "Space Mono", monospace';
+    x.fillStyle=acc;x.font='800 50px "Barlow Condensed", sans-serif';
     x.fillText(Math.max(s1,s2)+':'+Math.min(s1,s2),W-M-30,y+52);
-    x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Space Mono", monospace';
+    x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Barlow Condensed", sans-serif';
     x.fillText('+'+bigDiff,W-M-30,y+78);
     x.textAlign='left';
     y+=rowH+14;
@@ -6925,11 +6999,11 @@ async function renderRoundCard(){
 
   // ══ FOOTER ══
   x.fillStyle='rgba(255,255,255,.4)';
-  x.font='600 22px "Space Mono", monospace';x.textAlign='right';
+  x.font='600 22px "Barlow Condensed", sans-serif';x.textAlign='right';
   x.fillText('by Blaž Erčulj',W-M,H-46);
   x.textAlign='left';
   x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 24px "Space Mono", monospace';
+  x.font='600 24px "Barlow Condensed", sans-serif';
   x.fillText(SITE_LABEL,M,H-46);
 }
 
@@ -8442,7 +8516,7 @@ function drawTrend(pid, color){
   if(hasPf&&rdLast.length>0){
     const divX=padL+rdLast.length*(bw+3)-1;
     bars+=`<line x1="${divX}" y1="${padT-4}" x2="${divX}" y2="${padT+chartH}" stroke="rgba(249,115,22,.4)" stroke-width="1" stroke-dasharray="3,2"/>`;
-    bars+=`<text x="${divX+3}" y="${padT-6}" font-size="7" fill="rgba(249,115,22,.7)" font-family="Space Grotesk,sans-serif">KONČNICA</text>`;
+    bars+=`<text x="${divX+3}" y="${padT-6}" font-size="7" fill="rgba(249,115,22,.7)" font-family="Inter,sans-serif">KONČNICA</text>`;
   }
 
   allGames.forEach((g,i)=>{
@@ -8454,7 +8528,7 @@ function drawTrend(pid, color){
 
     bars+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" fill="${col}" rx="2" opacity="${isPf?1:.8}"/>`;
     if(bh>12){
-      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="Space Grotesk,sans-serif" font-weight="600">${g.efe}</text>`;
+      bars+=`<text x="${x+bw/2}" y="${y-2}" font-size="7" text-anchor="middle" fill="${col}" font-family="Inter,sans-serif" font-weight="600">${g.efe}</text>`;
     }
 
     // Label: round for RD, QF/SF/F for playoff
@@ -8466,7 +8540,7 @@ function drawTrend(pid, color){
     } else {
       lbl='K'+g.round;
     }
-    labels+=`<text x="${x+bw/2}" y="${h-6}" font-size="7" text-anchor="middle" fill="${isPf?'rgba(249,115,22,.6)':'rgba(148,163,184,.4)'}" font-family="Space Grotesk,sans-serif">${lbl}</text>`;
+    labels+=`<text x="${x+bw/2}" y="${h-6}" font-size="7" text-anchor="middle" fill="${isPf?'rgba(249,115,22,.6)':'rgba(148,163,184,.4)'}" font-family="Inter,sans-serif">${lbl}</text>`;
 
     bars+=`<rect x="${x}" y="${padT}" width="${bw}" height="${chartH}" fill="transparent" class="trend-hover"
       data-tip="${lbl} | ${g.pts}pts · ${g.reb}sk · ${g.ast}ast · EFE:${g.efe}"
@@ -8475,7 +8549,7 @@ function drawTrend(pid, color){
 
   const zeroY=padT+chartH;
   bars+=`<line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="rgba(255,255,255,.1)" stroke-width="1"/>`;
-  bars+=`<text x="${padL}" y="14" font-size="8" fill="rgba(148,163,184,.5)" font-family="Space Grotesk,sans-serif">EFE po krogu${hasPf?' (RD + Končnica)':' (zadnjih 10)'}</text>`;
+  bars+=`<text x="${padL}" y="14" font-size="8" fill="rgba(148,163,184,.5)" font-family="Inter,sans-serif">EFE po krogu${hasPf?' (RD + Končnica)':' (zadnjih 10)'}</text>`;
 
   return `<div style="position:relative">
     <svg viewBox="0 0 ${w} ${h}" style="width:100%;display:block;overflow:visible">
@@ -8519,13 +8593,13 @@ function drawTrendChart(pid, color, stat){
     [0,0.25,0.5,0.75,1].forEach(f=>{
       const y=padT+ch-f*ch;const v=Math.round(lo+(hi-lo)*f);
       svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/>`;
-      svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+      svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Inter,sans-serif">${v}</text>`;
     });
     // sidro 1500 (povprečje lige)
     if(1500>=lo&&1500<=hi){
       const y15=yAt(1500);
       svg+=`<line x1="${padL}" y1="${y15}" x2="${W-padR}" y2="${y15}" stroke="var(--mut)" stroke-width="1" stroke-dasharray="5,4" opacity=".5"/>`;
-      svg+=`<text x="${W-padR}" y="${y15-4}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">1500 povp.</text>`;
+      svg+=`<text x="${W-padR}" y="${y15-4}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Inter,sans-serif">1500 povp.</text>`;
     }
     // path + area
     let linePath='';
@@ -8595,7 +8669,7 @@ function drawTrendChart(pid, color, stat){
   [0,0.25,0.5,0.75,1].forEach(f=>{
     const y=padT+ch-f*ch;const v=Math.round(maxV*f);
     svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)" stroke-width="1"/>`;
-    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Inter,sans-serif">${v}</text>`;
   });
 
   // Playoff shading
@@ -8603,12 +8677,12 @@ function drawTrendChart(pid, color, stat){
     const px=xAt(firstPfIdx);
     svg+=`<rect x="${px}" y="${padT}" width="${W-padR-px}" height="${ch}" fill="rgba(251,191,36,.05)"/>`;
     svg+=`<line x1="${px}" y1="${padT}" x2="${px}" y2="${padT+ch}" stroke="rgba(251,191,36,.4)" stroke-width="1" stroke-dasharray="4,3"/>`;
-    svg+=`<text x="${px+4}" y="${padT+10}" font-size="8" fill="rgba(251,191,36,.8)" font-family="Space Grotesk,sans-serif">KONČNICA</text>`;
+    svg+=`<text x="${px+4}" y="${padT+10}" font-size="8" fill="rgba(251,191,36,.8)" font-family="Inter,sans-serif">KONČNICA</text>`;
   }
 
   // Avg line
   svg+=`<line x1="${padL}" y1="${avgY}" x2="${W-padR}" y2="${avgY}" stroke="${sm.col}" stroke-width="1" stroke-dasharray="5,4" opacity=".5"/>`;
-  svg+=`<text x="${W-padR}" y="${avgY-4}" font-size="9" fill="${sm.col}" text-anchor="end" font-family="Space Mono,monospace">povp. ${avg.toFixed(1)}</text>`;
+  svg+=`<text x="${W-padR}" y="${avgY-4}" font-size="9" fill="${sm.col}" text-anchor="end" font-family="Inter,sans-serif">povp. ${avg.toFixed(1)}</text>`;
 
   // Area + line
   svg+=`<path d="${areaPath}" fill="url(#${gid})"/>`;
@@ -8659,7 +8733,7 @@ function drawTeamTrend(teamName,color){
   const gid='tt'+Math.random().toString(36).slice(2,6);
   let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block">
     <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.2"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`;
-  [0,0.5,1].forEach(f=>{const y=padT+ch-f*ch;svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/><text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${Math.round(maxV*f)}</text>`;});
+  [0,0.5,1].forEach(f=>{const y=padT+ch-f*ch;svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/><text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Inter,sans-serif">${Math.round(maxV*f)}</text>`;});
   svg+=`<path d="${forPath}L${xAt(n-1)},${padT+ch}L${xAt(0)},${padT+ch}Z" fill="url(#${gid})"/>`;
   svg+=`<path d="${forPath}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round" style="filter:drop-shadow(0 0 4px ${color}66)"/>`;
   svg+=`<path d="${agPath}" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,3" opacity=".7" stroke-linejoin="round"/>`;
@@ -8788,8 +8862,8 @@ function drawRadar(axes,avgVals,color){
   const playerPts=axes.map((ax,i)=>pt(i,delez(ax.val,ax.max)).join(',')).join(' ');
   svg+=`<polygon class="radar-poly" points="${playerPts}" fill="${color}33" stroke="${color}" stroke-width="2.5" style="transform-origin:140px 130px;filter:drop-shadow(0 0 6px ${color}66)"/>`;
   axes.forEach((ax,i)=>{const[x,y]=pt(i,delez(ax.val,ax.max));svg+=`<circle cx="${x}" cy="${y}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="1.5"/>`;});
-  axes.forEach((ax,i)=>{const[x,y]=pt(i,1.22);const anchor=x<cx-5?'end':x>cx+5?'start':'middle';svg+=`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" font-family="DM Sans,sans-serif" fill="#94a3b8" dominant-baseline="middle">${ax.lbl}</text>`;});
-  svg+=`<line x1="10" y1="268" x2="28" y2="268" stroke="${color}" stroke-width="2"/><circle cx="19" cy="268" r="3" fill="${color}"/><text x="32" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Igralec</text><line x1="85" y1="268" x2="103" y2="268" stroke="rgba(148,163,184,.6)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="107" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="DM Sans,sans-serif">Povp. lige</text>`;
+  axes.forEach((ax,i)=>{const[x,y]=pt(i,1.22);const anchor=x<cx-5?'end':x>cx+5?'start':'middle';svg+=`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" font-family="Inter,sans-serif" fill="#94a3b8" dominant-baseline="middle">${ax.lbl}</text>`;});
+  svg+=`<line x1="10" y1="268" x2="28" y2="268" stroke="${color}" stroke-width="2"/><circle cx="19" cy="268" r="3" fill="${color}"/><text x="32" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="Inter,sans-serif">Igralec</text><line x1="85" y1="268" x2="103" y2="268" stroke="rgba(148,163,184,.6)" stroke-width="1.5" stroke-dasharray="4,3"/><text x="107" y="268" font-size="10" fill="#94a3b8" dominant-baseline="middle" font-family="Inter,sans-serif">Povp. lige</text>`;
   svg+=`</svg>`;return svg;
 }
 
@@ -10470,9 +10544,10 @@ function renderPregled(){
   const next=allMatches.filter(m=>m.status!=='FINISHED'&&m.status!=='LIVE'&&m.firstTeamName&&m.secondTeamName&&new Date(m.dateTime)>now)
     .sort((a,b)=>new Date(a.dateTime)-new Date(b.dateTime))[0];
 
-  let html=`<div style="margin-bottom:22px">
-    <div style="font-family:var(--fh);font-weight:800;font-size:1.8rem;letter-spacing:-.01em">Pregled — <span style="color:${lgColor}">${lgName}</span></div>
-    <div style="font-size:.82rem;color:var(--mut);font-family:var(--fm);margin-top:2px">Utrip lige na enem mestu</div>
+  const _krog=Math.max(0,...allMatches.filter(m=>m.status==='FINISHED').map(m=>m.round||0));
+  let html=`<div class="stran-h">
+    <h1>Pregled</h1>
+    <div class="stran-sub">${getLg().name||lgName} · ${typeof _currentSeason==='number'?(_currentSeason+1999)+'/'+String(_currentSeason+2000).slice(-2):''}${_krog?` · ${_krog}. krog`:''}</div>
   </div>`;
 
   // ══ JUNAK: Vodilni za MVP (čez celo širino, fotka + ekipna barva) ══
@@ -10499,16 +10574,16 @@ function renderPregled(){
         <div class="hero-main">
           <div class="hero-top">
             <div class="hero-info">
-              <span class="hero-badge">👑 Vodilni za MVP · ${lgName}</span>
+              <span class="hero-badge">Vodilni za MVP</span>
               <div class="hero-name">${p[F.name]}</div>
-              <div class="hero-meta">${p[F.team]} · ${nTekem(p[F.T])}${beRank?` · #${beRank} bElo`:''}</div>
+              <div class="hero-meta"><i class="ek-pika" style="background:${tc}"></i>${p[F.team]} · ${nTekem(p[F.T])}${beRank?` · #${beRank} bElo`:''}</div>
             </div>
             <div class="hero-card-cta">2K kartica →</div>
           </div>
           <div class="hero-stats">
-            <div class="hero-stat"><span class="hs-v" style="color:${tc}" data-count="${toc}" data-dec="1">0</span><span class="hs-l">Točk</span></div>
-            <div class="hero-stat"><span class="hs-v" data-count="${sk}" data-dec="1">0</span><span class="hs-l">Skokov</span></div>
-            <div class="hero-stat"><span class="hs-v" data-count="${as}" data-dec="1">0</span><span class="hs-l">Asistenc</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${toc}" data-dec="1">0</span><span class="hs-l">točk</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${sk}" data-dec="1">0</span><span class="hs-l">skokov</span></div>
+            <div class="hero-stat"><span class="hs-v" data-count="${as}" data-dec="1">0</span><span class="hs-l">podaj</span></div>
             <div class="hero-stat"><span class="hs-v" data-count="${efe}" data-dec="1">0</span><span class="hs-l">EFE</span></div>
           </div>
         </div>
@@ -10526,16 +10601,16 @@ function renderPregled(){
     const dstr=new Date(next.dateTime).toLocaleDateString('sl',{weekday:'short',day:'numeric',month:'short'});
     const tstr=uraTekme(next.dateTime)||'—';
     html+=`<div class="pregled-card" onclick="showTab('napovedi')" style="--pc:#a855f7">
-      <div class="pregled-card-h">🔮 Naslednja tekma</div>
+      <div class="pregled-card-h">Naslednja tekma</div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">${teamLogoHtml(t1,34)}<span style="font-size:.7rem;font-family:var(--fh);font-weight:600">${TEAM_SHORT[normalizeTeamName(t1)]||t1}</span></div>
-        <div style="text-align:center;padding:0 8px"><div style="font-size:.6875rem;color:var(--mut);font-family:var(--fm)">${dstr}</div><div style="font-family:var(--fh);font-weight:700;color:var(--mut)">${tstr}</div></div>
+        <div style="text-align:center;padding:0 8px"><div style="font-size:.6875rem;color:var(--mut);font-family:var(--fm)">${dstr}</div><div style="font-family:var(--fd);font-weight:700;font-size:1.5rem;line-height:1;margin-top:2px">${tstr}</div></div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;flex:1">${teamLogoHtml(t2,34)}<span style="font-size:.7rem;font-family:var(--fh);font-weight:600">${TEAM_SHORT[normalizeTeamName(t2)]||t2}</span></div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-family:var(--fs);font-weight:800;color:${c1};min-width:38px">${pr.p1}%</span>
-        <div style="flex:1;height:7px;border-radius:4px;overflow:hidden;display:flex;background:rgba(255,255,255,.05)"><div style="width:${pr.p1}%;background:${c1}"></div><div style="width:${pr.p2}%;background:${c2}"></div></div>
-        <span style="font-family:var(--fs);font-weight:800;color:${c2};min-width:38px;text-align:right">${pr.p2}%</span>
+        <span class="verj-st">${pr.p1} %</span>
+        <div class="verj-tr"><div style="width:${pr.p1}%;background:${lgColor}"></div><div style="width:${pr.p2}%;background:var(--border2)"></div></div>
+        <span class="verj-st" style="color:var(--sub);text-align:right">${pr.p2} %</span>
       </div>
     </div>`;
   }
@@ -10543,17 +10618,17 @@ function renderPregled(){
   // ── Kartica: Power top 3 ──
   if(power.length){
     let rows=power.map((t,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0${i<power.length-1?';border-bottom:1px solid var(--border)':''}">
-      <span style="font-family:var(--fh);font-weight:800;color:${i===0?'#fbbf24':'var(--mut)'};min-width:18px">${i===0?'👑':i+1}</span>
+      <span class="rang${i===0?' prvi':''}">${i+1}</span>
       ${teamLogoHtml(t.team,26)}
       <span style="flex:1;font-family:var(--fh);font-weight:600;font-size:.86rem;min-width:0">${t.team}</span>
-      <span style="font-family:var(--fs);font-weight:800;color:${ovrColor(Math.round(t.power))}">${t.power}</span>
+      <span class="vr">${t.power}</span>
     </div>`).join('');
     html+=`<div class="pregled-card" onclick="showTab('power')" style="--pc:#10b981">
-      <div class="pregled-card-h">⚡ Najmočnejše ekipe</div>${rows}
+      <div class="pregled-card-h">Najmočnejše ekipe</div>${rows}
     </div>`;
   } else if(!_hasFull){
     html+=`<div class="pregled-card" style="--pc:#10b981">
-      <div class="pregled-card-h">⚡ Najmočnejše ekipe</div>
+      <div class="pregled-card-h">Najmočnejše ekipe</div>
       ${[0,1,2].map(()=>'<div class="skeleton" style="height:20px;border-radius:6px;margin:8px 0"></div>').join('')}
     </div>`;
   }
@@ -10563,18 +10638,18 @@ function renderPregled(){
     let rows=beTop.map((x,i)=>{
       const pIdx=P.findIndex(z=>z[F.pid]===x.pid);
       return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0${i<beTop.length-1?';border-bottom:1px solid var(--border)':''}" onclick="event.stopPropagation();showPlayer(${pIdx})">
-        <span style="font-family:var(--fh);font-weight:800;color:${i===0?'#fbbf24':'var(--mut)'};min-width:18px">${i+1}</span>
+        <span class="rang${i===0?' prvi':''}">${i+1}</span>
         ${teamLogoHtml(x.team,26)}
         <span style="flex:1;font-family:var(--fh);font-weight:600;font-size:.86rem;min-width:0">${x.name}</span>
-        <span style="font-family:var(--fs);font-weight:800;color:#fbbf24">${x.be}</span>
+        <span class="vr">${x.be}</span>
       </div>`;
     }).join('');
     html+=`<div class="pregled-card" onclick="showTab('belo')" style="--pc:#fbbf24">
-      <div class="pregled-card-h">★ Najmočnejši igralci (bElo)</div>${rows}
+      <div class="pregled-card-h">Najmočnejši igralci <span>bElo</span></div>${rows}
     </div>`;
   } else if(!_hasFull){
     html+=`<div class="pregled-card" style="--pc:#fbbf24">
-      <div class="pregled-card-h">★ Najmočnejši igralci (bElo)</div>
+      <div class="pregled-card-h">Najmočnejši igralci <span>bElo</span></div>
       ${[0,1,2].map(()=>'<div class="skeleton" style="height:20px;border-radius:6px;margin:8px 0"></div>').join('')}
     </div>`;
   }
@@ -10601,8 +10676,8 @@ function renderPregled(){
       const tc=TEAM_COLORS[p[F.team]]||L.col;
       const av=ph?`<img src="${ph}" class="pstat-img" onerror="_ppPhotoErr(this,'${ini}',38)">`:`<div class="pstat-fb" style="background:${tc}33;color:${tc}">${ini}</div>`;
       html+=`<div class="pregled-stat" onclick="showPlayer(${pIdx})" style="--pc:${L.col}">
-        <div class="pstat-top"><span class="pstat-ic" style="color:${L.col}"><svg class="ic" style="width:15px;height:15px"><use href="#i-${L.ik}"/></svg></span><span class="pstat-lab">${L.lab}</span><span style="margin-left:auto;font-size:.6875rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">${izTekem(p[F.T])}</span></div>
-        <div class="pstat-val" style="color:${L.col}" data-count="${L.fmt(L.get.v)}" data-dec="1">0</div>
+        <div class="pstat-top"><span class="pstat-ic"><svg class="ic" style="width:15px;height:15px"><use href="#i-${L.ik}"/></svg></span><span class="pstat-lab">${L.lab}</span><span style="margin-left:auto;font-size:.6875rem;color:var(--mut);font-family:var(--fm);white-space:nowrap">${izTekem(p[F.T])}</span></div>
+        <div class="pstat-val" data-count="${L.fmt(L.get.v)}" data-dec="1">0</div>
         <div class="pstat-pl">${av}<span class="pstat-name"><span class="nm-full">${p[F.name]}</span><span class="nm-short">${kratkoIme(p[F.name])}</span></span></div>
       </div>`;
     });
@@ -10657,7 +10732,7 @@ function drawTeamEloChart(topTeams){
   [0,0.25,0.5,0.75,1].forEach(f=>{
     const y=padT+ch-f*ch, v=Math.round(lo+(hi-lo)*f);
     svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="rgba(255,255,255,.05)"/>`;
-    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Space Mono,monospace">${v}</text>`;
+    svg+=`<text x="${padL-6}" y="${y+3}" font-size="9" fill="var(--mut)" text-anchor="end" font-family="Inter,sans-serif">${v}</text>`;
   });
   // sidro 1500
   if(1500>=lo&&1500<=hi){const y=yAt(1500);svg+=`<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="var(--mut)" stroke-dasharray="5,4" opacity=".4"/>`;}
@@ -10671,7 +10746,7 @@ function drawTeamEloChart(topTeams){
   });
   // x os oznake (krogi)
   [0,Math.floor((maxN-1)/2),maxN-1].forEach(i=>{
-    svg+=`<text x="${xAt(i)}" y="${H-padB+18}" font-size="9" fill="var(--mut)" text-anchor="middle" font-family="Space Mono,monospace">K${i+1}</text>`;
+    svg+=`<text x="${xAt(i)}" y="${H-padB+18}" font-size="9" fill="var(--mut)" text-anchor="middle" font-family="Inter,sans-serif">K${i+1}</text>`;
   });
   svg+='</svg>';
   // legenda
@@ -11918,7 +11993,7 @@ function drawRaceChart(){
         stroke-width="${isNow?1.5:1}"/>`;
       svg+=`<text x="${x}" y="${H-6}" text-anchor="middle"
         fill="${isNow?'rgba(249,115,22,.7)':'rgba(255,255,255,.2)'}"
-        font-size="10" font-family="Space Grotesk,sans-serif"
+        font-size="10" font-family="Inter,sans-serif"
         font-weight="${isNow?700:400}">K${r}</text>`;
     }
   }
@@ -11927,7 +12002,7 @@ function drawRaceChart(){
   for(let p=1;p<=Math.min(nTeams,10);p++){
     svg+=`<text x="${PAD.l-6}" y="${yP(p)+4}" text-anchor="end"
       fill="rgba(255,255,255,.18)" font-size="10"
-      font-family="Space Grotesk,sans-serif">${p}</text>`;
+      font-family="Inter,sans-serif">${p}</text>`;
   }
 
   // Full lines (all rounds) + moving dot
@@ -11961,15 +12036,15 @@ function drawRaceChart(){
       const lu=teamLogoUrl(team);
       if(lu){
         svg+=`<image href="${lu}" x="${cx+10}" y="${cy-11}" width="22" height="22" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))"/>`;
-        svg+=`<text x="${cx+36}" y="${cy+4}" fill="${color}" font-size="11" font-family="Space Grotesk,sans-serif" font-weight="700">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+        svg+=`<text x="${cx+36}" y="${cy+4}" fill="${color}" font-size="11" font-family="Inter,sans-serif" font-weight="700">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
       } else {
-        svg+=`<text x="${cx+12}" y="${cy+4}" fill="${color}" font-size="11" font-family="Space Grotesk,sans-serif" font-weight="700">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
+        svg+=`<text x="${cx+12}" y="${cy+4}" fill="${color}" font-size="11" font-family="Inter,sans-serif" font-weight="700">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
       }
     } else {
       // End label
       const last=data[data.length-1];
       svg+=`<text x="${xR(last.round)+10}" y="${yP(last.pos)+4}" fill="${color}"
-        font-size="11" font-family="Space Grotesk,sans-serif"
+        font-size="11" font-family="Inter,sans-serif"
         font-weight="600" opacity="0.5">${TEAM_SHORT[team]||team.split(' ').slice(-1)[0]}</text>`;
     }
   });
