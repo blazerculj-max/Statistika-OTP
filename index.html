@@ -6561,6 +6561,66 @@ function _isExcludedTeam(name){
   const n=normalizeTeamName(name||'');
   return n==='Cedevita Olimpija';
 }
+// ═══ OVR za 2K kartico ═══
+// Prej: OVR = preslikava bElo. bElo po treh kolih komaj zapusti 1500 (razpon vseh
+// igralcev 71-81, korelacija z Game Score 0,58), ob porazu pa nosilca kaznuje
+// bolj kot rezervista — Zuher (7 min, 4 tocke) je imel 75, Orel (31 min, 16
+// tock) 73. Zdaj OVR iz igre same:
+//   kakovost q = 0,60 x percentil(Game Score/tekmo) + 0,25 x percentil(GS na 36 min)
+//              + 0,15 x percentil(minute/tekmo)          (3. SKL: le GS/tekmo)
+//   letos z lansko sezono (ista liga, vsaj 5 tekem):  q = (G*q_letos + 4*q_lani) / (G + 4)
+//   brez lanske:                                      q = (G*q_letos + 2*0,5)   / (G + 2)
+//     -> lanska igra steje toliko kot 4 letosnje tekme in z vsako tekmo manj;
+//        novinec se na zacetku pomakne proti sredini, ker o njem vemo malo.
+//   OVR = spodaj + (zgoraj - spodaj) x q^1,3   v razponu lige (1. SKL 58-95 ...)
+// Lanske ocene: data/ovr_prior.json (scripts/ovr_prior.py, ista formula).
+const OVR_RAZPON={liga1:[58,95],liga2:[52,84],liga3:[45,72]};
+var _ovrPrior=null, _ovrPriorObljuba=null, _ovrKak=null;
+function naloziOvrPrior(){
+  if(_ovrPrior) return Promise.resolve(_ovrPrior);
+  if(!_ovrPriorObljuba) _ovrPriorObljuba=fetch(GITHUB_RAW+'/ovr_prior.json')
+    .then(r=>r.ok?r.json():null).catch(()=>null)
+    .then(d=>(_ovrPrior=d||{lige:{}}));
+  return _ovrPriorObljuba;
+}
+function _ovrPercentil(vals){
+  const s=[...vals].sort((a,b)=>a-b), n=s.length, m=new Map();
+  s.forEach(v=>{ if(m.has(v))return; let manj=0,enako=0; for(const x of s){ if(x<v)manj++; else if(x===v)enako++; } m.set(v,(manj+(enako-1)/2)/Math.max(n-1,1)); });
+  return v=>m.get(v);
+}
+function _ovrKakovost(){
+  const LP=getLeaguePlayers();
+  if(_ovrKak&&_ovrKak.LP===LP) return _ovrKak.q;
+  const igr=LP.filter(p=>p[F.T]>0);
+  const gs=p=>gameScore({pts:p[F.toc],fgm:p[F.fg2m]+p[F.fg3m],fga:p[F.fg2a]+p[F.fg3a],ftm:p[F.ftm],fta:p[F.fta],
+    orb:p[F.nap],drb:p[F.obr],stl:p[F.sto],ast:p[F.pod],blk:p[F.blk],pf:p[F.pz],tov:p[F.izg]});
+  const gsPG=new Map(igr.map(p=>[p,gs(p)/p[F.T]]));
+  const pGs=_ovrPercentil([...gsPG.values()]);
+  const q=new Map();
+  if(leagueHasFullStats()){
+    const minPG=new Map(igr.map(p=>[p,p[F.MIN]/p[F.T]]));
+    const g36=new Map(igr.filter(p=>p[F.MIN]>=40).map(p=>[p,gs(p)/p[F.MIN]*36]));
+    const pMin=_ovrPercentil([...minPG.values()]), p36=_ovrPercentil([...g36.values()]);
+    igr.forEach(p=>{
+      const uc=g36.has(p)?p36(g36.get(p)):pGs(gsPG.get(p));
+      q.set(p[F.pid], 0.60*pGs(gsPG.get(p)) + 0.25*uc + 0.15*pMin(minPG.get(p)));
+    });
+  } else igr.forEach(p=>q.set(p[F.pid], pGs(gsPG.get(p))));
+  _ovrKak={LP,q};
+  return q;
+}
+function izracunajOVR(p){
+  const qLetos=_ovrKakovost().get(p[F.pid]);
+  if(qLetos==null) return null;
+  const G=p[F.T];
+  const lani=(_ovrPrior&&_ovrPrior.sezona===_currentSeason-1)?(((_ovrPrior.lige||{})[currentLeague]||{})[p[F.pid]]||null):null;
+  const imaLani=lani&&lani.t>=5;
+  const k=imaLani?4:2, qp=imaLani?lani.q:0.5;
+  const q=(G*qLetos+k*qp)/(G+k);
+  const [lo,hi]=OVR_RAZPON[currentLeague]||OVR_RAZPON.liga1;
+  return {ovr:Math.round(lo+(hi-lo)*Math.pow(q,1.3)), qLetos, qLani:imaLani?lani.q:null, utezLetos:G/(G+k)};
+}
+
 function bEloToOvr(be){
   if(be==null)return null;
   const cfg=LEAGUE_OVR_CFG[currentLeague]||LEAGUE_OVR_CFG.liga1;
@@ -6672,7 +6732,7 @@ function ovrColor(ovr){
   return ovr>=90?TIER_COLORS.elita:ovr>=82?TIER_COLORS.odlicen:ovr>=74?TIER_COLORS.dober:ovr>=66?TIER_COLORS.povprecen:TIER_COLORS.pod;
 }
 
-function open2KCard(pIdx){
+async function open2KCard(pIdx){
   const p=P[pIdx];
   if(!p)return;
   if(_isExcludedTeam(p[F.team])){toast('Cedevita Olimpija igra le končnico — premalo podatkov za 2K kartico','🏀');return;}
@@ -6686,13 +6746,17 @@ function open2KCard(pIdx){
   }});
   const teamLabel=[...teams].join(' / ');
   const be=computeBElo().ratings[merged[F.pid]];
-  const ovr=bEloToOvr(be)||60;
+  await naloziOvrPrior();
+  const _o=izracunajOVR(merged)||{ovr:bEloToOvr(be)||60};
+  const ovr=_o.ovr;
+  // podnapis pod OVR: od kod je ocena (letos / letos + lani)
+  const ovrVir=_o.qLani!=null?`letos ${Math.round(_o.utezLetos*100)} % · lani ${100-Math.round(_o.utezLetos*100)} %`:izTekem(merged[F.T]);
   const attrs=computePlayerAttributes(merged);
   const badges=computeBadges(merged,attrs);
   const t=Math.max(merged[F.T],1);
   draw2KCard({
     name:merged[F.name], team:teamLabel, born:merged[F.born], games:merged[F.T],
-    ovr, be, attrs, badges,
+    ovr, be, ovrVir, attrs, badges,
     pts:merged[F.toc]/t, reb:(merged[F.nap]+merged[F.obr])/t, ast:merged[F.pod]/t,
     color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
     logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0]),
@@ -6734,7 +6798,7 @@ async function draw2KCard(d){
   // bElo pod OVR
   x.fillStyle='rgba(255,255,255,.5)';
   x.font='600 26px "Barlow Condensed", sans-serif';
-  x.fillText('bElo '+(d.be||'—'), 150, 258);
+  x.fillText(d.ovrVir||('bElo '+(d.be||'—')), 150, 258);
 
   // ── Foto igralca desno zgoraj ──
   const photoSize=340, pcx=W-photoSize/2-70, pcy=photoSize/2+70;
@@ -6843,7 +6907,7 @@ async function draw2KCard(d){
   x.fillStyle='rgba(255,255,255,.35)';
   x.textAlign='left';
   x.font='600 24px "Barlow Condensed", sans-serif';
-  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · bElo OVERALL',56,H-80);
+  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel()+' · OVR IZ IGRE',56,H-80);
   x.textAlign='right';
   x.fillStyle=col;
   x.fillText('by Blaž Erčulj',W-56,H-80);

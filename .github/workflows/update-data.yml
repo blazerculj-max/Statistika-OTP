@@ -91,6 +91,14 @@ jobs:
         run: python scripts/backtest_napovedi.py
         continue-on-error: true
 
+      # ── Lanska kakovost igralcev za OVR na 2K kartici ──
+      # Bere arhiv prejsnje sezone (se ne spreminja), zato je hitro; ob menjavi
+      # sezone samodejno vzame novo prejsnjo sezono iz seasons.json.
+      - name: OVR izhodisce iz lanske sezone
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: python scripts/ovr_prior.py
+        continue-on-error: true
+
       # ── Sestavi (prijavljeni igralci) ──
       # Klubi prijavljajo igralce postopoma, zato osvezujemo ob vsakem zagonu.
       # Tece PRED prenosom slik: rosters.json prinese photoUuid tudi za igralce,
