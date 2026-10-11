@@ -2415,6 +2415,13 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .mo-tab{background:transparent;border:none;color:var(--sub);font-family:var(--fm);font-size:.8rem;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer}
 .mo-tab:hover{color:var(--text)}
 .mo-tab.active{background:var(--text);color:var(--bg)}
+
+/* 2) Kartica za deljenje: nikoli visja od okna (prej odrezana, gumbi cez sliko) */
+#share-canvas{max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);width:auto!important;max-width:100%}
+/* 5) Pregled: liho stevilo kartic — zadnja cez celo sirino, brez praznega mesta */
+@media(min-width:769px){.pregled-grid>:last-child:nth-child(odd){grid-column:1/-1}}
+.live-section-title{font-family:var(--fd)!important;font-weight:700;font-size:1.3rem!important;text-transform:uppercase;letter-spacing:.01em!important;color:var(--text)!important}
+.live-section-title[style*="#ef4444"]{color:#ef4444!important}
 </style>
 </head>
 <body>
@@ -6624,7 +6631,9 @@ function open2KCard(pIdx){
   const p=P[pIdx];
   if(!p)return;
   if(_isExcludedTeam(p[F.team])){toast('Cedevita Olimpija igra le končnico — premalo podatkov za 2K kartico','🏀');return;}
-  if(P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<5){toast('Premalo tekem za zanesljivo 2K kartico (min. 5)','🃏');return;}
+  // Prag sledi sezoni (prej fiksno 5 — po treh kolih kartice ni imel nihce).
+  const _min2k=pragTekem(5);
+  if(P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<_min2k){toast(`Premalo tekem za 2K kartico (najmanj ${_min2k})`,'ⓘ');return;}
   let merged=[...p]; const teams=new Set([p[F.team]]);
   P.forEach(x=>{ if(x!==p && x[F.pid]===p[F.pid]){
     teams.add(x[F.team]);
@@ -6732,13 +6741,16 @@ async function draw2KCard(d){
     ['MET',d.attrs.met],['RAKETA',d.attrs.napad],['PODAJA',d.attrs.podaja],
     ['SKOK',d.attrs.skok],['OBRAMBA',d.attrs.obramba],['EFEKT',d.attrs.efekt]
   ];
-  let ay=ny+170;
+  // Ime v dveh vrsticah (vecina tujih igralcev) je potisnilo sest vrstic
+  // atributov navzdol in zadnja (EFEKT) je trcila v nogo pri H-80. Vrstice so
+  // zdaj gostejse in se vedno koncajo nad nogo.
+  const rowH=l2?56:62;
+  let ay=Math.min(ny+(l2?150:170), H-140-(attrList.length-1)*rowH);
   const colL=56;               // začetek labela
   const barStart=colL+220;     // bar se začne za labelom (fiksno, da je poravnan)
   const barEnd=540;            // bar konec
   const valX=620;              // desni rob za vrednost (desno poravnano)
   const barWidth=barEnd-barStart;
-  const rowH=62;
   attrList.forEach(([lbl,val])=>{
     const c=ovrColor(val);
     const cy=ay;               // navpična sredina vrstice — vse poravnano nanjo
@@ -8580,11 +8592,11 @@ function showPlayer(idx){
       </div>
       <div class="pp-hero-actions">
         <div class="pp-hero-share" onclick="openShareCard(${idx})">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v14"/></svg>
           Deli
         </div>
-        ${(_isExcludedTeam(p[F.team])||P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<5)?'':`<div class="pp-hero-share pp-hero-share-2k" onclick="open2KCard(${idx})">
-          🃏 2K kartica
+        ${(_isExcludedTeam(p[F.team])||P.filter(x=>x[F.pid]===p[F.pid]).reduce((s,x)=>s+x[F.T],0)<pragTekem(5))?'':`<div class="pp-hero-share pp-hero-share-2k" onclick="open2KCard(${idx})">
+          2K kartica
         </div>`}
       </div>
     </div>
@@ -9390,7 +9402,7 @@ function renderLiveTab() {
 
   // TODAY section
   if(todayMatches.length) {
-    html += `<div class="live-section-title" style="color:var(--acc)">Danes</div>`;
+    html += `<div class="sec-head">Danes</div>`;
     html += `<div class="live-container" style="margin-bottom:24px">`;
     html += todayMatches.map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -9407,7 +9419,7 @@ function renderLiveTab() {
 
   // RECENT section
   if(recentMatches.length) {
-    html += `<div class="live-section-title" style="color:var(--sub)">Zadnji rezultati</div>`;
+    html += `<div class="sec-head">Zadnji rezultati</div>`;
     html += `<div class="live-container" style="margin-bottom:24px">`;
     html += recentMatches.slice(0,6).map(m => buildLiveCard(m, lgKey)).join('');
     html += `</div>`;
@@ -10916,7 +10928,7 @@ function renderPregled(){
               <div class="hero-name">${p[F.name]}</div>
               <div class="hero-meta"><i class="ek-pika" style="background:${tc}"></i>${p[F.team]} · ${nTekem(p[F.T])}${beRank?` · #${beRank} bElo`:''}</div>
             </div>
-            <div class="hero-card-cta">2K kartica →</div>
+            <div class="hero-card-cta" onclick="event.stopPropagation();open2KCard(${pIdx})">2K kartica →</div>
           </div>
           <div class="hero-stats">
             <div class="hero-stat"><span class="hs-v" data-count="${toc}" data-dec="1">0</span><span class="hs-l">točk</span></div>
@@ -11505,8 +11517,13 @@ function renderH2HTab(){
   // Vedno dejanske ekipe iz odigranih tekem (najbolj zanesljivo)
   const teams=[...new Set(allMatches.filter(m=>m.firstTeamName&&m.secondTeamName).flatMap(m=>[m.firstTeamName,m.secondTeamName]))].sort();
   if(!teams.length){wrap.innerHTML='<div class="empty">Ni ekip</div>';return;}
-  if(!_h2hA||!teams.includes(_h2hA))_h2hA=teams[0];
-  if(!_h2hB||!teams.includes(_h2hB))_h2hB=teams[1]||teams[0];
+  // Privzeto par zadnje odigrane tekme — prej prvi dve ekipi po abecedi, ki se
+  // praviloma se nista srecali, zato je zavihek vedno odprl prazno stanje.
+  if(!_h2hA||!teams.includes(_h2hA)||!_h2hB||!teams.includes(_h2hB)){
+    const zadnja=allMatches.filter(m=>m.status==='FINISHED').sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime))[0];
+    if(zadnja){_h2hA=zadnja.firstTeamName;_h2hB=zadnja.secondTeamName;}
+    else{_h2hA=teams[0];_h2hB=teams[1]||teams[0];}
+  }
 
   const opt=(sel)=>teams.map(t=>`<option value="${t}" ${t===sel?'selected':''}>${t}</option>`).join('');
 
