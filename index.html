@@ -2422,6 +2422,11 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 @media(min-width:769px){.pregled-grid>:last-child:nth-child(odd){grid-column:1/-1}}
 .live-section-title{font-family:var(--fd)!important;font-weight:700;font-size:1.3rem!important;text-transform:uppercase;letter-spacing:.01em!important;color:var(--text)!important}
 .live-section-title[style*="#ef4444"]{color:#ef4444!important}
+
+/* Gumb "Peterka kola" ob naslovu razdelka */
+.vrsta-h{display:flex!important;align-items:center;justify-content:space-between;gap:12px}
+.peterka-btn{font-family:var(--fm);font-size:.8rem;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text);background:transparent;border:1px solid var(--border2);border-radius:999px;padding:6px 14px;cursor:pointer;flex-shrink:0}
+.peterka-btn:hover{background:var(--card2)}
 </style>
 </head>
 <body>
@@ -2515,8 +2520,8 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
   <div class="rc-modal">
     <div class="rc-controls">
       <div class="rc-format-toggle">
-        <button id="rc-fmt-post" class="rc-fmt active" onclick="setRoundCardFormat('post')">Post (1:1)</button>
-        <button id="rc-fmt-story" class="rc-fmt" onclick="setRoundCardFormat('story')">Story (9:16)</button>
+        <button id="rc-fmt-post" class="rc-fmt active" onclick="setRoundCardFormat('post')">Objava (1:1)</button>
+        <button id="rc-fmt-story" class="rc-fmt" onclick="setRoundCardFormat('story')">Zgodba (9:16)</button>
       </div>
       <select id="rc-round-sel" onchange="renderRoundCard()"></select>
     </div>
@@ -7144,8 +7149,10 @@ async function _loadImg(input, opts){
     const wsrvEnh='https://wsrv.nl/?url='+encodeURIComponent(bare)+enh;
     const weservEnh='https://images.weserv.nl/?url='+encodeURIComponent(bare)+enh;
     if(W){
-      // Kakovost pomembna (kartice): najprej vecja/ostrejsa wsrv verzija, local kot rezerva
-      sources=[wsrvEnh, weservEnh, input.local, input.remote,
+      // Najprej lastna kopija (data/images, isti izvor): wsrv/weserv za fotografije
+      // KZS vracata 404 (preverjeno 11.10.2026), zato je kartica vsakic najprej
+      // cakala na dva neuspela poskusa.
+      sources=[input.local, wsrvEnh, weservEnh, input.remote,
         'https://corsproxy.io/?url='+encodeURIComponent(input.remote||'')].filter(Boolean);
     }else{
       // Navaden prikaz: local first (hitro, same-origin)
@@ -7193,6 +7200,11 @@ function setRoundCardFormat(fmt){
   renderRoundCard();
 }
 
+// ═══ PETERKA KOLA (kartica za Instagram) ═══
+// Smer A: temno ozadje, ozka pisava, ena poudarna barva. MVP kola velik s
+// fotografijo, rezultatom in statistiko; pod njim stirje naslednji. Razvrstitev
+// = Game Score tekme (+10 % za zmago), enako kot MVP kola na strani.
+// Prej: rjav preliv, MVP v modrem okvirju in isti igralec se enkrat kot "1.".
 async function renderRoundCard(){
   const sel=document.getElementById('rc-round-sel');
   const val=sel.value;
@@ -7204,270 +7216,149 @@ async function renderRoundCard(){
   cv.width=W;cv.height=H;
   const x=cv.getContext('2d');
   x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
-  const acc=isPlayoff?'#fbbf24':'#f97316';
+  try{ await document.fonts.load('700 64px "Barlow Condensed"'); await document.fonts.load('600 28px "Inter"'); }catch(e){}
+  const ACC=currentLeague==='liga2'?'#3b82f6':currentLeague==='liga3'?'#a855f7':'#f97316';
+  const BG='#0a0a0c', KART='#141417', TXT='#f4f4f5', SUB='#a1a1aa', MUT='#8b8b94';
+  const FD='"Barlow Condensed", sans-serif', FI='"Inter", sans-serif';
+  const polna=leagueHasFullStats();
 
-  // ── Gather data ──
-  let roundMatches, mvps, title, subtitle;
+  // ── Podatki ──
+  let ekipa=[], naslov, krogTxt;
   if(isPlayoff){
-    roundMatches=allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName===_rcRound);
-    title=_rcRound.toUpperCase();
-    subtitle='KONČNICA';
-    // MVP of this phase
-    const phaseScores=[];
-    P.forEach(p=>{
-      const log=playerGameLog[p[F.pid]];if(!log)return;
-      const pgs=log.filter(g=>roundMatches.some(m=>m.id===g.matchId));
-      if(!pgs.length)return;
-      const avgPts=pgs.reduce((s,g)=>s+g.pts,0)/pgs.length;
-      const avgReb=pgs.reduce((s,g)=>s+g.reb,0)/pgs.length;
-      const avgAst=pgs.reduce((s,g)=>s+g.ast,0)/pgs.length;
-      const avgEfe=pgs.reduce((s,g)=>s+g.efe,0)/pgs.length;
-      const sc=avgPts+avgReb*0.7+avgAst*0.8+avgEfe*0.3;
-      phaseScores.push({p,s:sc,game:{pts:Math.round(avgPts),reb:Math.round(avgReb),ast:Math.round(avgAst),efe:Math.round(avgEfe)}});
+    const roundMatches=allMatches.filter(m=>m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName===_rcRound);
+    const ids=new Set(roundMatches.map(m=>m.id)), videni=new Set(), sc=[];
+    P.forEach((p,pi)=>{
+      if(videni.has(p[F.pid]))return; videni.add(p[F.pid]);
+      const pgs=(playerGameLog[p[F.pid]]||[]).filter(g=>ids.has(g.matchId)); if(!pgs.length)return;
+      const avg=k=>pgs.reduce((s,g)=>s+(g[k]||0),0)/pgs.length;
+      const gs=gameScore({pts:avg('pts'),fgm:avg('fgm'),fga:avg('fga'),ftm:avg('ftm'),fta:avg('fta'),orb:avg('orb'),drb:avg('drb'),stl:avg('stl'),ast:avg('ast'),blk:avg('blk'),pf:avg('pf'),tov:avg('tov')});
+      sc.push({p,pi,s:gs,game:{pts:Math.round(avg('pts')),reb:Math.round(avg('reb')),ast:Math.round(avg('ast')),efe:Math.round(avg('efe')),team:pgs[0].team,matchId:null},povp:pgs.length});
     });
-    mvps=phaseScores.sort((a,b)=>b.s-a.s).slice(0,3);
+    ekipa=sc.sort((a,b)=>b.s-a.s).slice(0,5);
+    naslov=['PETERKA',_rcRound.toUpperCase()]; krogTxt='končnica';
   }else{
-    roundMatches=allMatches.filter(m=>m.round===_rcRound&&m.status==='FINISHED'&&m.competitions?.[0]?.competitionPhaseName==='Redni del');
-    mvps=getMvpByRound(_rcRound)||[];
-    title='KROG '+_rcRound;
-    subtitle=getLg().name.toUpperCase();
+    ekipa=getMvpByRound(_rcRound,5)||[];
+    naslov=['PETERKA',`${_rcRound}. KROGA`]; krogTxt=`${_rcRound}. krog`;
   }
-  const mvp=mvps[0];
+  const izid=g=>{
+    if(!g||!g.matchId)return null;
+    const m=allMatches.find(z=>z.id===g.matchId); if(!m)return null;
+    const doma=m.firstTeamName===g.team;
+    const a=doma?m.firstTeamScore:m.secondTeamScore, b=doma?m.secondTeamScore:m.firstTeamScore;
+    const nasp=doma?m.secondTeamName:m.firstTeamName;
+    return {zmaga:a>b, txt:`${a}:${b} proti ${TEAM_SHORT[nasp]||nasp}`};
+  };
+  const stat=g=>polna
+    ? [[g.pts,'točk'],[g.reb,'skokov'],[g.ast,'podaj'],[Math.round(g.efe),'EFE']]
+    : [[g.pts,'točk']];
 
-  // Top 3 igralci po EFEKTIVNOSTI (MVP + 2). 'mvps' je ze sortiran po EFE score (getMvpByRound / phase).
-  // Vsak ima svoj game (pts/reb/ast/efe) za prikaz.
-  const top3=mvps.slice(0,3);
-
-  // Biggest win
-  let bigWin=null,bigDiff=0;
-  roundMatches.forEach(m=>{
-    const d=Math.abs((m.firstTeamScore||0)-(m.secondTeamScore||0));
-    if(d>bigDiff){bigDiff=d;bigWin=m;}
-  });
-
-  // Standings (redni del only)
-  const standings=[];
-  if(!isPlayoff&&typeof raceData!=='undefined'){
-    Object.entries(raceData).forEach(([team,data])=>{
-      const d=data.find(z=>z.round===_rcRound);
-      if(d)standings.push({team,pos:d.pos,pts:d.pts});
-    });
-    standings.sort((a,b)=>a.pos-b.pos);
-  }
-
-  // ══ BACKGROUND — modern IG vibe ══
-  x.fillStyle='#070710';x.fillRect(0,0,W,H);
-  // Large diagonal accent shapes
-  const g1=x.createLinearGradient(0,0,W,H*0.5);
-  g1.addColorStop(0,_shade(acc,-55));g1.addColorStop(1,'transparent');
-  x.fillStyle=g1;x.fillRect(0,0,W,H);
-  // Radial glow
-  const rg=x.createRadialGradient(W*0.85,H*0.08,0,W*0.85,H*0.08,W*0.7);
-  rg.addColorStop(0,acc+'22');rg.addColorStop(1,'transparent');
-  x.fillStyle=rg;x.fillRect(0,0,W,H);
-  // Bottom subtle
-  const g2=x.createLinearGradient(0,H,0,H*0.6);
-  g2.addColorStop(0,_shade(acc,-70)+'cc');g2.addColorStop(1,'transparent');
-  x.fillStyle=g2;x.fillRect(0,0,W,H);
-  // Mesh dots pattern (subtle)
-  x.fillStyle='rgba(255,255,255,.025)';
-  for(let py=0;py<H;py+=44)for(let px=0;px<W;px+=44){x.beginPath();x.arc(px,py,1.4,0,Math.PI*2);x.fill();}
-
-  const M=70; // margin
-
-  // ══ HEADER ══
-  x.textAlign='left';
-  x.fillStyle=acc;
-  x.font='700 26px "Barlow Condensed", sans-serif';
-  x.fillText(subtitle+' · '+seasonLabel(),M,95);
-  x.fillStyle='#fff';
-  x.font='800 '+(isPlayoff&&title.length>10?78:96)+'px "Inter", sans-serif';
-  x.fillText(title,M-2,185);
-  // accent underline
-  const tw=x.measureText(title).width;
-  x.fillStyle=acc;_roundRect(x,M,205,Math.min(tw,W-2*M),7,4);x.fill();
-
-  let y=isStory?300:265;
-
-  // ══ MVP HERO CARD ══
-  if(mvp){
-    const p=mvp.p,gm=mvp.game,tm=p[F.team];
-    const col=TEAM_COLORS[(tm||'').split(' / ')[0]]||acc;
-    const cardH=isStory?460:330;
-    // gradient card
-    x.save();
-    const cg=x.createLinearGradient(M,y,W-M,y+cardH);
-    cg.addColorStop(0,col);cg.addColorStop(1,_shade(col,-50));
-    _roundRect(x,M,y,W-2*M,cardH,28);x.fillStyle=cg;x.fill();
-    // glossy overlay
-    const gloss=x.createLinearGradient(M,y,M,y+cardH*0.5);
-    gloss.addColorStop(0,'rgba(255,255,255,.12)');gloss.addColorStop(1,'transparent');
-    x.fillStyle=gloss;_roundRect(x,M,y,W-2*M,cardH,28);x.fill();
-    x.restore();
-    // decorative circle
-    x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
-    x.globalAlpha=0.1;x.fillStyle='#fff';x.beginPath();x.arc(W-M-100,y+60,200,0,Math.PI*2);x.fill();x.restore();
-    // Large team logo watermark (CGP — clearly marks the player's club)
-    const wmLogo=await _loadImg(teamLogoLocal(tm),{w:500});
-    if(wmLogo){
-      x.save();x.beginPath();_roundRect(x,M,y,W-2*M,cardH,28);x.clip();
-      x.globalAlpha=0.12;
-      const wmS=cardH*0.95;
-      try{x.drawImage(wmLogo,M+30,y+(cardH-wmS)/2,wmS,wmS);}catch(e){}
-      x.restore();
-    }
-    // MVP badge
-    x.fillStyle='rgba(255,255,255,.9)';
-    x.font='700 26px "Barlow Condensed", sans-serif';
-    x.fillText((isPlayoff?'MVP RUNDE':'MVP KROGA'),M+40,y+62);
-    // Player photo — big, right side
-    const photo=await _loadImg(playerPhotoLocal(p[F.pid]),{w:600});
-    const pSize=isStory?280:230, pX=W-pSize-M-20, pY=y+cardH-pSize-25;
-    x.save();
-    // photo bg ring
-    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2+6,0,Math.PI*2);
-    x.fillStyle='rgba(255,255,255,.18)';x.fill();
-    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2,0,Math.PI*2);x.closePath();x.clip();
-    if(photo){
-      const iw=photo.naturalWidth,ih=photo.naturalHeight,side=Math.min(iw,ih);
-      x.drawImage(photo,(iw-side)/2,0,side,side,pX,pY,pSize,pSize);
+  // ── Pomozne ──
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();};
+  const prilagodi=(txt,maxW,vel,teza,druz)=>{ let v=vel; do{ x.font=`${teza} ${v}px ${druz}`; if(x.measureText(txt).width<=maxW)break; v-=2; }while(v>18); return v; };
+  const skrajsaj=(txt,maxW)=>{ if(x.measureText(txt).width<=maxW)return txt; while(txt.length>1&&x.measureText(txt+'…').width>maxW)txt=txt.slice(0,-1); return txt+'…'; };
+  const ini=n=>(n||'').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  async function fotografija(p,X,Y,w,h,r){
+    rr(X,Y,w,h,r); x.fillStyle='#1b1b1f'; x.fill();
+    const im=await _loadImg(playerPhotoLocal(p[F.pid]),{w:Math.max(w,h)*2});
+    x.save(); rr(X,Y,w,h,r); x.clip();
+    if(im){
+      const iw=im.naturalWidth, ih=im.naturalHeight, sk=Math.max(w/iw,h/ih);
+      const dw=iw*sk, dh=ih*sk; x.drawImage(im, X+(w-dw)/2, Y, dw, dh);   // poravnano zgoraj (obraz)
     }else{
-      x.fillStyle=_shade(col,-30);x.fillRect(pX,pY,pSize,pSize);
-      x.fillStyle='#fff';x.font='800 90px "Inter",sans-serif';x.textAlign='center';
-      x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),pX+pSize/2,pY+pSize/2+30);x.textAlign='left';
+      x.fillStyle=MUT; x.font=`700 ${Math.round(h*0.32)}px ${FD}`; x.textAlign='center'; x.textBaseline='middle';
+      x.fillText(ini(p[F.name]), X+w/2, Y+h/2); x.textAlign='left'; x.textBaseline='alphabetic';
     }
     x.restore();
-    // ring stroke
-    x.beginPath();x.arc(pX+pSize/2,pY+pSize/2,pSize/2,0,Math.PI*2);
-    x.strokeStyle='rgba(255,255,255,.45)';x.lineWidth=5;x.stroke();
-    // Name
-    x.fillStyle='#fff';
-    x.font='800 60px "Inter", sans-serif';
-    const nm=p[F.name].toUpperCase(),parts=nm.split(' ');
-    const maxNW=pX-M-60;
-    let nl1=nm,nl2='';
-    if(x.measureText(nm).width>maxNW&&parts.length>1){
-      const mid=Math.ceil(parts.length/2);nl1=parts.slice(0,mid).join(' ');nl2=parts.slice(mid).join(' ');
-    }
-    const n1y=isStory?150:140;
-    x.fillText(nl1,M+40,y+n1y);
-    if(nl2)x.fillText(nl2,M+40,y+n1y+58);
-    const nbot=nl2?(y+n1y+98):(y+n1y+40);
-    // team + logo
-    const logo=await _loadImg(teamLogoLocal(tm),{w:140});
-    let tx=M+40;
-    if(logo){try{x.drawImage(logo,tx,nbot-26,36,36);}catch(e){}tx+=46;}
-    x.fillStyle='rgba(255,255,255,.85)';
-    x.font='600 30px "Inter", sans-serif';
-    x.fillText(tm,tx,nbot);
-    // Big stats
-    const sy=nbot+(isStory?70:56);
-    const stats=[['TČK',gm.pts],['SK',gm.reb],['AS',gm.ast],['EFE',gm.efe]];
-    let sx=M+40;
-    stats.forEach(([l,v])=>{
-      x.fillStyle='#fff';x.font='800 52px "Barlow Condensed", sans-serif';
-      x.fillText(v+'',sx,sy);
-      const vw=x.measureText(v+'').width;
-      x.fillStyle='rgba(255,255,255,.7)';x.font='600 22px "Barlow Condensed", sans-serif';
-      x.fillText(l,sx,sy+30);
-      sx+=Math.max(vw,60)+44;
+  }
+
+  // ── Ozadje in glava ──
+  x.fillStyle=BG; x.fillRect(0,0,W,H);
+  const M=60;
+  let y=isStory?170:104;
+  x.fillStyle=MUT; x.font=`600 28px ${FD}`;
+  x.fillText(`${(getLg().name||'').toUpperCase()} · ${seasonLabel()}`, M, y);
+  y+=isStory?104:92;
+  x.font=`700 ${isStory?118:100}px ${FD}`;
+  x.fillStyle=TXT; x.fillText(naslov[0]+' ', M, y);
+  const w0=x.measureText(naslov[0]+' ').width;
+  x.fillStyle=ACC; x.fillText(naslov[1], M+w0, y);
+  y+=isStory?60:44;
+
+  if(!ekipa.length){
+    x.fillStyle=SUB; x.font=`500 34px ${FI}`; x.fillText('Za ta krog še ni podatkov.', M, y+60);
+    return;
+  }
+
+  // ── MVP ──
+  const mvp=ekipa[0];
+  const mvpH=isStory?520:330, mvpW=W-2*M;
+  rr(M,y,mvpW,mvpH,28); x.fillStyle=KART; x.fill();
+  const fW=isStory?300:230, fH=mvpH-56;
+  await fotografija(mvp.p, M+28, y+28, fW, fH, 18);
+  const tx=M+28+fW+36, tW=mvpW-(fW+28+36)-28;
+  let ty=y+(isStory?90:70);
+  x.fillStyle=ACC; x.font=`700 26px ${FI}`; x.fillText(isPlayoff?'MVP KONČNICE':'MVP KROGA', tx, ty);
+  // ime: do dve vrstici
+  const ime=mvp.p[F.name].toUpperCase(), deli=ime.split(' ');
+  let v1=ime, v2='';
+  x.font=`700 ${isStory?78:64}px ${FD}`;
+  if(x.measureText(ime).width>tW && deli.length>1){ const sr=Math.ceil(deli.length/2); v1=deli.slice(0,sr).join(' '); v2=deli.slice(sr).join(' '); }
+  const vel=Math.min(prilagodi(v1,tW,isStory?78:64,700,FD), v2?prilagodi(v2,tW,isStory?78:64,700,FD):99);
+  x.font=`700 ${vel}px ${FD}`; x.fillStyle=TXT;
+  ty+=vel+4; x.fillText(v1, tx, ty);
+  if(v2){ ty+=vel-2; x.fillText(v2, tx, ty); }
+  // ekipa + izid
+  ty+=40;
+  const tc=TEAM_COLORS[mvp.game.team]||ACC;
+  x.fillStyle=tc; x.beginPath(); x.arc(tx+8, ty-9, 8, 0, Math.PI*2); x.fill();
+  x.fillStyle=SUB; x.font=`500 28px ${FI}`;
+  const iz=izid(mvp.game);
+  x.fillText(skrajsaj(mvp.game.team+(iz?` · ${iz.txt}`:''), tW-28), tx+26, ty);
+  // statistika
+  const sv=stat(mvp.game), sy=y+mvpH-(isStory?60:42), korak=Math.min(150,tW/Math.max(sv.length,1));
+  sv.forEach(([v,l],k)=>{
+    x.fillStyle=TXT; x.font=`700 ${isStory?84:66}px ${FD}`; x.fillText(String(v), tx+k*korak, sy-28);
+    x.fillStyle=MUT; x.font=`500 24px ${FI}`; x.fillText(l, tx+k*korak, sy+2);
+  });
+  y+=mvpH+(isStory?36:24);
+
+  // ── Stirje naslednji ──
+  const ostali=ekipa.slice(1,5);
+  const stolpcev=isStory?1:2, gap=24;
+  // visina iz preostalega prostora, da se zadnja vrstica ne zaleti v nogo
+  const vrstic=Math.ceil(4/stolpcev);
+  const kW=(W-2*M-(stolpcev-1)*gap)/stolpcev, kH=Math.min(isStory?230:999,(H-y-(isStory?150:118)-(vrstic-1)*gap)/vrstic);
+  for(let k=0;k<ostali.length;k++){
+    const e=ostali[k], col=k%stolpcev, vr=Math.floor(k/stolpcev);
+    const X=M+col*(kW+gap), Y=y+vr*(kH+gap);
+    rr(X,Y,kW,kH,22); x.fillStyle=KART; x.fill();
+    const pf=kH-40, pw=Math.round(pf*0.82);
+    await fotografija(e.p, X+20, Y+20, pw, pf, 14);
+    const lx=X+20+pw+24, lW=kW-(pw+20+24)-20;
+    // mesto v zgornjem desnem kotu (prej svoja vrstica nad imenom — zmanjkalo je prostora)
+    x.fillStyle='#3a3a42'; x.font=`700 ${isStory?64:52}px ${FD}`; x.textAlign='right'; x.fillText(String(k+2), X+kW-18, Y+(isStory?62:52)); x.textAlign='left';
+    const lWi=lW-(isStory?44:36);
+    const nm=e.p[F.name].toUpperCase();
+    const vv=prilagodi(nm, lWi, isStory?50:40, 700, FD);
+    x.fillStyle=TXT; x.font=`700 ${vv}px ${FD}`; x.fillText(skrajsaj(nm,lWi), lx, Y+20+vv+6);
+    x.fillStyle=SUB; x.font=`500 ${isStory?26:22}px ${FI}`;
+    const iz2=izid(e.game);
+    x.fillText(skrajsaj((TEAM_SHORT[e.game.team]||e.game.team)+(iz2?` · ${iz2.zmaga?'zmaga':'poraz'} ${iz2.txt.split(' ')[0]}`:''), lW), lx, Y+20+vv+42);
+    // statistika v ozki pisavi: stevilka bela, oznaka siva — gre v sirino kartice
+    let sx=lx;
+    stat(e.game).slice(0,3).forEach(([v,l])=>{
+      x.fillStyle=TXT; x.font=`700 ${isStory?44:36}px ${FD}`; x.fillText(String(v), sx, Y+kH-24);
+      sx+=x.measureText(String(v)).width+6;
+      x.fillStyle=MUT; x.font=`600 ${isStory?24:20}px ${FD}`; const lb=l.toUpperCase(); x.fillText(lb, sx, Y+kH-24);
+      sx+=x.measureText(lb).width+(isStory?26:18);
     });
-    y+=cardH+44;
   }
 
-  // ══ TOP 3 IGRALCI (po efektivnosti) ══
-  if(top3.length){
-    x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
-    x.fillText('NAJBOLJŠI IGRALCI',M,y);
-    y+=34;
-    for(let i=0;i<top3.length;i++){
-      const {p,game:gg}=top3[i];
-      const col=TEAM_COLORS[(p[F.team]||'').split(' / ')[0]]||acc;
-      const rowH=isStory?104:92;
-      x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
-      x.fillStyle=col;_roundRect(x,M,y,6,rowH,3);x.fill();
-      // rank
-      x.fillStyle=col;x.font='800 42px "Inter",sans-serif';
-      x.fillText((i+1)+'',M+28,y+64);
-      // player photo (circular)
-      const ph=await _loadImg(playerPhotoLocal(p[F.pid]),{w:220});
-      const ps=72,px2=M+72,py2=y+(rowH-ps)/2;
-      x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
-      if(ph){const iw=ph.naturalWidth,ih=ph.naturalHeight,sd=Math.min(iw,ih);x.drawImage(ph,(iw-sd)/2,0,sd,sd,px2,py2,ps,ps);}
-      else{x.fillStyle=col;x.fillRect(px2,py2,ps,ps);x.fillStyle='#fff';x.font='800 28px "Inter",sans-serif';x.textAlign='center';x.fillText(p[F.name].split(' ').map(w=>w[0]).join('').slice(0,2),px2+ps/2,py2+ps/2+10);x.textAlign='left';}
-      x.restore();
-      x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=col+'aa';x.lineWidth=3;x.stroke();
-      // club logo badge (bottom-right of photo) — za kateri klub igra
-      const clubLogo=await _loadImg(teamLogoLocal(p[F.team]),{w:90});
-      if(clubLogo){
-        const bs=34, bx=px2+ps-bs+4, by=py2+ps-bs+4;
-        x.save();
-        x.beginPath();x.arc(bx+bs/2,by+bs/2,bs/2+3,0,Math.PI*2);
-        x.fillStyle='#0a0a18';x.fill();
-        x.strokeStyle='rgba(255,255,255,.3)';x.lineWidth=1.5;x.stroke();
-        x.beginPath();x.arc(bx+bs/2,by+bs/2,bs/2,0,Math.PI*2);x.clip();
-        try{x.drawImage(clubLogo,bx,by,bs,bs);}catch(e){}
-        x.restore();
-      }
-      // name + team
-      const tx=px2+ps+30;
-      x.fillStyle='#fff';x.font='700 38px "Inter", sans-serif';
-      x.fillText(p[F.name],tx,y+46);
-      x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Barlow Condensed", sans-serif';
-      x.fillText(p[F.team],tx,y+80);
-      // stat line: EFE big + pts/reb/ast small
-      x.textAlign='right';
-      x.fillStyle=acc;x.font='800 50px "Barlow Condensed", sans-serif';
-      x.fillText(gg.efe+'',W-M-30,y+52);
-      x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Barlow Condensed", sans-serif';
-      x.fillText('EFE',W-M-30,y+78);
-      x.textAlign='left';
-      y+=rowH+14;
-    }
-    y+=24;
-  }
-
-  // ══ DODATNO (samo Story — isti slog kot zgoraj, da ostane enoten videz) ══
-  if(isStory && bigWin){
-    x.fillStyle=acc;x.font='800 32px "Inter", sans-serif';
-    x.fillText('NAJVEČJA ZMAGA',M,y);y+=34;
-    const s1=bigWin.firstTeamScore,s2=bigWin.secondTeamScore;
-    const win=s1>s2?bigWin.firstTeamName:bigWin.secondTeamName;
-    const lose=s1>s2?bigWin.secondTeamName:bigWin.firstTeamName;
-    const rowH=104;
-    x.fillStyle='rgba(255,255,255,.05)';_roundRect(x,M,y,W-2*M,rowH,18);x.fill();
-    const wcol=TEAM_COLORS[win]||acc;
-    x.fillStyle=wcol;_roundRect(x,M,y,6,rowH,3);x.fill();
-    // winner logo (circular, like player photo)
-    const wl=await _loadImg(teamLogoLocal(win),{w:200});
-    const ps=72,px2=M+72,py2=y+(rowH-ps)/2;
-    x.save();x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.closePath();x.clip();
-    x.fillStyle='#0a0a18';x.fill();
-    if(wl){try{x.drawImage(wl,px2+6,py2+6,ps-12,ps-12);}catch(e){}}
-    x.restore();
-    x.beginPath();x.arc(px2+ps/2,py2+ps/2,ps/2,0,Math.PI*2);x.strokeStyle=wcol+'aa';x.lineWidth=3;x.stroke();
-    const tx=px2+ps+30;
-    x.fillStyle='#fff';x.font='700 38px "Inter", sans-serif';
-    x.fillText(win,tx,y+46);
-    x.fillStyle='rgba(255,255,255,.55)';x.font='400 25px "Barlow Condensed", sans-serif';
-    x.fillText('proti '+lose,tx,y+80);
-    x.textAlign='right';
-    x.fillStyle=acc;x.font='800 50px "Barlow Condensed", sans-serif';
-    x.fillText(Math.max(s1,s2)+':'+Math.min(s1,s2),W-M-30,y+52);
-    x.fillStyle='rgba(255,255,255,.5)';x.font='600 20px "Barlow Condensed", sans-serif';
-    x.fillText('+'+bigDiff,W-M-30,y+78);
-    x.textAlign='left';
-    y+=rowH+14;
-  }
-
-  // ══ FOOTER ══
-  x.fillStyle='rgba(255,255,255,.4)';
-  x.font='600 22px "Barlow Condensed", sans-serif';x.textAlign='right';
-  x.fillText('by Blaž Erčulj',W-M,H-46);
-  x.textAlign='left';
-  x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 24px "Barlow Condensed", sans-serif';
-  x.fillText(SITE_LABEL,M,H-46);
+  // ── Noga ──
+  x.fillStyle=ACC; x.fillRect(M, H-86, 64, 4);
+  x.fillStyle=SUB; x.font=`600 26px ${FI}`; x.fillText(SITE_LABEL, M, H-44);
+  x.fillStyle=MUT; x.font=`500 22px ${FI}`; x.textAlign='right';
+  x.fillText(`razvrstitev: Game Score${isPlayoff?'':' · zmaga +10 %'}`, W-M, H-44); x.textAlign='left';
 }
 
 function openSeasonCard(){
@@ -11147,7 +11038,7 @@ function renderPregled(){
   const finished=allMatches.filter(m=>m.status==='FINISHED'&&m.firstTeamName&&m.secondTeamName)
     .sort((a,b)=>new Date(b.dateTime)-new Date(a.dateTime)).slice(0,6);
   if(finished.length){
-    html+=`<div class="pregled-sec-h">Zadnji rezultati</div>`;
+    html+=`<div class="pregled-sec-h vrsta-h">Zadnji rezultati<button class="peterka-btn" onclick="openRoundCard('rd')">Peterka kola →</button></div>`;
     html+='<div class="pregled-res-grid">';
     finished.forEach(m=>{
       const s1=m.firstTeamScore??0, s2=m.secondTeamScore??0;
@@ -12190,7 +12081,7 @@ function calcMvpScore(p){
   return gs*mvpUspehEkipe(p);
 }
 
-function getMvpByRound(round){
+function getMvpByRound(round,n=3){
   const roundMatchIds=new Set(allMatches.filter(m=>m.round===round&&m.status==='FINISHED').map(m=>m.id));
   if(!roundMatchIds.size)return null;
   const scores=[];
@@ -12207,7 +12098,9 @@ function getMvpByRound(round){
     const s=gs*(_zmagaEkipe(game.matchId,game.team)?1.1:1);
     scores.push({p,pi,s,game});
   });
-  return scores.sort((a,b)=>b.s-a.s).slice(0,3);
+  // igralec z vec vrsticami (prestop med sezono) bi se sicer pojavil dvakrat
+  const videni=new Set();
+  return scores.sort((a,b)=>b.s-a.s).filter(x=>!videni.has(x.p[F.pid])&&videni.add(x.p[F.pid])).slice(0,n);
 }
 
 function mvpCard(player,score,label,color,rank){
@@ -12361,7 +12254,7 @@ function renderMVP(){
     +'<div class="sec-head" style="--sh-c:#fbbf24">Najožji krog za MVP sezone</div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+mvpSezonaHtml+'</div>'
     +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
-    +'<div class="sec-head" style="--sh-c:#3b82f6">MVP po krogih (zadnjih 5)</div>'
+    +'<div class="sec-head vrsta-h">MVP po krogih<button class="peterka-btn" onclick="openRoundCard(\'rd\')">Peterka kola →</button></div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:24px">'+(roundHtml||'<div class="empty">Ni podatkov po krogih</div>')+'</div>'
     +'<div class="sec-head">Top 10</div>'
     +leaderboard
