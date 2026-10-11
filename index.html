@@ -2427,6 +2427,12 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .vrsta-h{display:flex!important;align-items:center;justify-content:space-between;gap:12px}
 .peterka-btn{font-family:var(--fm);font-size:.8rem;font-weight:600;text-transform:none;letter-spacing:0;color:var(--text);background:transparent;border:1px solid var(--border2);border-radius:999px;padding:6px 14px;cursor:pointer;flex-shrink:0}
 .peterka-btn:hover{background:var(--card2)}
+
+/* Izbira cetrtine nad boxscorom */
+.box-cetrt{display:inline-flex;flex-wrap:wrap;gap:2px;background:var(--card2);border-radius:999px;padding:3px;margin:0 0 14px}
+.box-cetrt button{background:transparent;border:none;color:var(--sub);font-family:var(--fm);font-size:.8rem;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;min-width:44px}
+.box-cetrt button:hover{color:var(--text)}
+.box-cetrt button.active{background:var(--text);color:var(--bg)}
 </style>
 </head>
 <body>
@@ -3355,7 +3361,7 @@ const LEAGUES = {
     color: '#f97316',
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
     cacheStats: 'liga1_stats_v3',
-    cachePbp:   'liga1_pbp_v3',
+    cachePbp:   'liga1_pbp_v4',   // v4: PBP z menjavami, napakami in peterko (11.10.2026)
     teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj'],
   },
   'liga2': {
@@ -3364,7 +3370,7 @@ const LEAGUES = {
     color: '#60a5fa',
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
     cacheStats: 'liga2_stats_v3',
-    cachePbp:   'liga2_pbp_v3',
+    cachePbp:   'liga2_pbp_v4',
     teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
   },
   'liga3': {
@@ -5589,7 +5595,7 @@ async function fetchLivePbp(matchInfo) {
     return d.pbp
       .filter(ev => ['2pt','3pt','freethrow','turnover','foul','rebound','block','steal'].includes(ev.actionType))
       .map(ev => ({
-        period:  ev.period,
+        period:  ev.periodType==='OVERTIME' ? 4+(+ev.period||1) : ev.period,
         gt:      ev.gt || '',
         action:  ev.actionType,
         sub:     ev.subType || '',
@@ -5752,7 +5758,7 @@ async function openMatch(matchId){
   }
   if(matchData){
     // Polje "po cetrtinah" le, kjer PBP obstaja (FIBA; 3. SKL ga nima).
-    if(window._boxTekma!==matchId){ _boxIzbran=null; window._boxTekma=matchId; }
+    if(window._boxTekma!==matchId){ _boxIzbran=null; _boxCetrt=0; window._boxTekma=matchId; }
     _boxVir = (matchInfo.fibaLiveStatsUrl && currentLeague!=='liga3')
       ? ()=>((typeof pbpData!=='undefined'&&pbpData[matchId])||{}).pbp||null : null;
     boxScore=drawBoxScore(matchData,c1,c2);
@@ -6079,7 +6085,7 @@ function _factsHtml(t1,t2,c1,c2,cetrtine,niz,prednost){
     const ekipa = niz.tno===1 ? t1 : t2;
     const barva = niz.tno===1 ? c1 : c2;
     kosi.push(`<div><div style="font-family:var(--fs);font-size:1.5rem;font-weight:700;color:${barva}">${niz.pts}:0</div>`
-      + `<div style="font-size:.6875rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">najdaljši niz · ${kratko(ekipa)} · Q${niz.period}</div></div>`);
+      + `<div style="font-size:.6875rem;color:var(--mut);letter-spacing:.1em;text-transform:uppercase">najdaljši niz · ${kratko(ekipa)} · ${niz.period>4?'POD':'Q'+niz.period}</div></div>`);
   }
   if(prednost){
     kosi.push(`<div><div style="font-family:var(--fs);font-size:1.5rem;font-weight:700;color:${c1}">+${prednost.a}</div>`
@@ -6119,6 +6125,8 @@ function renderMatchFacts(matchId, c1, c2){
         if(nov && document.getElementById('mo-facts'))
           document.getElementById('mo-facts').innerHTML=
             _factsHtml(mi.firstTeamName,mi.secondTeamName,c1,c2,cetrtine,nov,prednost);
+        // boxscore ponovno: zdaj ve za podaljske (gumb POD) in ima podatke za cetrtine
+        try{ if(_boxVir && _boxVir()) _boxPrerisi(); }catch(e){}
       },200);
     }catch(e){}
   }
@@ -6129,7 +6137,7 @@ function renderMatchFactsLive(matchId, c1, c2, d){
   const el=document.getElementById('mo-facts'); if(!el||!d) return;
   const mi=allMatches.find(m=>m.id===matchId); if(!mi) return;
   const cetrtine=_cetrtineIzFibe(d);
-  const niz=_najdaljsiNiz(d.pbp);
+  const niz=_najdaljsiNiz(_bxNormPeriode(d.pbp));
   // Prednost iz tekocega rezultata v PBP (s1/s2) — scoreChanges med tekmo ni.
   let prednost=null;
   if(d.pbp && d.pbp.length){
@@ -6320,12 +6328,12 @@ const _BX_VRSTE=[
 // ki so ta hip na igriscu.
 function _bxFibaPbp(f){
   if(!f||!f.pbp) return null;
-  const ev=f.pbp.slice();
+  const ev=_bxNormPeriode(f.pbp).slice();
   ['1','2'].forEach(t=>Object.values(((f.tm||{})[t]||{}).pl||{}).forEach(p=>{
     if(p.starter) ev.push({actionType:'starter',tno:+t,period:1,gt:'10:00',firstName:p.firstName,familyName:p.familyName});
   }));
   const [m,sk]=String(f.clock||'0:00').split(':');
-  ev._ura={period:+f.period||0, sek:(+m||0)*60+(+sk||0)};
+  ev._ura={period:(f.periodType==='OVERTIME'?4:0)+(+f.period||0), sek:(+m||0)*60+(+sk||0)};
   return ev;
 }
 function _bxSek(gt){const [m,s]=String(gt||'0:00').split(':');return (+m||0)*60+(parseFloat(s)||0);}
@@ -6348,7 +6356,9 @@ function _boxPoCetrtinah(pbp, ti, k){
       else if(e.actionType==='substitution'){
         const g=_bxSek(e.gt);
         if(e.subType==='out'&&na){ st.min[p-1]+=vstop-g; na=false; }
-        else if(e.subType==='in'){ na=true; vstop=g; }
+        // FIBA ima ponekod podvojen vstop; drugega prezremo, sicer bi
+        // ponastavili cas vstopa in izgubili minute (preverjeno: Malovcic)
+        else if(e.subType==='in'&&!na){ na=true; vstop=g; }
       }
     });
     if(na){
@@ -6435,9 +6445,71 @@ function _boxNarisi(){
   el.innerHTML=_boxCetrtineHtml(ti, ps); el.classList.add('on');
 }
 
+// ═══ BOXSCORE: cela tabela za eno cetrtino ═══
+// Izberes Q1-Q4 (ali podaljsek) in vsa tabela — igralci in vsota ekipe s
+// procenti meta — pokaze samo to cetrtino. Vir je isti play-by-play kot pri
+// okvirju za posameznega igralca (_boxPoCetrtinah). EFE za cetrtino je klasicna
+// ucinkovitost: TOC + SK + POD + STO + BLK - zgreseni meti - zgreseni PM - IZG.
+var _boxCetrt = 0;       // 0 = cela tekma
+var _boxZadnji = null;   // zadnji argumenti izrisa (za ponovni izris ob izbiri)
+function _boxCetrtinaPodatki(matchData, pbp, q){
+  const i=q-1;
+  const ekipa=(team,ti)=>{
+    const ps=(team.playerStats||[]).map(p=>{
+      const {st,imaMenjave}=_boxPoCetrtinah(pbp, ti, _bxKljuc(p.matchTeamPlayerFirstname,p.matchTeamPlayerLastname));
+      const g=k=>st[k][i]||0;
+      const fgm=g('2m')+g('3m'), fga=g('2a')+g('3a');
+      const sk=g('nap')+g('obr');
+      const kaj=fga||g('pma')||sk||g('pod')||g('sto')||g('izg')||g('blk')||g('pz');
+      const eff=g('toc')+sk+g('pod')+g('sto')+g('blk')-(fga-fgm)-(g('pma')-g('pmm'))-g('izg');
+      return Object.assign({},p,{
+        played: !!(p.played && (g('min')>0 || kaj)),
+        startingLineup:false,
+        minutes: imaMenjave ? g('min')/60 : 0,
+        points:g('toc'), twoPM:g('2m'), twoPA:g('2a'), threePM:g('3m'), threePA:g('3a'),
+        fgM:fgm, fgA:fga, fTM:g('pmm'), fTA:g('pma'),
+        offensiveRebounds:g('nap'), defensiveRebounds:g('obr'), totalRebounds:sk,
+        assists:g('pod'), steals:g('sto'), turnovers:g('izg'), blocksInFavor:g('blk'),
+        foulCommited: imaMenjave ? g('pz') : 0,
+        efficiencyCustom:eff, efficiency:eff
+      });
+    });
+    return Object.assign({},team,{playerStats:ps});
+  };
+  return Object.assign({},matchData,{firstTeam:ekipa(matchData.firstTeam,0), secondTeam:ekipa(matchData.secondTeam,1)});
+}
+function boxCetrtina(q){ _boxCetrt=q; _boxPrerisi(); }
+function _boxPrerisi(){
+  const el=document.getElementById('box-ovoj'); if(!el||!_boxZadnji) return;
+  const t=document.createElement('div');
+  t.innerHTML=drawBoxScore(_boxZadnji.matchData,_boxZadnji.c1,_boxZadnji.c2);
+  if(t.firstElementChild) el.replaceWith(t.firstElementChild);
+}
+
 function drawBoxScore(matchData,c1,c2){
+  _boxZadnji={matchData,c1,c2};
+  _boxEkipe=[matchData.firstTeam,matchData.secondTeam];   // okvir igralca primerja s celo tekmo
+  // Izbira cetrtine (le kjer je play-by-play)
+  let izbira='', nalagam=false;
+  if(_boxVir){
+    const pbp=_boxVir();
+    const maxP=pbp&&pbp.length?Math.max(4,...pbp.map(e=>+e.period||0)):4;
+    if(_boxCetrt>maxP) _boxCetrt=0;
+    const lbl=p=>p<=4?`Q${p}`:(maxP===5?'POD':`P${p-4}`);
+    izbira=`<div class="box-cetrt" role="group" aria-label="Četrtina">`
+      +[0,...Array.from({length:maxP},(_,k)=>k+1)].map(q=>`<button class="${_boxCetrt===q?'active':''}" onclick="boxCetrtina(${q})">${q?lbl(q):'Tekma'}</button>`).join('')
+      +`</div>`;
+    if(_boxCetrt){
+      if(pbp&&pbp.length) matchData=_boxCetrtinaPodatki(matchData,pbp,_boxCetrt);
+      else{
+        nalagam=true;
+        if(typeof pbpLoaded!=='undefined'&&!pbpLoaded&&typeof loadPBPData==='function'){ try{loadPBPData();}catch(e){} }
+        let n=0; const t=setInterval(()=>{ n++; if(!_boxCetrt||n>40){clearInterval(t);return;} if(_boxVir&&_boxVir()){clearInterval(t);_boxPrerisi();} },500);
+      }
+    }
+  }
+  if(nalagam) return `<div id="box-ovoj">${izbira}<div class="empty">Nalagam play-by-play …</div></div>`;
   const teams=[matchData.firstTeam,matchData.secondTeam];
-  _boxEkipe=teams;
   const colors=[c1,c2];
   const vsi=teams.flatMap(t=>(t.playerStats||[]));
   const kje=(f)=>vsi.some(p=>(p[f]||0)>0);
@@ -6513,7 +6585,7 @@ function drawBoxScore(matchData,c1,c2){
 
     return `<div style="margin-bottom:16px">
       <div class="mo-section-title" style="color:${colors[ti]}">${team.teamName}</div>
-      ${_boxVir?`<div class="bxq${_boxIzbran&&_boxIzbran.ti===ti?' on':''}" id="bxq-${ti}">${(()=>{if(!_boxIzbran||_boxIzbran.ti!==ti)return '';const ps=(team.playerStats||[]).find(p=>_bxKljuc(p.matchTeamPlayerFirstname,p.matchTeamPlayerLastname)===_boxIzbran.k);return ps?_boxCetrtineHtml(ti,ps):'';})()}</div>`:''}
+      ${_boxVir?`<div class="bxq${_boxIzbran&&_boxIzbran.ti===ti?' on':''}" id="bxq-${ti}">${(()=>{if(!_boxIzbran||_boxIzbran.ti!==ti)return '';const ps=((_boxEkipe[ti]||team).playerStats||[]).find(p=>_bxKljuc(p.matchTeamPlayerFirstname,p.matchTeamPlayerLastname)===_boxIzbran.k);return ps?_boxCetrtineHtml(ti,ps):'';})()}</div>`:''}
       <div style="overflow-x:auto"><table class="st" style="font-size:.72rem">
         <thead><tr>${glava}</tr></thead>
         <tbody>${rows}${tot}</tbody>
@@ -6526,7 +6598,10 @@ function drawBoxScore(matchData,c1,c2){
   const opomba = (!ima.min && !ima.sk && !ima.ast)
     ? `<div class="bff-note" style="border-top:none;padding-top:0">V tej ligi se v zapisnik vnašajo le točke, zadeti meti, prosti meti in osebne napake — minut, skokov in asistenc KZS ne beleži.</div>`
     : '';
-  return sections + opomba;
+  const opCetrt = _boxCetrt
+    ? `<div class="bff-note" style="border-top:none;padding-top:0">Statistika ${_boxCetrt<=4?_boxCetrt+'. četrtine':'podaljška'} iz play-by-playa. EFE je klasična učinkovitost (točke + skoki + podaje + ukradene + blokade − zgrešeni meti − izgube).</div>`
+    : '';
+  return `<div id="box-ovoj">${izbira}${sections}${opomba}${opCetrt}</div>`;
 }
 
 // ═══════════════════════════════════════════════════
@@ -10005,13 +10080,23 @@ function setNerdView(v){
   renderNerd();
 }
 
+// FIBA podaljske stevilci znova od 1 (period:1, periodType:'OVERTIME'), ne
+// kot 5. Brez tega so se dogodki podaljska steli v prvo cetrtino — v seznamu
+// play-by-play, nerd Cetrtinah, clutchu (ki gleda period>=4), nizih in okvirju
+// po cetrtinah. Tu jih enkrat prestevilcimo: podaljsek 1 -> 5, 2 -> 6 ...
+function _bxNormPeriode(ev){
+  if(!ev||!ev.length||!ev.some(e=>e&&e.periodType==='OVERTIME')) return ev;
+  const out=ev.map(e=>(e&&e.periodType==='OVERTIME')?Object.assign({},e,{period:4+(+e.period||1),periodType:'OVERTIME_N'}):e);
+  if(ev._ura) out._ura=ev._ura;
+  return out;
+}
 function processPbp(d){
   pbpData = {};
   // pbpLoaded postavimo tudi ob prazni datoteki: sicer je zavihek obtical na
   // "Nalagam PBP..." in ni bilo razvidno, ali se nalaga ali podatkov ni.
   if(d && d.pbp){
     Object.entries(d.pbp).forEach(([id,evts])=>{
-      pbpData[parseInt(id)] = {pbp: evts, matchId: parseInt(id)};
+      pbpData[parseInt(id)] = {pbp: _bxNormPeriode(evts), matchId: parseInt(id)};
     });
   }
   pbpLoaded = true;
@@ -10021,8 +10106,10 @@ function loadPBPData(){
   const el=document.getElementById('nerd-status');
   if(el)el.textContent='⏳ Nalagam PBP...';
   const lg=getLg();
-  const baseKey=lg.cachePbp||currentLeague+'_pbp_v3';
+  const baseKey=lg.cachePbp||currentLeague+'_pbp_v4';
   const cacheKey=_currentSeason===SEASON_ID?baseKey:baseKey+'_s'+_currentSeason;
+  // star zapis (v3, brez menjav) samo zaseda prostor
+  try{ localStorage.removeItem(cacheKey.replace('_pbp_v4','_pbp_v3')); }catch(e){}
   // Predpomnilnik velja 7 dni, kar je med sezono predolgo: PBP se dopolnjuje
   // vsak teden, ob začetku sezone pa je datoteka sprva prazna. Kdor je zavihek
   // odprl takrat, je cel teden dobival "PBP ni dosegljiv", čeprav so podatki
@@ -10040,7 +10127,11 @@ function loadPBPData(){
       // ob manjku ne osvežujemo ob vsakem odpiranju, ampak največ enkrat na uro.
       const manjka = n < odigranih && (Date.now()-p.ts) > 3600*1000;
       const prazen = n === 0;
-      if(Date.now()-p.ts < TTL_PBP && !manjka && !prazen) cached=p.data;
+      // Tekoca sezona: PBP se zdaj osvezuje vsako uro (tudi dopolnjuje ze
+      // shranjene tekme), zato predpomnilnik velja najvec 6 ur. Arhiv se ne
+      // spreminja in velja TTL_PBP.
+      const ttl = _currentSeason===SEASON_ID ? Math.min(TTL_PBP, 6*3600*1000) : TTL_PBP;
+      if(Date.now()-p.ts < ttl && !manjka && !prazen) cached=p.data;
     }
   }catch(e){}
   if(cached){processPbp(cached);if(el)el.textContent='PBP iz cache';renderNerd();return;}
