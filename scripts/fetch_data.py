@@ -369,11 +369,18 @@ def fetch_pbp_incremental(matches, existing_pbp):
         ev = existing_pbp.get(mid) or []
         return bool(ev) and 's1' not in (ev[0] or {})
 
+    # Enkratna dopolnitev: prej smo zavrgli menjave in osebne napake ter nismo
+    # shranili zacetne peterke — brez tega ni minut in napak po cetrtinah.
+    def brez_menjav(mid):
+        ev = existing_pbp.get(mid) or []
+        return bool(ev) and not any((e or {}).get('actionType') == 'starter' for e in ev)
+
     needs = [m for m in matches
              if m['status'] == 'FINISHED'
              and m.get('fibaLiveStatsUrl')
              and (str(m['id']) not in existing_pbp
-                  or brez_rezultata(str(m['id'])))]   # enkratna dopolnitev s s1/s2
+                  or brez_rezultata(str(m['id']))     # enkratna dopolnitev s s1/s2
+                  or brez_menjav(str(m['id'])))]      # enkratna dopolnitev z menjavami
 
     if not needs:
         print(f"  PBP: vse shranjeno ({len(existing_pbp)})")
@@ -393,8 +400,21 @@ def fetch_pbp_incremental(matches, existing_pbp):
                  ('gt','period','periodType','lead','tno','actionType','subType',
                   'success','firstName','familyName','s1','s2')}
                 for ev in d['pbp']
-                if ev.get('actionType') in ('2pt','3pt','freethrow','turnover','assist','rebound','block','steal')
+                if ev.get('actionType') in ('2pt','3pt','freethrow','turnover','assist','rebound','block','steal',
+                                            'foul','substitution')
             ]
+            # Zacetna peterka kot dogodek "starter" NA KONCU (seznam je od
+            # najnovejsega naprej — obrnjen jo da na zacetek tekme). Iz nje in
+            # menjav stran izracuna minute po cetrtinah; preverjeno: vsi
+            # igralci na 2 s natancno z uradnimi minutami FIBA.
+            for tno in ('1', '2'):
+                for pl in ((d.get('tm') or {}).get(tno) or {}).get('pl', {}).values():
+                    if pl.get('starter'):
+                        pbp[str(m['id'])].append({
+                            'gt': '10:00', 'period': 1, 'periodType': 'REGULAR', 'lead': 0,
+                            'tno': int(tno), 'actionType': 'starter', 'subType': '', 'success': '',
+                            'firstName': pl.get('firstName', ''), 'familyName': pl.get('familyName', ''),
+                            's1': 0, 's2': 0})
         if (i+1) % 5 == 0:
             print(f"  PBP {i+1}/{len(needs)}")
         time.sleep(0.4)

@@ -6233,7 +6233,7 @@ async function startLiveBoxScore(matchId, c1, c2, enkrat){
       const d0=await _fetchLiveBox(matchId);
       if(!el0) return;
       el0.innerHTML = d0
-        ? ((_boxVir=()=>((d0._fiba||{}).pbp)||null), drawBoxScore(d0, c1, c2)) +
+        ? ((_boxVir=()=>_bxFibaPbp(d0._fiba)), drawBoxScore(d0, c1, c2)) +
           '<div class="bff-note" style="border-top:none">Podatki so z uradnega sistema FIBA LiveStats, zajeti takoj po tekmi. '+
           'Ko KZS objavi zapisnik, jih zamenja uradna statistika.</div>'
         : '<div class="empty">Statistika še ni na voljo.</div>';
@@ -6254,7 +6254,7 @@ async function startLiveBoxScore(matchId, c1, c2, enkrat){
       if(!el.dataset.filled) el.innerHTML='<div class="empty">Boxscore med tekmo še ni na voljo — spodaj je uradni FIBA prikaz.</div>';
       return;
     }
-    _boxVir = ()=>((d._fiba||{}).pbp)||null;
+    _boxVir = ()=>_bxFibaPbp(d._fiba);
     el.innerHTML = drawBoxScore(d, c1, c2);
     el.dataset.filled = '1';
     // Isti zajem nosi tudi cetrtine in tekoci rezultat, zato osvezimo se potek.
@@ -6296,21 +6296,62 @@ function _boxShot(m,a){
 // statistike v 99,7 % (redka razlika je popravek v uradnem zapisniku — ta je
 // v okvirju posebej označena). Igralca iščemo po POLNEM imenu in ekipi: Krka
 // ima npr. dva Smitha in sam priimek ju pomeša.
-// Osebnih napak in minut tu (še) ni: prenos PBP zavrže napake in menjave.
+// Minute: iz zacetne peterke (dogodek "starter") in menjav. Preverjeno na
+// tekmi Sencur-Polzela: vseh 24 igralcev na 2 s natancno z minutami FIBA.
+// Osebne napake: vsi dogodki "foul" (osebne + napadalne) = uradne osebne.
+// Starejsi shranjeni PBP menjav nima — takrat vrstici minut in napak izpustimo.
 var _boxVir = null;      // funkcija, ki vrne PBP (tabelo dogodkov) ali null; null = liga brez PBP
 var _boxIzbran = null;   // {ti, k} — en igralec naenkrat, ostane izbran ob osvezitvi zive tekme
 var _boxEkipe = null;    // zadnji izrisani ekipi (za primerjavo z uradnim zapisnikom)
 function _bxNorm(x){return String(x||'').normalize('NFKD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/-/g,' ').replace(/\s+/g,' ').trim();}
 function _bxKljuc(fn,ln){return _bxNorm(fn)+'|'+_bxNorm(ln);}
 const _BX_VRSTE=[
-  ['toc','Točke'],['2','2T (z/v)'],['3','3T (z/v)'],['pm','PM (z/v)'],
+  ['min','Minute'],['toc','Točke'],['2','2T (z/v)'],['3','3T (z/v)'],['pm','PM (z/v)'],
   ['nap','Napadalni skoki'],['obr','Obrambni skoki'],['pod','Podaje'],
-  ['sto','Ukradene žoge'],['izg','Izgube'],['blk','Blokade']
+  ['sto','Ukradene žoge'],['izg','Izgube'],['blk','Blokade'],['pz','Osebne napake']
 ];
+// FIBA podatki zive tekme: dodamo zacetno peterko kot dogodke "starter" (na
+// konec — seznam je od najnovejsega naprej) in trenutno uro za minute igralcev,
+// ki so ta hip na igriscu.
+function _bxFibaPbp(f){
+  if(!f||!f.pbp) return null;
+  const ev=f.pbp.slice();
+  ['1','2'].forEach(t=>Object.values(((f.tm||{})[t]||{}).pl||{}).forEach(p=>{
+    if(p.starter) ev.push({actionType:'starter',tno:+t,period:1,gt:'10:00',firstName:p.firstName,familyName:p.familyName});
+  }));
+  const [m,sk]=String(f.clock||'0:00').split(':');
+  ev._ura={period:+f.period||0, sek:(+m||0)*60+(+sk||0)};
+  return ev;
+}
+function _bxSek(gt){const [m,s]=String(gt||'0:00').split(':');return (+m||0)*60+(parseFloat(s)||0);}
+function _bxMinFmt(sek){sek=Math.round(sek);return `${Math.floor(sek/60)}:${String(sek%60).padStart(2,'0')}`;}
 function _boxPoCetrtinah(pbp, ti, k){
   const maxP=Math.max(4,...pbp.map(e=>+e.period||0));
   const per=Array.from({length:maxP},(_,i)=>i+1);
-  const st={}; ['toc','2m','2a','3m','3a','pmm','pma','nap','obr','pod','sto','izg','blk'].forEach(x=>st[x]=per.map(()=>0));
+  const st={}; ['toc','2m','2a','3m','3a','pmm','pma','nap','obr','pod','sto','izg','blk','pz','min'].forEach(x=>st[x]=per.map(()=>0));
+  // Minute: sprehod v kronoloskem redu (seznam je od najnovejsega naprej).
+  const imaMenjave=pbp.some(e=>e.actionType==='starter');
+  if(imaMenjave){
+    const dolz=p=>p<=4?600:300;
+    const moj=e=>+e.tno===ti+1 && _bxKljuc(e.firstName,e.familyName)===k;
+    let na=false, vstop=0, cur=1;
+    [...pbp].reverse().forEach(e=>{
+      const p=+e.period||1;
+      if(p!==cur){ if(na) st.min[cur-1]+=vstop; vstop=dolz(p); cur=p; }
+      if(!moj(e)) return;
+      if(e.actionType==='starter'){ na=true; vstop=600; }
+      else if(e.actionType==='substitution'){
+        const g=_bxSek(e.gt);
+        if(e.subType==='out'&&na){ st.min[p-1]+=vstop-g; na=false; }
+        else if(e.subType==='in'){ na=true; vstop=g; }
+      }
+    });
+    if(na){
+      // Ziva tekma: igralec je ta hip na igriscu — do trenutne ure, ne do konca periode.
+      const u=pbp._ura, konec=(u&&u.period===cur)?u.sek:0;
+      st.min[cur-1]+=Math.max(0,vstop-konec);
+    }
+  }
   pbp.forEach(e=>{
     if(+e.tno!==ti+1 || _bxKljuc(e.firstName,e.familyName)!==k) return;
     const i=(+e.period||0)-1; if(i<0||i>=maxP) return;
@@ -6323,8 +6364,9 @@ function _boxPoCetrtinah(pbp, ti, k){
     else if(a==='steal') st.sto[i]++;
     else if(a==='turnover') st.izg[i]++;
     else if(a==='block') st.blk[i]++;
+    else if(a==='foul') st.pz[i]++;
   });
-  return {per, st};
+  return {per, st, imaMenjave};
 }
 function _boxCetrtineHtml(ti, ps){
   if(!_boxVir) return '';
@@ -6337,13 +6379,16 @@ function _boxCetrtineHtml(ti, ps){
   if(!pbp||!pbp.length){
     return glava+'<div class="bxq-prazno">Nalagam play-by-play …</div>'+zapri;
   }
-  const {per,st}=_boxPoCetrtinah(pbp, ti, _bxKljuc(ps.matchTeamPlayerFirstname, ps.matchTeamPlayerLastname));
+  const {per,st,imaMenjave}=_boxPoCetrtinah(pbp, ti, _bxKljuc(ps.matchTeamPlayerFirstname, ps.matchTeamPlayerLastname));
   const vsota=a=>a.reduce((x,y)=>x+y,0);
   const lbl=p=>p<=4?'Q'+p:(per.length===5?'POD':'P'+(p-4));
   const celica=(v,dim)=>`<td${dim?' class="bxq-0"':''}>${v}</td>`;
   const vrsta=(kl,ime)=>{
     let cells, tot;
-    if(kl==='2'||kl==='3'||kl==='pm'){
+    if(kl==='min'){
+      cells=st.min.map(v=>celica(v?_bxMinFmt(v):'—',!v)).join('');
+      tot=_bxMinFmt(vsota(st.min));
+    } else if(kl==='2'||kl==='3'||kl==='pm'){
       const m=st[kl==='pm'?'pmm':kl+'m'], a=st[kl==='pm'?'pma':kl+'a'];
       cells=per.map((_,i)=>celica(a[i]?`${m[i]}/${a[i]}`:'—',!a[i])).join('');
       tot=`${vsota(m)}/${vsota(a)}`;
@@ -6353,13 +6398,13 @@ function _boxCetrtineHtml(ti, ps){
     return `<tr><td class="bxq-l">${ime}</td>${cells}<td class="bxq-t">${tot}</td></tr>`;
   };
   // Primerjava z uradnim zapisnikom: kjer se sestevek ne ujema, povemo.
-  const uradno={toc:ps.points,'2m':ps.twoPM,'2a':ps.twoPA,'3m':ps.threePM,'3a':ps.threePA,pmm:ps.fTM,pma:ps.fTA,
+  const uradno={...(imaMenjave?{pz:ps.foulCommited}:{}),toc:ps.points,'2m':ps.twoPM,'2a':ps.twoPA,'3m':ps.threePM,'3a':ps.threePA,pmm:ps.fTM,pma:ps.fTA,
     nap:ps.offensiveRebounds,obr:ps.defensiveRebounds,pod:ps.assists,sto:ps.steals,izg:ps.turnovers,blk:ps.blocksInFavor};
-  const IME={toc:'točke','2m':'zadeti met za 2','2a':'met za 2',"3m":'zadeti met za 3','3a':'met za 3',pmm:'zadeti prosti meti',pma:'prosti meti',nap:'napadalni skoki',obr:'obrambni skoki',pod:'podaje',sto:'ukradene žoge',izg:'izgube',blk:'blokade'};
+  const IME={pz:'osebne napake',toc:'točke','2m':'zadeti met za 2','2a':'met za 2',"3m":'zadeti met za 3','3a':'met za 3',pmm:'zadeti prosti meti',pma:'prosti meti',nap:'napadalni skoki',obr:'obrambni skoki',pod:'podaje',sto:'ukradene žoge',izg:'izgube',blk:'blokade'};
   const razlike=Object.keys(uradno).filter(x=>uradno[x]!=null&&vsota(st[x])!==(uradno[x]||0)).map(x=>`${IME[x]} ${uradno[x]} (play-by-play ${vsota(st[x])})`);
   const opomba=razlike.length?`<div class="bxq-op">Uradni zapisnik se razlikuje: ${razlike.join(', ')}. Četrtine so iz play-by-playa.</div>`:'';
   return glava+`<div style="overflow-x:auto"><table class="bxq-t-tab"><thead><tr><th></th>${per.map(p=>`<th>${lbl(p)}</th>`).join('')}<th>Skupaj</th></tr></thead><tbody>`
-    +_BX_VRSTE.map(([k,i])=>vrsta(k,i)).join('')+`</tbody></table></div>`+opomba+zapri;
+    +_BX_VRSTE.filter(([k])=>imaMenjave||(k!=='min'&&k!=='pz')).map(([k,i])=>vrsta(k,i)).join('')+`</tbody></table></div>`+opomba+zapri;
 }
 // Izbira igralca. Prejsnji se odznaci (en igralec naenkrat).
 function boxIzberi(cb){
@@ -11761,7 +11806,7 @@ async function ensurePbpPanel(){
     if((!ev||!ev.length) && mi.status==='FINISHED'){
       if(!pbpLoaded) await new Promise(r=>{ loadPBPData(); const t=setInterval(()=>{ if(pbpLoaded){clearInterval(t);r();} },150); setTimeout(()=>{clearInterval(t);r();},8000); });
       const shr=(pbpData[liveMatchId]||{}).pbp;
-      if(shr&&shr.length) ev=shr.map(e=>({
+      if(shr&&shr.length) ev=shr.filter(e=>e.actionType!=='substitution'&&e.actionType!=='starter').map(e=>({
         period:e.period, gt:e.gt||'', action:e.actionType, sub:e.subType||'',
         success:e.success, player:((e.firstName||'')+' '+(e.familyName||'')).trim(),
         tno:e.tno, s1:e.s1, s2:e.s2
