@@ -6805,7 +6805,7 @@ function izracunajOVR(p){
   const k=imaLani?4:2, qp=imaLani?lani.q:0.5;
   const q=(G*qLetos+k*qp)/(G+k);
   const [lo,hi]=OVR_RAZPON[currentLeague]||OVR_RAZPON.liga1;
-  return {ovr:Math.round(lo+(hi-lo)*Math.pow(q,1.3)), qLetos, qLani:imaLani?lani.q:null, utezLetos:G/(G+k)};
+  return {ovr:Math.round(lo+(hi-lo)*Math.pow(q,1.3)), q, qLetos, qLani:imaLani?lani.q:null, utezLetos:G/(G+k), k};
 }
 
 function bEloToOvr(be){
@@ -6833,7 +6833,8 @@ function _pctlRank(value,allValues){
   let below=0; valid.forEach(v=>{if(v<value)below++;});
   return below/valid.length;
 }
-// 6 atributov, vsak 0-99, normaliziran proti ligi (igralci z >=5 tekem)
+// 6 atributov kot percentil v ligi (0..1; primerjalna skupina: igralci nad pragom tekem).
+// Na lestvico kartice jih preslika atributiZaKartico — ista kot OVR.
 function computePlayerAttributes(merged){
   const t=Math.max(merged[F.T],1);
   const pool=getLeaguePlayers().filter(p=>p[F.T]>=pragTekem(5));
@@ -6876,14 +6877,11 @@ function computePlayerAttributes(merged){
   const dsDef   =per(p=>p[F.sto]*0.6+p[F.blk]*1.4);
   const dsImpact=per(p=>p[F.efe]);
 
-  // Blend percentilov: kakovost W_Q + skupni doprinos W_S, → 45..99
+  // Blend percentilov: kakovost W_Q + skupni doprinos W_S (0..1).
   // MET ima manjšo težo volumna (TS% je že razmerje), ostali polni blend.
   const blend=(qv,qd,sv,sd,wQ)=>{
     const pQ=_pctlRank(qv,qd), pS=_pctlRank(sv,sd);
-    const mix=wQ*pQ+(1-wQ)*pS;
-    // Krivulja: strop 92 (ne 99) + eksponent 1.4 → le res izjemni dosežejo 90+,
-    // povprečje pade nižje. Atributi se zbližajo z OVR (manj "74 OVR a 99 obramba").
-    return Math.round(45+Math.pow(mix,1.4)*47);
+    return wQ*pQ+(1-wQ)*pS;
   };
   const _attrs={
     met:    blend(qShoot, dqShoot, sShoot, dsShoot, 0.78),
@@ -6893,56 +6891,81 @@ function computePlayerAttributes(merged){
     obramba:blend(qDef,   dqDef,   sDef,   dsDef,   0.65),
     efekt:  blend(qImpact,dqImpact,sImpact,dsImpact,0.6)
   };
+  return _attrs;
+}
+// ═══ Atributi na kartici — na isti lestvici kot OVR ═══
+// Prej so bili atributi v vseh ligah na lestvici 45-92 in brez upoštevanja
+// vzorca, OVR pa ima razpon lige (2. SKL 52-84) in z malo tekmami upošteva
+// lansko igro oziroma sredino. Zato je imel Nosakhare (2. SKL, 3 tekme) OVR 72
+// in štiri atribute med 88 in 91 — več od najboljšega OVR v ligi (81).
+// Zdaj:
+//   s = w x percentil atributa + (1 - w) x skupna kakovost q (ista kot za OVR)
+//   w = G / (G + k/2)  — posamezna statistika (skoki, podaje) se ustali hitreje
+//                        kot skupni vpliv, zato pol manj previdnosti kot pri OVR
+//   vrednost = spodaj + (zgoraj - spodaj) x s^1,3  — ista preslikava kot OVR
+// Povprečje atributov je tako v povprečju za manj kot 1 točko od OVR (preverjeno
+// na 2. SKL: 124 igralcev), profil igralca (močne in šibke strani) pa ostane.
+function atributiZaKartico(merged,o,perc){
+  const G=Math.max(merged[F.T],1), k=o&&o.k!=null?o.k:2, q=o&&o.q!=null?o.q:0.5;
+  const w=G/(G+k/2);
+  const [lo,hi]=OVR_RAZPON[currentLeague]||OVR_RAZPON.liga1;
+  const s={}, v={};
+  Object.entries(perc).forEach(([ime,p])=>{
+    s[ime]=w*p+(1-w)*q;
+    v[ime]=Math.round(lo+(hi-lo)*Math.pow(s[ime],1.3));
+  });
   // 🥚 Easter egg: Mark (52122) in Matic (52121) Hudobivnik — MET vedno 99.
   // Edini hard-code; OVR in ostali atributi ostanejo realni.
-  if(merged[F.pid]===52122||merged[F.pid]===52121)_attrs.met=99;
-  return _attrs;
+  if((merged[F.pid]===52122||merged[F.pid]===52121)&&v.met!=null){ v.met=99; s.met=1; }
+  return {v,s};
 }
 // 3. SKL beleži le točke in mete (brez skokov, podaj, poskusov iz igre), zato
 // so bili PODAJA, SKOK, OBRAMBA in EFEKT tam vsem enaki 45. Kartica v tej
-// ligi pokaže samo, kar podatki res povedo.
+// ligi pokaže samo, kar podatki res povedo. Vrne percentile (0..1) kot
+// computePlayerAttributes.
 function computePlayerAttributesOsnovni(merged){
   const pool=getLeaguePlayers().filter(p=>p[F.T]>=pragTekem(5));
   const tt=p=>Math.max(p[F.T],1);
-  const lestvica=(v,arr)=>Math.round(45+Math.pow(_pctlRank(v,arr),1.4)*47);
   // prosti meti: natančnost x volumen (polna vrednost od dveh poskusov na tekmo)
   const pm=p=>p[F.fta]>0?(p[F.ftm]/p[F.fta])*Math.min(1,p[F.fta]/tt(p)/2):0;
   return {
-    tocke: lestvica(merged[F.toc]/tt(merged), pool.map(p=>p[F.toc]/tt(p))),
-    za3:   lestvica(merged[F.fg3m]/tt(merged), pool.map(p=>p[F.fg3m]/tt(p))),
-    za2:   lestvica(merged[F.fg2m]/tt(merged), pool.map(p=>p[F.fg2m]/tt(p))),
-    prosti:lestvica(pm(merged), pool.map(pm)),
+    tocke: _pctlRank(merged[F.toc]/tt(merged), pool.map(p=>p[F.toc]/tt(p))),
+    za3:   _pctlRank(merged[F.fg3m]/tt(merged), pool.map(p=>p[F.fg3m]/tt(p))),
+    za2:   _pctlRank(merged[F.fg2m]/tt(merged), pool.map(p=>p[F.fg2m]/tt(p))),
+    prosti:_pctlRank(pm(merged), pool.map(pm)),
   };
 }
-// Značke kot v 2K: vsaka ima stopnjo glede na to, kako visoko je igralec v ligi
-// pri tej lastnosti. Prej je bila značka da/ne pri pragu 84 — igralec tik nad
-// pragom in najboljši v ligi sta imela isto oznako.
+// Značke kot v 2K: stopnja pove, kako visoko je igralec v ligi pri tej
+// lastnosti (s = isti, z vzorcem uravnoteženi delež kot za atribut). Prej je
+// bila značka da/ne pri atributu 84 na lestvici 45-92, ne glede na ligo.
 const ZNACKA_STOPNJE=[
-  {od:91,ime:'LEGENDA',c:'#c4b5fd'},
-  {od:87,ime:'ZLATO',c:'#f5c451'},
-  {od:83,ime:'SREBRO',c:'#d4d8e0'},
-  {od:78,ime:'BRON',c:'#d79a6c'},
+  {od:.97,ime:'LEGENDA',c:'#c4b5fd'},
+  {od:.92,ime:'ZLATO',c:'#f5c451'},
+  {od:.86,ime:'SREBRO',c:'#d4d8e0'},
+  {od:.78,ime:'BRON',c:'#d79a6c'},
 ];
-function computeBadges(merged,attrs){
+function computeBadges(merged,s,o){
   const t=Math.max(merged[F.T],1);
   const pool=getLeaguePlayers().filter(p=>p[F.T]>=pragTekem(5));
-  const toc=Math.round(45+Math.pow(_pctlRank(merged[F.toc]/t,pool.map(p=>p[F.toc]/Math.max(p[F.T],1))),1.4)*47);
-  const kandidati=leagueHasFullStats()?[
-    ['Ostrostrelec','tarca',attrs.met],
-    ['Skakalec','skok',attrs.skok],
-    ['Dirigent','podaja',attrs.podaja],
-    ['Branilec','scit',attrs.obramba],
-    ['Rušilec','strela',attrs.napad],
+  const polna=leagueHasFullStats();
+  // točke na tekmo (v 3. SKL so že atribut)
+  const toc=polna?atributiZaKartico(merged,o,{toc:_pctlRank(merged[F.toc]/t,pool.map(p=>p[F.toc]/Math.max(p[F.T],1)))}).s.toc:s.tocke;
+  const kandidati=polna?[
+    ['Ostrostrelec','tarca',s.met],
+    ['Skakalec','skok',s.skok],
+    ['Dirigent','podaja',s.podaja],
+    ['Branilec','scit',s.obramba],
+    ['Rušilec','strela',s.napad],
     ['Strelec','plamen',toc],
-    ['Zvezda','zvezda',attrs.efekt],
+    ['Zvezda','zvezda',s.efekt],
   ]:[
-    ['Ostrostrelec','tarca',attrs.za3],
-    ['Rušilec','strela',attrs.za2],
-    ['Strelec','plamen',attrs.tocke],
-    ['Mirna roka','merilnik',attrs.prosti],
+    ['Ostrostrelec','tarca',s.za3],
+    ['Rušilec','strela',s.za2],
+    ['Strelec','plamen',toc],
+    ['Mirna roka','merilnik',s.prosti],
   ];
   return kandidati
-    .map(([l,ik,v])=>({l,ik,v,s:ZNACKA_STOPNJE.find(s=>v>=s.od)}))
+    .map(([l,ik,v])=>({l,ik,v,s:ZNACKA_STOPNJE.find(z=>v>=z.od)}))
     .filter(z=>z.s).sort((a,b)=>b.v-a.v).slice(0,4);
 }
 
@@ -7099,11 +7122,11 @@ async function open2KCard(pIdx){
     .map(q=>(izracunajOVR(q)||{}).ovr).filter(v=>v!=null);
   const mesto=1+ovri.filter(v=>v>ovr).length;
   const polna=leagueHasFullStats();
-  const attrs=polna?computePlayerAttributes(merged):computePlayerAttributesOsnovni(merged);
+  const {v:attrs,s:attrsS}=atributiZaKartico(merged,_o,polna?computePlayerAttributes(merged):computePlayerAttributesOsnovni(merged));
   const atributi=polna
     ?[['MET',attrs.met],['RAKETA',attrs.napad],['PODAJA',attrs.podaja],['SKOK',attrs.skok],['OBRAMBA',attrs.obramba],['EFEKT',attrs.efekt]]
     :[['TOČKE',attrs.tocke],['ZA 3',attrs.za3],['ZA 2',attrs.za2],['PROSTI',attrs.prosti]];
-  const badges=computeBadges(merged,attrs);
+  const badges=computeBadges(merged,attrsS,_o);
   const t=Math.max(merged[F.T],1);
   const sezona=polna
     ?[[fmt(merged[F.toc]/t),'TOČK'],[fmt((merged[F.nap]+merged[F.obr])/t),'SKOKOV'],[fmt(merged[F.pod]/t),'PODAJ']]
@@ -7122,36 +7145,33 @@ async function open2KCard(pIdx){
   pokaziOverlay('share-overlay');document.body.style.overflow='hidden';
 }
 
-// ═══ 2K KARTICA (1080 x 1350, pokončna kot igralna kartica; Instagram 4:5) ═══
-// Levo OVR, mesto v ligi in sezonsko povprečje; desno fotografija, ki zbledi v
-// kartico, na njenem dnu značke. Spodaj ime (priimek velik), ekipa in atributi.
-// Ime, ekipa in značke se računajo OD SPODAJ navzgor: daljše ime potisne
-// značke višje, nikoli čez atribute ali čez fotografijo obraza.
-// Okvir in OVR sta v barvi razreda (zlato elita ... siva), sij za fotografijo
-// v barvi ekipe.
-let _2kRis=0;
-async function draw2KCard(d){
-  const moj=++_2kRis;
-  const vid0=document.getElementById('share-canvas');
-  // do konca risanja prazna kartica, ne prejšnja (drug igralec, kartica Deli)
-  vid0.width=1080; vid0.height=1350; const x0=vid0.getContext('2d'); x0.fillStyle='#050506'; x0.fillRect(0,0,1080,1350);
-  const cv=document.createElement('canvas');
-  await _narisi2K(cv,d);
-  if(moj!==_2kRis)return;
-  const vid=document.getElementById('share-canvas');
-  vid.width=cv.width; vid.height=cv.height;
-  vid.getContext('2d').drawImage(cv,0,0);
+// ═══ POKONČNI KARTICI: 2K in sezonska (Deli) — 1080 x 1350, Instagram 4:5 ═══
+// Isti okvir: temna kartica s sijem v barvi ekipe, desno fotografija, ki
+// zbledi v kartico, logo v kotu, spodaj priimek velik in ime nad njim.
+// Ime in ekipa se računata OD SPODAJ navzgor: daljše ime potisne vsebino nad
+// njim višje, nikoli čez ploščice spodaj.
+//
+// Risanje čaka na slike. Kartica, ki se je začela kasneje (drug igralec, iz 2K
+// na Deli), ima prednost — prejšnja na zaslon ne pride.
+let _kcRis=0;
+async function _kcNaZaslon(id,W,H,narisi){
+  const moj=++_kcRis;
+  const vid=document.getElementById(id);
+  // do konca risanja prazna kartica, ne prejšnja
+  vid.width=W; vid.height=H; const x0=vid.getContext('2d'); x0.fillStyle='#050506'; x0.fillRect(0,0,W,H);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  await narisi(cv);
+  if(moj!==_kcRis)return;
+  vid.width=W; vid.height=H; vid.getContext('2d').drawImage(cv,0,0);
 }
-async function _narisi2K(cv,d){
-  const W=1080,H=1350; cv.width=W; cv.height=H;
-  const x=cv.getContext('2d');
-  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+const _KK={W:1080,H:1350,O:24,M:72,R:44};
+async function _kcKarticaPodlaga(x,d){
+  const K=_KC, {W,H,O,R}=_KK, col=d.color;
+  x.imageSmoothingEnabled=true; x.imageSmoothingQuality='high';
   await _kcPisave();
-  const K=_KC, oc=ovrColor(d.ovr), col=d.color, O=24, M=72, R=44;
   const [foto,logo]=await Promise.all([_loadImg(d.photoLocal||d.photoUrl,{w:700}),_loadImg(d.logoLocal||d.logoUrl,{w:200})]);
-
   x.fillStyle='#050506'; x.fillRect(0,0,W,H);
-  x.save(); _kcRR(x,O,O,W-2*O,H-2*O,R); x.clip();
+  x.save(); _kcRR(x,O,O,W-2*O,H-2*O,R); x.clip();     // restore v _kcKarticaOkvir
   x.fillStyle=K.KARTA; x.fillRect(0,0,W,H);
   const sij=x.createRadialGradient(W*0.68,360,30,W*0.68,360,640);
   sij.addColorStop(0,_kcA(col,.5)); sij.addColorStop(.6,_kcA(col,.12)); sij.addColorStop(1,_kcA(col,0));
@@ -7160,23 +7180,20 @@ async function _narisi2K(cv,d){
   x.save(); x.globalAlpha=.03; x.strokeStyle='#fff'; x.lineWidth=2;
   for(let i=-H;i<W;i+=24){ x.beginPath(); x.moveTo(i,0); x.lineTo(i+H,H); x.stroke(); }
   x.restore();
-
-  // ── Fotografija ──
+  // fotografija desno; brez nje velik, zbledel logo ekipe (ali začetnici)
   const fX=360, fY=O, fW=W-O-fX, fH=860-O;
   if(!_kcFoto(x,foto,fX,fY,fW,fH,{levo:300,spodaj:400,vinjeta:.78})){
-    // brez fotografije: velik, zbledel logo ekipe (ali začetnici), brez okvirja
     x.save(); x.globalAlpha=.16;
     if(logo){ const v=440, sk=Math.min(v/logo.naturalWidth,v/logo.naturalHeight);
       try{ x.drawImage(logo, fX+fW/2-logo.naturalWidth*sk/2+40, 330-logo.naturalHeight*sk/2, logo.naturalWidth*sk, logo.naturalHeight*sk); }catch(e){} }
     else _kcZacetnici(x,d.name,fX+120,fY+80,fW-200,fH-300,col,true);
     x.restore();
   }
-  // spodnji del kartice brez sija — ime in atributi na mirni podlagi
+  // spodnji del brez sija — ime in ploščice na mirni podlagi
   const spod=x.createLinearGradient(0,700,0,960);
   spod.addColorStop(0,_kcA(K.KARTA,0)); spod.addColorStop(1,K.KARTA);
   x.fillStyle=spod; x.fillRect(0,700,W,H-700);
-
-  // ── Logo ekipe zgoraj desno ──
+  // logo ekipe zgoraj desno
   if(logo){
     const lr=50, lx=W-O-34-lr, ly=O+34+lr;
     x.beginPath(); x.arc(lx,ly,lr,0,Math.PI*2); x.fillStyle='rgba(8,8,10,.72)'; x.fill();
@@ -7184,12 +7201,81 @@ async function _narisi2K(cv,d){
     const ls=66, sk=Math.min(ls/logo.naturalWidth,ls/logo.naturalHeight);
     try{ x.drawImage(logo,lx-logo.naturalWidth*sk/2,ly-logo.naturalHeight*sk/2,logo.naturalWidth*sk,logo.naturalHeight*sk); }catch(e){}
   }
-
-  // ── Levo zgoraj: liga, OVR, mesto, izvor ocene ──
+  // liga in sezona zgoraj levo
   x.textAlign='left';
   x.fillStyle=K.MUT; x.font=`600 30px ${K.FD}`; _kcRazmik(x,3);
-  x.fillText(`${(getLg().name||'').toUpperCase()} · ${seasonLabel()}`, M, 108);
+  x.fillText(`${(getLg().name||'').toUpperCase()} · ${seasonLabel()}`, _KK.M, 108);
   _kcRazmik(x,0);
+}
+// Ekipa, priimek in ime nad vrstico ekY; vrne vrh bloka.
+function _kcKarticaIme(x,d,ekY){
+  const K=_KC, {W,M}=_KK;
+  x.fillStyle=d.color; x.beginPath(); x.arc(M+9,ekY-9,9,0,Math.PI*2); x.fill();
+  x.font=`600 28px ${K.FI}`; x.fillStyle=K.TXT;
+  const ekipa=_kcSkrajsaj(x,d.team,W-2*M-360);
+  x.fillText(ekipa, M+30, ekY);
+  const ew=x.measureText(ekipa).width;
+  x.fillStyle=K.MUT; x.font=`500 26px ${K.FI}`;
+  x.fillText(`  ·  ${d.born||''}  ·  ${nTekem(d.games)}`, M+30+ew, ekY);
+  const {ime,priimek}=_kcIme(d.pid,d.name);
+  const pr=_kcPriimek(x,priimek.toUpperCase(),W-2*M,140,78,true,K.FD);
+  let py=ekY-56;
+  x.fillStyle=K.TXT; x.font=`700 ${pr.v}px ${K.FD}`;
+  for(let i=pr.vrstice.length-1;i>=0;i--){ x.fillText(pr.vrstice[i], M-4, py); if(i)py-=Math.round(pr.v*0.9); }
+  let vrh=py-pr.v*0.72;
+  if(ime){
+    x.fillStyle=K.SUB; x.font=`600 34px ${K.FI}`; _kcRazmik(x,4);
+    x.fillText(_kcSkrajsaj(x,ime.toUpperCase(),W-2*M), M, vrh-18);
+    _kcRazmik(x,0); vrh-=18+34;
+  }
+  return vrh;
+}
+// Mreža ploščic nad nogo; vrne vrh mreže. Vsaka ploščica: [oznaka, vrednost, barva, opomba?, delež 0..1?]
+function _kcKarticaPloscice(x,ploscice,noga){
+  const K=_KC, {W,M}=_KK;
+  const n=ploscice.length, stolpcev=n>4?3:2, vrstic=Math.ceil(n/stolpcev), gap=12, tH=92;
+  const tW=(W-2*M-(stolpcev-1)*gap)/stolpcev;
+  const top=noga-44-vrstic*tH-(vrstic-1)*gap;
+  ploscice.forEach(([l,v,c,opomba,delez],i)=>{
+    const tx=M+(i%stolpcev)*(tW+gap), ty=top+Math.floor(i/stolpcev)*(tH+gap);
+    _kcRR(x,tx,ty,tW,tH,18); x.fillStyle='rgba(255,255,255,.035)'; x.fill();
+    x.strokeStyle='rgba(255,255,255,.07)'; x.lineWidth=1.5; x.stroke();
+    const vs=String(v);
+    x.font=`700 62px ${K.FD}`;
+    const vSir=Math.max(x.measureText(vs).width,x.measureText('99').width);
+    const vel=_kcVelikost(x,vs,tW*0.5,62,40,700,K.FD);
+    x.fillStyle=c; x.font=`700 ${vel}px ${K.FD}`; x.fillText(vs, tx+22, ty+68);
+    const lx=tx+22+Math.min(vSir,tW*0.5)+18, bw=tx+tW-22-lx;
+    x.fillStyle=K.TXT; x.font=`700 19px ${K.FI}`; _kcRazmik(x,2.5); x.fillText(_kcSkrajsaj(x,l,bw), lx, ty+40); _kcRazmik(x,0);
+    if(delez!=null){
+      _kcRR(x,lx,ty+54,bw,6,3); x.fillStyle='rgba(255,255,255,.08)'; x.fill();
+      _kcRR(x,lx,ty+54,Math.max(6,bw*Math.min(1,delez)),6,3); x.fillStyle=c; x.fill();
+    }else if(opomba){
+      x.fillStyle=opomba.c||K.MUT; x.font=`600 19px ${K.FI}`; x.fillText(_kcSkrajsaj(x,opomba.t,bw), lx, ty+68);
+    }
+  });
+  return top;
+}
+function _kcKarticaOkvir(x,barva){
+  const K=_KC, {W,H,O,M,R}=_KK, noga=H-O-40;
+  x.fillStyle=K.SUB; x.font=`600 22px ${K.FI}`; x.fillText(SITE_LABEL, M, noga);
+  x.textAlign='right'; x.fillStyle=K.MUT; x.fillText('by Blaž Erčulj', W-M, noga); x.textAlign='left';
+  x.restore();                                       // clip iz _kcKarticaPodlaga
+  const ok=x.createLinearGradient(0,0,W,H);
+  ok.addColorStop(0,barva); ok.addColorStop(.4,_kcA(barva,.18)); ok.addColorStop(.6,_kcA(barva,.18)); ok.addColorStop(1,barva);
+  _kcRR(x,O+2,O+2,W-2*O-4,H-2*O-4,R-2); x.strokeStyle=ok; x.lineWidth=4; x.stroke();
+}
+const _kcNoga=()=>_KK.H-_KK.O-40;
+
+// ═══ 2K KARTICA ═══
+// Levo OVR, mesto v ligi in sezonsko povprečje; na dnu fotografije značke;
+// spodaj atributi. Okvir in OVR v barvi razreda (zlato elita ... siva).
+function draw2KCard(d){ return _kcNaZaslon('share-canvas',_KK.W,_KK.H,cv=>_narisi2K(cv,d)); }
+async function _narisi2K(cv,d){
+  const x=cv.getContext('2d'), K=_KC, {W,M}=_KK, oc=ovrColor(d.ovr);
+  await _kcKarticaPodlaga(x,d);
+
+  // ── OVR, mesto, izvor ocene, sezonsko povprečje ──
   x.fillStyle=oc; x.font=`700 260px ${K.FD}`;
   x.fillText(String(d.ovr), M-8, 338);
   x.fillStyle=K.TXT; x.font=`700 28px ${K.FI}`; _kcRazmik(x,6);
@@ -7203,7 +7289,6 @@ async function _narisi2K(cv,d){
   if(mestoTxt)x.fillText(mestoTxt, M+ovrW+18, 388);
   _kcRazmik(x,0); x.fillStyle=K.MUT; x.font=`500 22px ${K.FI}`;
   x.fillText(`OVR iz igre · ${d.ovrVir}`, M, 424);
-  // sezonsko povprečje
   let sx=M;
   d.sezona.forEach(([v,l])=>{
     x.fillStyle=K.TXT; x.font=`700 60px ${K.FD}`; x.fillText(String(v), sx, 524);
@@ -7212,46 +7297,11 @@ async function _narisi2K(cv,d){
     sx+=Math.max(vw,lw)+34;
   });
 
-  // ── Spodaj navzgor: noga, atributi, ekipa, priimek, ime, značke ──
-  const noga=H-O-40;
-  const nA=d.atributi.length, stolpcev=nA>4?3:2, vrstic=Math.ceil(nA/stolpcev), gap=12, tH=92;
-  const tW=(W-2*M-(stolpcev-1)*gap)/stolpcev;
-  const aTop=noga-44-vrstic*tH-(vrstic-1)*gap;
-  d.atributi.forEach(([l,v],i)=>{
-    const tx=M+(i%stolpcev)*(tW+gap), ty=aTop+Math.floor(i/stolpcev)*(tH+gap), c=ovrColor(v);
-    _kcRR(x,tx,ty,tW,tH,18); x.fillStyle='rgba(255,255,255,.035)'; x.fill();
-    x.strokeStyle='rgba(255,255,255,.07)'; x.lineWidth=1.5; x.stroke();
-    x.fillStyle=c; x.font=`700 62px ${K.FD}`; x.fillText(String(v), tx+22, ty+68);
-    const lx=tx+22+x.measureText('99').width+18, bw=tx+tW-22-lx;
-    x.fillStyle=K.TXT; x.font=`700 19px ${K.FI}`; _kcRazmik(x,2.5); x.fillText(l, lx, ty+40); _kcRazmik(x,0);
-    _kcRR(x,lx,ty+54,bw,6,3); x.fillStyle='rgba(255,255,255,.08)'; x.fill();
-    _kcRR(x,lx,ty+54,Math.max(6,bw*v/99),6,3); x.fillStyle=c; x.fill();
-  });
-
-  // ekipa · letnik · tekme
-  const ekY=aTop-34;
-  x.fillStyle=col; x.beginPath(); x.arc(M+9,ekY-9,9,0,Math.PI*2); x.fill();
-  x.font=`600 28px ${K.FI}`; x.fillStyle=K.TXT;
-  const ekipa=_kcSkrajsaj(x,d.team,W-2*M-360);
-  x.fillText(ekipa, M+30, ekY);
-  const ew=x.measureText(ekipa).width;
-  x.fillStyle=K.MUT; x.font=`500 26px ${K.FI}`;
-  x.fillText(`  ·  ${d.born||''}  ·  ${nTekem(d.games)}`, M+30+ew, ekY);
-
-  // priimek (velik) in ime nad njim
-  const {ime,priimek}=_kcIme(d.pid,d.name);
-  const pr=_kcPriimek(x,priimek.toUpperCase(),W-2*M,140,78,true,K.FD);
-  let py=ekY-56;
-  x.fillStyle=K.TXT; x.font=`700 ${pr.v}px ${K.FD}`;
-  for(let i=pr.vrstice.length-1;i>=0;i--){ x.fillText(pr.vrstice[i], M-4, py); if(i)py-=Math.round(pr.v*0.9); }
-  let vrh=py-pr.v*0.72;
-  if(ime){
-    x.fillStyle=K.SUB; x.font=`600 34px ${K.FI}`; _kcRazmik(x,4);
-    x.fillText(_kcSkrajsaj(x,ime.toUpperCase(),W-2*M), M, vrh-18);
-    _kcRazmik(x,0); vrh-=18+34;
-  }
-
-  // značke nad imenom, poravnane desno (pod fotografijo)
+  // ── Spodaj navzgor: atributi, ime, značke ──
+  // črta = položaj v razponu lige (od najslabšega do najboljšega možnega OVR)
+  const [lo,hi]=OVR_RAZPON[currentLeague]||OVR_RAZPON.liga1;
+  const aTop=_kcKarticaPloscice(x,d.atributi.map(([l,v])=>[l,v,ovrColor(v),null,Math.max(.04,(v-lo)/(hi-lo))]),_kcNoga());
+  const vrh=_kcKarticaIme(x,d,aTop-34);
   if(d.badges.length){
     const r=40, korak=138, cy=vrh-30-56-r;
     // temna podlaga pod vrsto značk — čez svetle dele fotografije ostanejo berljive
@@ -7271,19 +7321,16 @@ async function _narisi2K(cv,d){
       x.shadowBlur=0; x.textAlign='left';
     });
   }
-
-  // noga
-  x.fillStyle=K.SUB; x.font=`600 22px ${K.FI}`; x.fillText(SITE_LABEL, M, noga);
-  x.textAlign='right'; x.fillStyle=K.MUT; x.fillText('by Blaž Erčulj', W-M, noga); x.textAlign='left';
-  x.restore();
-
-  // okvir v barvi razreda
-  const ok=x.createLinearGradient(0,0,W,H);
-  ok.addColorStop(0,oc); ok.addColorStop(.4,_kcA(oc,.18)); ok.addColorStop(.6,_kcA(oc,.18)); ok.addColorStop(1,oc);
-  _kcRR(x,O+2,O+2,W-2*O-4,H-2*O-4,R-2); x.strokeStyle=ok; x.lineWidth=4; x.stroke();
+  _kcKarticaOkvir(x,oc);
 }
 
-function openShareCard(pIdx){
+// ═══ SEZONSKA KARTICA (gumb Deli, Igralec sezone) ═══
+// Točke na tekmo velike, pod njimi forma zadnjih tekem; spodaj ploščice s
+// statistiko in mestom v ligi (ali povprečjem lige, kadar ni med prvimi 10).
+// NAJ TEKMA = največ točk na eni tekmi letos.
+// 3. SKL beleži le točke in mete, zato tam meti in najboljša tekma.
+// Prej: rjav preliv, krog s fotografijo, v 3. SKL ničle pri skokih in podajah.
+function openShareCard(pIdx,znak){
   const p=P[pIdx];
   if(!p)return;
   // Merge by pid for full-season totals
@@ -7293,14 +7340,44 @@ function openShareCard(pIdx){
     [F.T,F.MIN,F.fg2m,F.fg2a,F.fg3m,F.fg3a,F.ftm,F.fta,F.toc,F.nap,F.obr,F.pod,F.sto,F.izs,F.izg,F.pz,F.blk,F.pre,F.pm,F.efe,F.pip,F.fb,F.sc].forEach(fi=>merged[fi]+=x[fi]);
   }});
   const teamLabel=[...teams].join(' / ');
-  const t=Math.max(merged[F.T],1);
+  const t=Math.max(merged[F.T],1), polna=leagueHasFullStats();
+  // primerjalna skupina: igralci nad pragom tekem (kot drugje na strani)
+  const pool=getLeaguePlayers().filter(q=>q[F.T]>=pragTekem(5));
+  const tt=q=>Math.max(q[F.T],1);
+  const naj=pid=>Math.max(0,...(playerGameLog[pid]||[]).map(g=>g.pts||0));
+  // mesto v ligi (do 10.) ali povprečje lige
+  const primerjaj=(vrednost,fn,fmtV)=>{
+    const vals=pool.map(fn).filter(v=>v!=null);
+    if(vrednost==null||!vals.length)return null;
+    const mesto=1+vals.filter(v=>v>vrednost).length;
+    if(mesto<=10)return {t:`${mesto}. v ligi`,c:mesto<=3?'#f5c451':_KC.TXT};
+    return {t:`povpr. ${fmtV(vals.reduce((a,b)=>a+b,0)/vals.length)}`};
+  };
+  const f1=v=>fmt(v), fPct=v=>Math.round(v)+'%';
+  const ts=tsOf(merged);
+  const ploscice=polna?[
+    ['SKOKI',fmt((merged[F.nap]+merged[F.obr])/t),primerjaj((merged[F.nap]+merged[F.obr])/t,q=>(q[F.nap]+q[F.obr])/tt(q),f1)],
+    ['PODAJE',fmt(merged[F.pod]/t),primerjaj(merged[F.pod]/t,q=>q[F.pod]/tt(q),f1)],
+    ['EFE',fmt(merged[F.efe]/t),primerjaj(merged[F.efe]/t,q=>q[F.efe]/tt(q),f1)],
+    ['TS %',ts!=null?Math.round(ts)+'%':'—',primerjaj(ts,q=>tsOf(q),fPct)],
+    ['MINUTE',fmt(merged[F.MIN]/t,0),primerjaj(merged[F.MIN]/t,q=>q[F.MIN]/tt(q),v=>fmt(v,0))],
+    ['NAJ TEKMA',naj(merged[F.pid]),primerjaj(naj(merged[F.pid]),q=>naj(q[F.pid]),v=>fmt(v,0))],
+  ]:[
+    ['KOŠI ZA 2',fmt(merged[F.fg2m]/t),primerjaj(merged[F.fg2m]/t,q=>q[F.fg2m]/tt(q),f1)],
+    ['TROJKE',fmt(merged[F.fg3m]/t),primerjaj(merged[F.fg3m]/t,q=>q[F.fg3m]/tt(q),f1)],
+    ['PROSTI',merged[F.fta]>0?Math.round(merged[F.ftm]/merged[F.fta]*100)+'%':'—',
+      merged[F.fta]>0?primerjaj(merged[F.ftm]/merged[F.fta]*100,q=>q[F.fta]>=4?q[F.ftm]/q[F.fta]*100:null,fPct):null],
+    ['NAJ TEKMA',naj(merged[F.pid]),primerjaj(naj(merged[F.pid]),q=>naj(q[F.pid]),v=>fmt(v,0))],
+  ];
+  const tocMesto=primerjaj(merged[F.toc]/t,q=>q[F.toc]/tt(q),f1);
+  // forma: točke na zadnjih (do) 6 tekmah, po vrsti
+  const forma=(playerGameLog[merged[F.pid]]||[]).slice().sort((a,b)=>(a.round||0)-(b.round||0)).slice(-6).map(g=>g.pts||0);
+  const prva=(teamLabel||'').split(' / ')[0];
   drawShareCard({
-    name:merged[F.name], team:teamLabel, games:merged[F.T],
-    pts:merged[F.toc]/t, reb:(merged[F.nap]+merged[F.obr])/t, ast:merged[F.pod]/t,
-    efe:merged[F.efe]/t, fg3:pct(merged[F.fg3m],merged[F.fg3a]),
-    ts:tsOf(merged),
-    color:TEAM_COLORS[(teamLabel||'').split(' / ')[0]]||'#f97316',
-    logoUrl:teamLogoUrl((teamLabel||'').split(' / ')[0]),
+    pid:merged[F.pid], name:merged[F.name], team:teamLabel, born:merged[F.born], games:merged[F.T],
+    pts:merged[F.toc]/t, tocMesto, min:polna?merged[F.MIN]/t:null, forma, ploscice, znak,
+    color:TEAM_COLORS[prva]||'#f97316',
+    logoUrl:teamLogoUrl(prva),
     photoUrl:playerPhotoUrl(merged[F.pid]),
     logoLocal:teamLogoLocal(teamLabel),
     photoLocal:playerPhotoLocal(merged[F.pid])
@@ -7309,137 +7386,50 @@ function openShareCard(pIdx){
   pokaziOverlay('share-overlay');document.body.style.overflow='hidden';
 }
 
-async function drawShareCard(d){
-  const cv=document.getElementById('share-canvas');
-  cv.width=1080; cv.height=1080;   // 2K kartica je pokončna in velikost pusti po svoje
-  _2kRis++;                         // 2K kartica, ki se še riše, te ne sme prepisati
-  const x=cv.getContext('2d');
-  x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
-  const W=1080,H=1080;
-  const col=d.color;
-  const dark=_shade(col,-55);
+function drawShareCard(d){ return _kcNaZaslon('share-canvas',_KK.W,_KK.H,cv=>_narisiSezono(cv,d)); }
+async function _narisiSezono(cv,d){
+  const x=cv.getContext('2d'), K=_KC, {M}=_KK, col=d.color;
+  await loadRosters();
+  await _kcKarticaPodlaga(x,d);
 
-  // Background gradient
-  const bg=x.createLinearGradient(0,0,W,H);
-  bg.addColorStop(0,_shade(col,-72));
-  bg.addColorStop(1,'#06060f');
-  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  // ── Točke na tekmo ──
+  let y=d.znak?380:338;
+  if(d.znak){   // npr. "VODI ZA MVP" pri kartici igralca sezone
+    x.font=`700 22px ${K.FI}`; _kcRazmik(x,3);
+    const cw=x.measureText(d.znak).width+30;
+    _kcRR(x,M,142,cw,40,20); x.fillStyle=col; x.fill();
+    x.fillStyle='#fff'; x.textBaseline='middle'; x.fillText(d.znak, M+15, 163); x.textBaseline='alphabetic';
+    _kcRazmik(x,0);
+  }
+  x.fillStyle=K.TXT; x.font=`700 ${_kcVelikost(x,fmt(d.pts),300,230,150,700,K.FD)}px ${K.FD}`;
+  x.fillText(fmt(d.pts), M-6, y);
+  x.font=`700 26px ${K.FI}`; _kcRazmik(x,5);
+  x.fillText('TOČK / TEKMO', M, y+50);
+  const lw=x.measureText('TOČK / TEKMO').width;
+  if(d.tocMesto&&/v ligi/.test(d.tocMesto.t)){
+    _kcRazmik(x,2); x.fillStyle=d.tocMesto.c||K.SUB; x.font=`600 24px ${K.FI}`;
+    x.fillText(d.tocMesto.t.toUpperCase(), M+lw+18, y+50);
+  }
+  _kcRazmik(x,0); x.fillStyle=K.MUT; x.font=`500 22px ${K.FI}`;
+  x.fillText(izTekem(d.games)+(d.min!=null?` · ${fmt(d.min,0)} min na tekmo`:''), M, y+86);
 
-  // Top color band
-  const band=x.createLinearGradient(0,0,W,0);
-  band.addColorStop(0,col); band.addColorStop(1,dark);
-  x.fillStyle=band; x.fillRect(0,0,W,12);
-
-  // Decorative circle
-  x.save();
-  x.globalAlpha=0.08; x.fillStyle='#fff';
-  x.beginPath(); x.arc(W-120,180,260,0,Math.PI*2); x.fill();
-  x.restore();
-
-  // Header
-  x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 26px "Barlow Condensed", sans-serif';
-  x.textAlign='left';
-  x.fillText('SLOVENSKA KOŠARKA · '+seasonLabel(), 70, 100);
-
-  // Player photo — big circular, top-right. Logo badge sits on it.
-  const photoSize=260, photoCX=W-photoSize/2-80, photoCY=photoSize/2+90;
-  const photoImg=await _loadImg(d.photoLocal||d.photoUrl,{w:600});
-  const logoImg=await _loadImg(d.logoLocal||d.logoUrl,{w:200});
-  if(photoImg){
-    x.save();
-    x.beginPath();x.arc(photoCX,photoCY,photoSize/2+5,0,Math.PI*2);
-    x.fillStyle='rgba(255,255,255,.15)';x.fill();
-    x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);x.closePath();x.clip();
-    const iw=photoImg.naturalWidth,ih=photoImg.naturalHeight,side=Math.min(iw,ih);
-    x.drawImage(photoImg,(iw-side)/2,0,side,side,photoCX-photoSize/2,photoCY-photoSize/2,photoSize,photoSize);
-    x.restore();
-    x.beginPath();x.arc(photoCX,photoCY,photoSize/2,0,Math.PI*2);
-    x.strokeStyle='rgba(255,255,255,.4)';x.lineWidth=4;x.stroke();
-    // logo badge on photo
-    if(logoImg){
-      const bs=84,bx=photoCX+photoSize/2-bs-6,by=photoCY+photoSize/2-bs-6;
-      _roundRect(x,bx-6,by-6,bs+12,bs+12,18);
-      x.fillStyle='rgba(10,10,20,.85)';x.fill();
-      x.strokeStyle='rgba(255,255,255,.2)';x.lineWidth=2;x.stroke();
-      try{x.drawImage(logoImg,bx,by,bs,bs);}catch(e){}
-    }
-  } else if(logoImg){
-    // no photo — just big logo top-right
-    const ls=160,lx=W-ls-90,ly=110;
-    try{x.drawImage(logoImg,lx,ly,ls,ls);}catch(e){}
+  // ── Forma: točke na zadnjih tekmah ──
+  if(d.forma.length>=2){
+    const top=y+136, vis=100, sir=44, gap=12, najv=Math.max(...d.forma,1);
+    x.fillStyle=K.MUT; x.font=`600 18px ${K.FI}`; _kcRazmik(x,2);
+    x.fillText('ZADNJE TEKME', M, top); _kcRazmik(x,0);
+    d.forma.forEach((v,i)=>{
+      const h=Math.max(6,vis*v/najv), bx=M+i*(sir+gap), by=top+44+vis-h;
+      _kcRR(x,bx,by,sir,h,8); x.fillStyle=i===d.forma.length-1?col:'rgba(255,255,255,.22)'; x.fill();
+      x.fillStyle=K.TXT; x.font=`700 26px ${K.FD}`; x.textAlign='center';
+      x.fillText(String(v), bx+sir/2, by-8); x.textAlign='left';
+    });
   }
 
-  // Player name (wrap if long)
-  x.fillStyle='#fff';
-  x.font='800 80px "Inter", sans-serif';
-  const name=d.name.toUpperCase();
-  const parts=name.split(' ');
-  let line1=name, line2='';
-  if(x.measureText(name).width>W-140 && parts.length>1){
-    const mid=Math.ceil(parts.length/2);
-    line1=parts.slice(0,mid).join(' ');
-    line2=parts.slice(mid).join(' ');
-  }
-  x.fillText(line1, 70, 230);
-  if(line2){ x.fillText(line2, 70, 320); }
-  const nameBottom=line2?360:300;
-
-  // Team + games
-  x.fillStyle=col;
-  x.font='700 34px "Inter", sans-serif';
-  x.fillText(d.team, 70, nameBottom);
-  x.fillStyle='rgba(255,255,255,.4)';
-  x.font='400 26px "Barlow Condensed", sans-serif';
-  x.fillText(d.games+' tekem', 70, nameBottom+42);
-
-  // BIG stat — points
-  const bigY=nameBottom+200;
-  x.fillStyle='rgba(255,255,255,.5)';
-  x.font='600 28px "Barlow Condensed", sans-serif';
-  x.fillText('TOČKE NA TEKMO', 70, bigY-90);
-  x.fillStyle='#fff';
-  x.font='800 220px "Barlow Condensed", sans-serif';
-  x.fillText(d.pts.toFixed(1), 60, bigY+90);
-
-  // Stat grid (4 boxes)
-  const stats=[
-    {l:'SKOKI',v:d.reb.toFixed(1)},
-    {l:'ASIST.',v:d.ast.toFixed(1)},
-    {l:'EFE',v:d.efe.toFixed(1)},
-    {l:'TS%',v:(d.ts!=null?d.ts.toFixed(0)+'%':'—')},
-  ];
-  const gy=bigY+200, bw=(W-140-30)/4, bh=180;
-  stats.forEach((s,i)=>{
-    const bx=70+i*(bw+10);
-    // box
-    const rg=x.createLinearGradient(bx,gy,bx,gy+bh);
-    rg.addColorStop(0,'rgba(255,255,255,.08)');
-    rg.addColorStop(1,'rgba(255,255,255,.03)');
-    x.fillStyle=rg;
-    _roundRect(x,bx,gy,bw,bh,16); x.fill();
-    x.strokeStyle='rgba(255,255,255,.1)'; x.lineWidth=1; x.stroke();
-    // value
-    x.fillStyle='#fff';
-    x.font='800 58px "Barlow Condensed", sans-serif';
-    x.textAlign='center';
-    x.fillText(s.v, bx+bw/2, gy+90);
-    // label
-    x.fillStyle=col;
-    x.font='600 24px "Barlow Condensed", sans-serif';
-    x.fillText(s.l, bx+bw/2, gy+140);
-    x.textAlign='left';
-  });
-
-  // Footer
-  x.fillStyle='rgba(255,255,255,.4)';
-  x.font='600 22px "Barlow Condensed", sans-serif';
-  x.textAlign='right';
-  x.fillText('by Blaž Erčulj', W-70, H-50);
-  x.textAlign='left';
-  x.fillStyle='rgba(255,255,255,.55)';
-  x.font='600 24px "Barlow Condensed", sans-serif';
-  x.fillText(SITE_LABEL, 70, H-50);
+  // ── Spodaj navzgor: ploščice, ime ──
+  const pTop=_kcKarticaPloscice(x,d.ploscice.map(([l,v,op])=>[l,v,K.TXT,op||null,null]),_kcNoga());
+  _kcKarticaIme(x,d,pTop-34);
+  _kcKarticaOkvir(x,col);
 }
 
 function _roundRect(ctx,x,y,w,h,r){
@@ -7832,7 +7822,7 @@ function openSeasonCard(){
   const score=calcMvpScore;   // isti izbor kot MVP
   const best=[...LPa].sort((a,b)=>score(b)-score(a))[0];
   const pIdx=P.findIndex(x=>x[F.pid]===best[F.pid]);
-  if(pIdx>=0)openShareCard(pIdx);
+  if(pIdx>=0)openShareCard(pIdx,'VODI ZA MVP');
 }
 
 function downloadRoundCard(){
