@@ -2433,6 +2433,28 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .box-cetrt button{background:transparent;border:none;color:var(--sub);font-family:var(--fm);font-size:.8rem;font-weight:600;padding:7px 14px;border-radius:999px;cursor:pointer;min-width:44px}
 .box-cetrt button:hover{color:var(--text)}
 .box-cetrt button.active{background:var(--text);color:var(--bg)}
+
+/* Nove prijave (zavihek Prestopi) */
+.np-pod{font-family:var(--fm);font-size:.8rem;font-weight:500;text-transform:none;letter-spacing:0;color:var(--sub)}
+.np-opomba{font-size:.78rem;color:var(--mut);line-height:1.5;margin:-6px 0 14px;max-width:760px}
+.np-mreza{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:10px;margin-bottom:30px}
+.np-k{display:flex;gap:12px;align-items:stretch;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:10px 12px 10px 10px;min-width:0}
+.np-k.ima{cursor:pointer}
+.np-k.ima:hover{background:var(--card2)}
+.np-foto{align-self:flex-start;width:56px;height:70px;border-radius:10px;object-fit:cover;object-position:50% 12%;background:var(--card2);flex-shrink:0}
+.np-tel{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;overflow-wrap:anywhere}
+.np-ime{font-weight:700;font-size:.95rem;line-height:1.25}
+.np-meta{font-family:var(--fm);font-size:.72rem;color:var(--mut);margin-top:-2px}
+.np-ek{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;min-width:0}
+.np-ek span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-od{font-size:.75rem;color:var(--sub);line-height:1.35}
+.np-desno{display:flex;flex-direction:column;align-items:flex-end;text-align:right;flex-shrink:0;gap:6px}
+.np-dat{font-family:var(--fd);font-weight:700;font-size:1.25rem;line-height:1}
+.np-pred{font-family:var(--fm);font-size:.6875rem;color:var(--mut);margin-top:2px}
+.np-st{font-family:var(--fm);font-size:.72rem;color:var(--text);margin-top:2px}
+.np-st.ne{color:var(--mut)}
+.np-odj{font-family:var(--fm);font-size:.6875rem;color:var(--red);white-space:nowrap}
+@media(max-width:480px){.np-mreza{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2965,6 +2987,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
   </div>
 
   <div id="tab-transferji" class="tab">
+    <div id="np-wrap"></div>
     <div id="tr-wrap"></div>
   </div>
 
@@ -5196,6 +5219,7 @@ function trPlayerRow(p, smer){
 function renderTransferji(){
   const wrap=document.getElementById('tr-wrap');
   if(!wrap)return;
+  renderNovePrijave();
   if(!_TRANSFERS){
     wrap.innerHTML='<div class="empty">Nalagam prestope…</div>';
     loadTransfers().then(()=>{ if(_TRANSFERS)renderTransferji();
@@ -5249,6 +5273,89 @@ function renderTransferji(){
     </div>`;
   });
   wrap.innerHTML=html;
+}
+
+// ═══ NOVE PRIJAVE — kdo je bil prijavljen med sezono (data/prijave.json) ═══
+// KZS datuma prijave ne objavi. scripts/nove_prijave.py si ob vsakem zagonu
+// zapomni, kdaj je igralca prvič videl v sestavu — datum je zato natančen na
+// en zagon (~6 ur). Šteje samo prijava po 1. krogu, ki ni del prve objave
+// sestava ekipe; predsezonske prihode pokrijejo prestopi spodaj.
+let _PRIJAVE=null, _prSezona=null;
+async function loadPrijave(){
+  if(_prSezona===_currentSeason)return _PRIJAVE;
+  _prSezona=_currentSeason; _PRIJAVE=null;
+  try{
+    const r=await fetch(seasonFileUrl('prijave'),{cache:'no-cache'});
+    if(r.ok)_PRIJAVE=await r.json();
+  }catch(e){}
+  return _PRIJAVE;
+}
+const _LIGA_KRATKO={liga1:'1. SKL',liga2:'2. SKL',liga3:'3. SKL'};
+function _npDatum(iso){const d=new Date(iso);return `${d.getDate()}. ${d.getMonth()+1}.`;}
+// "pred 3 dnevi" po koledarskih dneh (ne po 24 urah), da se ujema z datumom.
+function _npPred(iso){
+  const d=new Date(iso), z=new Date();
+  const n=Math.round((new Date(z.getFullYear(),z.getMonth(),z.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
+  if(n<=0)return 'danes';
+  if(n===1)return 'včeraj';
+  return n===2?'pred 2 dnevoma':`pred ${n} dnevi`;
+}
+// Od kod je prišel — iz primerjave sezon (prestopi), če je že naložena.
+// Kdor med prihodi ekipe ni, je bil lani registriran pri istem klubu:
+// klub ga je le znova prijavil.
+function _npOdKod(n){
+  const lg=_TRANSFERS&&_TRANSFERS.leagues&&_TRANSFERS.leagues[currentLeague];
+  const t=lg&&lg.teams.find(x=>normalizeTeamName(x.name)===normalizeTeamName(n.team));
+  if(!t)return '';
+  const p=t.in.find(x=>x.pid===n.pid);
+  return p?trStation(p,'in'):'lani že v klubu';
+}
+function renderNovePrijave(){
+  const wrap=document.getElementById('np-wrap');
+  if(!wrap)return;
+  if(_prSezona!==_currentSeason){
+    wrap.innerHTML='';
+    loadPrijave().then(()=>{ if(_PRIJAVE)renderNovePrijave(); });
+    return;
+  }
+  const vrsta=(_PRIJAVE&&_PRIJAVE.nove&&_PRIJAVE.nove[currentLeague])||null;
+  if(!vrsta){wrap.innerHTML='';return;}
+  const zac=_PRIJAVE.zacetek&&_PRIJAVE.zacetek[currentLeague];
+  const kartice=vrsta.map(n=>{
+    const vir=n.photo?`${LOCAL_IMG_BASE}${n.photo}.png`:'';
+    const foto=vir?`<img class="np-foto" src="${vir}" alt="" loading="lazy"
+        onerror="this.onerror=null;this.src='https://api.kzs.si/public/images/${n.photo}'">`
+      :'<div class="np-foto"></div>';
+    // Statistika samo za ekipo, ki ga je prijavila — ne za drugo registracijo.
+    const igr=(typeof P!=='undefined'&&P||[]).find(x=>x[F.pid]===n.pid&&normalizeTeamName(x[F.team])===normalizeTeamName(n.team));
+    const st=igr&&igr[F.T]>0
+      ?`<div class="np-st">${nTekem(igr[F.T])} · ${fmt(igr[F.toc]/igr[F.T])} toč.</div>`
+      :'<div class="np-st ne">še ni igral</div>';
+    const od=_npOdKod(n);
+    const tudi=(n.tudi||[]).map(x=>`${x.team}${x.lg!==currentLeague?' ('+(_LIGA_KRATKO[x.lg]||x.lg)+')':''}`).join(', ');
+    const meta=[n.born, n.natCode&&n.natCode!=='SI'?(n.nat||n.natCode):''].filter(Boolean).join(' · ');
+    return `<div class="np-k${igr?' ima':''}"${igr?` onclick="openPlayerByPid(${n.pid})"`:''}>
+      ${foto}
+      <div class="np-tel">
+        <div class="np-ime">${n.name}</div>
+        ${meta?`<div class="np-meta">${meta}</div>`:''}
+        <div class="np-ek">${teamLogoHtml(n.team,18)}<span>${n.team}</span></div>
+        ${od?`<div class="np-od">${od}</div>`:''}
+        ${tudi?`<div class="np-od">tudi v sestavu: ${tudi}</div>`:''}
+        ${n.odjava?'':st}
+      </div>
+      <div class="np-desno">
+        <div><div class="np-dat">${_npDatum(n.datum)}</div><div class="np-pred">${_npPred(n.datum)}</div></div>
+        ${n.odjava?`<div class="np-odj">odjavljen ${_npDatum(n.odjava)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML=`<div class="pregled-sec-h vrsta-h" style="margin-top:4px">Nove prijave<span class="np-pod">${vrsta.length?`${nIgralcev(vrsta.length)} po 1. krogu`:''}</span></div>
+    <div class="np-opomba">Igralci, ki so jih klubi prijavili med sezono. Datum je dan, ko se je igralec
+      prvič pojavil v sestavu na KZS${zac?` (1. krog je končal ${_npDatum(zac)})`:''}.</div>
+    ${vrsta.length?`<div class="np-mreza">${kartice}</div>`
+      :'<div class="empty" style="margin-bottom:30px">Po 1. krogu ni bil prijavljen še noben nov igralec.</div>'}
+    <div class="pregled-sec-h">Prihodi in odhodi</div>`;
 }
 
 // ═══ SESTAVI — prijavljeni igralci (data/rosters.json) ═══

@@ -108,6 +108,15 @@ jobs:
         run: python scripts/fetch_rosters.py
         continue-on-error: true
 
+      # ── Nove prijave med sezono ──
+      # KZS datuma prijave ne objavi. data/prijave.json si zapomni, kdaj smo
+      # igralca prvic videli v sestavu, zato mora teci takoj PO sestavih in
+      # ob vsakem 6-urnem zagonu (natancnost datuma je en zagon).
+      - name: Nove prijave
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: python scripts/nove_prijave.py
+        continue-on-error: true
+
       # ── Prestopi (primerjava registracij obeh sezon) ──
       # Tece PO sestavih (rabi jih) in PRED slikami. Lanski indeks je
       # predpomnjen v data/_registrations_s{N}.json, zato zagon bere samo
