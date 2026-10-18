@@ -3376,7 +3376,8 @@ const DRZAVC_3X3 = {
 // Statične lastnosti lig. competitionId in faze se NE navajajo tukaj —
 // odkrije jih resolveLeagueApi() iz KZS API za izbrano sezono, zato ob novi
 // sezoni tu ni ničesar za posodabljati. 'teams' je le rezerva za prazen zaslon,
-// preden se naložijo podatki (initUI ekipe sicer izpelje iz tekem).
+// preden se naložijo podatki (initUI ekipe sicer izpelje iz tekem). Seznami so
+// iz sezone 2026/27 — do te sezone so bili lanski (Podčetrtek v 1. SKL).
 const LEAGUES = {
   'liga1': {
     name: 'Liga OTP banka',
@@ -3385,7 +3386,7 @@ const LEAGUES = {
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
     cacheStats: 'liga1_stats_v3',
     cachePbp:   'liga1_pbp_v4',   // v4: PBP z menjavami, napakami in peterko (11.10.2026)
-    teams: ['GGD Šenčur','Krka','Kansai Helios Domžale','Laško','Rogaška','Perspektiva Ilirija','Šentjur','Terme Olimia Podčetrtek','Hopsi Polzela','ECE Triglav Kranj'],
+    teams: ['ECE Triglav Kranj','GGD Šenčur','Gorica','Hopsi Polzela','Kansai Helios Domžale','Krka','Perspektiva Ilirija','Rogaška','Šentjur','Thermana Laško'],
   },
   'liga2': {
     name: '2. SKL',
@@ -3394,7 +3395,7 @@ const LEAGUES = {
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
     cacheStats: 'liga2_stats_v3',
     cachePbp:   'liga2_pbp_v4',
-    teams: ['Voga Grosuplje','Ipros Vrhnika','Celje','Gorica','Hidria','Ježica','LTH Castings','Ljubljana','Plama Pur Ilirska Bistrica','Portorož','Postojna','Slovan'],
+    teams: ['Branik','Celje','Grosuplje','Hidria','Ipros Vrhnika','Ježica','Konjice','LTH Castings','Leone Ajdovščina','Portorož','Slovan','Terme Olimia Podčetrtek'],
   },
   'liga3': {
     name: '3. SKL',
@@ -3409,11 +3410,10 @@ const LEAGUES = {
     statsUrl: GITHUB_RAW + '/liga3_stats.json',
     cacheStats: 'liga3_stats_v1',
     cachePbp:   'liga3_pbp_v1',
-    teams: ['Armicafe Troti','Bistrica Kety Emmi','Branik Maribor','Cedevita Olimpija mladi',
-            'Elektra Šoštanj','Gorenja vas','Hrastnik','Innoduler Dravograd Koroška',
-            'Janče ECP Tactical','Kolpa','Konjice','Koper','Kovinarstvo Bučar Miklavž',
-            'Leone Ajdovščina','Litija','Mesarija Prunk Sežana','Nazarje','Tera Tolmin',
-            'Vojnik G7','Vrani Vransko'],
+    teams: ['Armicafe Troti','Atlas Vojnik','Bistrica Kety Emmi','Cedevita Olimpija mladi',
+            'Elektra Šoštanj','Hrastnik','Innoduler Koroška','Janče ECP Tactical','Kolpa',
+            'Koper','Krvavec Meteor','Litija','Ljubljana','Mesarija Prunk Sežana','Miklavž',
+            'Postojna','Stražišče Kranj','Tera Tolmin','Vrani Vransko','ŽKK Maribor'],
   },
 };
 
@@ -4574,12 +4574,19 @@ function initUI() {
     try{renderPregled();}catch(e){}
   }
 
-  // Populate H2H selects — teams already declared above
-  ['h2h-team1','h2h-team2'].forEach(id=>{
+  // Izbira ekip za Medsebojno. Prej so se možnosti ob vsakem klicu le dodajale:
+  // prvi klic (še brez podatkov) je vpisal rezervni seznam (lanske ekipe —
+  // Podčetrtek v 1. SKL), drugi pa letošnje zraven, enako ob menjavi lige.
+  // Zdaj seznam vsakič na novo; izbrana ekipa ostane, če je še v ligi.
+  ['h2h-team1','h2h-team2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     if(!el)return;
+    const prej=el.value;
+    el.innerHTML=`<option value="">Ekipa ${i+1}</option>`;
     teams.forEach(t=>{const o=document.createElement('option');o.value=o.textContent=t;el.appendChild(o);});
+    if(teams.includes(prej))el.value=prej;
   });
+  try{renderH2H();}catch(e){}
 
   // Signal za usmerjevalnik. Brez njega je _routeWaitData() koncal ze pri
   // podatkih hitrega pregleda in izrisal npr. prazno lestvico, ki se nato ni
