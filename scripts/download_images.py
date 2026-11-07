@@ -21,8 +21,11 @@ Uporaba:
 
 Pozeni PO fetch_data.py (rabi data/*_stats.json).
 """
+import glob
+import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -32,6 +35,8 @@ IMAGES_DIR = "data/images"
 MANIFEST_PATH = os.path.join(IMAGES_DIR, "_manifest.json")
 KZS_BASE = "https://api.kzs.si/public/images/"
 LEAGUES = ["liga1", "liga2", "liga3"]
+NAJVEC_BAJTOV = 300_000
+NAJVEC_STRANICA = 1000
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -122,6 +127,63 @@ def collect_uuids():
         print(f"  - {transfers_path} ne obstaja - preskacem")
 
     return uuids
+
+
+def stisni_velike(manifest):
+    """Pomanjsa slike nad 300 KB (najdaljsa stranica 1000 px).
+
+    Nekatere fotografije KZS imajo 3000 px in 4,5 MB, stran pa jih kaze kot
+    sliko 40 px; za kartice (700 px) je 1000 px dovolj. Datoteka ohrani ime
+    .png, ker ga brskalniki pri slikah ne upostevajo (vecina je ze zdaj JPEG).
+    Manifest obdrzi podatke s KZS, zato se slika ne prenese znova.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        print("  ! Pillow ni namescen - slik ne pomanjsam")
+        return
+    prej = potem = stevec = 0
+    for fname in sorted(os.listdir(IMAGES_DIR)):
+        if not fname.endswith('.png'):
+            continue
+        pot = os.path.join(IMAGES_DIR, fname)
+        velikost = os.path.getsize(pot)
+        vnos = manifest.get(fname[:-4])
+        if velikost <= NAJVEC_BAJTOV or (vnos and vnos.get('stisnjeno')):
+            continue
+        try:
+            with Image.open(pot) as im:
+                im.load()
+                prosojna = 'A' in im.getbands() and im.getchannel('A').getextrema()[0] < 255
+                im.thumbnail((NAJVEC_STRANICA, NAJVEC_STRANICA))
+                izhod = io.BytesIO()
+                if prosojna:
+                    im.save(izhod, 'PNG', optimize=True)
+                else:
+                    im.convert('RGB').save(izhod, 'JPEG', quality=85, optimize=True, progressive=True)
+        except Exception as e:
+            print(f"  ! {fname[:8]}... ni berljiva ({e})")
+            continue
+        if izhod.tell() < velikost:
+            with open(pot, 'wb') as f:
+                f.write(izhod.getvalue())
+            prej += velikost
+            potem += izhod.tell()
+            stevec += 1
+        if vnos:
+            vnos['stisnjeno'] = 1
+    if stevec:
+        print(f"  Pomanjsanih {stevec} slik: {prej // 1000000} MB -> {potem // 1000000} MB")
+
+
+def arhivski_uuidi():
+    """Vsi UUID-ji iz arhiviranih sezon (data/*_stats_s*.json)."""
+    vzorec = re.compile(r'"(?:photoUuid|logoUuid|firstTeamLogoUuid|secondTeamLogoUuid)"\s*:\s*"([0-9a-f-]{36})"')
+    out = set()
+    for pot in glob.glob('data/*_stats_s*.json'):
+        with open(pot, encoding='utf-8') as f:
+            out.update(vzorec.findall(f.read()))
+    return out
 
 
 def head_info(uuid):
@@ -226,7 +288,9 @@ def main():
 
     # 4) Cleanup
     if cleanup:
-        current = set(uuids)
+        # Arhivske sezone niso med prenosi (njihove slike se ne spreminjajo), a
+        # stran jih prikazuje. Mnogih na KZS ni vec, zato bi bil izbris dokoncen.
+        current = set(uuids) | arhivski_uuidi()
         for fname in os.listdir(IMAGES_DIR):
             if not fname.endswith('.png'):
                 continue
@@ -236,6 +300,7 @@ def main():
                 manifest.pop(u, None)
                 print(f"  - BRISEM (osirotela) {u[:8]}...")
 
+    stisni_velike(manifest)
     save_manifest(manifest)
 
     nfiles = len([f for f in os.listdir(IMAGES_DIR) if f.endswith('.png')])

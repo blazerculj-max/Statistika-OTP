@@ -5,6 +5,7 @@
 // ══════════════════════════════════════════════════════════
 
 const CACHE = 'skl-net-first-v1';
+const SLIKE = 'skl-slike-v1';
 
 // Ob namestitvi: takoj prevzemi krmilo (ne čakaj na zaprtje zavihkov)
 self.addEventListener('install', (e) => {
@@ -16,7 +17,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.map((k) => (k === CACHE ? null : caches.delete(k))));
+      await Promise.all(keys.map((k) => (k === CACHE || k === SLIKE ? null : caches.delete(k))));
       await self.clients.claim();
     })()
   );
@@ -28,6 +29,23 @@ self.addEventListener('fetch', (e) => {
 
   // Samo GET zahteve obravnavamo
   if (req.method !== 'GET') return;
+
+  // Slike: predpomnilnik najprej. Datoteka je poimenovana po UUID-ju in se ne
+  // spreminja (KZS ob zamenjavi dodeli novega). Prej je šla vsaka fotografija ob
+  // vsakem ogledu znova čez mrežo, kar je na telefonu pomenilo megabajte.
+  if (new URL(req.url).pathname.includes('/data/images/')) {
+    e.respondWith(
+      (async () => {
+        const cache = await caches.open(SLIKE);
+        const hit = await cache.match(req);
+        if (hit) return hit;
+        const fresh = await fetch(req);
+        if (fresh && fresh.status === 200) cache.put(req, fresh.clone());
+        return fresh;
+      })()
+    );
+    return;
+  }
 
   e.respondWith(
     (async () => {

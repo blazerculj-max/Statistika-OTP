@@ -3552,26 +3552,51 @@ function buildTeamLogoMap(){
 }
 
 let _playerPhotos = {}; // playerId -> photoUuid
+// Velja najnovejša fotografija. KZS ob zamenjavi slike dodeli nov UUID, starega
+// pa izbriše (404). Prej je obveljala prva, zato je imelo 147 igralcev (npr.
+// Dino Murić) na strani začetnice namesto slike. Sestav (rosters.json) je še
+// novejši od zadnjega zapisnika, zato ima zadnjo besedo.
 function buildPlayerPhotoMap(){
   _playerPhotos = {};
-  Object.values(matchStatsCache).forEach(md=>{
+  const cas={};
+  (allMatches||[]).forEach(m=>{cas[m.id]=m.dateTime||'';});
+  Object.keys(matchStatsCache).sort((a,b)=>(cas[a]||'').localeCompare(cas[b]||'')).forEach(id=>{
+    const md=matchStatsCache[id];
     if(!md)return;
     [md.firstTeam,md.secondTeam].forEach(side=>{
       (side?.playerStats||[]).forEach(ps=>{
-        if(ps.playerId && ps.photoUuid && !_playerPhotos[ps.playerId])
-          _playerPhotos[ps.playerId] = ps.photoUuid;
+        if(ps.playerId && ps.photoUuid) _playerPhotos[ps.playerId] = ps.photoUuid;
       });
     });
   });
+  loadRosters().then(_fotoIzSestavov);
+}
+function _fotoIzSestavov(){
+  Object.values((_ROSTERS&&_ROSTERS.leagues)||{}).forEach(L=>(L.teams||[]).forEach(t=>(t.players||[]).forEach(p=>{
+    if(p.pid&&p.photo)_playerPhotos[p.pid]=p.photo;
+  })));
 }
 // Lokalne slike v repo (prenesene z download_images.py) — iste domene, izvozljive na canvas
 const LOCAL_IMG_BASE='data/images/';
 function playerPhotoUuid(pid){return _playerPhotos[pid]||null;}
 function teamLogoUuidByName(name){return _teamLogos[(name||'').split(' / ')[0]]||null;}
+// Naslov za <img>: lastna kopija. Hitrejša in ostane tudi, ko KZS sliko izbriše.
+// Če je še ni (nova slika, prenos teče na 6 ur), jo prevzame poslušalec spodaj.
 function playerPhotoUrl(pid){
   const uuid=_playerPhotos[pid];
-  return uuid ? 'https://api.kzs.si/public/images/'+uuid : null;
+  return uuid ? LOCAL_IMG_BASE+uuid+'.png' : null;
 }
+// Lastne kopije ni -> KZS. Poslušalec teče v fazi zajema, zato ustavi dogodek,
+// preden pride do onerror na sliki: ta bi takoj narisal začetnice ali piko,
+// čeprav slika na KZS obstaja. Če ne uspe niti KZS, onerror opravi svoje.
+document.addEventListener('error',e=>{
+  const im=e.target;
+  if(!im||im.tagName!=='IMG')return;
+  const m=(im.getAttribute('src')||'').match(/^data\/images\/([0-9a-f-]{36})\.png$/);
+  if(!m)return;
+  e.stopImmediatePropagation();
+  im.src=TEAM_LOGO_BASE+m[1];
+},true);
 // URL za canvas: poskusi lokalno (same-origin), sicer KZS
 function playerPhotoLocal(pid){
   const uuid=_playerPhotos[pid];
@@ -3584,7 +3609,7 @@ function teamLogoLocal(name){
 
 function teamLogoUrl(teamName){
   const uuid=_teamLogos[teamName];
-  return uuid ? TEAM_LOGO_BASE+uuid : null;
+  return uuid ? LOCAL_IMG_BASE+uuid+'.png' : null;
 }
 
 // Returns an <img> logo, or a colored dot fallback. size in px.
@@ -5368,15 +5393,19 @@ function renderNovePrijave(){
 // ═══ SESTAVI — prijavljeni igralci (data/rosters.json) ═══
 // Statistika nastane šele iz odigranih tekem; sestavi obstajajo že prej.
 // Zato je to edini vir imen in fotografij v predsezonskem obdobju.
-let _ROSTERS=null, _rostersTried=false;
-async function loadRosters(){
-  if(_ROSTERS||_rostersTried)return _ROSTERS;
-  _rostersTried=true;
-  try{
-    const r=await fetch(seasonFileUrl('rosters'),{cache:'no-cache'});
-    if(r.ok)_ROSTERS=await r.json();
-  }catch(e){}
-  return _ROSTERS;
+// Obljuba na sezono: hkratni klici si delijo isti prenos, po menjavi sezone se
+// naloži znova (prej je bil prvi neuspeh, npr. arhivska sezona brez sestavov, trajen).
+let _ROSTERS=null, _rostersSezona=null, _rostersObljuba=null;
+function loadRosters(){
+  if(_rostersSezona===_currentSeason)return _rostersObljuba;
+  _rostersSezona=_currentSeason; _ROSTERS=null;
+  return _rostersObljuba=(async()=>{
+    try{
+      const r=await fetch(seasonFileUrl('rosters'),{cache:'no-cache'});
+      if(r.ok)_ROSTERS=await r.json();
+    }catch(e){}
+    return _ROSTERS;
+  })();
 }
 // Slovenščina ima štiri oblike: ednina (1), dvojina (2), množina (3–4)
 // in rodilnik (5+). Oblike podamo v tem vrstnem redu. Pri sestavljenih
