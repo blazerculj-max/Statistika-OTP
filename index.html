@@ -2459,6 +2459,23 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .preverjeno{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--mut);margin:10px 2px 0;line-height:1.4}
 .preverjeno .ic{width:14px;height:14px;flex-shrink:0;color:var(--green)}
 .preverjeno.ne,.preverjeno.ne .ic{color:var(--red)}
+/* Peterke */
+.pt-seznam{display:flex;flex-direction:column;gap:8px}
+.pt-v,.pt-i{display:grid;grid-template-columns:minmax(0,1fr) repeat(3,54px);gap:6px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:10px 12px}
+.pt-i{cursor:pointer}
+.pt-imena{display:flex;flex-wrap:wrap;gap:1px 10px;font-size:.8rem;font-weight:600;min-width:0}
+.pt-imena em,.pt-ime em{flex:0 0 100%;display:block;font-style:normal;font-weight:400;font-size:.72rem;color:var(--sub)}
+.pt-ime{font-weight:600;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pt-ime small{display:block;font-weight:400;font-size:.72rem;color:var(--mut)}
+.pt-st{text-align:right}
+.pt-st b{display:block;font-family:var(--fd);font-weight:700;font-size:1.15rem;line-height:1.1}
+.pt-st i{font-style:normal;font-size:.6875rem;color:var(--mut)}
+.pt-prag{font-family:var(--fm);font-weight:400;font-size:.72rem;color:var(--mut);text-transform:none;letter-spacing:0;margin-left:6px}
+.pt-opomba{font-size:.75rem;color:var(--mut);line-height:1.5;margin-top:14px}
+.pt-profil{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pt-profil>div{background:var(--card2);border-radius:var(--r-md);padding:10px;text-align:center}
+.pt-profil b{display:block;font-family:var(--fd);font-weight:700;font-size:1.4rem}
+.pt-profil i{font-style:normal;font-size:.72rem;color:var(--mut)}
 /* Karta metov */
 .km{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
 .km-levo{flex:1 1 300px;min-width:0}
@@ -3009,6 +3026,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
         <button class="tb active" id="nerd-clutch-btn" onclick="setNerdView('clutch')">CLUTCH</button>
         <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">ČETRTINE</button>
         <button class="tb" id="nerd-karta-btn" onclick="setNerdView('karta')">KARTA METOV</button>
+        <button class="tb" id="nerd-peterke-btn" onclick="setNerdView('peterke')">PETERKE</button>
         <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">TIPI METOV</button>
         <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">SCORING RUNS</button>
         <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">IZGUBE ŽOGE</button>
@@ -9216,7 +9234,7 @@ function showPlayer(idx){
         ${leagueHasFullStats()?`<div class="pp-section-title">PROFIL (vs liga)</div>${radarSVG}
         <div class="pp-section-title" style="margin-top:14px">TOČKE PO TIPU META</div>${scoringSVG}`:`<div class="pp-section-title">TOČKE PO TIPU META</div>${scoringSVG}`}
         <div class="pp-section-title" style="margin-top:14px">FORMA SKOZI SEZONO</div><div id="trend-chart-wrap">${trendSVG}</div>
-        ${_kmNaVoljo()?'<div class="pp-section-title" style="margin-top:14px">KARTA METOV</div><div id="km-igralec"><div class="empty">Nalagam mete…</div></div>':''}
+        ${_kmNaVoljo()?'<div class="pp-section-title" style="margin-top:14px">KARTA METOV</div><div id="km-igralec"><div class="empty">Nalagam mete…</div></div><div id="pet-igralec"></div>':''}
       </div>
       <div class="pp-right">
         ${leagueHasFullStats()?`<div class="pp-section-title">NAPREDNA STATISTIKA</div>
@@ -9274,6 +9292,7 @@ function showPlayer(idx){
   window._currentPid = p[F.pid];
   // Activate count-up animations in the profile hero + stats
   _kmNapolni('km-igralec',m=>m.pid===p[F.pid]);
+  _petIgralec(p[F.pid],p[F.team]);
   requestAnimationFrame(()=>{
     const ov=document.getElementById('player-overlay');
     activateCounters(ov);
@@ -10611,12 +10630,14 @@ async function renderAttendance(){
 
 function setNerdView(v){
   nerdView=v;
-  ['clutch','quarters','karta','shots','runs','turnovers','rebounds','bff'].forEach(x=>{
+  ['clutch','quarters','karta','peterke','shots','runs','turnovers','rebounds','bff'].forEach(x=>{
     const b=document.getElementById('nerd-'+x+'-btn');
     if(b)b.classList.toggle('active',x===v);
   });
+  // na telefonu je vrstica gumbov daljša od zaslona: izbrani naj bo viden
+  document.getElementById('nerd-'+v+'-btn')?.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
   const sel=document.getElementById('nerd-min-sel');
-  if(sel)sel.style.display=v==='karta'?'none':'';
+  if(sel)sel.style.display=v==='karta'||v==='peterke'?'none':'';
   renderNerd();
 }
 
@@ -11272,11 +11293,107 @@ function _kmVodilni(){
   }).join('');
 }
 
+// ═══ PETERKE IN VPLIV IGRALCA (data/{liga}_peterke.json, scripts/peterke.py) ═══
+// Kdo je bil na igrišču, sledimo iz začetne peterke in menjav. Merilo je razlika
+// v točkah na 100 posesti (NET), da so primerljive tudi različne minutaže.
+// Izračunane minute in plus-minus se ujemajo z zapisnikom pri 98 % nastopov.
+let _pet=null, _petKljuc=null, _petObljuba=null;
+function naloziPeterke(){
+  const k=currentLeague+'/'+_currentSeason;
+  if(_petKljuc===k)return _petObljuba;
+  _petKljuc=k; _pet=null;
+  return _petObljuba=(async()=>{
+    try{
+      const r=await fetch(seasonFileUrl(currentLeague+'_peterke'),{cache:'no-cache'});
+      if(r.ok){
+        const d=await r.json(), ekipe={};
+        Object.entries(d.ekipe||{}).forEach(([ime,e])=>{ekipe[normalizeTeamName(ime)]=e;});
+        if(Object.keys(ekipe).length)_pet={ekipe};
+      }
+    }catch(e){}
+    return _pet;
+  })();
+}
+const _petNet=c=>c.pz>0&&c.pp>0?c.za/c.pz*100-c.proti/c.pp*100:null;
+const _petBrez=(t,c)=>({min:t.min-c.min,za:t.za-c.za,proti:t.proti-c.proti,pz:t.pz-c.pz,pp:t.pp-c.pp});
+const _petZnak=v=>v==null?'—':(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1);
+const _petCela=v=>(v>0?'+':v<0?'−':'')+Math.abs(v);
+const _petBarva=v=>v==null||v===0?'var(--text)':v>0?'var(--green)':'var(--red)';
+function _petVrstaPeterke(p,imena,ekipa){
+  const net=_petNet(p), pm=p.za-p.proti;
+  return `<div class="pt-v">
+    <div class="pt-imena">${ekipa?`<em>${ekipa}</em>`:''}${p.p.map(id=>`<span>${kratkoIme(imena[id]||'?')}</span>`).join('')}</div>
+    <div class="pt-st"><b>${Math.round(p.min)}</b><i>min</i></div>
+    <div class="pt-st"><b>${_petCela(pm)}</b><i>+/−</i></div>
+    <div class="pt-st"><b style="color:${_petBarva(net)}">${_petZnak(net)}</b><i>NET</i></div>
+  </div>`;
+}
+function _petVrstaIgralca(r,ekipa){
+  return `<div class="pt-i" onclick="openPlayerByPid(${r.pid})">
+    <div class="pt-ime">${r.ime}${ekipa?`<em>${r.ekipa}</em>`:''}<small>${Math.round(r.c.min)} min</small></div>
+    <div class="pt-st"><b>${_petZnak(r.z)}</b><i>z njim</i></div>
+    <div class="pt-st"><b>${_petZnak(r.b)}</b><i>brez</i></div>
+    <div class="pt-st"><b style="color:${_petBarva(r.raz)}">${_petZnak(r.raz)}</b><i>razlika</i></div>
+  </div>`;
+}
+// Igralci z dovolj minutami v obeh stanjih; brez tega "brez njega" ne pove nič.
+function _petVpliv(ime,e,imena){
+  const prag=Math.max(20,e.skupaj.min*.15);
+  return Object.entries(e.igralci).filter(([p,c])=>imena[p]&&c.min>=prag&&e.skupaj.min-c.min>=prag).map(([p,c])=>{
+    const z=_petNet(c), b=_petNet(_petBrez(e.skupaj,c));
+    return {pid:+p,ime:imena[p],ekipa:ime,c,z,b,raz:z!=null&&b!=null?z-b:null};
+  }).filter(r=>r.raz!=null).sort((a,b)=>b.raz-a.raz);
+}
+async function renderPeterkeNerd(wrap){
+  wrap.innerHTML='<div class="empty">Nalagam peterke…</div>';
+  await naloziPeterke();
+  if(!_pet){wrap.innerHTML=`<div class="empty">${_kmNaVoljo()?'Peterke so na voljo za tekočo sezono.':'Za '+(getLg().short||'to ligo')+' peterk ni: tekme se ne beležijo v FIBA LiveStats.'}</div>`;return;}
+  wrap.innerHTML=`<div class="ctrls km-izbira"><select id="pt-sel" onchange="petIzris()"><option value="">Vsa liga</option>${Object.keys(_pet.ekipe).sort().map(e=>`<option>${e}</option>`).join('')}</select></div>
+    <div id="pt-vsebina"></div>
+    <div class="pt-opomba">NET je razlika v točkah na 100 posesti. Pri manj kot 30 minutah je številka še zelo nezanesljiva.
+      »Brez« pomeni, kako je ekipa igrala, ko igralca ni bilo na igrišču; odvisno je tudi od tega, kdo ga je zamenjal.</div>`;
+  petIzris();
+}
+function petIzris(){
+  const izbrana=document.getElementById('pt-sel').value, el=document.getElementById('pt-vsebina'), imena=_kmImena();
+  if(izbrana){
+    const e=_pet.ekipe[izbrana];
+    el.innerHTML=`<div class="nerd-section-title">PETERKE PO MINUTAH</div>
+      <div class="pt-seznam">${e.peterke.map(p=>_petVrstaPeterke(p,imena)).join('')||'<div class="empty">Še premalo podatkov.</div>'}</div>
+      <div class="nerd-section-title" style="margin-top:24px">VPLIV IGRALCEV</div>
+      <div class="pt-seznam">${_petVpliv(izbrana,e,imena).map(r=>_petVrstaIgralca(r)).join('')||'<div class="empty">Še premalo minut.</div>'}</div>`;
+    return;
+  }
+  const vse=Object.entries(_pet.ekipe).flatMap(([ime,e])=>e.peterke.map(p=>({...p,ekipa:ime})));
+  const prag=Math.max(15,Math.min(40,Math.max(...vse.map(p=>p.min))*.4));
+  const naj=vse.filter(p=>p.min>=prag).sort((a,b)=>_petNet(b)-_petNet(a)).slice(0,8);
+  const vpliv=Object.entries(_pet.ekipe).flatMap(([ime,e])=>_petVpliv(ime,e,imena)).sort((a,b)=>b.raz-a.raz).slice(0,10);
+  el.innerHTML=`<div class="nerd-section-title">NAJBOLJŠE PETERKE LIGE <span class="pt-prag">vsaj ${Math.round(prag)} minut</span></div>
+    <div class="pt-seznam">${naj.map(p=>_petVrstaPeterke(p,imena,p.ekipa)).join('')||'<div class="empty">Še premalo podatkov.</div>'}</div>
+    <div class="nerd-section-title" style="margin-top:24px">NAJVEČJI VPLIV NA EKIPO</div>
+    <div class="pt-seznam">${vpliv.map(r=>_petVrstaIgralca(r,true)).join('')||'<div class="empty">Še premalo minut.</div>'}</div>`;
+}
+async function _petIgralec(pid,ekipa){
+  const el=document.getElementById('pet-igralec');
+  if(!el)return;
+  await naloziPeterke();
+  const e=_pet&&_pet.ekipe[normalizeTeamName(String(ekipa).split(' / ')[0])], c=e&&e.igralci[pid];
+  if(!c||c.min<10||e.skupaj.min-c.min<10){el.innerHTML='';return;}
+  const z=_petNet(c), b=_petNet(_petBrez(e.skupaj,c));
+  el.innerHTML=`<div class="pp-section-title" style="margin-top:14px">VPLIV NA EKIPO</div>
+    <div class="pt-profil">
+      <div><b style="color:${_petBarva(z)}">${_petZnak(z)}</b><i>z njim (${Math.round(c.min)} min)</i></div>
+      <div><b style="color:${_petBarva(b)}">${_petZnak(b)}</b><i>brez njega</i></div>
+      <div><b style="color:${_petBarva(z-b)}">${_petZnak(z-b)}</b><i>razlika</i></div>
+    </div><div class="pt-opomba" style="margin-top:6px">Razlika v točkah na 100 posesti.</div>`;
+}
+
 function renderNerd(){
   const wrap=document.getElementById('nerd-wrap');
   const statusEl=document.getElementById('nerd-status');
   if(!wrap)return;
   if(nerdView==='karta'){renderKartaNerd(wrap);return;}
+  if(nerdView==='peterke'){renderPeterkeNerd(wrap);return;}
   if(!pbpLoaded){wrap.innerHTML='<div class="empty">Nalagam PBP...</div>';return;}
   if(!Object.keys(pbpData).length){
     const odigranih=(typeof allMatches!=='undefined'&&allMatches)?allMatches.filter(m=>m.status==='FINISHED').length:0;

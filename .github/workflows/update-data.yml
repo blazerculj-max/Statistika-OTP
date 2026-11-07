@@ -87,6 +87,12 @@ jobs:
         run: python scripts/fetch_meti.py
         continue-on-error: true
 
+      # ── Peterke in vpliv igralca (iz PBP, hitro) ──
+      - name: Peterke
+        if: github.event.inputs.mode != 'archive'
+        run: python scripts/peterke.py
+        continue-on-error: true
+
       # ── Preveritev: ali se statistika ujema z uradno KZS ──
       # Izid gre v data/preverjanje.json (stran ga pokaze pod lestvico). Ce se kaj
       # ne ujema, zadnji korak zagon oznaci kot neuspel in GitHub poslje obvestilo.
