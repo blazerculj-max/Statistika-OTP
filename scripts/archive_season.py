@@ -3,7 +3,7 @@
 archive_season.py — Arhivira CELOTNO sezono in posodobi seasons.json manifest.
 
 KAJ ARHIVIRA:
-  - Lige:      data/liga{1,2,3}_{stats,pregled,pbp}.json  →  ..._s{SID}.json
+  - Lige:      data/liga{1,2,3}_{stats,pregled,pbp,meti,peterke}.json  →  ..._s{SID}.json
   - Obisk:     data/attendance.json                       →  attendance_s{SID}.json
   - 3x3:       data/drzavc_3x3.json                       →  drzavc_3x3_s{SID}.json
   - Mladinci:  data/{mladi,hks,srb,bg}_manifest.json + vse datoteke, na katere
@@ -42,7 +42,7 @@ LEAGUES = ['liga1', 'liga2', 'liga3']
 LEAGUE_NAMES = {'liga1': 'Liga OTP banka', 'liga2': '2. SKL', 'liga3': '3. SKL'}
 
 # Vrste datotek na ligo (stats je obvezen, ostalo neobvezno)
-LEAGUE_KINDS = ['stats', 'pregled', 'pbp']
+LEAGUE_KINDS = ['stats', 'pregled', 'pbp', 'meti', 'peterke']
 
 # Samostojne datoteke — kopija 1:1
 SIMPLE_FILES = ['attendance.json', 'drzavc_3x3.json']

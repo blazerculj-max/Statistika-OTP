@@ -80,10 +80,6 @@ body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-s
 @keyframes hdrLivePulse{0%,100%{opacity:1}50%{opacity:.6}}
 .hdr-install{display:inline-flex;align-items:center;gap:6px;background:var(--text);border:none;color:var(--bg);border-radius:var(--r-sm);padding:8px 14px;font-family:var(--fh);font-size:.78rem;font-weight:700;cursor:pointer;transition:transform .1s}
 .hdr-install:active{transform:scale(.96)}
-.hdr-cache{opacity:.5}
-.hdr-cache:hover{opacity:1}
-.hdr-season{font-family:var(--fm);font-size:.7rem;color:var(--mut);letter-spacing:.1em}
-.hdr-badge{background:var(--acc);color:#fff;padding:3px 10px;border-radius:20px;font-family:var(--fh);font-size:.85rem;letter-spacing:.05em}
 .nav{display:flex;flex-direction:column;gap:0;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:99}
 .nav-row{display:flex;gap:1px;padding:4px 20px;overflow-x:auto;justify-content:center;align-items:center;position:relative}
 /* En sam podcrtaj, ki zdrsne z zavihka na zavihek. Prej ga je imel vsak
@@ -160,13 +156,10 @@ select:focus{outline:none;border-color:var(--acc)}
 .lrv-sub{font-family:var(--fm);font-size:.6875rem;color:var(--mut);text-align:right;margin-top:1px}
 .age-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 @media(max-width:860px){.age-wrap{grid-template-columns:1fr}}
-.ac{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
 .act{font-family:var(--fh);font-size:1.3rem;letter-spacing:.04em;margin-bottom:14px;color:var(--sub)}
 .bars{display:flex;align-items:flex-end;gap:6px;height:160px;padding-bottom:28px;position:relative}
 .bw{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative}
 .bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;position:relative;cursor:default}
-.barlbl{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:.6875rem;color:var(--mut);white-space:nowrap}
-.barval{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.6875rem;font-family:var(--fm);font-weight:600}
 .at{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px}
 .at th{text-align:left;padding:6px 8px;color:var(--mut);font-size:.6875rem;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border)}
 .at td{padding:7px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm);text-align:center}
@@ -175,14 +168,6 @@ select:focus{outline:none;border-color:var(--acc)}
 .si{background:var(--card2);border:1px solid var(--border2);color:var(--text);padding:8px 14px;border-radius:7px;font-family:var(--fs);font-size:.85rem;width:280px}
 .si::placeholder{color:var(--mut)}.si:focus{outline:none;border-color:var(--acc)}
 .srch-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
-.pcard{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--sp-4);transition:border-color .2s,transform .2s,box-shadow .2s}
-.pcard:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--sh-md)}
-.pcard:hover{border-color:var(--acc)}
-.pc-name{font-family:var(--fs);font-weight:600;font-size:.92rem;margin-bottom:3px}
-.pc-meta{font-size:.72rem;color:var(--mut);margin-bottom:10px}
-.pc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
-.pc-stat{text-align:center;background:var(--card2);border-radius:5px;padding:5px 4px}
-.pc-sv{font-family:var(--fh);font-size:1.1rem}.pc-sl{font-size:.6875rem;color:var(--mut);letter-spacing:.04em}
 .pname-link{cursor:pointer;transition:color .15s}
 .pname-link:hover{color:var(--acc)!important;text-decoration:underline}
 /* Ime v boxscoreu je klikljivo — tudi med živo tekmo. Podčrtana pikčasta
@@ -230,14 +215,6 @@ th:hover .th-q{opacity:.7}
 .pp-close{position:sticky;top:14px;float:right;margin:14px 16px 0 0;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:.95rem;z-index:10;transition:background .2s,color .2s,transform .15s;backdrop-filter:blur(8px)}
 .pp-close:hover{background:rgba(255,255,255,.16);color:#fff;transform:scale(1.08)}
 .pp-close:hover{background:var(--red);color:white}
-.pp-header{display:flex;align-items:center;gap:16px;padding:20px 22px;position:relative;overflow:hidden}
-.pp-color-bar{width:4px;height:60px;border-radius:2px;flex-shrink:0}
-.pp-name{font-family:var(--fh);font-size:2.2rem;font-weight:800;letter-spacing:-.04em;line-height:.95}
-.pp-meta{font-size:.78rem;color:var(--mut);margin-top:4px}
-.pp-key-stats{display:flex;gap:16px;margin-left:auto}
-.pp-stat{text-align:center;background:var(--card2);border-radius:8px;padding:8px 14px;min-width:64px}
-.pp-sv{font-family:var(--fh);font-size:1.5rem}
-.pp-sl{font-size:.6875rem;color:var(--mut);letter-spacing:.05em;text-transform:uppercase}
 .pp-body{display:grid;grid-template-columns:300px 1fr;gap:0;border-top:1px solid var(--border)}
 @media(max-width:700px){.pp-body{grid-template-columns:1fr}}
 .pp-left{padding:18px 16px;border-right:1px solid var(--border)}
@@ -254,7 +231,6 @@ th:hover .th-q{opacity:.7}
 .pp-table td{padding:5px 8px;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm)}
 .pp-table td:first-child{font-family:var(--fs);color:var(--sub);font-size:.72rem}
 .pp-table tr:last-child td{border-bottom:none}
-.cbar-hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);margin-bottom:8px}
 .cbar-row{display:grid;grid-template-columns:52px 1fr 52px;gap:6px;align-items:center;margin-bottom:6px}
 .cbar-name{font-family:var(--fm);font-size:.72rem;font-weight:600}
 .cbar-bars{display:flex;flex-direction:column}
@@ -268,12 +244,8 @@ th:hover .th-q{opacity:.7}
 @keyframes ballBounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(180deg)}}
 .load-detail{font-size:.72rem;color:var(--mut);font-family:var(--fm);min-height:20px;text-align:center}
 /* MATCHES TAB */
-.round-section{margin-bottom:20px}
 .round-title{font-family:var(--fh);font-size:1.1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:8px;padding:6px 0;border-bottom:2px solid var(--border);transition:color .2s}
 .matches-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
-.match-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .2s}
-.match-card:hover{border-color:var(--acc)}
-.match-card.live{border-color:#22c55e;animation:pulse-border 2s infinite}
 @keyframes pulse-border{0%,100%{border-color:#22c55e}50%{border-color:#16a34a}}
 .mc-teams{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .mc-team{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;flex:1}
@@ -291,12 +263,7 @@ th:hover .th-q{opacity:.7}
 .mo-modal{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:1100px;max-height:94vh;overflow-y:auto;position:relative}
 .mo-close{position:sticky;top:12px;float:right;margin:12px 14px 0 0;width:32px;height:32px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--sub);z-index:10}
 .mo-close:hover{background:var(--red);color:white}
-.mo-header{padding:22px 24px 16px;border-bottom:1px solid var(--border)}
-.mo-score-row{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:8px}
-.mo-team{font-family:var(--fh);font-size:1.1rem;font-weight:700;letter-spacing:-.02em;flex:1}
-.mo-team.away{text-align:right}
 .mo-score{font-family:var(--fd);font-size:3.5rem;font-weight:800;letter-spacing:-.04em;color:var(--acc);line-height:1}
-.mo-meta{font-size:.72rem;color:var(--mut);text-align:center}
 .mo-body{padding:16px 20px}
 .mo-section{margin-bottom:20px}
 .mo-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--mut);margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
@@ -310,18 +277,11 @@ th:hover .th-q{opacity:.7}
 .live-card:hover{border-color:var(--border2);transform:translateY(-3px);box-shadow:0 14px 36px rgba(0,0,0,.4)}
 .live-card.is-live{border-color:rgba(239,68,68,.4);box-shadow:0 0 20px rgba(239,68,68,.08)}
 .live-card.is-today{border-color:rgba(249,115,22,.25)}
-.live-header{padding:8px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);font-size:.6875rem;font-family:var(--fm);color:var(--mut)}
 .live-pulse{display:inline-flex;align-items:center;gap:4px;color:#ef4444;font-weight:700}
 .live-pulse::before{content:'';width:7px;height:7px;border-radius:50%;background:#ef4444;animation:livePulse 1.2s ease infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
-.live-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;padding:16px;gap:12px}
-.live-team-name{font-family:var(--fh);font-size:.92rem;font-weight:700;letter-spacing:.01em;line-height:1.2;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;text-align:center}
-.live-team-name.home,.live-team-name.away{justify-content:flex-start;text-align:center}
-.live-team-name .tn-txt{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word}
-.live-team-logo{width:34px;height:34px;object-fit:contain;flex-shrink:0}
 .live-score{font-family:var(--fs);font-size:2.3rem;font-weight:800;letter-spacing:-.02em;text-align:center;min-width:90px;color:var(--text);align-self:center}
 .live-score.upcoming{font-size:1rem;color:var(--mut)}
-.live-footer{padding:6px 14px 10px;display:flex;align-items:center;justify-content:space-between;font-size:.6875rem;font-family:var(--fm);color:var(--mut)}
 .live-quarter{background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-weight:700;font-size:.6875rem}
 .live-ticker{background:var(--card2);border-top:1px solid var(--border);padding:8px 14px;font-size:.7rem;font-family:var(--fm);color:var(--sub);max-height:80px;overflow-y:auto}
 .live-ticker-item{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:8px}
@@ -331,20 +291,7 @@ th:hover .th-q{opacity:.7}
 .score-updated{animation:scoreFlash .5s ease}
 @keyframes scoreFlash{0%{color:var(--acc)}100%{color:var(--text)}}
 /* ATTENDANCE */
-.att-section-title{font-family:var(--fh);font-size:1rem;letter-spacing:.06em;color:var(--sub);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
-.att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-bottom:20px}
 .att-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
-.att-card-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.att-row{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid rgba(26,26,50,.4)}
-.att-row:last-child{border-bottom:none}
-.att-row:hover{background:rgba(255,255,255,.02)}
-.att-rank{width:22px;font-size:.72rem;color:var(--mut);font-family:var(--fm);text-align:center;flex-shrink:0}
-.att-info{flex:1;min-width:0}
-.att-name{font-size:.82rem;font-weight:500;color:var(--text)}
-.att-meta{font-size:.6875rem;color:var(--mut)}
-.att-bar-wrap{flex:2;height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden;min-width:40px}
-.att-bar{height:100%;border-radius:3px;background:var(--blue)}
-.att-val{font-family:var(--fh);font-size:1.1rem;flex-shrink:0;min-width:50px;text-align:right}
 .att-trend{display:flex;align-items:flex-end;gap:2px;height:40px}
 .att-trend-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;background:var(--blue);opacity:.7;cursor:default;transition:opacity .15s}
 .att-trend-bar:hover{opacity:1}
@@ -357,12 +304,7 @@ th:hover .th-q{opacity:.7}
 .hero-title{font-family:var(--fh);font-size:clamp(3.2rem,12vw,6.5rem);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0 0 var(--sp-5);color:var(--text)}
 .hero-title span{background:linear-gradient(120deg,var(--acc),#fbbf24);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hero-sub{font-size:var(--t-md);color:var(--sub);margin:0 auto var(--sp-7);font-family:var(--fm);max-width:380px;line-height:1.5;font-weight:400}
-.hero-cta{display:inline-flex;align-items:center;gap:10px;background:var(--text);color:var(--bg);border:none;border-radius:100px;padding:16px 36px;font-family:var(--fh);font-size:var(--t-base);font-weight:700;letter-spacing:.01em;cursor:pointer;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,background .2s;box-shadow:0 1px 0 rgba(255,255,255,.1);animation:ctaBreathe 3.4s ease-in-out infinite}
 @keyframes ctaBreathe{0%,100%{box-shadow:0 1px 0 rgba(255,255,255,.1),0 0 0 0 rgba(249,115,22,0)}50%{box-shadow:0 1px 0 rgba(255,255,255,.1),0 0 28px -2px rgba(249,115,22,.35)}}
-.hero-cta:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 32px -8px rgba(255,255,255,.25);animation:none}
-.hero-cta:active{transform:translateY(0) scale(1)}
-.hero-cta svg{transition:transform .3s}
-.hero-cta:hover svg{transform:translateX(3px)}
 /* Lige so glavna izbira: kartice so dovolj velike, da jih oko prebere kot
    gumbe, in nosijo barvo svoje lige. */
 .hero-leagues{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-3);margin-top:var(--sp-6)}
@@ -412,41 +354,7 @@ th:hover .th-q{opacity:.7}
 .standings-table td{padding:8px 10px;text-align:center;border-bottom:1px solid rgba(26,26,50,.5);font-family:var(--fm);white-space:nowrap}
 .standings-table td:first-child{text-align:left;padding-left:14px;font-family:var(--fs)}
 .standings-table tr:hover td{background:rgba(249,115,22,.04)}
-.standings-table tr.my-team td{background:rgba(249,115,22,.06)}
-.pos-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:.72rem;font-weight:700;font-family:var(--fm);margin-right:8px;flex-shrink:0}
-.form-dots{display:flex;gap:3px;justify-content:center}
 .h2h-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
-.h2h-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.h2h-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.05em;border-bottom:1px solid var(--border);color:var(--sub)}
-.h2h-match{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid rgba(26,26,50,.4);font-size:.78rem}
-.h2h-match:last-child{border-bottom:none}
-.h2h-score{font-family:var(--fh);font-size:1.1rem;letter-spacing:.04em}
-.diff-pos{color:#22c55e}.diff-neg{color:#ef4444}.diff-zero{color:var(--mut)}
-/* PLAYOFF BRACKET */
-.bracket-wrap{overflow-x:auto;padding:16px 0}
-.bracket-grid{display:flex;gap:0;align-items:flex-start;min-width:700px}
-.bracket-col{display:flex;flex-direction:column;flex:1;padding:0 4px;position:relative}
-.bracket-col-title{font-family:var(--fh);font-size:.72rem;letter-spacing:.1em;text-align:center;padding:6px 0 10px;text-transform:uppercase}
-.bracket-pair{position:relative;margin-bottom:8px}
-.bracket-series{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .2s;margin:0}
-.bracket-series.done{border-color:rgba(34,197,94,.3)}
-.bracket-series.live{border-color:rgba(239,68,68,.5);box-shadow:0 0 16px rgba(239,68,68,.12)}
-.bracket-series.pending{opacity:.6}
-.bracket-team{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:8px}
-.bracket-team:first-child{border-bottom:1px solid var(--border)}
-.bracket-team-name{font-size:.78rem;font-weight:500;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bracket-team-score{font-family:var(--fh);font-size:1.05rem;flex-shrink:0;min-width:18px;text-align:right}
-.bracket-team.winner .bracket-team-name{font-weight:700}
-.bracket-team.winner .bracket-team-score{color:#22c55e;font-weight:700}
-.bracket-team.loser .bracket-team-name{opacity:.45}
-.bracket-team.loser .bracket-team-score{opacity:.45}
-/* Connector lines between rounds */
-.bracket-connector-right{position:absolute;right:-4px;top:50%;width:12px;height:2px;background:var(--border2)}
-.bracket-connector-top{position:absolute;right:-4px;bottom:50%;width:2px;background:var(--border2)}
-.bracket-connector-bot{position:absolute;right:-4px;top:50%;width:2px;background:var(--border2)}
-.group-split{display:flex;flex-direction:column;gap:16px;margin-bottom:16px}
-.group-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
-.group-title{padding:10px 14px;font-family:var(--fh);font-size:1rem;letter-spacing:.06em;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:8px}
 /* NERD STATS */
 .nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
 .nerd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:20px}
@@ -500,9 +408,6 @@ th:hover .th-q{opacity:.7}
 .bff-note{padding:10px 14px;border-top:1px solid var(--border);font-size:.6875rem;color:var(--mut);font-family:var(--fm);line-height:1.5}
 .nerd-section-title{font-family:var(--fh);font-size:1.4rem;letter-spacing:.04em;color:var(--sub);margin:20px 0 12px}
 .clutch-def{background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:.75rem;color:var(--mut);margin-bottom:16px;font-family:var(--fm)}
-.q-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.q-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
-.q-title{font-family:var(--fh);font-size:1rem;letter-spacing:.04em;color:var(--mut);margin-bottom:8px}
 .run-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px}
 .run-score{font-family:var(--fh);font-size:1.6rem;letter-spacing:.04em}
 .run-meta{flex:1;font-size:.75rem;color:var(--mut)}
@@ -551,8 +456,6 @@ th:hover .th-q{opacity:.7}
     gap:6px;
   }
   .hdr-title{font-size:1.2rem}
-  .hdr-season{display:none}
-  .hdr-badge{font-size:.72rem;padding:2px 8px}
 
   /* Liga gumbi večji, bolj tapabilni */
   .hdr-right{align-items:flex-start;gap:4px;width:100%}
@@ -571,9 +474,6 @@ th:hover .th-q{opacity:.7}
 
   /* Live badge manjši */
   #live-badge{font-size:.72rem;padding:2px 8px}
-
-  /* Update indicator skrij */
-  #update-indicator{display:none}
 
   /* Tabs scrollable */
   .content{padding-bottom:84px !important}
@@ -601,9 +501,6 @@ th:hover .th-q{opacity:.7}
 
   /* Starost/obisk grafi */
   .age-wrap svg{height:120px}
-
-  /* Primerjava radar manjši */
-  .pp-grid{grid-template-columns:1fr !important}
 }
 
 @media(max-width:768px){
@@ -698,7 +595,6 @@ th:hover .th-q{opacity:.7}
 .std-pos.p3{background:linear-gradient(135deg,#d97c4a,#b45309);color:#fff}
 .std-pos.pn{background:var(--card2);color:var(--sub)}
 .std-team-cell{display:flex;align-items:center;gap:9px}
-.std-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 8px var(--sd-glow)}
 .std-team-name{font-weight:600;font-size:.86rem}
 .form-dot{width:19px;height:19px;border-radius:6px;font-size:.6875rem;font-weight:800;display:inline-flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);letter-spacing:-.02em}
 .form-dot.w{background:linear-gradient(135deg,#34d399,#10b981)}
@@ -706,11 +602,6 @@ th:hover .th-q{opacity:.7}
 .std-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.6875rem;color:var(--mut);font-family:var(--fm);margin:8px 0 4px}
 .std-legend span{display:inline-flex;align-items:center;gap:5px}
 .std-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
-
-/* ═══ PREMIUM MATCH CARDS ═══ */
-.match-card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:14px;padding:0;cursor:pointer;transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,box-shadow .22s;overflow:hidden;position:relative}
-.match-card:hover{transform:translateY(-3px);border-color:var(--border2);box-shadow:0 12px 32px rgba(0,0,0,.35)}
-.match-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--mc-c1,var(--acc)),var(--mc-c2,var(--blue)))}
 
 /* ═══ GLOBAL DEPTH — subtle gradient bg + glow accents ═══ */
 body{background:var(--bg)}
@@ -739,7 +630,6 @@ body{background:var(--bg)}
 .pbseries.champ{border-color:#fbbf24;box-shadow:0 0 30px rgba(251,191,36,.25)}
 .pbteam{display:flex;align-items:center;gap:9px;padding:11px 13px;position:relative}
 .pbteam+.pbteam{border-top:1px solid var(--border)}
-.pbteam-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .pbteam-name{flex:1;font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pbteam-score{font-family:var(--fs);font-size:1.25rem;font-weight:800;min-width:22px;text-align:center;flex-shrink:0}
 .pbteam.win .pbteam-name{font-weight:800}
@@ -750,9 +640,6 @@ body{background:var(--bg)}
 .pbgame{font-family:var(--fm);font-size:.6875rem;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.05);color:var(--mut);white-space:nowrap}
 .pbgame.live{background:rgba(239,68,68,.2);color:#ef4444;font-weight:700}
 .pbseries-tag{font-size:.6875rem;text-align:center;padding:3px;color:var(--mut);font-family:var(--fm);letter-spacing:.05em;border-bottom:1px solid var(--border)}
-/* Connector lines */
-.pbconn{position:absolute;right:0;width:30px;border-right:2px solid var(--border2)}
-.pbconn-h{position:absolute;height:2px;background:var(--border2);right:-30px;width:30px}
 /* Champion trophy card */
 .pbchamp-col{display:flex;flex-direction:column;justify-content:center;padding:0 20px}
 .pbchamp{text-align:center;padding:24px 20px;background:linear-gradient(155deg,rgba(251,191,36,.12),rgba(251,191,36,.03));border:1px solid rgba(251,191,36,.3);border-radius:16px;width:200px}
@@ -772,7 +659,7 @@ body{background:var(--bg)}
 .drop-in{animation:dropIn .18s cubic-bezier(.2,.8,.2,1) both}
 
 /* Card hover polish — applies broadly */
-.lc,.nerd-card,.att-card,.fstat,.live-card,.pbseries,.q-card,.group-card{will-change:transform}
+.lc,.nerd-card,.att-card,.fstat,.live-card,.pbseries{will-change:transform}
 .fstat:hover{transform:translateY(-2px);border-color:var(--border2);box-shadow:0 8px 24px rgba(0,0,0,.25)}
 
 /* Animated gradient accent on hover for hero cards */
@@ -782,7 +669,6 @@ body{background:var(--bg)}
 .skeleton{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.09) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px}
 @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 .skel-row{height:42px;margin-bottom:8px}
-.skel-card{height:120px;margin-bottom:12px}
 
 /* Number flip for live scores */
 @keyframes numPop{0%{transform:scale(1)}40%{transform:scale(1.25);color:var(--acc)}100%{transform:scale(1)}}
@@ -799,10 +685,10 @@ body{background:var(--bg)}
 .hero-leagues{animation:heroFade .7s .44s both}
 .hero-what{animation:heroFade .7s .58s both}
 @keyframes heroFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@media(prefers-reduced-motion:reduce){.hero-eyebrow,.hero-title,.hero-sub,.hero-cta,.hero-leagues,.hero-wrap{animation:none}}
+@media(prefers-reduced-motion:reduce){.hero-eyebrow,.hero-title,.hero-sub,.hero-leagues,.hero-wrap{animation:none}}
 
 /* Button press feedback */
-.nb,.tb,.hc-btn,.share-btn{transition:transform .12s,background .18s,color .18s,opacity .18s}
+.nb,.tb,.share-btn{transition:transform .12s,background .18s,color .18s,opacity .18s}
 .nb:active,.tb:active{transform:scale(.95)}
 
 /* Smooth scroll behavior */
@@ -862,11 +748,9 @@ html{scroll-behavior:smooth}
 .mo-hero-team{display:flex;flex-direction:column;gap:8px;min-height:140px}
 .mo-hero-team.home{align-items:flex-end;text-align:right}
 .mo-hero-team.away{align-items:flex-start;text-align:left}
-.mo-hero-team .mo-logo{width:56px;height:56px;object-fit:contain}
 .mo-hero-wlabel{margin-top:2px}
 .mo-hero-score{align-self:center;margin-top:30px}
 .mo-hero-tname{font-family:var(--fh);font-size:1.3rem;font-weight:800;letter-spacing:-.02em;line-height:1.1}
-.mo-hero-dot{width:14px;height:14px;border-radius:50%;display:inline-block;margin:8px 0}
 .mo-hero-score{font-family:var(--fs);font-size:4.2rem;font-weight:800;letter-spacing:-.04em;line-height:.9;display:flex;align-items:center;gap:14px}
 .mo-hero-score .sc{transition:transform .3s}
 .mo-hero-score .sep{font-size:2rem;color:var(--mut);font-weight:400}
@@ -984,7 +868,6 @@ html{scroll-behavior:smooth}
 .fmatch-teams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:18px}
 .fmatch-team{text-align:center}
 .fmatch-tname{font-family:var(--fh);font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.15}
-.fmatch-dot{width:13px;height:13px;border-radius:50%;display:inline-block;margin-top:8px}
 .fmatch-vs{text-align:center}
 .fmatch-score{font-family:var(--fs);font-size:2.6rem;font-weight:800;letter-spacing:-.03em;line-height:1}
 .fmatch-cd{font-family:var(--fs);font-size:1.5rem;font-weight:800;color:var(--acc);line-height:1}
@@ -1120,8 +1003,6 @@ html{scroll-behavior:smooth}
 .team-hdr-logo{width:58px;height:58px;background:var(--card2);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:7px;flex-shrink:0;border:1px solid var(--border2)}
 
 /* ═══ ROUND CARD GENERATOR ═══ */
-.rc-open-btn{display:inline-flex;align-items:center;gap:9px;background:linear-gradient(135deg,var(--acc),#ea580c);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-family:var(--fh);font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:18px;transition:transform .15s,box-shadow .2s;box-shadow:0 4px 16px rgba(249,115,22,.35)}
-.rc-open-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(249,115,22,.45)}
 #roundcard-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:1300;align-items:center;justify-content:center;padding:16px;flex-direction:column;gap:14px;overflow-y:auto}
 .rc-modal{display:flex;flex-direction:column;gap:14px;align-items:center;max-width:100%;padding:20px 0}
 .rc-controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
@@ -1185,7 +1066,7 @@ html{scroll-behavior:smooth}
   .pp-hero-signature .sv{font-size:2.8rem}
 
   /* Modali (share, round card, match overlay) — skoraj polni zaslon */
-  .share-modal, .rc-modal{max-width:96vw}
+  .rc-modal{max-width:96vw}
   .rc-canvas-wrap{max-height:60vh}
 
   /* Match overlay polni zaslon na mobilnem */
@@ -1206,7 +1087,7 @@ html{scroll-behavior:smooth}
   .social-grid{grid-template-columns:1fr}
 
   /* Lestvica race — manjši slider gumbi */
-  .race-fmt, .rc-fmt{padding:7px 10px;font-size:.74rem}
+  .rc-fmt{padding:7px 10px;font-size:.74rem}
 
   /* Trend graf gumbi tappable */
   #trend-chart-wrap button{padding:7px 12px;font-size:.76rem}
@@ -1233,7 +1114,7 @@ html{scroll-behavior:smooth}
 /* Match/share overlay — polni zaslon na mobilnem */
 @media(max-width:768px){
   #match-overlay{padding:0;align-items:stretch}
-  #match-overlay .mo-content, #match-overlay > div{max-height:100vh;border-radius:0 !important;width:100%}
+  #match-overlay > div{max-height:100vh;border-radius:0 !important;width:100%}
 }
 
 /* iOS: prepreči auto-zoom ob fokusu inputa (font mora biti ≥16px) */
@@ -1263,8 +1144,6 @@ html{scroll-behavior:smooth}
   /* prva celica (ime+letnica+graf) naj ne bo preširoka */
   #st td:first-child, #st th:first-child{padding-left:8px}
   #st .pl-born{display:none}
-  /* Mini-trend in born badge skrij na mobilnem (preveč gneče) */
-  #st .mini-trend{display:none}
   /* Lestvica na mobilnem: pokaži samo bistvene stolpce (M, ekipa, T, Z, P, TČ).
      Sekundarne (GB, Z%, TOČ+/-, dom/gost, forma) skrij — ime ekipe ni več odrezano. */
   .standings-table .col-sec, .standings-table .col-form{display:none}
@@ -1279,7 +1158,7 @@ html{scroll-behavior:smooth}
   .standings-table th:nth-child(5), .standings-table td:nth-child(5),
   .standings-table th:nth-child(6), .standings-table td:nth-child(6){width:30px}
   .standings-table .std-team-cell{gap:6px}
-  .standings-table .std-team-cell img,.standings-table .std-team-cell .logo-fallback{width:22px!important;height:22px!important;flex-shrink:0}
+  .standings-table .std-team-cell img{width:22px!important;height:22px!important;flex-shrink:0}
   /* Scroll-namig: senca na desnem robu drsečih kontejnerjev, da je jasno,
      da je vodoravno še vsebina (tabela ekip ipd.) */
   .tw, [style*="overflow-x"]{
@@ -1291,11 +1170,6 @@ html{scroll-behavior:smooth}
     background-attachment:local;
   }
 }
-
-/* ═══ HERO CTA — glavni vstop ═══ */
-
-.hero-or::before{right:100%}
-.hero-or::after{left:100%}
 
 /* Hero league cards — bolj prefinjeni hover */
 .hero-card{transition:transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .3s !important}
@@ -1445,7 +1319,7 @@ button:disabled,select:disabled{opacity:.4;cursor:not-allowed}
   background:var(--sh-c,var(--acc));
 }
 /* Velike številke (statistike) — tabularne, izrazite */
-.pp-hs-v, .ts-v, .stat-big{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.pp-hs-v{font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 
 /* ═══════════════════════════════════════════════════
    PRAZNI PROSTOR — več zraka = dražji občutek
@@ -1457,16 +1331,8 @@ button:disabled,select:disabled{opacity:.4;cursor:not-allowed}
 .rec-card, .mvp-card{padding:var(--sp-5)}
 /* Razmik med sekcijami */
 .tab > * + .sec-head{margin-top:var(--sp-7)}
-
-/* ═══════════════════════════════════════════════════
-   PODATKOVNE BARVE — zelena=dobro, rdeča=slabo, nevtralna
-   ═══════════════════════════════════════════════════ */
-.d-good{color:var(--green) !important}
-.d-bad{color:var(--red) !important}
-.d-neutral{color:var(--sub) !important}
-.d-hot{color:var(--acc) !important}
 /* Tabularne številke povsod kjer so podatki poravnani */
-td, .stat-val, .pp-hs-v{font-variant-numeric:tabular-nums}
+td, .pp-hs-v{font-variant-numeric:tabular-nums}
 
 /* ═══════════════════════════════════════════════════
    PRAZNA STANJA — z osebnostjo
@@ -1893,15 +1759,6 @@ html[data-vt="nalozeno"]::view-transition-new(root){animation:vtGor .45s var(--e
 /* ── Kartice se razkrijejo ob drsenju — samo CSS, brez opazovalcev v JS ──
    :where() ima nicno specificnost, zato .stagger-in, kjer je, prevlada.
    translate/scale namesto transform, da ostanejo obstojeci hover dvigi. */
-@supports (animation-timeline:view()){
-  @media (prefers-reduced-motion:no-preference){
-    :where(.live-card,.match-card,.nerd-card,.h2h-card,.group-card,.att-card,.pcard,.scard,.t3-card,.q-card,.pregled-card,.pregled-res,.fstat,.ac){
-      animation:vtRazkrij linear both;
-      animation-timeline:view();
-      animation-range:entry 0% entry 60%;
-    }
-  }
-}
 @keyframes vtRazkrij{from{opacity:0;translate:0 18px;scale:.985}}
 
 /* ── Spodnja navigacija na telefonu: ikona v "tabletki" ── */
@@ -2020,7 +1877,6 @@ p{text-wrap:pretty}
 
   /* Kartica prve/žive tekme: mreža, da se Šentjur ne prelomi pod rezultat. */
   .ps-match{grid-template-columns:1fr auto 1fr;gap:10px}
-  .ps-match .ps-logo{width:38px;height:38px}
 
   /* Kartice statističnih poudarkov so na 375px široke ~165px: polno ime je
      odrezalo v "Sreten Knež…". Namesto tritočkovnika pokažemo "S. Knežević". */
@@ -2082,9 +1938,6 @@ p{text-wrap:pretty}
   .tstats{margin-left:0;width:100%;gap:0;justify-content:space-between;border-top:1px solid var(--border);padding-top:12px}
   .tstats .ts{flex:1;text-align:center}
   /* Tekme na mobilnem: osnovni vertikalni layout je že OK, le manjše mere */
-  .live-teams{gap:8px;padding:13px 10px}
-  .live-team-name{font-size:.82rem;line-height:1.18}
-  .live-team-name img,.live-team-name .live-team-logo,.live-team-name .logo-fallback{width:28px!important;height:28px!important}
   .live-score{font-size:1.75rem;min-width:56px;align-self:center}
   /* Domača ekipa ima v DOM najprej ime, gostujoča najprej grb. Na namizju je
      to zrcalno in deluje, v stolpcu na telefonu pa je pri eni ekipi ime nad
@@ -2106,11 +1959,6 @@ p{text-wrap:pretty}
      min-width:0 se letniki in ekipe postavijo v isto vrstico, sortiranje z
      najdaljšimi napisi pa se prelomi v svojo. */
   .ml-ctrls select{min-width:0;max-width:none}
-
-  .live-team-name{justify-content:flex-start;gap:5px}
-  .live-team-name img,.live-team-name .live-team-logo,.live-team-name .logo-fallback{order:1}
-  .live-team-name .tn-txt{order:2}
-  .live-team-name>span:not(.tn-txt){order:3;line-height:1}
 
   /* IZPOSTAVLJENA TEKMA: rezultat pri 2.6rem ne gre v eno vrstico, zato je
      "71" ostal zgoraj, "87" pa padel v naslednjo vrstico — vsaka ekipa svoj
@@ -2142,7 +1990,7 @@ p{text-wrap:pretty}
 .hdr-title{font-family:var(--fh);font-weight:700;letter-spacing:-.015em}
 
 /* Kontrolniki v berljivi pisavi (prej pisalni stroj) */
-select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
+select,input,textarea,.tb,.si,.gloss-k{font-family:var(--fm)!important}
 .tb{text-transform:none;letter-spacing:0;font-size:.8rem;font-weight:600}
 /* Stikala: aktivna moznost je bela "tabletka", ne oranzna ploskev —
    oranzna ostane za eno stvar na zaslonu (poudarek lige). */
@@ -2155,7 +2003,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .pstat-val,.fstat-val,.hcard-val,.sv,.pp-hs-v,.hs-v,.tp-st-v,.live-score,.mo-hero-score,.fmatch-score{font-family:var(--fd)!important;font-weight:700!important;letter-spacing:0!important}
 
 /* Kartice: ravne ploskve brez prelivov in sence, en radij */
-.pregled-card,.hero-card,.lc,.match-card,.live-card,.nerd-card,.h2h-card,.group-card,.att-card,.pcard,.scard,.q-card,.fstat,.pregled-stat,.pregled-res{border-radius:var(--r-lg)!important;box-shadow:none!important}
+.pregled-card,.hero-card,.lc,.live-card,.nerd-card,.att-card,.scard,.fstat,.pregled-stat,.pregled-res{border-radius:var(--r-lg)!important;box-shadow:none!important}
 
 /* ── Smer A: Pregled ── */
 .stran-h{margin:4px 0 20px}
@@ -2241,7 +2089,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .lc-vrsta{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:.92rem;color:var(--sub)}
 .lc-vrsta.zm{color:var(--text);font-weight:600}
 .lc-vrsta.po .lc-ime,.lc-vrsta.po .lc-rez{color:var(--mut)}
-.lc-vrsta img,.lc-vrsta .live-team-logo,.lc-vrsta .logo-fallback{width:26px!important;height:26px!important;flex-shrink:0}
+.lc-vrsta img{width:26px!important;height:26px!important;flex-shrink:0}
 .lc-ime{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lc-rez{font-family:var(--fd);font-weight:700;font-size:1.45rem;line-height:1;color:var(--text)}
 .lc-noga{padding:6px 14px 8px;font-size:.75rem;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2346,7 +2194,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .mvp-hs .l{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important}
 
 /* ── Smer A: kartice brez barvnih crt (Iskanje, ...) ── */
-.scard::before,.match-card::before,.hero-lg::before{display:none!important}
+.scard::before,.hero-lg::before{display:none!important}
 .scard:hover{transform:none!important;box-shadow:none!important;border-color:var(--border2)!important}
 .scard-team{color:var(--sub)!important}
 .scard-st .v{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.15rem}
@@ -2388,7 +2236,6 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .tp-hero{background:var(--card)!important;border-bottom:1px solid var(--border)}
 .tp-hero::before,.tp-hero::after{display:none!important}
 .tp-name{font-family:var(--fd)!important;font-weight:700!important;text-transform:uppercase;letter-spacing:.005em!important;color:var(--text)!important;text-shadow:none!important}
-.tp-meta,.tp-sub{color:var(--sub)!important}
 .tp-st{background:var(--card2)!important;border:1px solid var(--border)!important}
 .tp-st-v{color:var(--text)!important;font-family:var(--fd)!important;font-weight:700!important;font-size:1.9rem!important}
 .tp-st-l{color:var(--mut)!important;text-transform:none!important;letter-spacing:0!important;font-size:.75rem!important}
