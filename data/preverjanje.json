@@ -1,30 +1,51 @@
 {
- "preverjeno": "2026-11-07T12:45:26Z",
- "igralcev": 558,
+ "preverjeno": "2026-11-07T21:39:01Z",
+ "igralcev": 559,
  "ekip": 42,
- "odstopanj": 0,
+ "odstopanj": 276,
  "lige": {
   "liga1": {
-   "igralcev": 127,
-   "igralciUjema": 127,
+   "igralcev": 128,
+   "igralciUjema": 128,
    "neznano": 0,
    "ekip": 10,
    "ekipeUjema": 10
   },
   "liga2": {
    "igralcev": 154,
-   "igralciUjema": 154,
+   "igralciUjema": 75,
    "neznano": 0,
    "ekip": 12,
-   "ekipeUjema": 12
+   "ekipeUjema": 4
   },
   "liga3": {
    "igralcev": 277,
-   "igralciUjema": 277,
+   "igralciUjema": 106,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 20
+   "ekipeUjema": 2
   }
  },
- "primeri": []
+ "primeri": [
+  "liga2 Jure Brežan: T 5/6, fg2a 12/14, nap 1/2, obr 4/5",
+  "liga2 Blaž Bončina: T 6/7, fg2m 8/9, fg2a 15/18, fg3a 5/6",
+  "liga2 Jaka Zemljič: T 6/7, fg2m 16/17, fg2a 29/34, fg3m 6/7",
+  "liga2 Luka Rudović: T 6/7, fg2m 13/16, fg2a 22/25, fg3a 17/19",
+  "liga2 Simon Tratnik: T 6/7, fg2m 21/24, fg2a 36/39, fta 22/23",
+  "liga2 Milan Petrović: T 6/7, fg2m 1/3, fg2a 4/6, fg3m 2/3",
+  "liga2 Rok Savić: T 6/7, fg2m 41/48, fg2a 68/80, fg3m 4/5",
+  "liga2 Andraž Kavaš: T 6/7, fg2m 30/37, fg2a 61/69, fg3m 3/6",
+  "liga2 Marko Bukvič: T 6/7, fg2m 17/21, fg2a 32/40, fg3m 4/7",
+  "liga2 Maks Mrgole: T 6/7, fg2a 9/11, fg3a 7/8, nap 3/4",
+  "liga2 Patrik Kavkler: T 6/7, fg2m 20/21, fg2a 41/44, fg3m 6/9",
+  "liga2 Maks Sever: T 6/7, fg2m 10/13, fg2a 18/22, fg3m 3/4",
+  "liga2 Jakov Stipaničev: T 6/7, fg2m 14/16, fg2a 26/30, fg3a 26/30",
+  "liga2 Emin Šarić: T 6/7, fg2a 3/4, pod 4/6, pz 10/13",
+  "liga2 Žiga Pojbič Kovačič: T 2/3, fg3a 0/1, obr 1/2, pod 1/2",
+  "liga2 Vid Tamše: T 6/7, fg2m 34/39, fg2a 56/64, ftm 11/12",
+  "liga2 Bine Pregl: T 6/7, fg2m 13/17, fg2a 28/35, fg3a 27/32",
+  "liga2 Jure Besedić: T 6/7, fg2m 10/12, fg2a 17/20, fg3m 4/5",
+  "liga2 Vid Pregl: T 6/7, fg2m 26/31, fg2a 45/52, fg3m 2/3",
+  "liga2 Matic Grušovnik: T 6/7, fg2m 52/56, fg2a 89/97, fg3a 16/21"
+ ]
 }
