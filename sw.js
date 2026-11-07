@@ -50,8 +50,9 @@ self.addEventListener('fetch', (e) => {
   e.respondWith(
     (async () => {
       try {
-        // VEDNO poskusi svežo verzijo z mreže
-        const fresh = await fetch(req, { cache: 'no-store' });
+        // VEDNO vprašaj strežnik. no-cache: če se datoteka ni spremenila, pride
+        // odgovor 304 brez vsebine; no-store je vsakič prenesel vse znova.
+        const fresh = await fetch(req, { cache: 'no-cache' });
         // Shrani kopijo v predpomnilnik (samo za zasilni offline primer)
         if (fresh && fresh.status === 200 && req.url.startsWith('http')) {
           const cache = await caches.open(CACHE);

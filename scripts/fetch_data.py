@@ -49,6 +49,17 @@ MAX_SEASON_LOOKBACK = 6
 FORCE_FULL  = '--full'  in sys.argv
 FETCH_PBP   = '--pbp'   in sys.argv
 STATS_ONLY  = '--stats' in sys.argv
+# Polja KZS, ki jih ne uporablja ne stran ne skripte. Datoteka je bila tretjino
+# večja, brskalnik pa jo razčleni ob vsakem obisku. Dodatek polja: odstrani ga tu.
+ODVECNO_TEKMA = ('moveRequests', 'delegationChanges', 'commissioner', 'refereeController', 'conclusions',
+                 'liveStreams', 'delegated', 'sportHallAddress', 'matchEvaluationId', 'gameIndex', 'sportHallId',
+                 'firstTeamId', 'secondTeamId', 'isFirstTeamPlaceholder', 'isSecondTeamPlaceholder',
+                 'secondTeamShortName', 'firstTeamShortName', 'scoreInsertedManually')
+ODVECNO_IGRALEC = ('twoPPerc', 'threePPerc', 'fTPerc', 'fgPerc', 'assistsTurnoverRatio', 'defensiveRating',
+                   'efficiencyGameScore', 'fastBreakPointsAttempted', 'fastBreakPointsMade', 'usagePercentage',
+                   'mVPVotes', 'offensiveRating', 'pER', 'pointsInThePaintAttempted', 'pointsInThePaintMade',
+                   'secondChancePointsAttempted', 'secondChancePointsMade', 'trueShootingAttempts',
+                   'trueShootingPercentage', 'jerseyNumber', 'captain')
 OSVEZI_UR   = 5    # na koliko ur znova preberemo vse zapisnike sezone (vsak 6-urni zagon)
 
 def fetch_json(url, retries=3):
@@ -234,6 +245,23 @@ def fetch_lestvica(comp_id):
         if red:
             out[(ph.get('competitionPhase') or {}).get('name')] = red
     return out
+
+
+def zozi_tekme(matches):
+    return [{k: v for k, v in m.items() if k not in ODVECNO_TEKMA} for m in matches]
+
+
+def zozi_zapisnike(stats):
+    for md in stats.values():
+        for stran in ('firstTeam', 'secondTeam'):
+            t = (md or {}).get(stran)
+            if not t:
+                continue
+            t.pop('staff', None)
+            for z in (t.get('playerStats') or []) + [t.get('teamStats') or {}]:
+                for k in ODVECNO_IGRALEC:
+                    z.pop(k, None)
+    return stats
 
 
 def cas_za_osvezitev(existing):
@@ -652,7 +680,7 @@ def process_league(key, lg):
     payload = {'updatedAt': now, 'league': lg['name'], 'seasonId': SEASON_ID,
                'uradnaLestvica': lestvica,
                'statsOsvezeno': now if osvezi else (existing or {}).get('statsOsvezeno'),
-               'allMatches': matches, 'matchStats': stats}
+               'allMatches': zozi_tekme(matches), 'matchStats': zozi_zapisnike(stats)}
     stats_file = f"data/{key}_stats.json"
     with open(stats_file, 'w') as f:
         json.dump(payload, f, ensure_ascii=False, separators=(',',':'))

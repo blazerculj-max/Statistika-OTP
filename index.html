@@ -3145,7 +3145,9 @@ const GITHUB_RAW = 'data';
 const FIBA_PROXY = 'https://floral-bush-24fe.blazerculj.workers.dev/?id=';
 const SITE_URL   = 'https://blazerculj-max.github.io/Statistika-OTP/';
 const SITE_LABEL = 'blazerculj-max.github.io/Statistika-OTP';
-const GITHUB_MAX_AGE = 6 * 3600 * 1000;
+// Starejši podatki sprožijo nalaganje z API-ja: več sto klicev iz brskalnika, na
+// telefonu minuta čakanja. Zagoni na 6 ur včasih zamujajo, zato meja ni tesna.
+const GITHUB_MAX_AGE = 24 * 3600 * 1000;
 // Privzeta trenutna sezona. Prava vrednost pride iz seasons.json ("current"),
 // ki ga vzdržuje fetcher — ob novi sezoni ni treba nič ročno spreminjati.
 let SEASON_ID = 26;
@@ -3171,11 +3173,6 @@ async function loadSeasonsManifest(){
 }
 
 // Cache ključ glede na ligo + sezono (ločen cache za vsako sezono)
-function seasonCacheKey(){
-  const base=getLg().cacheStats;
-  return _currentSeason===SEASON_ID ? base : base+'_s'+_currentSeason;
-}
-
 // URL do katerekoli podatkovne datoteke za dano sezono.
 // Trenutna sezona → živa datoteka (npr. liga1_pregled.json),
 // arhivska        → ista datoteka s pripono _s{ID} (liga1_pregled_s26.json).
@@ -3498,8 +3495,6 @@ const LEAGUES = {
     short: '1. SKL',
     color: '#f97316',
     statsUrl: GITHUB_RAW + '/liga1_stats.json',
-    cacheStats: 'liga1_stats_v3',
-    cachePbp:   'liga1_pbp_v4',   // v4: PBP z menjavami, napakami in peterko (11.10.2026)
     teams: ['ECE Triglav Kranj','GGD Šenčur','Gorica','Hopsi Polzela','Kansai Helios Domžale','Krka','Perspektiva Ilirija','Rogaška','Šentjur','Thermana Laško'],
   },
   'liga2': {
@@ -3507,8 +3502,6 @@ const LEAGUES = {
     short: '2. SKL',
     color: '#60a5fa',
     statsUrl: GITHUB_RAW + '/liga2_stats.json',
-    cacheStats: 'liga2_stats_v3',
-    cachePbp:   'liga2_pbp_v4',
     teams: ['Branik','Celje','Grosuplje','Hidria','Ipros Vrhnika','Ježica','Konjice','LTH Castings','Leone Ajdovščina','Portorož','Slovan','Terme Olimia Podčetrtek'],
   },
   'liga3': {
@@ -3522,8 +3515,6 @@ const LEAGUES = {
     // ponujala zavihka PLAY-BY-PLAY in FIBA LIVE BOX, ki sta prazna.
     fiba: false,
     statsUrl: GITHUB_RAW + '/liga3_stats.json',
-    cacheStats: 'liga3_stats_v1',
-    cachePbp:   'liga3_pbp_v1',
     teams: ['Armicafe Troti','Atlas Vojnik','Bistrica Kety Emmi','Cedevita Olimpija mladi',
             'Elektra Šoštanj','Hrastnik','Innoduler Koroška','Janče ECP Tactical','Kolpa',
             'Koper','Krvavec Meteor','Litija','Ljubljana','Mesarija Prunk Sežana','Miklavž',
@@ -3816,52 +3807,16 @@ function setProgress(pct, msg) {
 }
 
 // ═══════════════════════════════════════
-// CACHE — localStorage z TTL
+// PREDPOMNILNIK
 // ═══════════════════════════════════════
-const TTL_STATS = 6 * 3600 * 1000;
-const TTL_PBP   = 7 * 24 * 3600 * 1000;
-
-function cacheGet(key, ttl=TTL_STATS) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const {ts, data} = JSON.parse(raw);
-    if (Date.now() - ts > ttl) { localStorage.removeItem(key); return null; }
-    return data;
-  } catch(e) { return null; }
-}
-
-function cacheSet(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ts: Date.now(), data}));
-  } catch(e) {
-    // localStorage full — clear old data and try again
-    try { localStorage.clear(); localStorage.setItem(key, JSON.stringify({ts: Date.now(), data})); }
-    catch(e2) {}
-  }
-}
-
-function cacheCas(key) {
-  try { return JSON.parse(localStorage.getItem(key)).ts||0; } catch(e) { return 0; }
-}
-
-function cacheInfo(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const {ts} = JSON.parse(raw);
-    const age = Math.round((Date.now() - ts) / 60000);
-    return age < 60 ? age + ' min' : Math.round(age/60) + ' ur';
-  } catch(e) { return null; }
-}
+// Podatkov ne hranimo več v localStorage (glej _loadAllData); stare zapise pobrišemo,
+// ker so zasedali do 5 MB.
+try{Object.keys(localStorage).filter(k=>/_(stats|pbp)_v\d/.test(k)).forEach(k=>localStorage.removeItem(k));}catch(e){}
 
 // Prej je le pobrisal shranjene podatke in pokazal alert — strani ni
 // osvezil in predpomnilnika (service worker) ni izpraznil. Na telefonu, kjer
 // trde osvezitve ni, je to edini nacin za svezo stran.
 async function cacheClear() {
-  Object.values(LEAGUES).forEach(lg => {
-    try{ localStorage.removeItem(lg.cacheStats); localStorage.removeItem(lg.cachePbp); }catch(e){}
-  });
   try{ if(window.caches){ const k=await caches.keys(); await Promise.all(k.map(x=>caches.delete(x))); } }catch(e){}
   toast('Osvežujem podatke …','↻');
   setTimeout(()=>location.reload(), 350);
@@ -4102,9 +4057,11 @@ function selectLeague(lg) {
 // ⚡ Naloži data/{lg}_pregled.json (majhen, agregirani igralci) → izriše Pregled v <1s.
 // Če ne uspe (datoteka še ne obstaja / offline), tiho preskoči — loadAllData prevzame.
 let _fastPregledDone=false;
+let _fastTece=null;
 async function tryFastPregled(lg){
-  if(_fastPregledDone)return;
+  if(_fastPregledDone||_fastTece===lg+'/'+_currentSeason)return;
   if(P.length)return;                   // podatki že tu (cache) — ni potrebe
+  _fastTece=lg+'/'+_currentSeason;
   try{
     // Arhivske sezone imajo svoj pregled (…_pregled_s26.json); če ga ni, tiho odnehamo.
     const r=await fetch(seasonFileUrl(lg+'_pregled'),{cache:'no-cache'});
@@ -4310,29 +4267,32 @@ let _preloadStarted=false;
 async function preloadOtherLeagues(){
   if(_preloadStarted)return;
   if(_currentSeason!==SEASON_ID)return; // preload samo za aktualno sezono
+  // na telefonu ne porabljamo prenosa za lige, ki jih obiskovalec morda ne odpre
+  if(navigator.connection?.saveData||matchMedia('(max-width:640px)').matches)return;
   _preloadStarted=true;
   // Počakaj malo, da prva liga in UI nista motena
   await new Promise(r=>setTimeout(r,2500));
   for(const [key,lg] of Object.entries(LEAGUES)){
     if(key===currentLeague)continue;
     // Že v cache? Preskoči.
-    if(cacheGet(lg.cacheStats, TTL_STATS))continue;
-    try{
-      const resp=await fetch(lg.statsUrl,{cache:'no-cache'});
-      if(!resp.ok)continue;
-      const data=await resp.json();
-      // Shrani v isti format kot live load
-      const am=data.allMatches||[];
-      const msc={};
-      Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
-      cacheSet(lg.cacheStats,{allMatches:am,matchStatsCache:msc,uradnaLestvica:data.uradnaLestvica||null});
-    }catch(e){/* tiho */}
+    // samo ogrejemo predpomnilnik brskalnika; preklop lige je potem takojšen
+    try{ await fetch(lg.statsUrl,{cache:'no-cache'}); }catch(e){/* tiho */}
     // Pavza med ligami, da ne zasede pasovne širine naenkrat
     await new Promise(r=>setTimeout(r,1500));
   }
 }
 
-async function loadAllData() {
+// Ob vstopu po povezavi jo pokličeta routeBoot in _routeApply skoraj hkrati:
+// vsak obisk je statistiko prenesel dvakrat. Isto nalaganje si zdaj delita.
+let _nalaganje=null;
+function loadAllData(){
+  const k=currentLeague+'/'+_currentSeason;
+  if(_nalaganje&&_nalaganje.k===k)return _nalaganje.p;
+  const p=_loadAllData().finally(()=>{ if(_nalaganje&&_nalaganje.p===p)_nalaganje=null; });
+  _nalaganje={k,p};
+  return p;
+}
+async function _loadAllData() {
   window._fullDataLoaded = false;
   try {
     pokaziOverlay('loading-overlay');
@@ -4340,37 +4300,14 @@ async function loadAllData() {
     // Skeleton v glavni tabeli (občutek hitrosti)
     const stEl=document.getElementById('st');
     if(stEl)stEl.innerHTML='<tbody>'+skeletonRows(10)+'</tbody>';
-    // ── 1. Preveri localStorage cache ──
-    // Velja le, če na strežniku ni novejših podatkov. Prej je bil 6 ur v veljavi
-    // ne glede na to in vračajoči obiskovalec je gledal stare rezultate, čeprav
-    // so bili novi objavljeni že uro po tekmi.
-    let cached = cacheGet(seasonCacheKey(), TTL_STATS);
-    if (cached) {
-      try {
-        const h = await fetch(seasonStatsUrl(currentLeague, _currentSeason), {method:'HEAD', cache:'no-store'});
-        if (h.ok && Date.parse(h.headers.get('last-modified')||'') > cacheCas(seasonCacheKey())) cached = null;
-      } catch(e) {}
-    }
-    if (cached) {
-      const age = cacheInfo(seasonCacheKey());
-      setProgress(85, 'Iz predpomnilnika (' + age + ' star)...');
-      allMatches = cached.allMatches;
-      _uradnaLestvica = cached.uradnaLestvica||null;
-      matchStatsCache = cached.matchStatsCache;
-      setProgress(96, 'Agregiram...');
-      aggregatePlayers('all'); initUI();
-      setProgress(100, 'Naloženo iz predpomnilnika (' + age + ')');
-      setTimeout(_skrijNalaganje, 300);
-      initWebSocket();
-    startLiveRefresh();
-      preloadOtherLeagues();
-      return;
-    }
-
-    // ── 2. Poskusi GitHub (hitro, pre-fetchano) ──
+    // ── 1. GitHub (hitro, pre-fetchano) ──
+    // Brez lastnega predpomnilnika: no-cache vpraša strežnik, ali je datoteka nova,
+    // in če ni, jo vzame iz predpomnilnika brskalnika (odgovor 304 brez vsebine).
+    // Prej je šlo vse v localStorage: 1,4-2,3 MB na ligo, kvota je 5 MB, ob polni
+    // kvoti pa je localStorage.clear() izbrisal tudi temo in shranjene izbire.
     setProgress(10, 'Nalagam iz GitHub...');
     try {
-      const ghRes = await fetch(seasonStatsUrl(currentLeague, _currentSeason) + '?t=' + Date.now());
+      const ghRes = await fetch(seasonStatsUrl(currentLeague, _currentSeason), {cache:'no-cache'});
       if (ghRes.ok) {
         const ghData = await ghRes.json();
         const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
@@ -4384,12 +4321,13 @@ async function loadAllData() {
           Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
             matchStatsCache[parseInt(id)] = stats;
           });
-          cacheSet(seasonCacheKey(), {allMatches, matchStatsCache, uradnaLestvica:_uradnaLestvica});
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
           setProgress(100, 'GitHub (' + Math.round(ghAge/60000) + ' min)');
           setTimeout(_skrijNalaganje, 300);
           initWebSocket();
+          startLiveRefresh();
+          preloadOtherLeagues();
           return;
         }
         console.log('GitHub data too old (' + Math.round(ghAge/3600000) + 'h), fetching fresh...');
@@ -4456,7 +4394,6 @@ async function loadAllData() {
       setProgress(Math.min(pct,90), `Statistika... ${Math.min(i+batchSize, finished.length)}/${finished.length}`);
     }
 
-    cacheSet(seasonCacheKey(), {allMatches, matchStatsCache, uradnaLestvica:_uradnaLestvica});
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
     setProgress(100, 'Naloženo iz API');
@@ -5538,13 +5475,14 @@ function renderNovePrijave(){
 // Zato je to edini vir imen in fotografij v predsezonskem obdobju.
 // Obljuba na sezono: hkratni klici si delijo isti prenos, po menjavi sezone se
 // naloži znova (prej je bil prvi neuspeh, npr. arhivska sezona brez sestavov, trajen).
-let _ROSTERS=null, _rostersSezona=null, _rostersObljuba=null;
+let _ROSTERS=null, _rostersUrl=null, _rostersObljuba=null;
 function loadRosters(){
-  if(_rostersSezona===_currentSeason)return _rostersObljuba;
-  _rostersSezona=_currentSeason; _ROSTERS=null;
+  const url=seasonFileUrl('rosters');
+  if(_rostersUrl===url)return _rostersObljuba;
+  _rostersUrl=url; _ROSTERS=null;
   return _rostersObljuba=(async()=>{
     try{
-      const r=await fetch(seasonFileUrl('rosters'),{cache:'no-cache'});
+      const r=await fetch(url,{cache:'no-cache'});
       if(r.ok)_ROSTERS=await r.json();
     }catch(e){}
     return _ROSTERS;
@@ -10403,23 +10341,10 @@ async function getAllLeaguesMatches(){
     if(key===currentLeague && allMatches.length){
       matches=allMatches;
     } else {
-      // Poskusi cache; če ni, aktivno naloži (ne čakaj na preload)
-      const cached=cacheGet(lg.cacheStats,TTL_STATS);
-      if(cached&&cached.allMatches){
-        matches=cached.allMatches;
-      } else {
-        try{
-          const resp=await fetch(lg.statsUrl+'?t='+Date.now());
-          if(resp.ok){
-            const data=await resp.json();
-            matches=data.allMatches||[];
-            // Predpomni za naprej
-            const msc={};
-            Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
-            cacheSet(lg.cacheStats,{allMatches:matches,matchStatsCache:msc});
-          }
-        }catch(e){}
-      }
+      try{
+        const resp=await fetch(lg.statsUrl,{cache:'no-cache'});
+        if(resp.ok) matches=(await resp.json()).allMatches||[];
+      }catch(e){}
     }
     if(matches){
       matches.forEach(m=>all.push({...m,_league:lg.short,_leagueColor:lg.color}));
@@ -10666,40 +10591,9 @@ function processPbp(d){
 function loadPBPData(){
   const el=document.getElementById('nerd-status');
   if(el)el.textContent='⏳ Nalagam PBP...';
-  const lg=getLg();
-  const baseKey=lg.cachePbp||currentLeague+'_pbp_v4';
-  const cacheKey=_currentSeason===SEASON_ID?baseKey:baseKey+'_s'+_currentSeason;
-  // star zapis (v3, brez menjav) samo zaseda prostor
-  try{ localStorage.removeItem(cacheKey.replace('_pbp_v4','_pbp_v3')); }catch(e){}
-  // Predpomnilnik velja 7 dni, kar je med sezono predolgo: PBP se dopolnjuje
-  // vsak teden, ob začetku sezone pa je datoteka sprva prazna. Kdor je zavihek
-  // odprl takrat, je cel teden dobival "PBP ni dosegljiv", čeprav so podatki
-  // medtem prišli. Zato predpomnilnik zavržemo, če pokriva manj tekem, kot jih
-  // je odigranih — ali če je prazen.
-  let cached=null;
-  try{
-    const r=localStorage.getItem(cacheKey);
-    if(r){
-      const p=JSON.parse(r);
-      const n=Object.keys((p.data&&p.data.pbp)||{}).length;
-      const odigranih=(typeof allMatches!=='undefined'&&allMatches)
-        ? allMatches.filter(m=>m.status==='FINISHED').length : 0;
-      // Ni nujno, da ima vsaka odigrana tekma PBP (FIBA ne pokriva vseh), zato
-      // ob manjku ne osvežujemo ob vsakem odpiranju, ampak največ enkrat na uro.
-      const manjka = n < odigranih && (Date.now()-p.ts) > 3600*1000;
-      const prazen = n === 0;
-      // Tekoca sezona: PBP se zdaj osvezuje vsako uro (tudi dopolnjuje ze
-      // shranjene tekme), zato predpomnilnik velja najvec 6 ur. Arhiv se ne
-      // spreminja in velja TTL_PBP.
-      const ttl = _currentSeason===SEASON_ID ? Math.min(TTL_PBP, 6*3600*1000) : TTL_PBP;
-      if(Date.now()-p.ts < ttl && !manjka && !prazen) cached=p.data;
-    }
-  }catch(e){}
-  if(cached){processPbp(cached);if(el)el.textContent='PBP iz cache';renderNerd();return;}
-  fetch(seasonFileUrl(currentLeague+'_pbp')+'?t='+Date.now())
+  fetch(seasonFileUrl(currentLeague+'_pbp'),{cache:'no-cache'})
     .then(r=>r.json())
     .then(d=>{
-      try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}
       processPbp(d);
       if(el)el.textContent='PBP naložen';
       renderNerd();
