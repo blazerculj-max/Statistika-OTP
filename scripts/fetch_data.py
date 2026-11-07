@@ -580,6 +580,9 @@ def build_pregled(matches, stats):
         'firstTeamName':m['firstTeamName'],'secondTeamName':m['secondTeamName'],
         'firstTeamScore':m.get('firstTeamScore'),'secondTeamScore':m.get('secondTeamScore'),
         'firstTeamLogoUuid':m.get('firstTeamLogoUuid'),'secondTeamLogoUuid':m.get('secondTeamLogoUuid'),
+        # faza: brez nje ELO in lestvica na hitrem pregledu ne najdeta nobene tekme
+        'competitions':[{k:c.get(k) for k in ('competitionPhaseName','competitionPhaseGroupName')}
+                        for c in (m.get('competitions') or [])[:1]],
     } for m in matches]
 
     players = list(byKey.values())

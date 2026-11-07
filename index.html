@@ -4519,6 +4519,10 @@ function aggregatePlayers(phaseFilter) {
 
   _leaguePlayers = null;
   _tmAgg = {};
+  // Ocene so odvisne od tekem in zapisnikov. Izračunane na hitrem pregledu bi
+  // sicer ostale: ta nima zapisnikov, ELO je bil prazen in vse napovedi so
+  // kazale le prednost domačega igrišča (57 % pri vsaki tekmi).
+  _eloRatings = null; _bEloRatings = null;
 }
 
 function normalizeTeamName(n) {
