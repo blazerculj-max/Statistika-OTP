@@ -219,6 +219,23 @@ def needs_full_fetch(existing):
     age_h = (datetime.now(timezone.utc) - updated).total_seconds() / 3600
     return age_h > 24 * 7
 
+def fetch_lestvica(comp_id):
+    """
+    Uradni vrstni red KZS: {faza: {ekipa: mesto}}. Stran ga uporabi pri ekipah z
+    enakim stevilom tock — KZS med sezono razvrsca po razliki v kosih, po koncu
+    rednega dela po medsebojnih tekmah, in tega ni treba ugibati.
+    """
+    d = fetch_json(f"{API_BASE}/matches/standings?competitionId={comp_id}")
+    out = {}
+    for ph in ((d or {}).get('data') or {}).get('phases') or []:
+        skupine = ([ph['standings']] if ph.get('standings')
+                   else [g.get('standings') or [] for g in ph.get('groups') or []])
+        red = {s['teamName']: i + 1 for st in skupine for i, s in enumerate(st)}
+        if red:
+            out[(ph.get('competitionPhase') or {}).get('name')] = red
+    return out
+
+
 def cas_za_osvezitev(existing):
     """Ali je cas, da znova preberemo vse zapisnike sezone (enkrat na OSVEZI_UR)."""
     zadnja = (existing or {}).get('statsOsvezeno')
@@ -626,8 +643,11 @@ def process_league(key, lg):
     if LEAGUES.get(key, {}).get('fiba') is not False:
         stats, _ = dopolni_iz_fibe(matches, stats)
 
+    lestvica = fetch_lestvica(lg['id']) or (existing or {}).get('uradnaLestvica') or {}
+
     now = datetime.now(timezone.utc).isoformat()
     payload = {'updatedAt': now, 'league': lg['name'], 'seasonId': SEASON_ID,
+               'uradnaLestvica': lestvica,
                'statsOsvezeno': now if osvezi else (existing or {}).get('statsOsvezeno'),
                'allMatches': matches, 'matchStats': stats}
     stats_file = f"data/{key}_stats.json"
@@ -639,6 +659,7 @@ def process_league(key, lg):
     try:
         pregled = build_pregled(matches, stats)
         pregled['updatedAt'] = now
+        pregled['uradnaLestvica'] = lestvica
         pregled['league'] = lg['name']
         pregled['seasonId'] = SEASON_ID   # da arhiviranje prepozna sezono datoteke
         pregled_file = f"data/{key}_pregled.json"

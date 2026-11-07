@@ -3523,6 +3523,7 @@ let pbpLoaded = false;
 let nerdView = 'clutch';
 let nerdStats = null; // computed nerd stats cache
 let allMatches = [];  // raw match list from API
+let _uradnaLestvica = null;  // {faza: {ekipa: mesto}} — uradni vrstni red KZS
 let matchStatsCache = {}; // matchId → stats
 let playerGameLog = {}; // playerId → [{round, matchId, stats}]
 let mode='tot', lMode='avg', lMin=5, sortCol=-1, sortDir=1, heatmap=false;
@@ -3724,6 +3725,10 @@ function cacheSet(key, data) {
     try { localStorage.clear(); localStorage.setItem(key, JSON.stringify({ts: Date.now(), data})); }
     catch(e2) {}
   }
+}
+
+function cacheCas(key) {
+  try { return JSON.parse(localStorage.getItem(key)).ts||0; } catch(e) { return 0; }
 }
 
 function cacheInfo(key) {
@@ -3999,6 +4004,7 @@ async function tryFastPregled(lg){
       p.blk,p.pre,p.pm,p.efe,p.pip,p.fb,p.sc
     ]);
     allMatches=d.matches||[];
+    _uradnaLestvica=d.uradnaLestvica||null;
     playerGameLog=d.gamelog||{};
     window._fastMvpPid=d.mvpPid||null;
     Object.keys(playerGameLog).forEach(pid=>playerGameLog[pid].sort((a,b)=>a.round-b.round));
@@ -4108,7 +4114,7 @@ async function switchSeason(seasonId){
   _currentSeason=seasonId;
   _seasonSwitched=true;
   // Reset stanje (kot pri switchLeague)
-  P=[];allMatches=[];matchStatsCache={};pbpData={};
+  P=[];allMatches=[];_uradnaLestvica=null;matchStatsCache={};pbpData={};
   pbpLoaded=false;nerdStats=null;_leaguePlayers=null;_tmAgg={};
   _eloRatings=null;_bEloRatings=null;playerGameLog={};_leagueFullStats=null;
   sortCol=-1;
@@ -4153,7 +4159,7 @@ async function switchLeague(lg) {
   // Update UI
   updateHeader();
   // Reset state
-  P = []; allMatches = []; matchStatsCache = {}; pbpData = {};
+  P = []; allMatches = []; _uradnaLestvica = null; matchStatsCache = {}; pbpData = {};
   pbpLoaded = false; nerdStats = null; _leaguePlayers = null; _tmAgg = {};
   _eloRatings = null; _bEloRatings = null; playerGameLog = {}; _leagueFullStats=null;
   sortCol = -1;
@@ -4196,14 +4202,14 @@ async function preloadOtherLeagues(){
     // Že v cache? Preskoči.
     if(cacheGet(lg.cacheStats, TTL_STATS))continue;
     try{
-      const resp=await fetch(lg.statsUrl,{cache:'force-cache'});
+      const resp=await fetch(lg.statsUrl,{cache:'no-cache'});
       if(!resp.ok)continue;
       const data=await resp.json();
       // Shrani v isti format kot live load
       const am=data.allMatches||[];
       const msc={};
       Object.entries(data.matchStats||{}).forEach(([id,st])=>{msc[parseInt(id)]=st;});
-      cacheSet(lg.cacheStats,{allMatches:am,matchStatsCache:msc});
+      cacheSet(lg.cacheStats,{allMatches:am,matchStatsCache:msc,uradnaLestvica:data.uradnaLestvica||null});
     }catch(e){/* tiho */}
     // Pavza med ligami, da ne zasede pasovne širine naenkrat
     await new Promise(r=>setTimeout(r,1500));
@@ -4219,11 +4225,21 @@ async function loadAllData() {
     const stEl=document.getElementById('st');
     if(stEl)stEl.innerHTML='<tbody>'+skeletonRows(10)+'</tbody>';
     // ── 1. Preveri localStorage cache ──
-    const cached = cacheGet(seasonCacheKey(), TTL_STATS);
+    // Velja le, če na strežniku ni novejših podatkov. Prej je bil 6 ur v veljavi
+    // ne glede na to in vračajoči obiskovalec je gledal stare rezultate, čeprav
+    // so bili novi objavljeni že uro po tekmi.
+    let cached = cacheGet(seasonCacheKey(), TTL_STATS);
+    if (cached) {
+      try {
+        const h = await fetch(seasonStatsUrl(currentLeague, _currentSeason), {method:'HEAD', cache:'no-store'});
+        if (h.ok && Date.parse(h.headers.get('last-modified')||'') > cacheCas(seasonCacheKey())) cached = null;
+      } catch(e) {}
+    }
     if (cached) {
       const age = cacheInfo(seasonCacheKey());
       setProgress(85, 'Iz predpomnilnika (' + age + ' star)...');
       allMatches = cached.allMatches;
+      _uradnaLestvica = cached.uradnaLestvica||null;
       matchStatsCache = cached.matchStatsCache;
       setProgress(96, 'Agregiram...');
       aggregatePlayers('all'); initUI();
@@ -4242,14 +4258,17 @@ async function loadAllData() {
       if (ghRes.ok) {
         const ghData = await ghRes.json();
         const ghAge = Date.now() - new Date(ghData.updatedAt).getTime();
-        if (ghAge < GITHUB_MAX_AGE) {
+        // Arhivska sezona se ne spreminja: njena starost ni razlog za nalaganje
+        // z API-ja (prej več sto klicev iz brskalnika ob vsakem preklopu).
+        if (ghAge < GITHUB_MAX_AGE || _currentSeason !== SEASON_ID) {
           setProgress(80, 'GitHub podatki (' + Math.round(ghAge/60000) + ' min stari)...');
           allMatches = ghData.allMatches;
+          _uradnaLestvica = ghData.uradnaLestvica||null;
           // Convert matchStats format from GitHub
           Object.entries(ghData.matchStats || {}).forEach(([id, stats]) => {
             matchStatsCache[parseInt(id)] = stats;
           });
-          cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
+          cacheSet(seasonCacheKey(), {allMatches, matchStatsCache, uradnaLestvica:_uradnaLestvica});
           setProgress(96, 'Agregiram...');
           aggregatePlayers('all'); initUI();
           setProgress(100, 'GitHub (' + Math.round(ghAge/60000) + ' min)');
@@ -4321,7 +4340,7 @@ async function loadAllData() {
       setProgress(Math.min(pct,90), `Statistika... ${Math.min(i+batchSize, finished.length)}/${finished.length}`);
     }
 
-    cacheSet(seasonCacheKey(), {allMatches, matchStatsCache});
+    cacheSet(seasonCacheKey(), {allMatches, matchStatsCache, uradnaLestvica:_uradnaLestvica});
     setProgress(96, 'Agregiram...');
     aggregatePlayers('all'); initUI();
     setProgress(100, 'Naloženo iz API');
@@ -12790,10 +12809,10 @@ function buildRaceData() {
       if(m.firstTeamScore>m.secondTeamScore){standings[t1].W++;standings[t2].L++;}
       else{standings[t2].W++;standings[t1].L++;}
     });
-    // Isti FIBA kriteriji kot na Lestvici (medsebojno, nato kos razlika).
+    // Isti kriteriji kot na Lestvici; zadnji krog se mora ujemati z njo.
     // Prej samo po tockah: izenacene ekipe so ostale v nakljucnem vrstnem redu
-    // in zadnji krog se ni ujemal z Lestvico (Krka pred Sencurjem pri +49 : +57).
-    const sorted = applyFibaTiebreakers(Object.values(standings), roundMatches).map(st=>[st.name,st]);
+    // (Krka pred Sencurjem pri +49 : +57).
+    const sorted = applyFibaTiebreakers(Object.values(standings), allMatches, r===raceMaxRound?'Redni del':null).map(st=>[st.name,st]);
     sorted.forEach(([name,st],pos)=>{
       if(!raceData[name])raceData[name]=[];
       raceData[name].push({round:r,pos:pos+1,pts:st.W*2+st.L});
@@ -13663,9 +13682,12 @@ function renderRekordi(){
 // ═══════════════════════════════════════════════════
 function computeTeamAdvanced(){
   const teamRaw={};
+  const veljavne=new Set(allMatches.map(m=>m.id));
+  const posesti=side=>(side?.playerStats||[]).reduce((s,p)=>p.played
+    ?s+(p.fgA||0)+0.44*(p.fTA||0)+(p.turnovers||0)-(p.offensiveRebounds||0):s,0);
 
   Object.entries(matchStatsCache).forEach(([matchId,ms])=>{
-    if(!ms)return;
+    if(!ms||!veljavne.has(ms.matchId))return;
     [ms.firstTeam,ms.secondTeam].forEach(side=>{
       if(!side)return;
       const tname=side.teamName||'';
@@ -13675,10 +13697,11 @@ function computeTeamAdvanced(){
         ftm:0,fta:0,pts:0,
         oreb:0,dreb:0,reb:0,
         ast:0,stl:0,blk:0,tov:0,
-        games:0
+        games:0,possNasp:0
       };
       const r=teamRaw[tname];
       r.games++;
+      r.possNasp+=posesti(side===ms.firstTeam?ms.secondTeam:ms.firstTeam);
       (side.playerStats||[]).forEach(p=>{
         if(!p.played)return;
         r.fg2m+=p.twoPM||0;
@@ -13724,13 +13747,15 @@ function computeTeamAdvanced(){
     const wl=wlMap[team]||{W:0,L:0,ptsFor:0,ptsAga:0,homeW:0,homeL:0,awayW:0,awayL:0,ptsArr:[r.pts],G:r.games};
     const G=wl.G||r.games;
     const poss=Math.max(r.fga+0.44*r.fta+r.tov-r.oreb,1);
+    const possNasp=Math.max(r.possNasp,1);
     // Use actual match scores (100% accurate) as pts for ratings
     const actualPtsPerG=wl.ptsFor/G;
     const actualOppPerG=wl.ptsAga/G;
     // ortg = pts per 100 possessions
     const ortg=wl.ptsFor/poss*100;
-    // drtg = opponent pts per 100 possessions (same poss estimate)
-    const drtg=wl.ptsAga/poss*100;
+    // drtg = točke nasprotnika na 100 NJEGOVIH posesti. Prej deljeno z lastnimi
+    // posestmi, zato je bila DEF RTG tu drugačna kot v tabeli tempa na Lestvici.
+    const drtg=wl.ptsAga/possNasp*100;
     const netrtg=ortg-drtg;
     // TS%: actual pts / (2*(FGA + 0.44*FTA)) — numerator from real scores
     const tsDenom=2*(r.fga+0.44*r.fta);
@@ -13748,6 +13773,7 @@ function computeTeamAdvanced(){
       fg2pct:r.fg2a>0?r.fg2m/r.fg2a*100:0,
       fg3pct:r.fg3a>0?r.fg3m/r.fg3a*100:0,
       ftpct:r.fta>0?r.ftm/r.fta*100:0,
+      razlika:(wl.ptsFor-wl.ptsAga)/G, fg3pg:r.fg3m/G,
       threePtRate:r.fga>0?r.fg3a/r.fga*100:0,
       astTov:r.tov>0?r.ast/r.tov:r.ast,
       rebPg:r.reb/G,orebPg:r.oreb/G,
@@ -13763,7 +13789,12 @@ function renderTeamStats(){
   const wrap=document.getElementById('teamstats-wrap');
   if(!wrap||!P.length){if(wrap)wrap.innerHTML='<div class="empty">Naloži podatke</div>';return;}
 
-  if(!window.tsSort)window.tsSort={col:'netrtg',asc:false};
+  // 3. SKL ne beleži poskusov iz igre, skokov, podaj in izgub. Brez njih posesti,
+  // učinkovitosti in TS% ni mogoče izračunati — prej je tabela kazala OFF RTG 1032,
+  // TS 75 % pri vseh ekipah in 0 % trojk. Tam so samo stolpci, ki imajo podlago.
+  const polna=leagueHasFullStats();
+  if(!window.tsSort||(!polna&&!['razlika','pts','ptsAga','fg3pg','ft','home','away','cons'].includes(window.tsSort.col)))
+    window.tsSort={col:polna?'netrtg':'razlika',asc:false};
   window.sortTS=(col)=>{
     if(window.tsSort.col===col)window.tsSort.asc=!window.tsSort.asc;
     else{window.tsSort.col=col;window.tsSort.asc=false;}
@@ -13779,12 +13810,13 @@ function renderTeamStats(){
     pace:t=>t.pace, astTov:t=>t.astTov, reb:t=>t.rebPg,
     stl:t=>t.stlPg, blk:t=>t.blkPg, tov:t=>-t.tovPg,
     pts:t=>t.ptsFor, ptsAga:t=>-t.ptsAga,
+    razlika:t=>t.razlika, fg3pg:t=>t.fg3pg, ft:t=>t.ftpct,
     home:t=>t.homeW/(t.homeW+t.homeL||1),
     away:t=>t.awayW/(t.awayW+t.awayL||1),
     cons:t=>-t.stdDev,
   };
   const sorted=[...data].sort((a,b)=>{
-    const fn=sortFns[window.tsSort.col]||sortFns.netrtg;
+    const fn=sortFns[window.tsSort.col]||sortFns[polna?'netrtg':'razlika'];
     return window.tsSort.asc?fn(a)-fn(b):fn(b)-fn(a);
   });
 
@@ -13809,15 +13841,18 @@ function renderTeamStats(){
       <td style="text-align:center;color:var(--mut)">${i+1}.</td>
       <td style="font-weight:700;color:${tc};white-space:nowrap"><div style="display:flex;align-items:center;gap:8px">${teamLogoHtml(t.team,22)}<span>${t.team}</span></div></td>
       <td style="text-align:center">${t.W}-${t.L}</td>
-      <td style="text-align:center;font-weight:700;color:${netColor}">${t.netrtg>0?'+':''}${t.netrtg.toFixed(1)}</td>
+      ${polna?`<td style="text-align:center;font-weight:700;color:${netColor}">${t.netrtg>0?'+':''}${t.netrtg.toFixed(1)}</td>
       <td style="text-align:center;color:#f97316;font-weight:600">${t.ortg.toFixed(1)}</td>
       <td style="text-align:center;color:#60a5fa;font-weight:600">${t.drtg.toFixed(1)}</td>
       <td style="text-align:center;color:${tsColor}">${t.ts.toFixed(1)}%</td>
       <td style="text-align:center">${t.fg3pct.toFixed(1)}%</td>
       <td style="text-align:center">${t.astTov.toFixed(2)}</td>
-      <td style="text-align:center">${t.pace.toFixed(1)}</td>
+      <td style="text-align:center">${t.pace.toFixed(1)}</td>`
+      :`<td style="text-align:center;font-weight:700;color:${t.razlika>0?'#22c55e':t.razlika<0?'#ef4444':'var(--text)'}">${t.razlika>0?'+':''}${t.razlika.toFixed(1)}</td>`}
       <td style="text-align:center">${t.ptsFor.toFixed(1)}</td>
       <td style="text-align:center">${t.ptsAga.toFixed(1)}</td>
+      ${polna?'':`<td style="text-align:center">${t.fg3pg.toFixed(1)}</td>
+      <td style="text-align:center">${t.ftpct.toFixed(1)}%</td>`}
       <td style="text-align:center;color:#22c55e;font-size:.75rem">${homeWL}</td>
       <td style="text-align:center;color:#a855f7;font-size:.75rem">${awayWL}</td>
       <td style="text-align:center;color:var(--mut);font-size:.75rem">${t.stdDev.toFixed(1)}</td>
@@ -13825,14 +13860,21 @@ function renderTeamStats(){
   }).join('');
 
   // League leader cards
-  const leaders=[
+  const leaders=(polna?[
     {label:'NET RATING',col:'netrtg',val:t=>(t.netrtg>0?'+':'')+t.netrtg.toFixed(1),color:'#22c55e'},
     {label:'TRUE SHOOTING',col:'ts',val:t=>t.ts.toFixed(1)+'%',color:'#f97316'},
     {label:'PACE',col:'pace',val:t=>t.pace.toFixed(1),color:'#60a5fa'},
     {label:'AST/TOV',col:'astTov',val:t=>t.astTov.toFixed(2),color:'#a855f7'},
     {label:'DEF RATING',col:'drtg',val:t=>t.drtg.toFixed(1),color:'#60a5fa',low:true},
     {label:'KONSISTENCA',col:'cons',val:t=>t.stdDev.toFixed(1)+' σ',color:'#fbbf24',low:true},
-  ].map(l=>{
+  ]:[
+    {label:'RAZLIKA NA TEKMO',col:'razlika',val:t=>(t.razlika>0?'+':'')+t.razlika.toFixed(1),color:'#22c55e'},
+    {label:'NAJBOLJŠI NAPAD',col:'pts',val:t=>t.ptsFor.toFixed(1),color:'#f97316'},
+    {label:'NAJBOLJŠA OBRAMBA',col:'ptsAga',val:t=>t.ptsAga.toFixed(1),color:'#60a5fa'},
+    {label:'TROJKE NA TEKMO',col:'fg3pg',val:t=>t.fg3pg.toFixed(1),color:'#a855f7'},
+    {label:'PROSTI METI',col:'ft',val:t=>t.ftpct.toFixed(1)+'%',color:'#60a5fa'},
+    {label:'KONSISTENCA',col:'cons',val:t=>t.stdDev.toFixed(1)+' σ',color:'#fbbf24',low:true},
+  ]).map(l=>{
     const best=sorted.reduce((b,t)=>{
       const fn=sortFns[l.col];
       return fn(t)>fn(b)?t:b;
@@ -13858,15 +13900,17 @@ function renderTeamStats(){
           <th style="text-align:center">M</th>
           <th style="text-align:left">EKIPA</th>
           <th style="text-align:center;color:var(--sub)">Z-P</th>
-          ${th('netrtg','NET RTG','Net Rating = Off - Def rating','#22c55e')}
+          ${polna?`${th('netrtg','NET RTG','Net Rating = Off - Def rating','#22c55e')}
           ${th('ortg','OFF RTG','Točke na 100 posesti','#f97316')}
           ${th('drtg','DEF RTG','Prejete točke na 100 posesti','#60a5fa')}
           ${th('ts','TS%','True Shooting %','#fbbf24')}
           ${th('fg3','3PT%','Odstotek trojk','')}
           ${th('astTov','AST/TOV','Razmerje asistence/izgube žoge','')}
-          ${th('pace','PACE','Posesti na tekmo','')}
+          ${th('pace','PACE','Posesti na tekmo','')}`:th('razlika','+/− TM','Razlika v točkah na tekmo','#22c55e')}
           ${th('pts','PTS/TM','Točke na tekmo','#f97316')}
           ${th('ptsAga','PTS/TM PR','Prejete točke na tekmo','#60a5fa')}
+          ${polna?'':`${th('fg3pg','3PT/TM','Zadete trojke na tekmo','')}
+          ${th('ft','PM%','Odstotek prostih metov','')}`}
           ${th('home','DOMA','Zmage doma','#22c55e')}
           ${th('away','GOSTJE','Zmage v gosteh','#a855f7')}
           ${th('cons','σ','Konsistenca (nižje = bolj enakomerna)','#fbbf24')}
@@ -13927,22 +13971,27 @@ function showTeamDashboard(encodedTeam){
         <div style="font-family:var(--fh);font-size:1.1rem;font-weight:700;color:${tc}">${team}</div>
         <div style="display:flex;gap:6px">${formDots}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px">
         <div>
-          <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">ADVANCED METRICS</div>
+          ${leagueHasFullStats()?`<div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">ADVANCED METRICS</div>
           ${statRow('Net Rating',t.netrtg,0,'',true)}
           ${statRow('Off Rating',t.ortg,avgOrtg,'',true)}
           ${statRow('Def Rating',t.drtg,avgDrtg,'',false)}
           ${statRow('True Shooting',t.ts,avgTs,'%',true)}
           ${statRow('Pace',t.pace,avgPace,'',true)}
-          ${statRow('AST/TOV',t.astTov,avgAstTov,'',true)}
+          ${statRow('AST/TOV',t.astTov,avgAstTov,'',true)}`
+          :`<div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">NA TEKMO</div>
+          ${statRow('Točke',t.ptsFor,data.reduce((s,x)=>s+x.ptsFor,0)/data.length,'',true)}
+          ${statRow('Prejete točke',t.ptsAga,data.reduce((s,x)=>s+x.ptsAga,0)/data.length,'',false)}
+          ${statRow('Razlika',t.razlika,0,'',true)}
+          ${statRow('Trojke',t.fg3pg,data.reduce((s,x)=>s+x.fg3pg,0)/data.length,'',true)}`}
         </div>
         <div>
           <div style="font-family:var(--fh);font-size:.7rem;color:var(--mut);margin-bottom:8px;letter-spacing:.06em">SHOOTING & SPLITS</div>
-          ${statRow('2PT%',t.fg2pct,data.reduce((s,x)=>s+x.fg2pct,0)/data.length,'%',true)}
-          ${statRow('3PT%',t.fg3pct,data.reduce((s,x)=>s+x.fg3pct,0)/data.length,'%',true)}
+          ${leagueHasFullStats()?`${statRow('2PT%',t.fg2pct,data.reduce((s,x)=>s+x.fg2pct,0)/data.length,'%',true)}
+          ${statRow('3PT%',t.fg3pct,data.reduce((s,x)=>s+x.fg3pct,0)/data.length,'%',true)}`:''}
           ${statRow('FT%',t.ftpct,data.reduce((s,x)=>s+x.ftpct,0)/data.length,'%',true)}
-          ${statRow('3PT Rate',t.threePtRate,data.reduce((s,x)=>s+x.threePtRate,0)/data.length,'%',true)}
+          ${leagueHasFullStats()?statRow('3PT Rate',t.threePtRate,data.reduce((s,x)=>s+x.threePtRate,0)/data.length,'%',true):''}
           <div style="display:flex;gap:12px;margin-top:10px">
             <div style="flex:1;background:var(--card);border-radius:8px;padding:10px;text-align:center">
               <div style="font-size:.6875rem;color:var(--mut)">DOMA</div>
@@ -14516,7 +14565,20 @@ window.addEventListener('appinstalled', ()=>{
 // ═══════════════════════════════
 // STANDINGS FUNCTIONS
 // ═══════════════════════════════
-function applyFibaTiebreakers(data, allMatchesRef) {
+// Vrstni red ekip z enakim številom točk. Prednost ima uradni vrstni red KZS
+// (faza = ime faze). Brez njega isto pravilo, kot ga uporablja KZS, preverjeno
+// na lestvicah 2025/26 in 2026/27: dokler redni del ni končan, skupna razlika v
+// koših, po koncu medsebojne tekme (FIBA). Prej so medsebojne tekme veljale že
+// med sezono, ko vsi pari še niso igrali, zato je bil vrstni red drugačen od
+// uradnega (npr. Laško pred Gorico, Šentjur pred Heliosom).
+function applyFibaTiebreakers(data, allMatchesRef, faza) {
+  const tocke=t=>t.W*2+t.L, razlika=t=>t.ptsFor-t.ptsAga;
+  const red=faza&&_uradnaLestvica&&_uradnaLestvica[faza];
+  if(red&&data.every(t=>red[t.name]!=null))
+    return [...data].sort((a,b)=>tocke(b)-tocke(a)||red[a.name]-red[b.name]);
+  const redni=(allMatchesRef||[]).filter(m=>(m.competitions?.[0]?.competitionPhaseName||'')==='Redni del');
+  if(!faza||!redni.length||redni.some(m=>m.status!=='FINISHED'))
+    return [...data].sort((a,b)=>tocke(b)-tocke(a)||razlika(b)-razlika(a)||b.ptsFor-a.ptsFor);
   const groups = {};
   data.forEach(t => {
     const key = (t.W*2 + t.L).toString();
@@ -14577,11 +14639,11 @@ function computeTeamStats(matchList, phaseFilter) {
   return Object.values(teams);
 }
 
-function buildStandingsTable(data, sort, title, color){
+function buildStandingsTable(data, sort, title, color, faza='Redni del'){
   if(sort==='pts'){
     const euPts=t=>t.W*2+t.L;
     data.sort((a,b)=>euPts(b)-euPts(a)||b.W-a.W);
-    data=applyFibaTiebreakers(data,allMatches);
+    data=applyFibaTiebreakers(data,allMatches,faza);
   } else if(sort==='ptsdiff'){
     data.sort((a,b)=>(b.ptsFor-b.ptsAga)-(a.ptsFor-a.ptsAga));
   } else {
@@ -14804,15 +14866,11 @@ function renderStandings(){
   if(!wrap||!allMatches.length)return;
 
   // Repopulate H2H dropdowns with current league teams only
-  // H2H: samo ekipe iz LEAGUES.teams ali rednega dela (ne playoff pari)
-  const lg0=getLg();
-  const lgTeams=(lg0.teams&&lg0.teams.length
-    ? lg0.teams
-    : [...new Set(allMatches
-        .filter(m=>m.status==='FINISHED'&&
-          !['Četrtfinale','Polfinale','Finale','Osmina finala'].includes(m.competitions?.[0]?.competitionPhaseName||''))
-        .map(m=>[m.firstTeamName,m.secondTeamName]).flat())]
-  ).sort();
+  // Iz tekem, ne iz LEAGUES.teams: ta je le rezerva, imena pa se morajo natanko
+  // ujemati s tekmami ('Branik ' ima v podatkih KZS presledek na koncu).
+  const lgTeams=[...new Set(allMatches
+    .filter(m=>!['Četrtfinale','Polfinale','Finale','Osmina finala'].includes(m.competitions?.[0]?.competitionPhaseName||''))
+    .map(m=>[m.firstTeamName,m.secondTeamName]).flat().filter(Boolean))].sort();
   ['h2h-team1','h2h-team2'].forEach((id,i)=>{
     const el=document.getElementById(id);
     if(!el)return;
@@ -14864,7 +14922,7 @@ function renderStandings(){
         const allObstMatches = [...rdH2H, ...obstMatches];
         const od=computeTeamStats(allObstMatches,'');
         const odFiltered=od.filter(t=>obstTeams.has(t.name));
-        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316');
+        if(odFiltered.length)html+=buildStandingsTable(odFiltered,sort,'LIGA ZA OBSTANEK (vklj. medsebojni redni del)','#f97316','Liga za obstanek');
       }
     }
   }
