@@ -1,0 +1,30 @@
+{
+ "preverjeno": "2026-11-07T07:44:53Z",
+ "igralcev": 558,
+ "ekip": 42,
+ "odstopanj": 0,
+ "lige": {
+  "liga1": {
+   "igralcev": 127,
+   "igralciUjema": 127,
+   "neznano": 0,
+   "ekip": 10,
+   "ekipeUjema": 10
+  },
+  "liga2": {
+   "igralcev": 154,
+   "igralciUjema": 154,
+   "neznano": 0,
+   "ekip": 12,
+   "ekipeUjema": 12
+  },
+  "liga3": {
+   "igralcev": 277,
+   "igralciUjema": 277,
+   "neznano": 0,
+   "ekip": 20,
+   "ekipeUjema": 20
+  }
+ },
+ "primeri": []
+}

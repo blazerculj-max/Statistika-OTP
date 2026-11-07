@@ -80,6 +80,14 @@ jobs:
         run: python scripts/verify_boxscore.py
         continue-on-error: true
 
+      # ── Preveritev: ali se statistika ujema z uradno KZS ──
+      # Izid gre v data/preverjanje.json (stran ga pokaze pod lestvico). Ce se kaj
+      # ne ujema, zadnji korak zagon oznaci kot neuspel in GitHub poslje obvestilo.
+      - name: Preveri statistiko proti uradni KZS
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: python scripts/verify_uradno.py
+        continue-on-error: true
+
       # ── Koliko je model napovedi vreden ──
       # Zapise data/napovedi_tocnost.json, ki ga zavihek Napovedi prikaze.
       # Tece kronolosko: vsaka napoved samo iz tekem pred njo.
@@ -152,3 +160,9 @@ jobs:
           [ "${{ github.event.inputs.mode }}" = "archive" ] && MSG="Arhiv sezone $(date -u '+%Y-%m-%d %H:%M UTC')"
           git diff --staged --quiet || git commit -m "$MSG"
           git push
+
+      # Na koncu, da se podatki objavijo tudi ob odstopanju.
+      - name: Opozori, ce se statistika ne ujema z uradno
+        if: github.event.inputs.mode != 'archive' && github.event.schedule != '20 15-23 * * *'
+        run: |
+          python -c "import json,sys; d=json.load(open('data/preverjanje.json')); print('odstopanj:', d['odstopanj']); [print(' ', p) for p in d['primeri']]; sys.exit(1 if d['odstopanj'] else 0)"

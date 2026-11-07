@@ -2456,6 +2456,9 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .np-odj{font-family:var(--fm);font-size:.6875rem;color:var(--red);white-space:nowrap}
 @media(max-width:480px){.np-mreza{grid-template-columns:1fr}}
 /* ═══ TELEFON — pregled 7.11.2026 (izmerjeno pri 375 in 320 px) ═══ */
+.preverjeno{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--mut);margin:10px 2px 0;line-height:1.4}
+.preverjeno .ic{width:14px;height:14px;flex-shrink:0;color:var(--green)}
+.preverjeno.ne,.preverjeno.ne .ic{color:var(--red)}
 @media(max-width:640px){
   /* Glava v dveh vrsticah namesto treh (141 -> ~100 px, skoraj četrtina zaslona
      je bila glava). Vrstica 1: naslov in ikone; vrstica 2: lige in sezona.
@@ -2799,6 +2802,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
       </select>
     </div>
     <div id="standings-wrap"></div>
+    <div id="preverjeno-wrap"></div>
     <div id="tempo-wrap"></div>
     <div id="playoff-wrap" style="margin-top:24px"></div>
     <!-- Primerjalnik je bil nad tabelo in je na telefonu zasedel prvi zaslon,
@@ -14927,9 +14931,30 @@ function renderTempo(){
     </tbody></table></div>`;
 }
 
+// Izid primerjave z uradno statistiko KZS (scripts/verify_uradno.py). Samo za
+// tekočo sezono: datoteka pove stanje zadnje posodobitve.
+let _preverjanje;
+async function renderPreverjeno(){
+  const el=document.getElementById('preverjeno-wrap');
+  if(!el)return;
+  if(_preverjanje===undefined){
+    try{ const r=await fetch(GITHUB_RAW+'/preverjanje.json',{cache:'no-cache'}); _preverjanje=r.ok?await r.json():null; }
+    catch(e){ _preverjanje=null; }
+  }
+  const d=_preverjanje, l=d&&d.lige&&d.lige[currentLeague];
+  if(!l||_currentSeason!==SEASON_ID){el.innerHTML='';return;}
+  const t=new Date(d.preverjeno);
+  const kdaj=`${t.getDate()}. ${t.getMonth()+1}. ob ${t.getHours()}:${String(t.getMinutes()).padStart(2,'0')}`;
+  const ok=l.igralciUjema===l.igralcev&&l.ekipeUjema===l.ekip;
+  el.innerHTML=`<div class="preverjeno${ok?'':' ne'}"><svg class="ic" aria-hidden="true"><use href="#i-tarca"/></svg><span>${ok
+    ?`Ujema se z uradno statistiko KZS: ${nIgralcev(l.igralcev)} in ${l.ekip} ekip, preverjeno ${kdaj}.`
+    :`Pri primerjavi z uradno statistiko KZS je ${l.igralcev-l.igralciUjema+l.ekip-l.ekipeUjema} odstopanj, preverjeno ${kdaj}. Popravek sledi ob naslednji posodobitvi.`}</span></div>`;
+}
+
 function renderStandings(){
   const wrap=document.getElementById('standings-wrap');
   if(!wrap||!allMatches.length)return;
+  renderPreverjeno();
 
   // Repopulate H2H dropdowns with current league teams only
   // Iz tekem, ne iz LEAGUES.teams: ta je le rezerva, imena pa se morajo natanko

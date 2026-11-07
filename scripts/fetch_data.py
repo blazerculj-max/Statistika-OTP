@@ -49,7 +49,7 @@ MAX_SEASON_LOOKBACK = 6
 FORCE_FULL  = '--full'  in sys.argv
 FETCH_PBP   = '--pbp'   in sys.argv
 STATS_ONLY  = '--stats' in sys.argv
-OSVEZI_UR   = 12   # na koliko ur znova preberemo vse zapisnike sezone
+OSVEZI_UR   = 5    # na koliko ur znova preberemo vse zapisnike sezone (vsak 6-urni zagon)
 
 def fetch_json(url, retries=3):
     for i in range(retries):
@@ -250,7 +250,7 @@ def fetch_stats_incremental(matches, existing_stats, osvezi=False):
     Zapisnike novih tekem in tekem zadnjih 48 ur beremo ob vsakem zagonu.
     KZS pa zapisnike popravlja tudi tedne kasneje: novembra 2026 je bilo 21 od 124
     tekem drugacnih, kot smo jih hranili, zato je bila statistika strani drugacna
-    od uradne. Zato enkrat na OSVEZI_UR ur (osvezi=True) preberemo vse.
+    od uradne. Zato na OSVEZI_UR ur (osvezi=True) preberemo vse.
     Kjer se zapisnik ni spremenil (_kzs = prstni odtis odgovora KZS), obdrzimo
     shranjenega, ker ima lahko dopolnitve iz FIBA.
     """
