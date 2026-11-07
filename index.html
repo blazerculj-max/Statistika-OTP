@@ -4366,9 +4366,11 @@ function aggregatePlayers(phaseFilter) {
       const teamName = normalizeTeamName(teamData.teamName);
 
       teamData.playerStats.forEach(ps => {
-        // Liga3 ne beleži minut (minutes=0) — filtriramo samo po played + ali ima vsaj točke
-      const hasStats = ps.points > 0 || ps.twoPM > 0 || ps.threePM > 0 || ps.fTM > 0;
-      if (!ps.played || (!hasStats && ps.minutes === 0)) return;
+        // Tekma šteje, če je igralec igral — tako šteje tudi KZS. Prej je izpadel,
+        // kdor ni imel ne točk ne minut: v 3. SKL (brez minut) vsak, ki ni zadel.
+        // Stran je tam 108 igralcem štela premalo tekem (z njimi osebnih napak in
+        // prostih metov), 21 igralcev pa sploh ni imela.
+        if (!ps.played) return;
         const key = ps.playerId + '_' + teamName;
 
         if (!byPid[key]) {
@@ -6684,9 +6686,7 @@ function drawBoxScore(matchData,c1,c2){
 
   const sections=teams.map((team,ti)=>{
     const played=(team.playerStats||[])
-      .filter(ps=>ps.played && ((ps.minutes||0)>0 || (ps.points||0)>0 ||
-                 (ps.fgM||0)>0 || (ps.fTA||0)>0 || (ps.foulCommited||0)>0 ||
-                 ((ps.offensiveRebounds||0)+(ps.defensiveRebounds||0))>0 || (ps.assists||0)>0))
+      .filter(ps=>ps.played)
       .sort((a,b)=>b.points-a.points);
     const rows=played.map(ps=>{
       const nm=`${(ps.matchTeamPlayerFirstname||'').trim()} ${ps.matchTeamPlayerLastname||''}`;

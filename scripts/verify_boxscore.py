@@ -12,8 +12,8 @@ KAJ PRIMERJA (na igralca, po imenu):
 Ekipno pa še končni rezultat.
 
 Imena se med sistemoma pišejo različno (šumniki, vrstni red, drugo ime), zato
-jih normaliziramo in primerjamo po priimku + začetnici imena — isti pristop kot
-v aplikaciji.
+jih normaliziramo in primerjamo po priimku + polnem imenu; po začetnici samo,
+če je ta enolična — isti pristop kot v aplikaciji.
 
 Uporaba:
   python scripts/verify_boxscore.py              # vse odigrane tekme te sezone
@@ -51,10 +51,25 @@ def norm(s):
 
 
 def kljuc(ime, priimek):
-    """Priimek + začetnica imena — dovolj za razlikovanje znotraj ene ekipe."""
-    p = norm(priimek)
-    i = norm(ime)
-    return f"{p}|{i[:1]}"
+    """Priimek + polno ime. Začetnica ni dovolj: brata Tin in Tilen Malovčić."""
+    return f"{norm(priimek)}|{norm(ime)}"
+
+
+def uskladi(kzs, fiba):
+    """
+    Isti igralec z drugače zapisanim imenom ("Kristjan - Željko" / "Kristjan"):
+    FIBA ključ preimenuje v KZS ključ, če priimek in začetnica enolično povesta,
+    kdo je kdo.
+    """
+    def kratko(k):
+        pr, ime = k.split('|')
+        return f"{pr}|{ime[:1]}"
+    samo_k, samo_f = set(kzs) - set(fiba), set(fiba) - set(kzs)
+    for k in samo_k:
+        kand = [f for f in samo_f if kratko(f) == kratko(k)]
+        if len(kand) == 1:
+            fiba[k] = fiba.pop(kand[0])
+            samo_f.discard(kand[0])
 
 
 def fetch_fiba(fid, retries=2):
@@ -130,6 +145,7 @@ def preveri_tekmo(m, md):
 
     for ti in (0, 1):
         ime_ekipe = (md.get('firstTeam' if ti == 0 else 'secondTeam') or {}).get('teamName', f'ekipa {ti+1}')
+        uskladi(k_pl[ti], f_pl[ti])
 
         # Končni rezultat
         uradni = m.get('firstTeamScore' if ti == 0 else 'secondTeamScore')
