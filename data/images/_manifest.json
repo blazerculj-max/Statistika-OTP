@@ -7,7 +7,8 @@
 "026c23b0-4226-4cf9-9962-76e8cbe66690": {
 "size": "365594",
 "etag": "67016c38-5941a",
-"downloaded_at": 1780637784
+"downloaded_at": 1780637784,
+"stisnjeno": 1
 },
 "02980fbf-85a6-45a9-9342-1b4527e4d9d4": {
 "size": "85461",
@@ -17,12 +18,14 @@
 "03dadb49-4926-46e0-ad1d-fc50929503ec": {
 "size": "587411",
 "etag": "68b9a4e3-8f693",
-"downloaded_at": 1780637786
+"downloaded_at": 1780637786,
+"stisnjeno": 1
 },
 "04b3f489-afee-4179-a444-fc1386bb9c52": {
 "size": "379903",
 "etag": "670ab463-5cbff",
-"downloaded_at": 1780637786
+"downloaded_at": 1780637786,
+"stisnjeno": 1
 },
 "050a1bbe-094d-48e9-b843-7ead76b483e6": {
 "size": "24754",
@@ -42,7 +45,8 @@
 "05cae6d9-9675-4207-a1ba-74e81a74cc4d": {
 "size": "314717",
 "etag": "652c2f30-4cd5d",
-"downloaded_at": 1780637788
+"downloaded_at": 1780637788,
+"stisnjeno": 1
 },
 "05cf6db3-d75a-4afe-a4e7-3e7f354e6a0c": {
 "size": "33215",
@@ -97,12 +101,14 @@
 "096d4c09-aec5-49f4-85fc-7fbb35526c20": {
 "size": "359432",
 "etag": "64fcd60d-57c08",
-"downloaded_at": 1780637794
+"downloaded_at": 1780637794,
+"stisnjeno": 1
 },
 "0982992d-dfd0-4c58-a54c-a43fc793ea3a": {
 "size": "454482",
 "etag": "64fcd4c8-6ef52",
-"downloaded_at": 1780637794
+"downloaded_at": 1780637794,
+"stisnjeno": 1
 },
 "09d0a027-113d-489a-a8d4-1bc6db4f5011": {
 "size": "191697",
@@ -202,7 +208,8 @@
 "0ff22a04-6240-4931-831d-bc1b2997483f": {
 "size": "338522",
 "etag": "6502df98-52a5a",
-"downloaded_at": 1780637804
+"downloaded_at": 1780637804,
+"stisnjeno": 1
 },
 "10669a9d-925d-478c-8f68-74bedbdbdbd5": {
 "size": "116764",
@@ -217,7 +224,8 @@
 "10d878d2-eed1-4463-a89e-9a4f5d61ee23": {
 "size": "422142",
 "etag": "64fcd5b0-670fe",
-"downloaded_at": 1780637806
+"downloaded_at": 1780637806,
+"stisnjeno": 1
 },
 "10dd2944-081b-4938-9603-867c07eaf745": {
 "size": "33255",
@@ -322,7 +330,8 @@
 "16cdd04c-177f-4729-bf74-1b2471c654c9": {
 "size": "317048",
 "etag": "6511c36d-4d678",
-"downloaded_at": 1780637816
+"downloaded_at": 1780637816,
+"stisnjeno": 1
 },
 "16ce3c36-f965-4216-ae11-2f109e852991": {
 "size": "114950",
@@ -372,12 +381,14 @@
 "18b6131a-d6d5-4e3c-9f6c-669f6796852a": {
 "size": "2330331",
 "etag": "67039831-238edb",
-"downloaded_at": 1780637820
+"downloaded_at": 1780637820,
+"stisnjeno": 1
 },
 "18c557a5-729b-43be-b43a-f0fe8bb3c17c": {
 "size": "305937",
 "etag": "66fbc288-4ab11",
-"downloaded_at": 1780637821
+"downloaded_at": 1780637821,
+"stisnjeno": 1
 },
 "18ddde30-d0d0-44e1-9655-6322f4dc8533": {
 "size": "29349",
@@ -387,7 +398,8 @@
 "1929da02-9143-4a13-8dbc-67bd0d2909c3": {
 "size": "418779",
 "etag": "65378068-663db",
-"downloaded_at": 1780637822
+"downloaded_at": 1780637822,
+"stisnjeno": 1
 },
 "19a45996-a1df-4e95-a147-656f9cba278e": {
 "size": "19846",
@@ -397,7 +409,8 @@
 "19fa60de-11bc-4240-b7ba-be86bfa3d34e": {
 "size": "325661",
 "etag": "670ea240-4f81d",
-"downloaded_at": 1780637823
+"downloaded_at": 1780637823,
+"stisnjeno": 1
 },
 "1a0fb487-002e-4eef-9b3a-df84fd56e8c4": {
 "size": "199511",
@@ -412,12 +425,14 @@
 "1ac5ae3a-7da2-4390-b732-60e3b7c17ee7": {
 "size": "356649",
 "etag": "65040355-57129",
-"downloaded_at": 1780637825
+"downloaded_at": 1780637825,
+"stisnjeno": 1
 },
 "1afc68b5-254f-434e-ab8e-751caee49cbc": {
 "size": "314683",
 "etag": "67389556-4cd3b",
-"downloaded_at": 1780637826
+"downloaded_at": 1780637826,
+"stisnjeno": 1
 },
 "1b62956d-b1b8-4a13-86d9-1fc3226e24e2": {
 "size": "131864",
@@ -437,7 +452,8 @@
 "1cf4a276-e550-4a7f-8df5-d4fb1001c77d": {
 "size": "1561935",
 "etag": "68b683e9-17d54f",
-"downloaded_at": 1780637828
+"downloaded_at": 1780637828,
+"stisnjeno": 1
 },
 "1d96db19-fc71-4a77-90d2-666452fbd1b6": {
 "size": "174268",
@@ -457,7 +473,8 @@
 "1dedfeb6-ace5-42cb-bfcd-2fe2b815090a": {
 "size": "488358",
 "etag": "6520f75d-773a6",
-"downloaded_at": 1780637831
+"downloaded_at": 1780637831,
+"stisnjeno": 1
 },
 "1ec994db-e22a-437b-a4c6-808ccefb9435": {
 "size": "20630",
@@ -492,7 +509,8 @@
 "2063b95c-50d3-47be-be95-bab027692c66": {
 "size": "373433",
 "etag": "65147e24-5b2b9",
-"downloaded_at": 1780637834
+"downloaded_at": 1780637834,
+"stisnjeno": 1
 },
 "20728748-9546-45df-aa23-c6b30472b8b6": {
 "size": "229028",
@@ -562,7 +580,8 @@
 "2339c45f-d2ce-4420-96dd-ef7c04f08bf1": {
 "size": "318511",
 "etag": "66e9d724-4dc2f",
-"downloaded_at": 1780637841
+"downloaded_at": 1780637841,
+"stisnjeno": 1
 },
 "23acf283-beaa-40c5-877d-58491a959cef": {
 "size": "26974",
@@ -572,7 +591,8 @@
 "243f1c02-61a7-4fc0-bf8e-4efbdd515183": {
 "size": "1517102",
 "etag": "68b680a3-17262e",
-"downloaded_at": 1780637842
+"downloaded_at": 1780637842,
+"stisnjeno": 1
 },
 "2452e70d-f908-4f45-bcaf-7c8f942c7326": {
 "size": "255535",
@@ -597,7 +617,8 @@
 "26fabab4-ff0e-497e-82af-1378f6e475af": {
 "size": "345431",
 "etag": "652663a3-54557",
-"downloaded_at": 1780637845
+"downloaded_at": 1780637845,
+"stisnjeno": 1
 },
 "27d51fa4-29c5-4ed8-9c3d-058615dc8752": {
 "size": "74421",
@@ -637,7 +658,8 @@
 "29627856-e25c-4baa-9ab0-78f44f34eebe": {
 "size": "1083571",
 "etag": "65168e92-1088b3",
-"downloaded_at": 1780637850
+"downloaded_at": 1780637850,
+"stisnjeno": 1
 },
 "29785fd4-a87c-4529-9aa8-6c8cf27eb858": {
 "size": "27350",
@@ -662,7 +684,8 @@
 "2a4bd1ac-b4be-428c-a64b-5010dc1fe71f": {
 "size": "379861",
 "etag": "66fbc23b-5cbd5",
-"downloaded_at": 1780637852
+"downloaded_at": 1780637852,
+"stisnjeno": 1
 },
 "2a79ea60-078c-4c2e-a0fb-5b46031a09c4": {
 "size": "251176",
@@ -712,7 +735,8 @@
 "2d0c78d2-db6a-428c-921e-d1236feaa54b": {
 "size": "382019",
 "etag": "66e3d68d-5d443",
-"downloaded_at": 1780637857
+"downloaded_at": 1780637857,
+"stisnjeno": 1
 },
 "2d8232f1-67d2-4a9d-a36f-d7a0b48ba81c": {
 "size": "6980",
@@ -722,7 +746,8 @@
 "2d826c39-b51c-4dbb-9e8b-9464484bfec4": {
 "size": "333709",
 "etag": "66fbe737-5178d",
-"downloaded_at": 1780637858
+"downloaded_at": 1780637858,
+"stisnjeno": 1
 },
 "2dc33441-123b-492a-af01-d2b37e28a9c4": {
 "size": "30425",
@@ -777,7 +802,8 @@
 "30c1bd09-298d-48d4-b7c5-3bdbdfafa48c": {
 "size": "305355",
 "etag": "67ee4a6d-4a8cb",
-"downloaded_at": 1780637864
+"downloaded_at": 1780637864,
+"stisnjeno": 1
 },
 "30c9e206-2024-4ac6-99e8-6111d51f104b": {
 "size": "74111",
@@ -802,7 +828,8 @@
 "323c6bd6-c6bc-4314-970f-e4a18ec17eb8": {
 "size": "396152",
 "etag": "65148018-60b78",
-"downloaded_at": 1780637867
+"downloaded_at": 1780637867,
+"stisnjeno": 1
 },
 "32743d02-3ab0-418d-94c6-64a181c2fd0b": {
 "size": "250242",
@@ -812,7 +839,8 @@
 "33bee32c-b1b5-4d38-93f9-57ac0c3cdd7f": {
 "size": "318138",
 "etag": "67389444-4daba",
-"downloaded_at": 1780637868
+"downloaded_at": 1780637868,
+"stisnjeno": 1
 },
 "341fcea1-fdac-4f70-a950-de5c6828a3a5": {
 "size": "91673",
@@ -827,7 +855,8 @@
 "344cf7c1-00eb-45a9-9cf7-ed840aa4a883": {
 "size": "318448",
 "etag": "6520fd15-4dbf0",
-"downloaded_at": 1780637870
+"downloaded_at": 1780637870,
+"stisnjeno": 1
 },
 "3461efd0-df24-4895-a745-04133807fd11": {
 "size": "23563",
@@ -902,7 +931,8 @@
 "37b31ea3-e7ad-436d-a7e6-9952377db22c": {
 "size": "358170",
 "etag": "651919f6-5771a",
-"downloaded_at": 1780637877
+"downloaded_at": 1780637877,
+"stisnjeno": 1
 },
 "37b630bf-b7e7-4fef-aaa6-89fbd0ce3b4a": {
 "size": "87926",
@@ -917,7 +947,8 @@
 "37f65802-7863-49e8-921c-1dfb3cec0d85": {
 "size": "562023",
 "etag": "6707708d-89367",
-"downloaded_at": 1780637879
+"downloaded_at": 1780637879,
+"stisnjeno": 1
 },
 "38355a4f-932c-41d8-8aec-01ef72fd6d0b": {
 "size": "295044",
@@ -937,7 +968,8 @@
 "38ec8d43-ecbf-4acb-ad4a-1fc6abee5ae3": {
 "size": "332311",
 "etag": "652171ab-51217",
-"downloaded_at": 1780637881
+"downloaded_at": 1780637881,
+"stisnjeno": 1
 },
 "38fa79dc-f68a-48ab-9939-9792fc63eb51": {
 "size": "37848",
@@ -977,7 +1009,8 @@
 "3c2701ea-cd56-4049-a910-4d1043a36b70": {
 "size": "476732",
 "etag": "65183ddc-7463c",
-"downloaded_at": 1780637886
+"downloaded_at": 1780637886,
+"stisnjeno": 1
 },
 "3d9a61e5-3363-4fe0-a7e8-d10de2b53c2d": {
 "size": "216375",
@@ -1057,7 +1090,8 @@
 "403ad87a-24d4-4048-9a3a-f56ad369de20": {
 "size": "1469153",
 "etag": "68b68130-166ae1",
-"downloaded_at": 1780637895
+"downloaded_at": 1780637895,
+"stisnjeno": 1
 },
 "405eb6ce-1191-453f-a894-c9d5ee4301a0": {
 "size": "22610",
@@ -1072,7 +1106,8 @@
 "409a8391-df26-4931-bdce-6fb7506b025b": {
 "size": "311712",
 "etag": "6502e2f6-4c1a0",
-"downloaded_at": 1780637896
+"downloaded_at": 1780637896,
+"stisnjeno": 1
 },
 "40b9aa59-ba3f-4ca9-bb8b-b9b7c7bae296": {
 "size": "15360",
@@ -1107,7 +1142,8 @@
 "441ed1b1-0345-4cb4-bdcf-5dfc654ac93a": {
 "size": "1549949",
 "etag": "68b680bc-17a67d",
-"downloaded_at": 1780637900
+"downloaded_at": 1780637900,
+"stisnjeno": 1
 },
 "4457045e-de88-45af-82bd-90abecd87610": {
 "size": "24580",
@@ -1117,7 +1153,8 @@
 "446522df-a4c1-4d37-866a-64222ab9d108": {
 "size": "4526844",
 "etag": "68b87002-4512fc",
-"downloaded_at": 1780637901
+"downloaded_at": 1780637901,
+"stisnjeno": 1
 },
 "4586ff12-6ac5-45f9-b015-5344ddcc8320": {
 "size": "63234",
@@ -1137,7 +1174,8 @@
 "4796af49-97d3-45d2-8347-a74293d9501f": {
 "size": "317245",
 "etag": "652c2fbf-4d73d",
-"downloaded_at": 1780637904
+"downloaded_at": 1780637904,
+"stisnjeno": 1
 },
 "47a1dca1-e63e-4608-864c-8275f32e98a4": {
 "size": "195186",
@@ -1152,7 +1190,8 @@
 "48d01b20-dac0-4cb8-b8d3-9ea29bd68adf": {
 "size": "602650",
 "etag": "68c069ab-9321a",
-"downloaded_at": 1780637906
+"downloaded_at": 1780637906,
+"stisnjeno": 1
 },
 "491fa41c-68cf-4fee-8a4d-0f902fab1eb1": {
 "size": "26349",
@@ -1162,7 +1201,8 @@
 "4959290d-b682-4656-8cbd-0dc18bb95206": {
 "size": "316904",
 "etag": "6529b079-4d5e8",
-"downloaded_at": 1780637907
+"downloaded_at": 1780637907,
+"stisnjeno": 1
 },
 "49b431b4-e3da-4657-9217-c66574a0444c": {
 "size": "151086",
@@ -1227,7 +1267,8 @@
 "4e70f75b-59d7-4950-95af-404f96c4806f": {
 "size": "353141",
 "etag": "6500b3ac-56375",
-"downloaded_at": 1780637913
+"downloaded_at": 1780637913,
+"stisnjeno": 1
 },
 "4f18f8ac-a2c4-45f3-8565-9b176866f859": {
 "size": "35621",
@@ -1282,7 +1323,8 @@
 "52b522eb-ee46-4a2e-a737-c6ce5093c6a5": {
 "size": "447196",
 "etag": "6517fa29-6d2dc",
-"downloaded_at": 1780637918
+"downloaded_at": 1780637918,
+"stisnjeno": 1
 },
 "52f37775-f27e-4a12-9d73-d719c134a4cf": {
 "size": "20298",
@@ -1362,7 +1404,8 @@
 "58946274-74ea-48cd-81fa-263cbe67d4ab": {
 "size": "326990",
 "etag": "6712be6d-4fd4e",
-"downloaded_at": 1780637925
+"downloaded_at": 1780637925,
+"stisnjeno": 1
 },
 "58afdc54-4f93-4a7c-b4bf-0f774c6be067": {
 "size": "128338",
@@ -1412,7 +1455,8 @@
 "5c18a72d-68de-40a6-a087-b216be8d1ab6": {
 "size": "319068",
 "etag": "64ec772f-4de5c",
-"downloaded_at": 1780637930
+"downloaded_at": 1780637930,
+"stisnjeno": 1
 },
 "5c37fb80-a12a-4f0a-9159-49220c18d508": {
 "size": "237908",
@@ -1482,7 +1526,8 @@
 "5f584cc8-26d5-4a65-86bd-c81792873bcc": {
 "size": "332409",
 "etag": "678562d1-51279",
-"downloaded_at": 1780637937
+"downloaded_at": 1780637937,
+"stisnjeno": 1
 },
 "5f84cfa9-f016-45eb-9492-9a2bc0b8b516": {
 "size": "25941",
@@ -1502,12 +1547,14 @@
 "5fea3eeb-8d37-4724-aa0b-a3b6a17891b8": {
 "size": "319390",
 "etag": "670ea4b5-4df9e",
-"downloaded_at": 1780637939
+"downloaded_at": 1780637939,
+"stisnjeno": 1
 },
 "6081c61f-d794-4b2b-850d-6e7b0433009e": {
 "size": "312629",
 "etag": "66e9d76e-4c535",
-"downloaded_at": 1780637939
+"downloaded_at": 1780637939,
+"stisnjeno": 1
 },
 "6082ad20-2a78-4c9c-b120-718c87ffeee6": {
 "size": "136069",
@@ -1522,7 +1569,8 @@
 "611fbaea-89ae-4000-a4cd-51f70c344dc8": {
 "size": "401132",
 "etag": "6791207b-61eec",
-"downloaded_at": 1780637941
+"downloaded_at": 1780637941,
+"stisnjeno": 1
 },
 "61e48102-9158-4d0d-b0fb-2848c0c3c999": {
 "size": "20397",
@@ -1557,7 +1605,8 @@
 "62d8c964-e566-49bd-ac44-20d9268f635d": {
 "size": "364797",
 "etag": "6785631a-590fd",
-"downloaded_at": 1780637944
+"downloaded_at": 1780637944,
+"stisnjeno": 1
 },
 "63598c7e-6e4f-4f48-a4fa-44b6486930dc": {
 "size": "119609",
@@ -1597,7 +1646,8 @@
 "65508125-9f76-4c1f-a7c0-d74230a4e906": {
 "size": "313167",
 "etag": "673bce16-4c74f",
-"downloaded_at": 1780637949
+"downloaded_at": 1780637949,
+"stisnjeno": 1
 },
 "655d2c3f-d76d-4d62-a939-e68c921dd1fd": {
 "size": "27072",
@@ -1617,12 +1667,14 @@
 "66be1431-2fa4-4b1c-8499-11524e889a13": {
 "size": "381396",
 "etag": "66f48e4b-5d1d4",
-"downloaded_at": 1780637951
+"downloaded_at": 1780637951,
+"stisnjeno": 1
 },
 "675d8443-2b0c-4495-903e-39c050b1fbbb": {
 "size": "458712",
 "etag": "67016c96-6ffd8",
-"downloaded_at": 1780637952
+"downloaded_at": 1780637952,
+"stisnjeno": 1
 },
 "677b0522-e1e4-4617-a4a2-990952cd0fa4": {
 "size": "19554",
@@ -1687,7 +1739,8 @@
 "6c0812d3-1560-4eed-a29a-23227729ebdd": {
 "size": "523268",
 "etag": "65183d3c-7fc04",
-"downloaded_at": 1780637958
+"downloaded_at": 1780637958,
+"stisnjeno": 1
 },
 "6c0b2b9e-c310-40f2-a063-9a082dd2b2bf": {
 "size": "38860",
@@ -1702,7 +1755,8 @@
 "6c50cb1f-a2cb-4b9a-aea3-3f3a1c27ef4a": {
 "size": "364183",
 "etag": "67016c0e-58e97",
-"downloaded_at": 1780637960
+"downloaded_at": 1780637960,
+"stisnjeno": 1
 },
 "6c96fc7e-7541-48bc-8d61-5ac8862fca77": {
 "size": "15042",
@@ -1712,7 +1766,8 @@
 "6cd39436-3e80-41ff-83c7-06d2a3e82252": {
 "size": "466548",
 "etag": "67016d0d-71e74",
-"downloaded_at": 1780637961
+"downloaded_at": 1780637961,
+"stisnjeno": 1
 },
 "6d02cc54-1954-43ab-8cbf-2d10228e4aba": {
 "size": "40826",
@@ -1727,12 +1782,14 @@
 "6d276ed8-d54f-440d-a26c-055e6ba8ee65": {
 "size": "405760",
 "etag": "651e349d-63100",
-"downloaded_at": 1780637962
+"downloaded_at": 1780637962,
+"stisnjeno": 1
 },
 "6d7a7784-05fb-4d81-96ad-968f51f0bd10": {
 "size": "372912",
 "etag": "66e6e099-5b0b0",
-"downloaded_at": 1780637963
+"downloaded_at": 1780637963,
+"stisnjeno": 1
 },
 "6d988282-5327-4a4e-a48b-07abbb1030a4": {
 "size": "32746",
@@ -1742,7 +1799,8 @@
 "6e3b538e-d002-4a32-9dae-3cf3240b3174": {
 "size": "484045",
 "etag": "65147fd0-762cd",
-"downloaded_at": 1780637964
+"downloaded_at": 1780637964,
+"stisnjeno": 1
 },
 "6e8a4970-bae5-4dcb-af59-f88f3ee75d7e": {
 "size": "158498",
@@ -1757,7 +1815,8 @@
 "6ed27543-dd1f-441a-a568-3cac89d30fa7": {
 "size": "313316",
 "etag": "64fb812b-4c7e4",
-"downloaded_at": 1780637966
+"downloaded_at": 1780637966,
+"stisnjeno": 1
 },
 "6f41afbd-a37e-42d2-b093-e45afb8c52f6": {
 "size": "26659",
@@ -1807,7 +1866,8 @@
 "7114d0f2-e3b6-4747-afe1-b587bf01c44c": {
 "size": "353337",
 "etag": "67016cd9-56439",
-"downloaded_at": 1780637971
+"downloaded_at": 1780637971,
+"stisnjeno": 1
 },
 "71b57070-8978-4641-ac87-edf6a5db7774": {
 "size": "53352",
@@ -1837,7 +1897,8 @@
 "72d12fc3-e84a-4da0-a9ee-3e9b7426cbe6": {
 "size": "354844",
 "etag": "65170343-56a1c",
-"downloaded_at": 1780637974
+"downloaded_at": 1780637974,
+"stisnjeno": 1
 },
 "732f66b7-9615-4f02-a077-ec3433fd218b": {
 "size": "99124",
@@ -1902,7 +1963,8 @@
 "76dd308c-33f2-4663-b550-58120f4b2a3d": {
 "size": "322410",
 "etag": "673bcd5b-4eb6a",
-"downloaded_at": 1780637981
+"downloaded_at": 1780637981,
+"stisnjeno": 1
 },
 "770d090c-25fb-478b-8da9-7a1703d77ac3": {
 "size": "13207",
@@ -1917,7 +1979,8 @@
 "77534f54-c450-4fe2-858b-2bd086cd8994": {
 "size": "2102751",
 "etag": "682df6b4-2015df",
-"downloaded_at": 1780637982
+"downloaded_at": 1780637982,
+"stisnjeno": 1
 },
 "7790931e-8620-4c31-a90e-e966b24baa45": {
 "size": "69284",
@@ -1962,7 +2025,8 @@
 "793282e1-608d-460a-89b8-19c892b433e9": {
 "size": "344858",
 "etag": "64fcd656-5431a",
-"downloaded_at": 1780637987
+"downloaded_at": 1780637987,
+"stisnjeno": 1
 },
 "796cc9a8-2a59-4768-a945-d0f1d03f2e41": {
 "size": "31661",
@@ -1987,7 +2051,8 @@
 "7c312768-6892-4de8-b9e6-49e1e747a295": {
 "size": "489604",
 "etag": "67016d3c-77884",
-"downloaded_at": 1780637990
+"downloaded_at": 1780637990,
+"stisnjeno": 1
 },
 "7c91c8bb-d519-44be-b364-7047458db535": {
 "size": "21554",
@@ -2112,7 +2177,8 @@
 "845a5568-1124-4123-81c2-a289f8252638": {
 "size": "326809",
 "etag": "66e5f228-4fc99",
-"downloaded_at": 1780638002
+"downloaded_at": 1780638002,
+"stisnjeno": 1
 },
 "8496ca27-48ff-4ce8-b06e-a4285a9a7419": {
 "size": "262402",
@@ -2127,7 +2193,8 @@
 "853b17f7-dfc5-4787-9842-f72397730be2": {
 "size": "348643",
 "etag": "66e368e5-551e3",
-"downloaded_at": 1780638004
+"downloaded_at": 1780638004,
+"stisnjeno": 1
 },
 "85575abb-ffc0-457b-a03f-8b99af11dc7e": {
 "size": "64458",
@@ -2137,7 +2204,8 @@
 "85c517d7-e945-41e7-95e0-0a446c4bacbe": {
 "size": "385849",
 "etag": "652118e5-5e339",
-"downloaded_at": 1780638005
+"downloaded_at": 1780638005,
+"stisnjeno": 1
 },
 "85ec72de-1d9e-441a-8149-1437118f38b8": {
 "size": "28338",
@@ -2162,7 +2230,8 @@
 "8750bf94-0422-4500-9f60-a0826090d65d": {
 "size": "1471184",
 "etag": "6512bc2b-1672d0",
-"downloaded_at": 1780638008
+"downloaded_at": 1780638008,
+"stisnjeno": 1
 },
 "8766d722-985e-423b-8811-942c5ca7cb40": {
 "size": "8277",
@@ -2172,7 +2241,8 @@
 "87709c16-0618-49f1-b4c6-41773607a8c4": {
 "size": "368687",
 "etag": "64fad87a-5a02f",
-"downloaded_at": 1780638009
+"downloaded_at": 1780638009,
+"stisnjeno": 1
 },
 "881204ea-7e8c-491a-a8b2-b392ac757faf": {
 "size": "162417",
@@ -2277,7 +2347,8 @@
 "8ee9cdbb-0ea8-4dd1-b52b-b7795c45422f": {
 "size": "369529",
 "etag": "652c2fe0-5a379",
-"downloaded_at": 1780638020
+"downloaded_at": 1780638020,
+"stisnjeno": 1
 },
 "8f12d7d6-af24-4892-82f3-85b36799790c": {
 "size": "277754",
@@ -2307,7 +2378,8 @@
 "8fc2afd1-b223-4e30-a723-c473dc495d80": {
 "size": "1808054",
 "etag": "68b81c52-1b96b6",
-"downloaded_at": 1780638023
+"downloaded_at": 1780638023,
+"stisnjeno": 1
 },
 "90243c24-ba10-4c40-a53f-7dc506b6c4b1": {
 "size": "58852",
@@ -2317,7 +2389,8 @@
 "90e06430-8d52-42ae-b1f4-f6f1913f8168": {
 "size": "467983",
 "etag": "6729ea09-7240f",
-"downloaded_at": 1780638025
+"downloaded_at": 1780638025,
+"stisnjeno": 1
 },
 "90ea2156-5570-45b3-b172-3e99d9f5028e": {
 "size": "166665",
@@ -2362,7 +2435,8 @@
 "944ea653-7644-40e9-9d6e-4d50115b4b44": {
 "size": "419486",
 "etag": "6798aa7e-6669e",
-"downloaded_at": 1780638029
+"downloaded_at": 1780638029,
+"stisnjeno": 1
 },
 "94c8f1e7-8670-48d3-9fab-75d2400ffcfc": {
 "size": "61538",
@@ -2372,7 +2446,8 @@
 "952432f5-94dd-48e7-9be4-9b90b624672b": {
 "size": "312462",
 "etag": "650476ad-4c48e",
-"downloaded_at": 1780638031
+"downloaded_at": 1780638031,
+"stisnjeno": 1
 },
 "9538bff0-a608-47b8-a285-171ecc29a1c2": {
 "size": "255993",
@@ -2522,12 +2597,14 @@
 "9ef46872-f961-472a-b796-b4434835884f": {
 "size": "326443",
 "etag": "65218b00-4fb2b",
-"downloaded_at": 1780638046
+"downloaded_at": 1780638046,
+"stisnjeno": 1
 },
 "9fc47ba4-423c-43b3-806a-a4cac0b6d6da": {
 "size": "322461",
 "etag": "650405d2-4eb9d",
-"downloaded_at": 1780638047
+"downloaded_at": 1780638047,
+"stisnjeno": 1
 },
 "a0c3293d-6998-4ce8-a3c8-a838b1d3b6f2": {
 "size": "23205",
@@ -2592,7 +2669,8 @@
 "a474024f-4a3f-4b75-ae48-bb0601e88433": {
 "size": "1240823",
 "etag": "68b9bc03-12eef7",
-"downloaded_at": 1780638053
+"downloaded_at": 1780638053,
+"stisnjeno": 1
 },
 "a484a023-155f-43aa-a78e-f6b7720fb4cc": {
 "size": "251751",
@@ -2617,17 +2695,20 @@
 "a6206388-77bf-49b2-adf9-8b114e12e0a2": {
 "size": "423679",
 "etag": "66fbc25e-676ff",
-"downloaded_at": 1780638056
+"downloaded_at": 1780638056,
+"stisnjeno": 1
 },
 "a6dd5e09-7689-4645-83ca-0dea920055ae": {
 "size": "307593",
 "etag": "6516fcf7-4b189",
-"downloaded_at": 1780638057
+"downloaded_at": 1780638057,
+"stisnjeno": 1
 },
 "a70f07e4-2b39-4f41-8652-5cc9ce464267": {
 "size": "333528",
 "etag": "6520fdbc-516d8",
-"downloaded_at": 1780638058
+"downloaded_at": 1780638058,
+"stisnjeno": 1
 },
 "a756990c-df06-48f5-9791-543dcf2074b6": {
 "size": "14220",
@@ -2677,7 +2758,8 @@
 "a9e2185f-53e0-4059-b139-2c6ccf9355fa": {
 "size": "2208585",
 "etag": "670396fe-21b349",
-"downloaded_at": 1780638062
+"downloaded_at": 1780638062,
+"stisnjeno": 1
 },
 "a9f68399-b29c-4170-bf0a-ceb2df671618": {
 "size": "293911",
@@ -2697,7 +2779,8 @@
 "aaed4824-f1b7-469e-8172-15c275b2f68d": {
 "size": "331418",
 "etag": "673894e4-50e9a",
-"downloaded_at": 1780638065
+"downloaded_at": 1780638065,
+"stisnjeno": 1
 },
 "aafc9243-3736-49e6-a9c3-ca568fd1b8d1": {
 "size": "53019",
@@ -2712,7 +2795,8 @@
 "abb96094-4031-4ae6-ad28-edc2cf5f90e4": {
 "size": "469262",
 "etag": "6514a718-7290e",
-"downloaded_at": 1780638067
+"downloaded_at": 1780638067,
+"stisnjeno": 1
 },
 "abc25088-94c6-4c06-bc4a-9949f878c49d": {
 "size": "120686",
@@ -2787,7 +2871,8 @@
 "af53b37b-1c66-467e-9890-d7b3ddd32a5f": {
 "size": "427668",
 "etag": "66e6e0d6-68694",
-"downloaded_at": 1780638075
+"downloaded_at": 1780638075,
+"stisnjeno": 1
 },
 "af602e31-bedf-44af-bb27-f8f242c440d3": {
 "size": "188440",
@@ -2807,7 +2892,8 @@
 "b00e7f59-17c9-454b-92dd-1e5e71fd1a78": {
 "size": "374636",
 "etag": "6736f545-5b76c",
-"downloaded_at": 1780638078
+"downloaded_at": 1780638078,
+"stisnjeno": 1
 },
 "b0517fb1-3b46-4be2-9782-e30f57dc88ea": {
 "size": "170342",
@@ -2847,7 +2933,8 @@
 "b19767f8-22da-4844-a240-fee7ae092972": {
 "size": "306058",
 "etag": "6738979e-4ab8a",
-"downloaded_at": 1780638082
+"downloaded_at": 1780638082,
+"stisnjeno": 1
 },
 "b1f5fef5-61eb-4d5e-b041-64498023692e": {
 "size": "27169",
@@ -2862,7 +2949,8 @@
 "b224b704-378f-4eb1-9953-aef78ee6a953": {
 "size": "502015",
 "etag": "652f8027-7a8ff",
-"downloaded_at": 1780638084
+"downloaded_at": 1780638084,
+"stisnjeno": 1
 },
 "b3941315-9ab3-4e09-bf68-611985c21c74": {
 "size": "217816",
@@ -2892,7 +2980,8 @@
 "b552acaf-78a1-4a27-af65-b0c4fd169295": {
 "size": "310616",
 "etag": "6738969a-4bd58",
-"downloaded_at": 1780638087
+"downloaded_at": 1780638087,
+"stisnjeno": 1
 },
 "b6023e5e-93a9-4a5d-87d6-3d39c7a84930": {
 "size": "30015",
@@ -2932,7 +3021,8 @@
 "b788884d-9400-48ce-bfbd-26cc99e20602": {
 "size": "412824",
 "etag": "65173f91-64c98",
-"downloaded_at": 1780638091
+"downloaded_at": 1780638091,
+"stisnjeno": 1
 },
 "b7b49dd9-3e30-4785-bb56-ddce6669b31b": {
 "size": "22714",
@@ -2957,7 +3047,8 @@
 "b9a4c18b-d9fc-49ec-8989-f4395c85782a": {
 "size": "377109",
 "etag": "66fbc17b-5c115",
-"downloaded_at": 1780638093
+"downloaded_at": 1780638093,
+"stisnjeno": 1
 },
 "b9a4e758-0401-4271-b8dc-5e4d1d4eb5bd": {
 "size": "257804",
@@ -2972,7 +3063,8 @@
 "ba36a15a-ea2b-4fcb-bb08-75bced07e39f": {
 "size": "369801",
 "etag": "65173edf-5a489",
-"downloaded_at": 1780638095
+"downloaded_at": 1780638095,
+"stisnjeno": 1
 },
 "ba4fbcf6-2547-4a78-8a77-350af904cf44": {
 "size": "28007",
@@ -3102,7 +3194,8 @@
 "c259c2da-42e2-47bb-94a5-8c0961e83b4c": {
 "size": "398695",
 "etag": "66e6e081-61567",
-"downloaded_at": 1780638108
+"downloaded_at": 1780638108,
+"stisnjeno": 1
 },
 "c26a2f64-0f5d-4fdc-be73-6528a7851e36": {
 "size": "216737",
@@ -3112,7 +3205,8 @@
 "c270b143-52a8-45c0-9aa6-8bd08152d1e9": {
 "size": "430428",
 "etag": "66e6e102-6915c",
-"downloaded_at": 1780638110
+"downloaded_at": 1780638110,
+"stisnjeno": 1
 },
 "c2948c29-297f-4995-a279-f5a3e5ba0120": {
 "size": "29535",
@@ -3182,7 +3276,8 @@
 "c62e50c2-dd7c-40be-92f7-841b8e51e7ef": {
 "size": "383805",
 "etag": "67016d8e-5db3d",
-"downloaded_at": 1780638117
+"downloaded_at": 1780638117,
+"stisnjeno": 1
 },
 "c634e8a3-a52e-4d49-b255-169a579afc31": {
 "size": "51634",
@@ -3207,7 +3302,8 @@
 "c891f7aa-8c0d-4369-aeca-6a27ed21fe76": {
 "size": "325266",
 "etag": "65147c4c-4f692",
-"downloaded_at": 1780638119
+"downloaded_at": 1780638119,
+"stisnjeno": 1
 },
 "c8a4e028-b99c-4ab1-8b18-ec630d33cc73": {
 "size": "20722",
@@ -3217,7 +3313,8 @@
 "c8e6f262-fdf4-480c-830d-9e8fdb1b7adf": {
 "size": "401457",
 "etag": "67389473-62031",
-"downloaded_at": 1780638120
+"downloaded_at": 1780638120,
+"stisnjeno": 1
 },
 "c8f6cd45-7d4e-4f5b-9d39-0920c38fb297": {
 "size": "26554",
@@ -3242,7 +3339,8 @@
 "c95433da-eba4-4779-84b3-1526c2e8268e": {
 "size": "381751",
 "etag": "64fcd718-5d337",
-"downloaded_at": 1780638123
+"downloaded_at": 1780638123,
+"stisnjeno": 1
 },
 "c959906d-2c57-4247-a4ed-4ce8ed40def0": {
 "size": "148374",
@@ -3272,12 +3370,14 @@
 "cc0d13c4-771b-49df-b399-6559c5456bd1": {
 "size": "304689",
 "etag": "67389405-4a631",
-"downloaded_at": 1780638126
+"downloaded_at": 1780638126,
+"stisnjeno": 1
 },
 "cc63e5ac-a75b-405e-b522-84257fc1c4e5": {
 "size": "381276",
 "etag": "650d735e-5d15c",
-"downloaded_at": 1780638127
+"downloaded_at": 1780638127,
+"stisnjeno": 1
 },
 "cce5a0d6-5c67-4bff-92b0-fe68ec7fae4c": {
 "size": "21868",
@@ -3297,7 +3397,8 @@
 "cdf6a5b4-21d2-4473-ad15-d93069fdd6dd": {
 "size": "543944",
 "etag": "6502dff7-84cc8",
-"downloaded_at": 1780638129
+"downloaded_at": 1780638129,
+"stisnjeno": 1
 },
 "ce63f7da-be30-4b75-8076-4fbd72136b66": {
 "size": "25404",
@@ -3357,12 +3458,14 @@
 "d2943fea-cbeb-4f9b-8afb-ed16c5c2c3ec": {
 "size": "455556",
 "etag": "66e6dfe2-6f384",
-"downloaded_at": 1780638135
+"downloaded_at": 1780638135,
+"stisnjeno": 1
 },
 "d30347df-deca-445d-b289-28a8cf1e6c01": {
 "size": "358528",
 "etag": "66fd5411-57880",
-"downloaded_at": 1780638136
+"downloaded_at": 1780638136,
+"stisnjeno": 1
 },
 "d33cd951-eb9f-4ab6-b99f-2c337e12d427": {
 "size": "22588",
@@ -3412,12 +3515,14 @@
 "d558a372-d6df-419a-8839-ff235d514c3e": {
 "size": "325449",
 "etag": "6516fdc4-4f749",
-"downloaded_at": 1780638141
+"downloaded_at": 1780638141,
+"stisnjeno": 1
 },
 "d5ba34bd-e8ab-4367-b97d-a6726af3b3a1": {
 "size": "2666286",
 "etag": "682df5f3-28af2e",
-"downloaded_at": 1780638142
+"downloaded_at": 1780638142,
+"stisnjeno": 1
 },
 "d5c8905c-3d8f-491d-a9ac-28d1b413d4ff": {
 "size": "30463",
@@ -3467,7 +3572,8 @@
 "d92ca7c2-7347-42cf-bfc2-e777624b1edf": {
 "size": "479901",
 "etag": "66fbc13d-7529d",
-"downloaded_at": 1780638147
+"downloaded_at": 1780638147,
+"stisnjeno": 1
 },
 "da54c8fb-b8fe-4dd3-a9ef-ef1aff858433": {
 "size": "17648",
@@ -3487,7 +3593,8 @@
 "db5cca82-c904-490a-ad92-b5cd2e96dd98": {
 "size": "1845016",
 "etag": "68aee50a-1c2718",
-"downloaded_at": 1780638149
+"downloaded_at": 1780638149,
+"stisnjeno": 1
 },
 "dba10bbc-3dce-464d-a7c7-539c07b59e36": {
 "size": "7139",
@@ -3537,7 +3644,8 @@
 "dca1aa49-9a90-47bd-a107-10d1ae686d5d": {
 "size": "399188",
 "etag": "66e6e129-61754",
-"downloaded_at": 1780638154
+"downloaded_at": 1780638154,
+"stisnjeno": 1
 },
 "dcf376a4-4952-45bf-b0f2-3339ca0a2af1": {
 "size": "193866",
@@ -3567,7 +3675,8 @@
 "de21f149-0ecc-4fae-994e-186b279934ce": {
 "size": "432625",
 "etag": "66e6e05d-699f1",
-"downloaded_at": 1780638157
+"downloaded_at": 1780638157,
+"stisnjeno": 1
 },
 "de7aa7c7-ac1f-48ce-b468-512959383007": {
 "size": "218484",
@@ -3602,17 +3711,20 @@
 "e21606f3-1a8d-4460-8bad-c4744658a738": {
 "size": "324169",
 "etag": "6736346c-4f249",
-"downloaded_at": 1780638161
+"downloaded_at": 1780638161,
+"stisnjeno": 1
 },
 "e250c6f4-5606-41cf-bd28-08f4b6ea2e72": {
 "size": "336388",
 "etag": "6511c39a-52204",
-"downloaded_at": 1780638162
+"downloaded_at": 1780638162,
+"stisnjeno": 1
 },
 "e2605c32-74df-4fab-be5b-e35554f1fa7d": {
 "size": "2853184",
 "etag": "6502067f-2b8940",
-"downloaded_at": 1780638163
+"downloaded_at": 1780638163,
+"stisnjeno": 1
 },
 "e2788b5e-e5bc-40d3-9d2c-1eea64dc9e70": {
 "size": "191927",
@@ -3692,7 +3804,8 @@
 "e7bd978e-2287-4d57-9cd5-9696b8fcf192": {
 "size": "316029",
 "etag": "653be815-4d27d",
-"downloaded_at": 1780638171
+"downloaded_at": 1780638171,
+"stisnjeno": 1
 },
 "e8a07e25-a192-482c-aeaa-8e62be017ae1": {
 "size": "13878",
@@ -3732,7 +3845,8 @@
 "e9ea5b1c-f14a-44c3-8f25-27ff0b0ea81a": {
 "size": "399888",
 "etag": "6500b29a-61a10",
-"downloaded_at": 1780638174
+"downloaded_at": 1780638174,
+"stisnjeno": 1
 },
 "e9fe6e93-7c23-44d5-b649-adf15fff9497": {
 "size": "28032",
@@ -3742,7 +3856,8 @@
 "ea0ff093-a5aa-4597-9580-56019b00fd2a": {
 "size": "317968",
 "etag": "671fc7d3-4da10",
-"downloaded_at": 1780638175
+"downloaded_at": 1780638175,
+"stisnjeno": 1
 },
 "eac7fe4e-3a59-4762-bb66-2ca2cd02b8bd": {
 "size": "104054",
@@ -3777,7 +3892,8 @@
 "ebf82ed9-b7aa-4a87-8a7f-411fe81a3e11": {
 "size": "309299",
 "etag": "65147a66-4b833",
-"downloaded_at": 1780638179
+"downloaded_at": 1780638179,
+"stisnjeno": 1
 },
 "ec2fd506-a4d7-4bf9-8850-6456e344ffd1": {
 "size": "34927",
@@ -3812,7 +3928,8 @@
 "ed9a1dde-1586-462c-9331-1d3914d86a7d": {
 "size": "470918",
 "etag": "64fcd86b-72f86",
-"downloaded_at": 1780638182
+"downloaded_at": 1780638182,
+"stisnjeno": 1
 },
 "ee1f4f29-64ea-4d65-b5d6-89d2883b88d6": {
 "size": "17311",
@@ -3827,7 +3944,8 @@
 "ee455fbd-ad2a-4594-b433-f99558798b60": {
 "size": "451123",
 "etag": "67016dde-6e233",
-"downloaded_at": 1780638183
+"downloaded_at": 1780638183,
+"stisnjeno": 1
 },
 "ee839175-0fa0-494a-9c96-0a2c0ecced3d": {
 "size": "20826",
@@ -3882,7 +4000,8 @@
 "f2205558-474b-454f-a761-06821160dba3": {
 "size": "1332255",
 "etag": "6512bcf9-14541f",
-"downloaded_at": 1780638189
+"downloaded_at": 1780638189,
+"stisnjeno": 1
 },
 "f266ffb1-ab4e-4f6d-ac66-e1bc5662a084": {
 "size": "35547",
@@ -3922,7 +4041,8 @@
 "f386a6a5-08d5-4eaf-a120-932a407279c1": {
 "size": "358378",
 "etag": "66f48e06-577ea",
-"downloaded_at": 1780638193
+"downloaded_at": 1780638193,
+"stisnjeno": 1
 },
 "f38aa1bc-8c28-4e90-9c18-ef914e5558cf": {
 "size": "260243",
@@ -3937,7 +4057,8 @@
 "f4703733-10b6-4c62-8bba-1e9ed9083903": {
 "size": "1462699",
 "etag": "68b683c2-1651ab",
-"downloaded_at": 1780638195
+"downloaded_at": 1780638195,
+"stisnjeno": 1
 },
 "f474b3ae-2c38-435b-b983-05c2fc547dd5": {
 "size": "28946",
@@ -3992,7 +4113,8 @@
 "f72b6402-a3f9-48e7-a40c-16f6fd5fc89a": {
 "size": "316366",
 "etag": "651dc0a0-4d3ce",
-"downloaded_at": 1780638201
+"downloaded_at": 1780638201,
+"stisnjeno": 1
 },
 "f784b6bd-e52b-4391-aa80-84fcf0fa67a9": {
 "size": "182871",
@@ -4002,7 +4124,8 @@
 "f7a12bd6-069b-4f7f-b9a2-26000193adac": {
 "size": "481864",
 "etag": "6520fd8d-75a48",
-"downloaded_at": 1780638202
+"downloaded_at": 1780638202,
+"stisnjeno": 1
 },
 "f804d6af-5d7d-4118-b5bb-00ba0ccf7cc9": {
 "size": "108000",
@@ -4037,7 +4160,8 @@
 "f909ac15-aaca-407a-b725-d6a5953e190f": {
 "size": "389259",
 "etag": "66e3f0b7-5f08b",
-"downloaded_at": 1780638206
+"downloaded_at": 1780638206,
+"stisnjeno": 1
 },
 "f90fe2e9-905d-481c-a7fd-042c0b75530c": {
 "size": "42490",
@@ -4047,7 +4171,8 @@
 "f9808e15-1e58-4563-b80b-517c4a26e1d9": {
 "size": "321892",
 "etag": "670ea3e9-4e964",
-"downloaded_at": 1780638207
+"downloaded_at": 1780638207,
+"stisnjeno": 1
 },
 "f9a4fb4b-8265-4a85-a7d0-27411599c907": {
 "size": "257531",
@@ -4067,7 +4192,8 @@
 "fa93e844-d098-44cf-adef-0dbc5bbdb619": {
 "size": "342754",
 "etag": "6520fd6f-53ae2",
-"downloaded_at": 1780638210
+"downloaded_at": 1780638210,
+"stisnjeno": 1
 },
 "fa9421ad-137b-4c5c-b4de-53d00a1299b6": {
 "size": "127430",
@@ -4142,12 +4268,14 @@
 "fe7a0c47-2ec0-4f0f-996b-dcc5431a0d0e": {
 "size": "494580",
 "etag": "6517f9d7-78bf4",
-"downloaded_at": 1780638217
+"downloaded_at": 1780638217,
+"stisnjeno": 1
 },
 "fe7fc452-5c6f-4067-8788-4935105da691": {
 "size": "303698",
 "etag": "65191b11-4a252",
-"downloaded_at": 1780638218
+"downloaded_at": 1780638218,
+"stisnjeno": 1
 },
 "fed7445b-74a1-472d-897a-d965332c07a0": {
 "size": "109409",
@@ -4157,7 +4285,8 @@
 "fee476d0-21d3-4dcb-afef-b0f5dd0bd4fa": {
 "size": "558594",
 "etag": "66f6ec11-88602",
-"downloaded_at": 1780638219
+"downloaded_at": 1780638219,
+"stisnjeno": 1
 },
 "ff2e2490-a86a-4f46-8197-b6062e855b97": {
 "size": "29159",
@@ -4257,7 +4386,8 @@
 "14d976a1-daef-4731-a030-961166db3cb4": {
 "size": "515357",
 "etag": "6520fcac-7dd1d",
-"downloaded_at": 1789137660
+"downloaded_at": 1789137660,
+"stisnjeno": 1
 },
 "19c928a6-5b13-45f5-be7e-b6a72425a531": {
 "size": "34477",
@@ -4467,7 +4597,8 @@
 "9691a4a2-1e86-4b8e-9b18-91d4a1b8ed16": {
 "size": "430659",
 "etag": "656add12-69243",
-"downloaded_at": 1789137681
+"downloaded_at": 1789137681,
+"stisnjeno": 1
 },
 "992f7569-7cb6-4c60-80e3-04a9f26a5e6b": {
 "size": "30869",
@@ -4507,7 +4638,8 @@
 "ae5cbe7f-3245-42b4-8413-d302593489df": {
 "size": "313780",
 "etag": "673f77a6-4c9b4",
-"downloaded_at": 1789137685
+"downloaded_at": 1789137685,
+"stisnjeno": 1
 },
 "b07cc1b3-e9f4-4683-8c68-c7a5e790a678": {
 "size": "26650",
@@ -4522,7 +4654,8 @@
 "b727ed81-87e9-4cb4-9ceb-5b2b3d01c592": {
 "size": "371449",
 "etag": "66e17aef-5aaf9",
-"downloaded_at": 1789137686
+"downloaded_at": 1789137686,
+"stisnjeno": 1
 },
 "ba19f810-eb1e-48cc-8c61-f849e850699d": {
 "size": "25404",
@@ -4572,7 +4705,8 @@
 "c717573a-c478-4420-8859-30969d275df1": {
 "size": "1524568",
 "etag": "68b6814a-174358",
-"downloaded_at": 1789137691
+"downloaded_at": 1789137691,
+"stisnjeno": 1
 },
 "ca37b7ca-7171-4cc8-a472-8834d45e52e3": {
 "size": "49367",
@@ -4647,7 +4781,8 @@
 "f3204adb-c1f2-4fd7-88e6-2bea52ca05fb": {
 "size": "494164",
 "etag": "68b2bbb2-78a54",
-"downloaded_at": 1789137699
+"downloaded_at": 1789137699,
+"stisnjeno": 1
 },
 "f423b591-e3bb-4e1f-a202-f0c3b57c3b98": {
 "size": "75669",
@@ -4682,7 +4817,8 @@
 "3ad1096b-e7f0-4606-96ae-9ea0f7b28fe1": {
 "size": "383903",
 "etag": "65212f51-5db9f",
-"downloaded_at": 1789185444
+"downloaded_at": 1789185444,
+"stisnjeno": 1
 },
 "b10fdfe8-5a40-46c0-a22e-eacf69bd504d": {
 "size": "28853",
@@ -4692,12 +4828,14 @@
 "d781f5c5-6c9b-4675-ac4d-aeef6dabb123": {
 "size": "346931",
 "etag": "651a6714-54b33",
-"downloaded_at": 1789185488
+"downloaded_at": 1789185488,
+"stisnjeno": 1
 },
 "e8f54411-b503-43a2-971f-e8b377aac9cd": {
 "size": "304112",
 "etag": "65297ab3-4a3f0",
-"downloaded_at": 1789185494
+"downloaded_at": 1789185494,
+"stisnjeno": 1
 },
 "68198d1e-8fce-4a35-9636-c99f05c78d24": {
 "size": "44125",
@@ -4777,7 +4915,8 @@
 "28e1fa26-3bbe-42f5-984c-ccdd22c09aa6": {
 "size": "304225",
 "etag": "6525bba1-4a461",
-"downloaded_at": 1789372045
+"downloaded_at": 1789372045,
+"stisnjeno": 1
 },
 "2faf21c5-5586-4878-915b-f534f701dee2": {
 "size": "39829",
@@ -4792,12 +4931,14 @@
 "63feabd3-aafb-44b6-a666-34bbd6924cdc": {
 "size": "324525",
 "etag": "65266bc9-4f3ad",
-"downloaded_at": 1789372065
+"downloaded_at": 1789372065,
+"stisnjeno": 1
 },
 "66bd0aa0-0cfd-4255-b4a0-e3dabbb75cb9": {
 "size": "321019",
 "etag": "65266c34-4e5fb",
-"downloaded_at": 1789372067
+"downloaded_at": 1789372067,
+"stisnjeno": 1
 },
 "7fc71a7f-de52-4083-a674-96e86e3c5c4e": {
 "size": "27780",
@@ -4807,12 +4948,14 @@
 "b47c5273-1e1e-47e1-8ad3-cd50f3b69dc6": {
 "size": "510957",
 "etag": "65266c0a-7cbed",
-"downloaded_at": 1789372090
+"downloaded_at": 1789372090,
+"stisnjeno": 1
 },
 "efd4c5b8-8933-4cfc-a907-d9ba1d1aae0e": {
 "size": "1876436",
 "etag": "652693b1-1ca1d4",
-"downloaded_at": 1789372111
+"downloaded_at": 1789372111,
+"stisnjeno": 1
 },
 "02f73776-5edb-4134-a7c8-d626929a65fe": {
 "size": "27611",
@@ -4827,7 +4970,8 @@
 "13bbdf55-e23c-4252-89b0-59e8da1424af": {
 "size": "442060",
 "etag": "6521018e-6becc",
-"downloaded_at": 1789388298
+"downloaded_at": 1789388298,
+"stisnjeno": 1
 },
 "1b45ff2c-5ee9-4421-b877-ece4da6a0ad5": {
 "size": "58789",
@@ -4867,17 +5011,20 @@
 "cae980ae-3854-4312-b777-acea0e79e579": {
 "size": "365422",
 "etag": "64ec7670-5936e",
-"downloaded_at": 1789388366
+"downloaded_at": 1789388366,
+"stisnjeno": 1
 },
 "e5069cda-bacc-410d-ada8-56cb7e892dc5": {
 "size": "390600",
 "etag": "65210296-5f5c8",
-"downloaded_at": 1789388377
+"downloaded_at": 1789388377,
+"stisnjeno": 1
 },
 "fbc43458-dad6-442c-92bc-e23a6fcc4892": {
 "size": "303131",
 "etag": "65262676-4a01b",
-"downloaded_at": 1789388388
+"downloaded_at": 1789388388,
+"stisnjeno": 1
 },
 "07ed66f9-563a-4cb5-a4cb-916735b21efc": {
 "size": "21719",
@@ -4922,7 +5069,8 @@
 "6633c434-8cdb-43ac-a23e-95c63353592c": {
 "size": "375139",
 "etag": "656ade6c-5b963",
-"downloaded_at": 1789422061
+"downloaded_at": 1789422061,
+"stisnjeno": 1
 },
 "665c1567-6ad6-4674-8478-8df32d6ecd60": {
 "size": "254626",
@@ -4942,7 +5090,8 @@
 "6d683c73-9e01-41ef-bd97-f920d776ec84": {
 "size": "379193",
 "etag": "652a32ae-5c939",
-"downloaded_at": 1789422066
+"downloaded_at": 1789422066,
+"stisnjeno": 1
 },
 "72156361-aa91-4be9-a8a6-458e8a87c496": {
 "size": "199283",
@@ -5032,7 +5181,8 @@
 "b87d7793-c969-4b86-ade3-f1464e08abea": {
 "size": "322135",
 "etag": "671faa37-4ea57",
-"downloaded_at": 1789506281
+"downloaded_at": 1789506281,
+"stisnjeno": 1
 },
 "f4615e8b-455a-4c01-aeb6-76492b6c969c": {
 "size": "77149",
@@ -5157,7 +5307,8 @@
 "dfbd0b66-1a7c-4634-9b9e-18afd123d378": {
 "size": "506978",
 "etag": "65183e10-7bc62",
-"downloaded_at": 1789531919
+"downloaded_at": 1789531919,
+"stisnjeno": 1
 },
 "e2568282-ca96-43d2-9e16-dedf85b7a0ae": {
 "size": "24187",
@@ -5182,7 +5333,8 @@
 "0fc5f1db-3af8-4219-858d-ac780f289c55": {
 "size": "356100",
 "etag": "67576c74-56f04",
-"downloaded_at": 1789592750
+"downloaded_at": 1789592750,
+"stisnjeno": 1
 },
 "16ca8751-efc9-4db6-81eb-c09dc58c3af7": {
 "size": "36661",
@@ -5192,12 +5344,14 @@
 "1e7f74e9-6c52-4bf3-aec0-7348ebdfad08": {
 "size": "339829",
 "etag": "67581485-52f75",
-"downloaded_at": 1789592759
+"downloaded_at": 1789592759,
+"stisnjeno": 1
 },
 "38810128-bfbb-49d5-a6d3-e600179dca7e": {
 "size": "336501",
 "etag": "67576efd-52275",
-"downloaded_at": 1789592775
+"downloaded_at": 1789592775,
+"stisnjeno": 1
 },
 "38c8d744-d7d8-46e3-b6b3-62cf4c54c818": {
 "size": "19070",
@@ -5252,7 +5406,8 @@
 "85451eff-ad0e-4456-a711-863fc5b89766": {
 "size": "396582",
 "etag": "67581957-60d26",
-"downloaded_at": 1789592819
+"downloaded_at": 1789592819,
+"stisnjeno": 1
 },
 "863afa22-0f50-43fe-b42b-7ea40755179d": {
 "size": "260986",
@@ -5267,7 +5422,8 @@
 "91c41c9f-2121-4697-943d-bc1b361b5917": {
 "size": "347879",
 "etag": "66fbc1c0-54ee7",
-"downloaded_at": 1789592827
+"downloaded_at": 1789592827,
+"stisnjeno": 1
 },
 "92d4b997-9b7c-4abf-b080-ff390145fde8": {
 "size": "22541",
@@ -5277,7 +5433,8 @@
 "93c05fd8-e532-4d66-95cc-a632d6a1e28c": {
 "size": "332566",
 "etag": "6758167d-51316",
-"downloaded_at": 1789592830
+"downloaded_at": 1789592830,
+"stisnjeno": 1
 },
 "9bcab5a1-7992-43f1-ba5c-106acbfc3b4f": {
 "size": "20166",
@@ -5317,7 +5474,8 @@
 "da63b536-3371-4a7f-91e7-36ac6c7f3ce3": {
 "size": "364152",
 "etag": "67576f86-58e78",
-"downloaded_at": 1789592870
+"downloaded_at": 1789592870,
+"stisnjeno": 1
 },
 "f02a8110-33f0-4b21-b970-6dc5f84c8ca0": {
 "size": "283044",
@@ -5477,7 +5635,8 @@
 "07027ed0-fa74-46c2-91c3-b3bdfa336d4a": {
 "size": "311583",
 "etag": "6521bd1e-4c11f",
-"downloaded_at": 1789764157
+"downloaded_at": 1789764157,
+"stisnjeno": 1
 },
 "08accf6a-a39b-4443-b005-841b19066a8d": {
 "size": "183835",
@@ -5497,12 +5656,14 @@
 "117b958b-8d85-4c2b-a87d-adf4e4c84b40": {
 "size": "409317",
 "etag": "67576e3b-63ee5",
-"downloaded_at": 1789764168
+"downloaded_at": 1789764168,
+"stisnjeno": 1
 },
 "1192762e-d59b-4e48-999d-94e80d75fc5f": {
 "size": "336363",
 "etag": "66fd536a-521eb",
-"downloaded_at": 1789764169
+"downloaded_at": 1789764169,
+"stisnjeno": 1
 },
 "124930a6-20de-4b95-ae1c-cf18a9f1ede8": {
 "size": "214867",
@@ -5527,17 +5688,20 @@
 "1ddd13bc-be80-40a2-8ed0-3d99bc8aca6f": {
 "size": "304901",
 "etag": "65147e69-4a705",
-"downloaded_at": 1789764181
+"downloaded_at": 1789764181,
+"stisnjeno": 1
 },
 "1f048541-b5f5-4c46-9ac8-fdfb81f6a4c1": {
 "size": "333429",
 "etag": "67576db3-51675",
-"downloaded_at": 1789764183
+"downloaded_at": 1789764183,
+"stisnjeno": 1
 },
 "304b7ca3-6756-49a4-93a9-9fa01fb1e34f": {
 "size": "1010613",
 "etag": "68b96651-f6bb5",
-"downloaded_at": 1789764196
+"downloaded_at": 1789764196,
+"stisnjeno": 1
 },
 "33794b68-0cf5-4fcd-89f2-2ae8e624a96d": {
 "size": "266765",
@@ -5577,7 +5741,8 @@
 "653c71ca-d62b-4b5b-a01c-6dca62fa3b75": {
 "size": "325569",
 "etag": "67576ed9-4f7c1",
-"downloaded_at": 1789764239
+"downloaded_at": 1789764239,
+"stisnjeno": 1
 },
 "660a932c-00ec-4df8-8bd4-11a36b6b8e21": {
 "size": "16305",
@@ -5597,12 +5762,14 @@
 "73f0feb4-e710-4b9b-950d-9a5f046bb95e": {
 "size": "357506",
 "etag": "6554f723-57482",
-"downloaded_at": 1789764252
+"downloaded_at": 1789764252,
+"stisnjeno": 1
 },
 "754ab53b-6ca5-48b5-a2c0-2ad8a3d919dc": {
 "size": "1559063",
 "etag": "68b683a7-17ca17",
-"downloaded_at": 1789764255
+"downloaded_at": 1789764255,
+"stisnjeno": 1
 },
 "801c10bd-e19d-4751-9e17-d5781e4b5f39": {
 "size": "199272",
@@ -5652,7 +5819,8 @@
 "9829bb57-97f1-4053-a3a8-7845b019db57": {
 "size": "339819",
 "etag": "6521bcb0-52f6b",
-"downloaded_at": 1789764289
+"downloaded_at": 1789764289,
+"stisnjeno": 1
 },
 "99a7c37b-3627-48f9-a0ee-30fa4b03473b": {
 "size": "40545",
@@ -5752,7 +5920,8 @@
 "e0a571c7-e026-444d-aa32-9683117bc72d": {
 "size": "313025",
 "etag": "64fb8107-4c6c1",
-"downloaded_at": 1789764353
+"downloaded_at": 1789764353,
+"stisnjeno": 1
 },
 "e1b95064-6bcf-44d8-9de7-7669bb06cd5f": {
 "size": "224109",
@@ -5777,7 +5946,8 @@
 "5243b788-d235-4d23-8d0b-0df658ddbf90": {
 "size": "667293",
 "etag": "688a1790-a2e9d",
-"downloaded_at": 1789832557
+"downloaded_at": 1789832557,
+"stisnjeno": 1
 },
 "92930205-4415-40f4-949f-bc2275b844a4": {
 "size": "231073",
@@ -5997,7 +6167,8 @@
 "2c9c4eac-bf4e-4922-b898-f20ba651a695": {
 "size": "323533",
 "etag": "6529b15d-4efcd",
-"downloaded_at": 1790027564
+"downloaded_at": 1790027564,
+"stisnjeno": 1
 },
 "439da8c1-ec35-40fb-adf3-0ba8f4b782ac": {
 "size": "242727",
@@ -6712,7 +6883,8 @@
 "734b165a-291e-48be-b7c4-3556e8c90b07": {
 "size": "313565",
 "etag": "66f94f7c-4c8dd",
-"downloaded_at": 1791265513
+"downloaded_at": 1791265513,
+"stisnjeno": 1
 },
 "02d46ab4-f322-45ff-8e58-6f5cd3f1d372": {
 "size": "23018",
@@ -7177,7 +7349,8 @@
 "50ef82ae-f147-4f87-8038-e33bb8bdf0cc": {
 "size": "310216",
 "etag": "65147b6c-4bbc8",
-"downloaded_at": 1791977661
+"downloaded_at": 1791977661,
+"stisnjeno": 1
 },
 "d4761261-9de1-4a07-8e63-f1318420bd9b": {
 "size": "23891",
@@ -7497,7 +7670,8 @@
 "6f2a0cd5-d2d9-4fe4-b81b-854cbab2c33f": {
 "size": "337195",
 "etag": "66f94fbb-5252b",
-"downloaded_at": 1792495010
+"downloaded_at": 1792495010,
+"stisnjeno": 1
 },
 "7dc73c42-32ac-4cc9-8d0c-8c995ebe7bcb": {
 "size": "19779",
