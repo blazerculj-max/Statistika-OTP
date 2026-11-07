@@ -2459,6 +2459,37 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .preverjeno{display:flex;align-items:center;gap:8px;font-size:.75rem;color:var(--mut);margin:10px 2px 0;line-height:1.4}
 .preverjeno .ic{width:14px;height:14px;flex-shrink:0;color:var(--green)}
 .preverjeno.ne,.preverjeno.ne .ic{color:var(--red)}
+/* Karta metov */
+.km{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.km-levo{flex:1 1 300px;min-width:0}
+.km-desno{flex:1 1 230px;min-width:0}
+.km-svg{display:block;width:100%;height:auto;border-radius:12px;background:var(--card2)}
+.km-crta{fill:none;stroke:var(--sub);stroke-opacity:.5;stroke-width:.045}
+.km-z{fill:#22c55e;fill-opacity:.9}
+.km-g{fill:none;stroke:#ef4444;stroke-opacity:.75;stroke-width:.05}
+.km-krmila{display:flex;flex-wrap:wrap;gap:6px 10px;margin-bottom:10px}
+.km-krmila .box-cetrt{margin:0}
+.km-krmila .box-cetrt button{padding:6px 11px;min-width:0}
+.km-legenda{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.72rem;color:var(--mut);margin-top:7px}
+.km-legenda span{display:inline-flex;align-items:center;gap:5px}
+.km-legenda i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.km-z-l{background:#22c55e}
+.km-g-l{border:1.5px solid #ef4444}
+.km-povz{font-size:.8rem;color:var(--sub);margin-bottom:6px}
+.km-vr{display:grid;grid-template-columns:minmax(0,1fr) 68px 40px 34px;gap:6px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.km-gl{font-size:.6875rem;color:var(--mut);padding-top:2px}
+.km-st,.km-p,.km-raz{text-align:right;font-family:var(--fm)}
+.km-st{color:var(--sub)}
+.km-p{font-weight:600}
+.km-izbira{gap:8px;margin-bottom:12px}
+.km-izbira select{flex:1 1 150px;min-width:0;max-width:240px}
+.km-vodilni{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:10px}
+.km-vk{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:12px 14px}
+.km-vk-n{font-weight:700;font-size:.85rem;margin-bottom:6px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.km-vk-n span{font-weight:400;font-size:.6875rem;color:var(--mut)}
+.km-vk-v{display:grid;grid-template-columns:minmax(0,1fr) auto 44px;gap:8px;align-items:baseline;padding:5px 0;font-size:.8rem;cursor:pointer}
+.km-vk-v span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.km-vk-v em{font-style:normal;text-align:right;color:var(--mut);font-family:var(--fm);font-size:.72rem}
 @media(max-width:640px){
   /* Glava v dveh vrsticah namesto treh (141 -> ~100 px, skoraj četrtina zaslona
      je bila glava). Vrstica 1: naslov in ikone; vrstica 2: lige in sezona.
@@ -2977,6 +3008,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
       <div class="tgl">
         <button class="tb active" id="nerd-clutch-btn" onclick="setNerdView('clutch')">CLUTCH</button>
         <button class="tb" id="nerd-q-btn" onclick="setNerdView('quarters')">ČETRTINE</button>
+        <button class="tb" id="nerd-karta-btn" onclick="setNerdView('karta')">KARTA METOV</button>
         <button class="tb" id="nerd-shots-btn" onclick="setNerdView('shots')">TIPI METOV</button>
         <button class="tb" id="nerd-runs-btn" onclick="setNerdView('runs')">SCORING RUNS</button>
         <button class="tb" id="nerd-tov-btn" onclick="setNerdView('turnovers')">IZGUBE ŽOGE</button>
@@ -4028,7 +4060,9 @@ function selectLeague(lg) {
   // Vstopni zaslon se odmakne (poveca in zabrise), za njim je nalaganje.
   _vt('vstop', ()=>{
     document.getElementById('hero-overlay').style.display = 'none';
-    pokaziOverlay('loading-overlay');
+    // Prehod se izvede šele ob naslednjem okvirju; če so bili podatki hitrejši,
+    // bi nalaganje prikazali znova in nihče ga ne bi več skril.
+    if(!window._fullDataLoaded) pokaziOverlay('loading-overlay');
   });
   currentLeague = lg;
   _eloRatings = null;
@@ -6071,6 +6105,7 @@ async function openMatch(matchId){
         // Play-by-play je doslej imel gumb samo med zivo tekmo, ceprav je
         // plosca nastala tudi pri koncanih — bil je nedosegljiv.
         if(hasFiba) out+=g('pbp','','Play-by-play');
+        if(hasFiba&&matchInfo.status==='FINISHED') out+=g('meti','','Karta metov');
         if(hasFiba&&isLive) out+=g('livebox','','FIBA Live');
         return out+'</div>';
       })()}
@@ -6091,6 +6126,7 @@ async function openMatch(matchId){
         </div>`;
       })()}
       ${hasFiba?`<div id="mo-tab-pbp" class="mo-tab-panel" style="display:${(boxScore||matchData||isLive)||(matchInfo.status!=='FINISHED'&&!isLive)?'none':'block'}"><div id="pbp-section"><div class="empty">Nalagam play-by-play...</div></div></div>`:''}
+      ${hasFiba&&matchInfo.status==='FINISHED'?`<div id="mo-tab-meti" class="mo-tab-panel" data-mid="${matchInfo.id}" style="display:none"><div class="mo-section" id="km-tekma"><div class="empty">Nalagam mete…</div></div></div>`:''}
       ${!boxScore&&!matchData&&!hasFiba&&matchInfo.status==='FINISHED'?`<div class="empty">Statistika ni na voljo</div>`:''}
     </div>
   </div>`;
@@ -8018,11 +8054,13 @@ function showTeamProfile(teamName){
       ${(()=>{const tt=drawTeamTrend(teamName,color);return tt?`<div class="sec-head" style="--sh-c:${color};margin-top:0">Forma skozi sezono</div>${tt}<div style="height:20px"></div>`:'';})()}
       <div class="sec-head" style="--sh-c:${color};margin-top:0">Postava (${roster.length})</div>
       <div>${rosterHtml||'<div class="empty">Ni igralcev</div>'}</div>
+      ${_kmNaVoljo()?`<div class="sec-head" style="--sh-c:${color};margin-top:22px">Karta metov</div><div id="km-ekipa"><div class="empty">Nalagam mete…</div></div>`:''}
     </div>
   </div>`;
   pokaziOverlay(overlay);
   document.body.style.overflow='hidden';
   requestAnimationFrame(()=>activateCounters(overlay));
+  _kmNapolni('km-ekipa',m=>m.ekipa===normalizeTeamName(teamName));
 }
 function closeTeamProfile(){
   skrijOverlay('team-overlay');
@@ -9178,6 +9216,7 @@ function showPlayer(idx){
         ${leagueHasFullStats()?`<div class="pp-section-title">PROFIL (vs liga)</div>${radarSVG}
         <div class="pp-section-title" style="margin-top:14px">TOČKE PO TIPU META</div>${scoringSVG}`:`<div class="pp-section-title">TOČKE PO TIPU META</div>${scoringSVG}`}
         <div class="pp-section-title" style="margin-top:14px">FORMA SKOZI SEZONO</div><div id="trend-chart-wrap">${trendSVG}</div>
+        ${_kmNaVoljo()?'<div class="pp-section-title" style="margin-top:14px">KARTA METOV</div><div id="km-igralec"><div class="empty">Nalagam mete…</div></div>':''}
       </div>
       <div class="pp-right">
         ${leagueHasFullStats()?`<div class="pp-section-title">NAPREDNA STATISTIKA</div>
@@ -9234,6 +9273,7 @@ function showPlayer(idx){
   </div>`;
   window._currentPid = p[F.pid];
   // Activate count-up animations in the profile hero + stats
+  _kmNapolni('km-igralec',m=>m.pid===p[F.pid]);
   requestAnimationFrame(()=>{
     const ov=document.getElementById('player-overlay');
     activateCounters(ov);
@@ -10571,10 +10611,12 @@ async function renderAttendance(){
 
 function setNerdView(v){
   nerdView=v;
-  ['clutch','quarters','shots','runs','turnovers','rebounds','bff'].forEach(x=>{
+  ['clutch','quarters','karta','shots','runs','turnovers','rebounds','bff'].forEach(x=>{
     const b=document.getElementById('nerd-'+x+'-btn');
     if(b)b.classList.toggle('active',x===v);
   });
+  const sel=document.getElementById('nerd-min-sel');
+  if(sel)sel.style.display=v==='karta'?'none':'';
   renderNerd();
 }
 
@@ -11026,10 +11068,215 @@ function renderRuns({scoringRuns}){
   return '<div class="nerd-section-title">NAJVEČJI SCORING RUNS SEZONE</div>'+items;
 }
 
+// ═══ KARTA METOV (data/{liga}_meti.json, scripts/fetch_meti.py) ═══
+// Lokacije metov iz FIBA LiveStats, 1. in 2. SKL. Datoteka se naloži šele, ko je
+// karta odprta. Mere so uradne (FIBA): igrišče 28 x 15 m, obroč 1,575 m od
+// osnovne črte, trojka 6,75 m, v kotih 0,9 m od stranske črte.
+// Na karti je koš zgoraj in gledamo proti njemu, zato je levo igralčeva leva:
+// FIBA šteje y od spodaj, kar pri košu na levi strani igrišča pomeni, da je
+// večji y igralčeva desna.
+const KM_KOS={L:1.575,W:7.5}, KM_VISINA=11.3, KM_R=0.72;
+const KM_CONE=[['pod','Pod košem'],['srednja','Srednja razdalja'],['kot','Trojka iz kota'],['krilo','Trojka s krila'],['sredina','Trojka s sredine']];
+function _kmCona(L,W,t){
+  const dL=L-KM_KOS.L, dW=W-KM_KOS.W;
+  if(t===2) return Math.hypot(dL,dW)<2.5?'pod':'srednja';
+  if(L<3) return 'kot';
+  return Math.abs(Math.atan2(dW,dL))<Math.PI/7?'sredina':'krilo';
+}
+// Šesterokotna mreža (koordinate v metrih na karti)
+function _kmHex(x,y){
+  const q=(Math.sqrt(3)/3*x-y/3)/KM_R, r=(2/3*y)/KM_R;
+  let rx=Math.round(q), rz=Math.round(r), ry=Math.round(-q-r);
+  const dx=Math.abs(rx-q), dz=Math.abs(rz-r), dy=Math.abs(ry+q+r);
+  if(dx>dy&&dx>dz)rx=-ry-rz; else if(dy<=dz)rz=-rx-ry;
+  return rx+','+rz;
+}
+function _kmHexSredina(k){
+  const [q,r]=k.split(',').map(Number);
+  return [KM_R*Math.sqrt(3)*(q+r/2), KM_R*1.5*r];
+}
+let _meti=null, _metiKljuc=null, _metiObljuba=null;
+function naloziMete(){
+  const k=currentLeague+'/'+_currentSeason;
+  if(_metiKljuc===k)return _metiObljuba;
+  _metiKljuc=k; _meti=null;
+  return _metiObljuba=(async()=>{
+    try{
+      const r=await fetch(seasonFileUrl(currentLeague+'_meti'),{cache:'no-cache'});
+      if(!r.ok)return null;
+      const d=await r.json(), vsi=[], poTekmi={}, cone={}, hex={};
+      Object.entries(d.tekme||{}).forEach(([mid,ekipi])=>{
+        poTekmi[mid]=ekipi.map(([ime,meti])=>{
+          const ekipa=normalizeTeamName(ime), v=meti.map(s=>{
+            const L=s[1]/1000*28, W=s[2]/1000*15;
+            const m={pid:s[0],ekipa,mid:+mid,L,W,z:s[3],per:s[4],t:s[5],cona:_kmCona(L,W,s[5]),hex:_kmHex(W,L)};
+            vsi.push(m);
+            const c=cone[m.cona]||(cone[m.cona]={a:0,m:0}); c.a++; c.m+=m.z;
+            const h=hex[m.hex]||(hex[m.hex]={a:0,m:0}); h.a++; h.m+=m.z;
+            return m;
+          });
+          return [ekipa,v];
+        });
+      });
+      if(vsi.length)_meti={vsi,poTekmi,cone,hex};
+    }catch(e){}
+    return _meti;
+  })();
+}
+function _kmIgrisce(){
+  const l=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+  const zac=(KM_KOS.L+Math.sqrt(6.75**2-6.6**2)).toFixed(3);
+  return `<g class="km-crta">
+    ${l(0,0,15,0)}<rect x="5.05" y="0" width="4.9" height="5.8"/>
+    <circle cx="7.5" cy="5.8" r="1.8"/><circle cx="7.5" cy="${KM_KOS.L}" r=".225"/>
+    ${l(6.6,1.2,8.4,1.2)}
+    <path d="M6.25 ${KM_KOS.L}A1.25 1.25 0 0 0 8.75 ${KM_KOS.L}"/>
+    <path d="M.9 0V${zac}A6.75 6.75 0 0 0 14.1 ${zac}V0"/>
+  </g>`;
+}
+function _kmBarva(razlika){
+  // hladno (modro) - povprečje lige (sivo) - vroče (rdeče); polna barva pri ±15 točk
+  const t=Math.max(-1,Math.min(1,razlika/15)), a=[161,161,170], b=t>0?[239,68,68]:[59,130,246], k=Math.abs(t);
+  return `rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*k)).join(',')})`;
+}
+function _kmSvg(meti,pogled,liga){
+  let vsebina='';
+  // cela liga se ne more primerjati sama s sabo: tam primerjamo s povprečjem vseh metov
+  const skupaj=_meti.vsi.reduce((s,m)=>s+m.z,0)/_meti.vsi.length*100;
+  if(pogled==='cone'){
+    const h={};
+    meti.forEach(m=>{const x=h[m.hex]||(h[m.hex]={a:0,m:0}); x.a++; x.m+=m.z;});
+    const najvec=Math.max(1,...Object.values(h).map(x=>x.a));
+    vsebina=Object.entries(h).map(([k,x])=>{
+      const [cx,cy]=_kmHexSredina(k);
+      if(cy>KM_VISINA||cx<0||cx>15)return '';
+      const l=_meti.hex[k], r=KM_R*(.38+.62*Math.sqrt(x.a/najvec));
+      // en sam met ne pove nič: barva dobi polno moč šele pri osmih metih
+      const barva=_kmBarva((x.m/x.a*100-(liga?skupaj:l.m/l.a*100))*Math.min(1,x.a/8));
+      const tocke=[0,1,2,3,4,5].map(i=>{const a=Math.PI/180*(60*i-30); return `${(cx+r*Math.cos(a)).toFixed(2)},${(cy+r*Math.sin(a)).toFixed(2)}`;}).join(' ');
+      return `<polygon points="${tocke}" fill="${barva}"/>`;
+    }).join('');
+  }else{
+    // zgrešeni spodaj, zadeti nad njimi
+    vsebina=[...meti].sort((a,b)=>a.z-b.z).map(m=>m.L>KM_VISINA?'':m.z
+      ?`<circle cx="${m.W.toFixed(2)}" cy="${m.L.toFixed(2)}" r=".17" class="km-z"/>`
+      :`<circle cx="${m.W.toFixed(2)}" cy="${m.L.toFixed(2)}" r=".14" class="km-g"/>`).join('');
+  }
+  return `<svg class="km-svg" viewBox="0 0 15 ${KM_VISINA}" role="img" aria-label="Karta metov">${_kmIgrisce()}${vsebina}</svg>`;
+}
+function _kmCone(meti){
+  return KM_CONE.map(([id,ime])=>{
+    const v=meti.filter(m=>m.cona===id), a=v.length, z=v.reduce((s,m)=>s+m.z,0), l=_meti.cone[id];
+    const lp=l?l.m/l.a*100:0, p=a?z/a*100:0, raz=p-lp;
+    return `<div class="km-vr"><span>${ime}</span><span class="km-st">${z}/${a}</span>
+      <span class="km-p">${a?Math.round(p)+' %':'—'}</span>
+      <span class="km-raz" style="${a>=5?`color:${raz>=0?'var(--green)':'var(--red)'}`:''}">${a?(raz>=0?'+':'−')+Math.abs(Math.round(raz)):''}</span></div>`;
+  }).join('');
+}
+function _kmPovzetek(meti){
+  const st=f=>{const v=meti.filter(f), z=v.reduce((s,m)=>s+m.z,0); return `${z}/${v.length}`+(v.length?` (${Math.round(z/v.length*100)} %)`:'');};
+  return `Iz igre ${st(()=>true)} · trojke ${st(m=>m.t===3)}`;
+}
+// Karta v element id; izbira pogleda in četrtine ostane na elementu.
+function kartaMetov(id,meti,liga){
+  const el=document.getElementById(id);
+  if(!el)return;
+  if(!meti||!meti.length){el.innerHTML='<div class="empty">Ni zabeleženih metov.</div>';el._km=null;return;}
+  // pri več sto metih pike prekrijejo igrišče; izbire obiskovalca ne povozimo
+  const rocno=el._km&&el._km.rocno;
+  el._km={meti,liga,rocno,pogled:rocno?el._km.pogled:(meti.length>350?'cone':'pike'),cet:0};
+  _kmRisi(id);
+}
+function kmSet(id,kljuc,v){
+  const el=document.getElementById(id);
+  if(!el||!el._km)return;
+  el._km[kljuc]=v;
+  if(kljuc==='pogled')el._km.rocno=true;
+  _kmRisi(id);
+}
+function _kmRisi(id){
+  const el=document.getElementById(id), {meti,pogled,cet,liga}=el._km;
+  const izbrani=cet?meti.filter(m=>cet===5?m.per>4:m.per===cet):meti;
+  const gumb=(k,v,t,akt)=>`<button class="${akt?'active':''}" onclick="kmSet('${id}','${k}',${typeof v==='string'?`'${v}'`:v})">${t}</button>`;
+  const cetrtine=[[0,'Vse'],[1,'Q1'],[2,'Q2'],[3,'Q3'],[4,'Q4']].concat(meti.some(m=>m.per>4)?[[5,'POD']]:[]);
+  el.innerHTML=`<div class="km-krmila">
+      <div class="box-cetrt">${gumb('pogled','pike','Meti',pogled==='pike')}${gumb('pogled','cone','Vroče cone',pogled==='cone')}</div>
+      <div class="box-cetrt">${cetrtine.map(([v,t])=>gumb('cet',v,t,cet===v)).join('')}</div>
+    </div>
+    <div class="km">
+      <div class="km-levo">${_kmSvg(izbrani,pogled,liga)}
+        <div class="km-legenda">${pogled==='cone'
+          ?`<span><i style="background:#3b82f6"></i>${liga?'nižji odstotek':'pod povprečjem lige'}</span><span><i style="background:#ef4444"></i>${liga?'višji':'nad njim'}</span><span>večje = več metov</span>`
+          :'<span><i class="km-z-l"></i>zadet</span><span><i class="km-g-l"></i>zgrešen</span>'}</div>
+      </div>
+      <div class="km-desno">
+        <div class="km-povz">${_kmPovzetek(izbrani)}</div>
+        <div class="km-vr km-gl"><span>Cona</span><span class="km-st">Zad.</span><span class="km-p">%</span><span class="km-raz">liga</span></div>
+        ${_kmCone(izbrani)}
+      </div>
+    </div>`;
+}
+const _kmNaVoljo=()=>getLg().fiba!==false;
+async function _kmNapolni(id,filter){
+  if(!document.getElementById(id))return;
+  await naloziMete();
+  if(_meti)kartaMetov(id,_meti.vsi.filter(filter));
+  else{const el=document.getElementById(id); if(el)el.innerHTML='<div class="empty">Lokacije metov za to sezono niso na voljo.</div>';}
+}
+async function kartaTekme(mid){
+  const el=document.getElementById('km-tekma');
+  if(!el||el.dataset.mid===String(mid))return;
+  el.dataset.mid=mid;
+  await naloziMete();
+  const ekipi=_meti&&_meti.poTekmi[mid];
+  if(!ekipi){el.innerHTML='<div class="empty">Karta metov bo na voljo, ko bo tekma obdelana.</div>';return;}
+  el.innerHTML=ekipi.map(([ime],i)=>`<div class="pp-section-title" style="margin-top:${i?22:0}px">${ime}</div><div id="km-tekma-${i}"></div>`).join('');
+  ekipi.forEach(([,v],i)=>kartaMetov('km-tekma-'+i,v));
+}
+// Nerd: izbira ekipe in igralca ter vodilni po conah
+async function renderKartaNerd(wrap){
+  wrap.innerHTML='<div class="empty">Nalagam mete…</div>';
+  await naloziMete();
+  if(!_meti){wrap.innerHTML=`<div class="empty">${_kmNaVoljo()?'Lokacije metov za to sezono niso na voljo.':'Za '+(getLg().short||'to ligo')+' lokacij metov ni: tekme se ne beležijo v FIBA LiveStats.'}</div>`;return;}
+  const ekipe=[...new Set(_meti.vsi.map(m=>m.ekipa))].sort();
+  wrap.innerHTML=`<div class="ctrls km-izbira">
+      <select id="km-sel-ekipa" onchange="kmNerdEkipa()"><option value="">Vsa liga</option>${ekipe.map(e=>`<option>${e}</option>`).join('')}</select>
+      <select id="km-sel-igr" onchange="kmNerdIzris()"><option value="">Vsi igralci</option></select>
+    </div>
+    <div id="km-nerd"></div>
+    <div class="nerd-section-title" style="margin-top:26px">NAJNATANČNEJŠI PO CONAH</div>
+    <div class="km-vodilni">${_kmVodilni()}</div>`;
+  kmNerdIzris();
+}
+function _kmImena(){const m={}; P.forEach(p=>{m[p[F.pid]]=p[F.name];}); return m;}
+function kmNerdEkipa(){
+  const e=document.getElementById('km-sel-ekipa').value, imena=_kmImena();
+  const pidi=[...new Set(_meti.vsi.filter(m=>!e||m.ekipa===e).map(m=>m.pid))].filter(p=>imena[p]).sort((a,b)=>imena[a].localeCompare(imena[b],'sl'));
+  document.getElementById('km-sel-igr').innerHTML='<option value="">Vsi igralci</option>'+pidi.map(p=>`<option value="${p}">${imena[p]}</option>`).join('');
+  kmNerdIzris();
+}
+function kmNerdIzris(){
+  const e=document.getElementById('km-sel-ekipa').value, p=+document.getElementById('km-sel-igr').value;
+  kartaMetov('km-nerd',_meti.vsi.filter(m=>(!e||m.ekipa===e)&&(!p||m.pid===p)),!e&&!p);
+}
+function _kmVodilni(){
+  const imena=_kmImena(), t=Math.max(1,...P.map(p=>p[F.T]));
+  return KM_CONE.map(([id,ime])=>{
+    // prag raste s sezono, da en sam zadet met ne vodi lestvice
+    const prag=(id==='pod'?2:1)*Math.max(4,t);
+    const po={};
+    _meti.vsi.filter(m=>m.cona===id).forEach(m=>{const x=po[m.pid]||(po[m.pid]={a:0,z:0}); x.a++; x.z+=m.z;});
+    const naj=Object.entries(po).filter(([p,x])=>x.a>=prag&&imena[p]).sort((a,b)=>b[1].z/b[1].a-a[1].z/a[1].a||b[1].a-a[1].a).slice(0,3);
+    return `<div class="km-vk"><div class="km-vk-n">${ime}<span>vsaj ${prag} metov</span></div>${naj.map(([p,x],i)=>
+      `<div class="km-vk-v" onclick="openPlayerByPid(${p})"><span>${i+1}. ${imena[p]}</span><b>${Math.round(x.z/x.a*100)} %</b><em>${x.z}/${x.a}</em></div>`).join('')||'<div class="km-vk-v"><span>Še premalo metov</span></div>'}</div>`;
+  }).join('');
+}
+
 function renderNerd(){
   const wrap=document.getElementById('nerd-wrap');
   const statusEl=document.getElementById('nerd-status');
   if(!wrap)return;
+  if(nerdView==='karta'){renderKartaNerd(wrap);return;}
   if(!pbpLoaded){wrap.innerHTML='<div class="empty">Nalagam PBP...</div>';return;}
   if(!Object.keys(pbpData).length){
     const odigranih=(typeof allMatches!=='undefined'&&allMatches)?allMatches.filter(m=>m.status==='FINISHED').length:0;
@@ -12330,6 +12577,7 @@ function switchMatchTab(btn,panelId){
   const panel=document.getElementById(panelId);
   if(panel)panel.style.display='block';
   if(panelId==='mo-tab-pbp') ensurePbpPanel();
+  if(panelId==='mo-tab-meti') kartaTekme(panel.dataset.mid);
 }
 
 // Play-by-play napolnimo sele ob kliku. openMatch() ga pripravi samo, kadar
