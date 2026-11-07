@@ -2455,6 +2455,63 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
 .np-st.ne{color:var(--mut)}
 .np-odj{font-family:var(--fm);font-size:.6875rem;color:var(--red);white-space:nowrap}
 @media(max-width:480px){.np-mreza{grid-template-columns:1fr}}
+/* ═══ TELEFON — pregled 7.11.2026 (izmerjeno pri 375 in 320 px) ═══ */
+@media(max-width:640px){
+  /* Glava v dveh vrsticah namesto treh (141 -> ~100 px, skoraj četrtina zaslona
+     je bila glava). Vrstica 1: naslov in ikone; vrstica 2: lige in sezona.
+     display:contents dvigne otroke .hdr-right v isto vrstico kot naslov. */
+  .hdr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 6px;padding:8px 14px}
+  .hdr-right{display:contents}
+  .hdr-title{order:1;flex:1 1 40%;min-width:0}
+  #live-badge{order:2;font-size:0;padding:0;width:10px;height:10px;border-radius:50%;flex:none}
+  .hdr .cmdk-trigger{order:3;width:34px;height:34px;min-height:34px;padding:0;justify-content:center;flex:none}
+  #pwa-install{order:4;width:34px;height:34px;padding:0;justify-content:center;flex:none}
+  #pwa-install .pwa-lbl{display:none}
+  .hdr .hdr-icon-btn{order:5;flex:none}
+  .hdr .hdr-right .tgl{order:7;flex:1 1 60%;min-width:0}
+  .hdr .hdr-right .tgl .tb{min-height:36px;padding:7px 4px}
+  #season-select{order:8;flex:none;height:38px;padding:6px 8px;max-width:92px}
+
+  /* Profil igralca: čez cel zaslon. Plavajoči gumb za zapiranje je ožil vsebino
+     za 52 px, zato ploščice niso segle do desnega roba. */
+  #player-overlay{padding:0;align-items:stretch}
+  .pp-modal{height:100dvh!important;max-height:100dvh;border:0;box-shadow:none}
+  .pp-close{position:fixed;float:none;top:calc(12px + env(safe-area-inset-top,0px));right:12px;margin:0;z-index:20;background:var(--card2)}
+  .pp-hero{border-radius:0}
+  .pp-hero-top{padding-right:44px}
+  #player-overlay button{min-height:34px}
+  #trend-chart-wrap button,.pp-section-title button{padding-left:12px;padding-right:12px}
+
+  /* Vodilni: filtri so vzeli 570 px, prva številka je bila pod pregibom. */
+  #tab-liga .filter-note{display:none}
+  #tab-liga .ctrls{gap:8px;margin-bottom:8px;margin-top:0}
+  #tab-liga .ctrls .tgl{flex:0 1 auto}
+
+  /* Preklopniki z več možnostmi: ena vrstica, odvečno se pomika (prej se je
+     "SCORING RUNS" prelomil in odrezal). */
+  .tab .tgl{overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .tab .tgl::-webkit-scrollbar{display:none}
+  .tab .tgl .tb{white-space:nowrap;flex:0 0 auto}
+
+  /* Dotik: najmanj 36 px; vprašaj ostane majhen, območje dotika pa ne. */
+  .hero-card-cta,.peterka-btn{min-height:36px;display:inline-flex;align-items:center}
+  .hcard-share,.mvpk-deli{width:36px;height:36px}
+  .info-tip{position:relative}
+  .info-tip::after{content:'';position:absolute;inset:-12px}
+}
+@media(max-width:400px){
+  /* Mreže z najmanjšo širino 300-340 px so na 320 px silile čez rob. */
+  .matches-grid,.srch-results,.nerd-grid,.np-mreza{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:340px){
+  .hdr-title{font-size:.95rem}
+}
+.filtri-vec{margin-bottom:12px}
+.filtri-vec>summary{cursor:pointer;font-size:.8rem;color:var(--sub);font-family:var(--fm);padding:8px 2px;list-style:none;display:flex;align-items:center;gap:6px}
+.filtri-vec>summary::-webkit-details-marker{display:none}
+.filtri-vec>summary::before{content:'›';font-size:1rem;transition:rotate .15s}
+.filtri-vec[open]>summary::before{rotate:90deg}
+@media(min-width:641px){.filtri-vec>summary{display:none}}
 </style>
 </head>
 <body>
@@ -2802,6 +2859,8 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
         <button class="tb" id="lbtn-tot" onclick="setLMode('tot')">SKUPNO</button>
       </div>
     </div>
+    <details class="filtri-vec" id="filtri-meti">
+    <summary>Najmanj metov za odstotke</summary>
     <div class="ctrls" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;gap:18px">
       <span class="filter-note" style="color:var(--sub);font-size:.72rem">MIN METOV / TM ZA %:</span>
       <div style="display:flex;align-items:center;gap:6px">
@@ -2826,6 +2885,7 @@ select,input,textarea,.tb,.si,.gloss-k,.pc-name{font-family:var(--fm)!important}
         </select>
       </div>
     </div>
+    </details>
     <div class="ctrls" style="margin-top:-8px">
       <span class="filter-note">Faza:</span>
       <div class="tgl">
@@ -4530,6 +4590,8 @@ function subscribeToLiveMatches() {
 // INIT UI
 // ═══════════════════════════════════════════════════
 function initUI() {
+  // Filter metov je na računalniku vedno odprt (naslov je skrit), na telefonu zaprt.
+  if(matchMedia('(min-width:641px)').matches)document.getElementById('filtri-meti')?.setAttribute('open','');
   buildTeamLogoMap();
   buildPlayerPhotoMap();
   // Ekipe izpeljemo iz DEJANSKIH tekem (in igralcev), ne iz trdo kodiranega
@@ -10113,7 +10175,7 @@ function renderPlayerCompare() {
       teams.map(t=>`<option value="${t}" ${sel===t?'selected':''}>${t}</option>`).join('');
   }
   function playerOpts(team, selIdx) {
-    if(!team) return '<option value="-1">— Najprej izberi klub —</option>';
+    if(!team) return '<option value="-1">— Igralec —</option>';
     const players = P.map((p,i)=>({p,i}))
       .filter(({p})=>p[F.team]===team)
       .sort((a,b)=>b.p[F.toc]/Math.max(b.p[F.T],1)-a.p[F.toc]/Math.max(a.p[F.T],1));
@@ -12081,7 +12143,7 @@ function renderH2HTab(){
   const sA=teamStats(_h2hA), sB=teamStats(_h2hB);
 
   // VS hero
-  html+=`<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px">
+  html+=`<div class="h2h-vs" style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:16px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px;margin-bottom:20px">
     <div style="text-align:center">
       ${teamLogoHtml(_h2hA,64)}
       <div style="font-family:var(--fh);font-weight:800;font-size:1.1rem;color:${cA};margin-top:10px">${_h2hA}</div>
@@ -12771,8 +12833,8 @@ function renderMVP(){
   wrap.innerHTML=
     mvpHero
     +'<div class="sec-head" style="--sh-c:#fbbf24">Najožji krog za MVP sezone</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+mvpSezonaHtml+'</div>'
-    +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
+    +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px;margin-bottom:24px">'+mvpSezonaHtml+'</div>'
+    +(pfMvpHtml?'<div class="sec-head" style="--sh-c:#a855f7">MVP končnice</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:12px;margin-bottom:24px">'+pfMvpHtml+'</div>':'')
     +'<div class="sec-head vrsta-h">MVP po krogih<button class="peterka-btn" onclick="openRoundCard(\'rd\')">Peterka kola →</button></div>'
     +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:24px">'+(roundHtml||'<div class="empty">Ni podatkov po krogih</div>')+'</div>'
     +'<div class="sec-head">Top 10</div>'
