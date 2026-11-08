@@ -1,8 +1,8 @@
 {
- "preverjeno": "2026-11-08T05:25:01Z",
- "igralcev": 563,
+ "preverjeno": "2026-11-08T13:03:46Z",
+ "igralcev": 564,
  "ekip": 42,
- "odstopanj": 42,
+ "odstopanj": 0,
  "lige": {
   "liga1": {
    "igralcev": 128,
@@ -19,33 +19,12 @@
    "ekipeUjema": 12
   },
   "liga3": {
-   "igralcev": 280,
-   "igralciUjema": 242,
+   "igralcev": 281,
+   "igralciUjema": 281,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 16
+   "ekipeUjema": 20
   }
  },
- "primeri": [
-  "liga3 Gašper Kosi: T 6/7, fg2m 24/25, ftm 18/22, fta 35/39",
-  "liga3 Jakob Ibiši Bercieri: T 5/6, pz 10/12",
-  "liga3 Peter Košir: T 6/7, fg2m 6/8, fg3m 18/22, ftm 28/30",
-  "liga3 Peter Ulčar: T 6/7, fg2m 8/9, fg3m 5/8, toc 38/49",
-  "liga3 Luka Pušić: T 6/7, fg2m 10/11, fta 6/7, toc 26/28",
-  "liga3 Viktor Vujičić: T 6/7, fg2m 14/16, fg3m 4/5, toc 42/49",
-  "liga3 Andrej Volk: T 6/7, fg2m 4/5, toc 27/29, pz 8/9",
-  "liga3 Matija Fiore: T 4/5, fg2m 9/10, ftm 4/5, fta 7/9",
-  "liga3 Jan Maček: T 6/7, fg2m 24/28, ftm 13/18, fta 17/23",
-  "liga3 David Vac: T 6/7, fg2m 19/22, fg3m 10/12, ftm 9/12",
-  "liga3 Onyebuchi Peter Udefie: T 6/7, fg2m 33/38, fg3m 2/3, ftm 37/39",
-  "liga3 Nejc Ozbič: T 6/7, ftm 10/11, fta 18/20, toc 55/56",
-  "liga3 Gabrijel Bužan: T 6/7, pz 9/10",
-  "liga3 Jaka Jeras: T 5/6, ftm 1/3, fta 2/4, toc 7/9",
-  "liga3 Tej Vizjak: T 5/6, fg2m 6/8, fg3m 6/7, toc 33/40",
-  "liga3 Marcel Pozvek: T 5/6, fg2m 5/7, ftm 1/3, fta 4/8",
-  "liga3 Simon Perhoč: T 5/6, fg2m 15/18, fg3m 11/13, ftm 13/15",
-  "liga3 Aleks Žagar: T 2/3",
-  "liga3 Tristan Jolić: T 5/6, fg2m 4/5, fg3m 0/2, ftm 1/4",
-  "liga3 Nejc Čuk: T 5/6"
- ]
+ "primeri": []
 }
