@@ -1,8 +1,8 @@
 {
- "preverjeno": "2026-11-07T21:39:01Z",
- "igralcev": 559,
+ "preverjeno": "2026-11-08T05:25:01Z",
+ "igralcev": 563,
  "ekip": 42,
- "odstopanj": 276,
+ "odstopanj": 42,
  "lige": {
   "liga1": {
    "igralcev": 128,
@@ -12,40 +12,40 @@
    "ekipeUjema": 10
   },
   "liga2": {
-   "igralcev": 154,
-   "igralciUjema": 75,
+   "igralcev": 155,
+   "igralciUjema": 155,
    "neznano": 0,
    "ekip": 12,
-   "ekipeUjema": 4
+   "ekipeUjema": 12
   },
   "liga3": {
-   "igralcev": 277,
-   "igralciUjema": 106,
+   "igralcev": 280,
+   "igralciUjema": 242,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 2
+   "ekipeUjema": 16
   }
  },
  "primeri": [
-  "liga2 Jure Brežan: T 5/6, fg2a 12/14, nap 1/2, obr 4/5",
-  "liga2 Blaž Bončina: T 6/7, fg2m 8/9, fg2a 15/18, fg3a 5/6",
-  "liga2 Jaka Zemljič: T 6/7, fg2m 16/17, fg2a 29/34, fg3m 6/7",
-  "liga2 Luka Rudović: T 6/7, fg2m 13/16, fg2a 22/25, fg3a 17/19",
-  "liga2 Simon Tratnik: T 6/7, fg2m 21/24, fg2a 36/39, fta 22/23",
-  "liga2 Milan Petrović: T 6/7, fg2m 1/3, fg2a 4/6, fg3m 2/3",
-  "liga2 Rok Savić: T 6/7, fg2m 41/48, fg2a 68/80, fg3m 4/5",
-  "liga2 Andraž Kavaš: T 6/7, fg2m 30/37, fg2a 61/69, fg3m 3/6",
-  "liga2 Marko Bukvič: T 6/7, fg2m 17/21, fg2a 32/40, fg3m 4/7",
-  "liga2 Maks Mrgole: T 6/7, fg2a 9/11, fg3a 7/8, nap 3/4",
-  "liga2 Patrik Kavkler: T 6/7, fg2m 20/21, fg2a 41/44, fg3m 6/9",
-  "liga2 Maks Sever: T 6/7, fg2m 10/13, fg2a 18/22, fg3m 3/4",
-  "liga2 Jakov Stipaničev: T 6/7, fg2m 14/16, fg2a 26/30, fg3a 26/30",
-  "liga2 Emin Šarić: T 6/7, fg2a 3/4, pod 4/6, pz 10/13",
-  "liga2 Žiga Pojbič Kovačič: T 2/3, fg3a 0/1, obr 1/2, pod 1/2",
-  "liga2 Vid Tamše: T 6/7, fg2m 34/39, fg2a 56/64, ftm 11/12",
-  "liga2 Bine Pregl: T 6/7, fg2m 13/17, fg2a 28/35, fg3a 27/32",
-  "liga2 Jure Besedić: T 6/7, fg2m 10/12, fg2a 17/20, fg3m 4/5",
-  "liga2 Vid Pregl: T 6/7, fg2m 26/31, fg2a 45/52, fg3m 2/3",
-  "liga2 Matic Grušovnik: T 6/7, fg2m 52/56, fg2a 89/97, fg3a 16/21"
+  "liga3 Gašper Kosi: T 6/7, fg2m 24/25, ftm 18/22, fta 35/39",
+  "liga3 Jakob Ibiši Bercieri: T 5/6, pz 10/12",
+  "liga3 Peter Košir: T 6/7, fg2m 6/8, fg3m 18/22, ftm 28/30",
+  "liga3 Peter Ulčar: T 6/7, fg2m 8/9, fg3m 5/8, toc 38/49",
+  "liga3 Luka Pušić: T 6/7, fg2m 10/11, fta 6/7, toc 26/28",
+  "liga3 Viktor Vujičić: T 6/7, fg2m 14/16, fg3m 4/5, toc 42/49",
+  "liga3 Andrej Volk: T 6/7, fg2m 4/5, toc 27/29, pz 8/9",
+  "liga3 Matija Fiore: T 4/5, fg2m 9/10, ftm 4/5, fta 7/9",
+  "liga3 Jan Maček: T 6/7, fg2m 24/28, ftm 13/18, fta 17/23",
+  "liga3 David Vac: T 6/7, fg2m 19/22, fg3m 10/12, ftm 9/12",
+  "liga3 Onyebuchi Peter Udefie: T 6/7, fg2m 33/38, fg3m 2/3, ftm 37/39",
+  "liga3 Nejc Ozbič: T 6/7, ftm 10/11, fta 18/20, toc 55/56",
+  "liga3 Gabrijel Bužan: T 6/7, pz 9/10",
+  "liga3 Jaka Jeras: T 5/6, ftm 1/3, fta 2/4, toc 7/9",
+  "liga3 Tej Vizjak: T 5/6, fg2m 6/8, fg3m 6/7, toc 33/40",
+  "liga3 Marcel Pozvek: T 5/6, fg2m 5/7, ftm 1/3, fta 4/8",
+  "liga3 Simon Perhoč: T 5/6, fg2m 15/18, fg3m 11/13, ftm 13/15",
+  "liga3 Aleks Žagar: T 2/3",
+  "liga3 Tristan Jolić: T 5/6, fg2m 4/5, fg3m 0/2, ftm 1/4",
+  "liga3 Nejc Čuk: T 5/6"
  ]
 }
