@@ -1,8 +1,8 @@
 {
- "preverjeno": "2026-11-12T14:56:03Z",
+ "preverjeno": "2026-11-12T23:23:57Z",
  "igralcev": 567,
  "ekip": 42,
- "odstopanj": 0,
+ "odstopanj": 22,
  "lige": {
   "liga1": {
    "igralcev": 129,
@@ -20,11 +20,32 @@
   },
   "liga3": {
    "igralcev": 283,
-   "igralciUjema": 283,
+   "igralciUjema": 263,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 20
+   "ekipeUjema": 18
   }
  },
- "primeri": []
+ "primeri": [
+  "liga3 Urh Rošer: T 6/7, fg2m 13/16, fta 8/11, toc 36/42",
+  "liga3 Petja Berk: T 4/5, fg2m 8/9, ftm 2/13, fta 4/17",
+  "liga3 Luka Gunzek: T 6/7, fg2m 26/28, fg3m 12/13, ftm 21/22",
+  "liga3 Marcel Kroflič: T 6/7, fg3m 1/3, ftm 0/1, fta 0/2",
+  "liga3 Tilen Jelenko: T 6/7, pz 11/12",
+  "liga3 Luka Verhovšek: T 6/7, fg3m 8/9, toc 41/44, pz 8/9",
+  "liga3 Nejc Kovče: T 6/7, fg2m 13/14, fg3m 6/7, ftm 2/6",
+  "liga3 Filip Lazarević: T 3/4, pz 3/5",
+  "liga3 Andraž Trafela: T 6/7, fg2m 18/22, fg3m 3/6, toc 56/73",
+  "liga3 Tim Rozman: T 6/7, fg2m 23/25, fg3m 6/8, ftm 18/20",
+  "liga3 Gašper Popič: T 6/7, fg2m 4/5, fg3m 11/13, toc 42/50",
+  "liga3 Anže Medved: T 6/7, fg2m 24/27, fg3m 15/18, ftm 26/35",
+  "liga3 Matevž Kamnik: T 5/6, fg3m 4/6, toc 17/23",
+  "liga3 Urban Dravinski: T 4/5, pz 8/10",
+  "liga3 Nejc Trup: T 6/7, fg3m 1/2, toc 5/8, pz 11/13",
+  "liga3 Jure Ličen: T 6/7, fg2m 51/57, fg3m 6/7, ftm 28/31",
+  "liga3 Jakob Strel: T 5/6, fg3m 13/16, ftm 12/13, fta 17/19",
+  "liga3 Jaka Germ: T 4/5, fg2m 6/7, toc 21/23, pz 9/12",
+  "liga3 Miha Zabev: T 5/6, fg2m 13/15, ftm 9/12, fta 17/22",
+  "liga3 Lovro Kos: T 3/4, fg3m 0/1, toc 3/6, pz 2/6"
+ ]
 }
