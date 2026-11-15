@@ -1,8 +1,8 @@
 {
- "preverjeno": "2026-11-15T13:46:37Z",
+ "preverjeno": "2026-11-15T22:40:34Z",
  "igralcev": 574,
  "ekip": 42,
- "odstopanj": 0,
+ "odstopanj": 44,
  "lige": {
   "liga1": {
    "igralcev": 132,
@@ -13,18 +13,39 @@
   },
   "liga2": {
    "igralcev": 156,
-   "igralciUjema": 156,
+   "igralciUjema": 136,
    "neznano": 0,
    "ekip": 12,
-   "ekipeUjema": 12
+   "ekipeUjema": 10
   },
   "liga3": {
    "igralcev": 286,
-   "igralciUjema": 286,
+   "igralciUjema": 266,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 20
+   "ekipeUjema": 18
   }
  },
- "primeri": []
+ "primeri": [
+  "liga2 Aljaž Križan: T 6/7, fg2m 19/25, fg2a 34/44, fg3a 24/29",
+  "liga2 Marko Bukvič: T 7/8, fg2m 21/22, fg2a 40/45, fg3m 7/8",
+  "liga2 Maks Sever: T 7/8, fg2m 13/15, fg2a 22/27, fg3m 4/6",
+  "liga2 Emin Šarić: T 7/8, fg3a 4/5, obr 1/2, pod 6/8",
+  "liga2 Žiga Pojbič Kovačič: T 3/4, fg2a 1/3, fg3m 0/2, fg3a 1/4",
+  "liga2 Filip Podpečan: T 3/4, fg2a 0/1, ftm 0/1, fta 0/4",
+  "liga2 Vid Tamše: T 7/8, fg2m 39/44, fg2a 64/70, ftm 12/13",
+  "liga2 Leon Ivičić: T 6/7, fg2a 18/19, fg3a 39/42, obr 13/15",
+  "liga2 Vojin Ivković: T 7/8, fg2m 17/23, fg2a 31/39, fg3m 15/20",
+  "liga2 Primož Škrlj: T 7/8, fg2m 18/19, fg2a 32/36, fg3m 6/7",
+  "liga2 Timotej Pišot: T 6/7, fg2m 5/6, fg2a 13/15, fg3m 0/1",
+  "liga2 Gregor Brecelj: T 7/8, fg2m 7/10, fg2a 13/18, fg3a 28/33",
+  "liga2 Elmir Haskić: T 7/8, fg2m 7/8, fg2a 18/20, toc 23/25",
+  "liga2 Sedin Karavdić: T 7/8, fg2m 9/12, fg2a 15/21, fg3a 20/23",
+  "liga2 Elvis Kerić: T 7/8, fg2m 25/26, fg2a 39/43, fg3m 7/8",
+  "liga2 Žiga Dimec: T 7/8, fg2m 34/40, fg2a 51/60, ftm 28/32",
+  "liga2 Mitja Nikolić: T 6/7, fg2m 12/14, fg2a 23/27, fg3a 36/38",
+  "liga2 Martin Grabnar: T 3/4, fg2m 1/4, fg2a 1/4, fta 2/4",
+  "liga2 Luka Josipović: T 4/5, fg3m 2/4, fg3a 6/10, toc 9/15",
+  "liga2 Maks Vincek: T 3/4, fg3m 0/1, fg3a 1/2, ftm 1/2"
+ ]
 }
