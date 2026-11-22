@@ -1,51 +1,30 @@
 {
- "preverjeno": "2026-11-21T18:57:24Z",
- "igralcev": 577,
+ "preverjeno": "2026-11-22T05:57:48Z",
+ "igralcev": 581,
  "ekip": 42,
- "odstopanj": 23,
+ "odstopanj": 0,
  "lige": {
   "liga1": {
-   "igralcev": 133,
-   "igralciUjema": 133,
+   "igralcev": 134,
+   "igralciUjema": 134,
    "neznano": 0,
    "ekip": 10,
    "ekipeUjema": 10
   },
   "liga2": {
-   "igralcev": 157,
-   "igralciUjema": 157,
+   "igralcev": 158,
+   "igralciUjema": 158,
    "neznano": 0,
    "ekip": 12,
    "ekipeUjema": 12
   },
   "liga3": {
-   "igralcev": 287,
-   "igralciUjema": 266,
+   "igralcev": 289,
+   "igralciUjema": 289,
    "neznano": 0,
    "ekip": 20,
-   "ekipeUjema": 18
+   "ekipeUjema": 20
   }
  },
- "primeri": [
-  "liga3 David Drame: T 6/7, fg2m 28/30, fg3m 12/15, toc 117/130",
-  "liga3 Blaž Abram: T 5/6, fg2m 8/10, fg3m 8/9, ftm 12/14",
-  "liga3 Žiga Tratnik: T 7/8, fg3m 8/10, ftm 17/19, fta 23/28",
-  "liga3 Marko Matijevič: T 7/8, fg2m 4/5, toc 62/64, pz 16/17",
-  "liga3 Tim Dokl: T 8/9, pz 20/23",
-  "liga3 Jakob Muršec: T 8/9, fg2m 32/36, ftm 19/25, fta 34/42",
-  "liga3 Nejc Kurnik: T 8/9, fg2m 30/35, fg3m 1/2, ftm 15/17",
-  "liga3 Tilen Brunec: T 8/9, fg2m 14/19, fg3m 3/4, ftm 7/9",
-  "liga3 Rene Martan: T 8/9, fg2m 36/37, ftm 15/17, fta 28/32",
-  "liga3 Andraž Kores: T 7/8, fg2m 28/31, fg3m 6/7, ftm 30/31",
-  "liga3 Matevž Berginc: T 4/5, fg3m 0/1, toc 4/7",
-  "liga3 Alen Martan: T 6/7, fg2m 23/25, fg3m 12/16, ftm 37/42",
-  "liga3 Jaka Ročenovič: T 8/9, fg2m 14/20, toc 82/94, pz 21/24",
-  "liga3 Val Pirnat Živanović: T 5/6, pz 3/4",
-  "liga3 Tjaž Manjević Kopčič: T 6/7, fg3m 11/13, toc 39/45, pz 2/3",
-  "liga3 Aljaž Janič: T 2/3, fg2m 1/2, toc 4/6, pz 6/9",
-  "liga3 Matija Popov: T 2/3, fg2m 1/2, ftm 0/1, fta 0/2",
-  "liga3 Bian Adam: T 1/2",
-  "liga3 Nikita Kian Kirsanov: T 4/5",
-  "liga3 Denis Kaube: T 4/5, ftm 3/5, fta 4/6, toc 15/17"
- ]
+ "primeri": []
 }
